@@ -1,17 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="39e5e309-5ec6-4168-998b-b8256ae1ef99" name="Default" comment="">
-      <change afterPath="$PROJECT_DIR$/Admin/App.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Configuration/Configuration.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Database/Server.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Database/pg/MessageTypes.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Database/pg/pgServer.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Configuration.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Noah.go" beforeDir="false" afterPath="$PROJECT_DIR$/Noah.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/config.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/config.yaml" afterDir="false" />
-    </list>
+    <list default="true" id="39e5e309-5ec6-4168-998b-b8256ae1ef99" name="Default" comment="" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -70,7 +60,7 @@
         <entry file="file://$PROJECT_DIR$/Database/pg/MessageTypes.go">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="45">
-              <caret line="3" column="4" selection-start-line="3" selection-start-column="4" selection-end-line="3" selection-end-column="4" />
+              <caret line="3" lean-forward="true" selection-start-line="3" selection-end-line="3" />
             </state>
           </provider>
         </entry>
@@ -175,6 +165,13 @@
               <item name="Database" type="462c0819:PsiDirectoryNode" />
               <item name="pg" type="462c0819:PsiDirectoryNode" />
             </path>
+            <path>
+              <item name="Noah" type="b2602c69:ProjectViewProjectNode" />
+              <item name="Noah" type="462c0819:PsiDirectoryNode" />
+              <item name="Database" type="462c0819:PsiDirectoryNode" />
+              <item name="pg" type="462c0819:PsiDirectoryNode" />
+              <item name="pgwirebase" type="462c0819:PsiDirectoryNode" />
+            </path>
           </expand>
           <select />
         </subPane>
@@ -221,7 +218,6 @@
   </component>
   <component name="ToolWindowManager">
     <frame x="0" y="23" width="1920" height="1124" extended-state="6" />
-    <editor active="true" />
     <layout>
       <window_info anchor="bottom" id="TODO" order="6" />
       <window_info anchor="bottom" id="Event Log" side_tool="true" />
@@ -326,7 +322,7 @@
     <entry file="file://$PROJECT_DIR$/Database/pg/MessageTypes.go">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="45">
-          <caret line="3" column="4" selection-start-line="3" selection-start-column="4" selection-end-line="3" selection-end-column="4" />
+          <caret line="3" lean-forward="true" selection-start-line="3" selection-end-line="3" />
         </state>
       </provider>
     </entry>
