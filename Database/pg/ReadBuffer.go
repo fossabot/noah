@@ -4,6 +4,8 @@ import (
 	"io"
 	"encoding/binary"
 	"github.com/Ready-Stock/Noah/Database/pg/pgwire/pgerror"
+	"bytes"
+	"unsafe"
 )
 
 const secondsInDay = 24 * 60 * 60
@@ -30,6 +32,19 @@ func (b *ReadBuffer) ReadUntypedMsg(rd io.Reader) (int, error) {
 	b.reset(size)
 	n, err := io.ReadFull(rd, b.Msg)
 	return nread + n, err
+}
+
+func (b *ReadBuffer) GetString() (string, error) {
+	pos := bytes.IndexByte(b.Msg, 0)
+	if pos == -1 {
+		return "", NewProtocolViolationErrorf("NUL terminator not found")
+	}
+	// Note: this is a conversion from a byte slice to a string which avoids
+	// allocation and copying. It is safe because we never reuse the bytes in our
+	// read buffer. It is effectively the same as: "s := string(b.Msg[:pos])"
+	s := b.Msg[:pos]
+	b.Msg = b.Msg[pos+1:]
+	return *((*string)(unsafe.Pointer(&s))), nil
 }
 
 

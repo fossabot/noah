@@ -2,9 +2,11 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="39e5e309-5ec6-4168-998b-b8256ae1ef99" name="Default" comment="">
-      <change beforePath="$PROJECT_DIR$/Database/pg/MessageTypes.go" beforeDir="false" afterPath="$PROJECT_DIR$/Database/pg/MessageTypes.go" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Database/pg/sql/exec_util.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Database/pg/MessageTypes.go" beforeDir="false" afterPath="$PROJECT_DIR$/Database/pg/ReadBuffer.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Database/pg/pgServer.go" beforeDir="false" afterPath="$PROJECT_DIR$/Database/pg/pgServer.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/vendor/github.com/cockroachdb/cockroach" beforeDir="false" afterPath="$PROJECT_DIR$/vendor/github.com/cockroachdb/cockroach" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/vendor/github.com/cockroachdb/cockroach" beforeDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
@@ -18,7 +20,7 @@
       <file leaf-file-name="Server.go" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/Database/Server.go">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="236">
+            <state relative-caret-position="285">
               <caret line="19" column="98" selection-start-line="19" selection-start-column="98" selection-end-line="19" selection-end-column="98" />
               <folding>
                 <element signature="e#18#35#0" expanded="true" />
@@ -27,11 +29,11 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="pgServer.go" pinned="false" current-in-tab="false">
+      <file leaf-file-name="pgServer.go" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/Database/pg/pgServer.go">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="330">
-              <caret line="22" column="33" selection-start-line="22" selection-start-column="24" selection-end-line="22" selection-end-column="33" />
+            <state relative-caret-position="135">
+              <caret line="53" selection-start-line="53" selection-end-line="53" />
               <folding>
                 <element signature="e#12#29#0" expanded="true" />
               </folding>
@@ -39,11 +41,44 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="MessageTypes.go" pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/Database/pg/MessageTypes.go">
+      <file leaf-file-name="errors.pb.go" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/Database/pg/pgwire/pgerror/errors.pb.go">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="371">
-              <caret line="44" column="1" selection-start-line="44" selection-start-column="1" selection-end-line="44" selection-end-column="1" />
+            <state relative-caret-position="231">
+              <caret line="18" column="14" selection-start-line="18" selection-start-column="14" selection-end-line="18" selection-end-column="14" />
+              <folding>
+                <element signature="e#288#385#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="predicates.go" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/../../cockroachdb/cockroach/pkg/sql/lex/predicates.go">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="322">
+              <caret line="59" column="14" selection-start-line="59" selection-start-column="14" selection-end-line="59" selection-end-column="14" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="exec_util.go" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/Database/pg/sql/exec_util.go">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="210">
+              <caret line="14" selection-start-line="14" selection-end-line="14" />
+              <folding>
+                <element signature="e#13#30#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="ReadBuffer.go" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/Database/pg/ReadBuffer.go">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="495">
+              <caret line="33" selection-start-line="33" selection-end-line="33" />
               <folding>
                 <element signature="e#12#47#0" expanded="true" />
               </folding>
@@ -51,36 +86,23 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="server.go" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/vendor/github.com/cockroachdb/cockroach/pkg/sql/pgwire/server.go">
+      <file leaf-file-name="binary.go" pinned="false" current-in-tab="false">
+        <entry file="file:///usr/local/Cellar/go/1.10.1/libexec/src/encoding/binary/binary.go">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="399">
-              <caret line="386" column="25" lean-forward="true" selection-start-line="376" selection-start-column="2" selection-end-line="386" selection-end-column="25" />
+            <state relative-caret-position="222">
+              <caret line="111" selection-start-line="111" selection-end-line="111" />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="encoding.go" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/vendor/github.com/cockroachdb/cockroach/pkg/sql/pgwire/pgwirebase/encoding.go">
+      <file leaf-file-name="io.go" pinned="false" current-in-tab="false">
+        <entry file="file:///usr/local/Cellar/go/1.10.1/libexec/src/io/io.go">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="336">
-              <caret line="170" selection-start-line="170" selection-end-line="178" selection-end-column="1" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="clientmessagetype_string.go" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/Database/pg/pgwirebase/clientmessagetype_string.go">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-184" />
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="conn.go" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/Database/pg/pgwirebase/conn.go">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="315">
-              <caret line="21" column="6" selection-start-line="21" selection-start-column="6" selection-end-line="21" selection-end-column="6" />
+            <state relative-caret-position="185">
+              <caret line="326" selection-start-line="326" selection-end-line="326" />
+              <folding>
+                <element signature="e#640#660#0" expanded="true" />
+              </folding>
             </state>
           </provider>
         </entry>
@@ -98,6 +120,7 @@
   <component name="FindInProjectRecents">
     <findStrings>
       <find>reset</find>
+      <find>n</find>
     </findStrings>
   </component>
   <component name="GOROOT" path="/usr/local/Cellar/go/1.10.1/libexec" />
@@ -115,8 +138,10 @@
         <option value="$PROJECT_DIR$/Configuration/Configuration.go" />
         <option value="$PROJECT_DIR$/Database/Server.go" />
         <option value="$PROJECT_DIR$/Database/pg/pgwirebase/conn.go" />
-        <option value="$PROJECT_DIR$/Database/pg/pgServer.go" />
         <option value="$PROJECT_DIR$/Database/pg/MessageTypes.go" />
+        <option value="$PROJECT_DIR$/Database/pg/ReadBuffer.go" />
+        <option value="$PROJECT_DIR$/Database/pg/sql/sql.go" />
+        <option value="$PROJECT_DIR$/Database/pg/pgServer.go" />
       </list>
     </option>
   </component>
@@ -163,58 +188,9 @@
             <path>
               <item name="Noah" type="b2602c69:ProjectViewProjectNode" />
               <item name="Noah" type="462c0819:PsiDirectoryNode" />
-              <item name="vendor" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="Noah" type="b2602c69:ProjectViewProjectNode" />
-              <item name="Noah" type="462c0819:PsiDirectoryNode" />
-              <item name="vendor" type="462c0819:PsiDirectoryNode" />
-              <item name="github.com" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="Noah" type="b2602c69:ProjectViewProjectNode" />
-              <item name="Noah" type="462c0819:PsiDirectoryNode" />
-              <item name="vendor" type="462c0819:PsiDirectoryNode" />
-              <item name="github.com" type="462c0819:PsiDirectoryNode" />
-              <item name="cockroachdb" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="Noah" type="b2602c69:ProjectViewProjectNode" />
-              <item name="Noah" type="462c0819:PsiDirectoryNode" />
-              <item name="vendor" type="462c0819:PsiDirectoryNode" />
-              <item name="github.com" type="462c0819:PsiDirectoryNode" />
-              <item name="cockroachdb" type="462c0819:PsiDirectoryNode" />
-              <item name="cockroach" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="Noah" type="b2602c69:ProjectViewProjectNode" />
-              <item name="Noah" type="462c0819:PsiDirectoryNode" />
-              <item name="vendor" type="462c0819:PsiDirectoryNode" />
-              <item name="github.com" type="462c0819:PsiDirectoryNode" />
-              <item name="cockroachdb" type="462c0819:PsiDirectoryNode" />
-              <item name="cockroach" type="462c0819:PsiDirectoryNode" />
-              <item name="pkg" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="Noah" type="b2602c69:ProjectViewProjectNode" />
-              <item name="Noah" type="462c0819:PsiDirectoryNode" />
-              <item name="vendor" type="462c0819:PsiDirectoryNode" />
-              <item name="github.com" type="462c0819:PsiDirectoryNode" />
-              <item name="cockroachdb" type="462c0819:PsiDirectoryNode" />
-              <item name="cockroach" type="462c0819:PsiDirectoryNode" />
-              <item name="pkg" type="462c0819:PsiDirectoryNode" />
+              <item name="Database" type="462c0819:PsiDirectoryNode" />
+              <item name="pg" type="462c0819:PsiDirectoryNode" />
               <item name="sql" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="Noah" type="b2602c69:ProjectViewProjectNode" />
-              <item name="Noah" type="462c0819:PsiDirectoryNode" />
-              <item name="vendor" type="462c0819:PsiDirectoryNode" />
-              <item name="github.com" type="462c0819:PsiDirectoryNode" />
-              <item name="cockroachdb" type="462c0819:PsiDirectoryNode" />
-              <item name="cockroach" type="462c0819:PsiDirectoryNode" />
-              <item name="pkg" type="462c0819:PsiDirectoryNode" />
-              <item name="sql" type="462c0819:PsiDirectoryNode" />
-              <item name="pgwire" type="462c0819:PsiDirectoryNode" />
             </path>
           </expand>
           <select />
@@ -233,6 +209,7 @@
   </component>
   <component name="RecentsManager">
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/Database/pg/pgwire" />
       <recent name="$PROJECT_DIR$/Database/pg" />
       <recent name="$PROJECT_DIR$/Configuration" />
     </key>
@@ -262,21 +239,20 @@
   </component>
   <component name="ToolWindowManager">
     <frame x="0" y="23" width="1920" height="1124" extended-state="6" />
-    <editor active="true" />
     <layout>
       <window_info anchor="bottom" id="TODO" order="6" />
       <window_info anchor="bottom" id="Event Log" side_tool="true" />
       <window_info anchor="bottom" id="Database Changes" show_stripe_button="false" />
       <window_info anchor="bottom" id="Run" order="2" weight="0.32968128" />
-      <window_info anchor="bottom" id="Version Control" visible="true" weight="0.32968128" />
+      <window_info anchor="bottom" id="Version Control" weight="0.32968128" />
       <window_info anchor="right" id="Graph Database" />
       <window_info anchor="bottom" id="Terminal" weight="0.32968128" />
-      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.24973376" />
+      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.24973376" />
       <window_info anchor="bottom" id="Graph Database Console" />
       <window_info anchor="right" id="Database" />
       <window_info anchor="bottom" id="Find" order="1" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
-      <window_info anchor="bottom" id="Debug" order="3" weight="0.39940238" />
+      <window_info active="true" anchor="bottom" id="Debug" order="3" visible="true" weight="0.39940238" />
       <window_info id="Favorites" side_tool="true" />
       <window_info anchor="right" id="Commander" internal_type="SLIDING" order="0" type="SLIDING" weight="0.4" />
       <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
@@ -286,6 +262,28 @@
       <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
       <window_info anchor="bottom" id="TODO" order="6" />
     </layout>
+    <layout-to-restore>
+      <window_info anchor="right" id="Graph Database" order="0" />
+      <window_info anchor="bottom" id="Run" order="7" weight="0.32968128" />
+      <window_info anchor="right" id="Ant Build" order="3" weight="0.25" />
+      <window_info anchor="bottom" id="Cvs" order="9" weight="0.25" />
+      <window_info active="true" content_ui="combo" id="Project" order="1" visible="true" weight="0.24973376" />
+      <window_info id="Structure" order="2" side_tool="true" weight="0.25" />
+      <window_info anchor="right" id="Commander" internal_type="SLIDING" order="2" type="SLIDING" weight="0.4" />
+      <window_info anchor="bottom" id="TODO" order="11" />
+      <window_info anchor="bottom" id="Database Changes" order="0" show_stripe_button="false" />
+      <window_info anchor="bottom" id="Graph Database Console" order="1" />
+      <window_info anchor="bottom" id="Message" order="5" />
+      <window_info anchor="bottom" id="Debug" order="8" weight="0.39940238" />
+      <window_info anchor="right" id="Database" order="1" />
+      <window_info anchor="bottom" id="Terminal" order="2" weight="0.32968128" />
+      <window_info anchor="bottom" id="Event Log" order="3" side_tool="true" />
+      <window_info anchor="bottom" id="Inspection" order="10" weight="0.4" />
+      <window_info anchor="bottom" id="Version Control" order="4" weight="0.32968128" />
+      <window_info anchor="right" content_ui="combo" id="Hierarchy" order="4" weight="0.25" />
+      <window_info anchor="bottom" id="Find" order="6" />
+      <window_info id="Favorites" order="0" side_tool="true" />
+    </layout-to-restore>
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="1" />
@@ -295,7 +293,21 @@
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
-      <option name="time" value="2" />
+      <breakpoints>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/Database/pg/pgServer.go</url>
+          <line>53</line>
+          <properties />
+          <option name="timeStamp" value="3" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/Database/pg/pgServer.go</url>
+          <line>70</line>
+          <properties />
+          <option name="timeStamp" value="4" />
+        </line-breakpoint>
+      </breakpoints>
+      <option name="time" value="5" />
     </breakpoint-manager>
   </component>
   <component name="editorHistoryManager">
@@ -370,7 +382,7 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/Database/pg/MessageTypes.go">
+    <entry file="file://$PROJECT_DIR$/Database/pg/ReadBuffer.go">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="45">
           <caret line="3" selection-start-line="3" selection-end-line="3" />
@@ -397,7 +409,7 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/Database/pg/pgwirebase/clientmessagetype_string.go">
+    <entry file="file://$PROJECT_DIR$/Database/pg/pgwire/pgwirebase/clientmessagetype_string.go">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="-249" />
       </provider>
@@ -418,7 +430,7 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/Database/pg/pgwirebase/encoding.go">
+    <entry file="file://$PROJECT_DIR$/Database/pg/pgwire/pgwirebase/encoding.go">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="342">
           <caret line="197" column="23" selection-start-line="197" selection-start-column="17" selection-end-line="197" selection-end-column="23" />
@@ -428,10 +440,10 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/Database/pg/pgwirebase/doc.go">
+    <entry file="file://$PROJECT_DIR$/Database/pg/pgwire/pgwirebase/doc.go">
       <provider selected="true" editor-type-id="text-editor" />
     </entry>
-    <entry file="file://$PROJECT_DIR$/Database/pg/pgwirebase/conn.go">
+    <entry file="file://$PROJECT_DIR$/Database/pg/pgwire/pgwirebase/conn.go">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="315">
           <caret line="21" column="6" selection-start-line="21" selection-start-column="6" selection-end-line="21" selection-end-column="6" />
@@ -489,9 +501,24 @@
     <entry file="file://$PROJECT_DIR$/Database/sql/sqlbase/cancel_checker.go" />
     <entry file="file://$PROJECT_DIR$/Database/sql/sqlbase/cascader.go" />
     <entry file="file://$PROJECT_DIR$/Database/sql/sqlbase/result_columns.go" />
+    <entry file="file://$PROJECT_DIR$/Database/pg/pgwire/pgwirebase/conn.go">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="315">
+          <caret line="21" column="6" selection-start-line="21" selection-start-column="6" selection-end-line="21" selection-end-column="6" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/Database/pg/pgwire/pgwirebase/clientmessagetype_string.go">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-184" />
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/Database/pg/pgwire/binary_test.go">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
     <entry file="file://$PROJECT_DIR$/Database/Server.go">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="236">
+        <state relative-caret-position="285">
           <caret line="19" column="98" selection-start-line="19" selection-start-column="98" selection-end-line="19" selection-end-column="98" />
           <folding>
             <element signature="e#18#35#0" expanded="true" />
@@ -499,48 +526,111 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/Database/pg/pgwirebase/conn.go">
+    <entry file="file://$PROJECT_DIR$/vendor/github.com/cockroachdb/cockroach/pkg/sql/pgwire/conn.go">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="315">
-          <caret line="21" column="6" selection-start-line="21" selection-start-column="6" selection-end-line="21" selection-end-column="6" />
+        <state relative-caret-position="847">
+          <caret line="964" selection-start-line="913" selection-end-line="964" />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/vendor/github.com/cockroachdb/cockroach/pkg/sql/pgwire/server.go">
+    <entry file="file://$PROJECT_DIR$/vendor/github.com/cockroachdb/cockroach/pkg/sql/pgwire/write_buffer.go">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="399">
-          <caret line="386" column="25" lean-forward="true" selection-start-line="376" selection-start-column="2" selection-end-line="386" selection-end-column="25" />
+        <state relative-caret-position="780">
+          <caret line="61" column="1" selection-start-line="61" selection-start-column="1" selection-end-line="61" selection-end-column="1" />
         </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/Database/pg/pgServer.go">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="330">
-          <caret line="22" column="33" selection-start-line="22" selection-start-column="24" selection-end-line="22" selection-end-column="33" />
-          <folding>
-            <element signature="e#12#29#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/Database/pg/pgwirebase/clientmessagetype_string.go">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-184" />
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/vendor/github.com/cockroachdb/cockroach/pkg/sql/pgwire/pgwirebase/encoding.go">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="336">
-          <caret line="170" selection-start-line="170" selection-end-line="178" selection-end-column="1" />
+          <caret line="128" selection-start-line="128" selection-end-line="139" selection-end-column="1" />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/Database/pg/MessageTypes.go">
+    <entry file="file://$PROJECT_DIR$/Database/pg/sql/exec_util.go">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="371">
-          <caret line="44" column="1" selection-start-line="44" selection-start-column="1" selection-end-line="44" selection-end-column="1" />
+        <state relative-caret-position="210">
+          <caret line="14" selection-start-line="14" selection-end-line="14" />
+          <folding>
+            <element signature="e#13#30#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/vendor/github.com/cockroachdb/cockroach/pkg/sql/exec_util.go">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="621">
+          <caret line="819" column="5" selection-start-line="819" selection-start-column="5" selection-end-line="819" selection-end-column="5" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/vendor/github.com/cockroachdb/cockroach/pkg/sql/pgwire/server.go">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="202">
+          <caret line="377" column="2" selection-start-line="377" selection-start-column="2" selection-end-line="377" selection-end-column="3" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/vendor/github.com/cockroachdb/cockroach/pkg/sql/lex/predicates.go">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="185">
+          <caret line="59" column="14" selection-start-line="59" selection-start-column="14" selection-end-line="59" selection-end-column="14" />
+          <folding>
+            <element signature="e#613#650#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/Database/pg/pgwire/pgerror/errors.pb.go">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="231">
+          <caret line="18" column="14" selection-start-line="18" selection-start-column="14" selection-end-line="18" selection-end-column="14" />
+          <folding>
+            <element signature="e#288#385#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../../cockroachdb/cockroach/pkg/sql/lex/predicates.go">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="322">
+          <caret line="59" column="14" selection-start-line="59" selection-start-column="14" selection-end-line="59" selection-end-column="14" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file:///usr/local/Cellar/go/1.10.1/libexec/src/io/io.go">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="185">
+          <caret line="326" selection-start-line="326" selection-end-line="326" />
+          <folding>
+            <element signature="e#640#660#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file:///usr/local/Cellar/go/1.10.1/libexec/src/encoding/binary/binary.go">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="222">
+          <caret line="111" selection-start-line="111" selection-end-line="111" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/Database/pg/ReadBuffer.go">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="495">
+          <caret line="33" selection-start-line="33" selection-end-line="33" />
           <folding>
             <element signature="e#12#47#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/Database/pg/pgServer.go">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="135">
+          <caret line="53" selection-start-line="53" selection-end-line="53" />
+          <folding>
+            <element signature="e#12#29#0" expanded="true" />
           </folding>
         </state>
       </provider>
