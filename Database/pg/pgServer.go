@@ -3,8 +3,6 @@ package pg
 import (
 	"net"
 	"fmt"
-	"bytes"
-	"github.com/Ready-Stock/Noah/Configuration"
 )
 
 func StartIncomingConnection(in <-chan *net.TCPConn, out chan<- *net.TCPConn) {
@@ -16,16 +14,15 @@ func StartIncomingConnection(in <-chan *net.TCPConn, out chan<- *net.TCPConn) {
 
 func handleConnection(conn *net.TCPConn) {
 	fmt.Println("Handling connection from ", conn.RemoteAddr().String())
-	buf := &bytes.Buffer{}
-	for {
-		data := make([]byte, Conf.Configuration.Database.ReadBuffer)
-		n, err := conn.Read(data)
-		if err != nil {
-			fmt.Println(err.Error())
-		}
-		buf.Write(data[:n])
-		if data[0] == 13 && data[1] == 10 {
-			break
-		}
+
+	var buf ReadBuffer
+	n, err := buf.ReadUntypedMsg(conn)
+	if err != nil {
+		return err
 	}
+	version, err := buf.GetUint32()
+	if err != nil {
+		return err
+	}
+	errSSLRequired := false
 }
