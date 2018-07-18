@@ -1,2 +1,4 @@
 admin_port: 8080
-data_port: 5433
+database:
+  read_buffer: 256
+  advertise_address: 127.0.0.1:5433
