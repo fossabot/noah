@@ -1,0 +1,16 @@
+1:
+-
+SELECT
+	(
+		SELECT
+			1
+	)
+
+14:
+--------------
+SELECT
+	(SELECT 1)
+
+17:
+-----------------
+SELECT (SELECT 1)

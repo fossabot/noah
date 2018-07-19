@@ -9,5 +9,6 @@ import (
 func main() {
 	Conf.ParseConfiguration()
 	fmt.Println("Starting admin application with port:", Conf.Configuration.AdminPort)
+	Database.SetupNodes()
 	Database.Start()
 }

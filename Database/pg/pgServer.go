@@ -5,8 +5,12 @@ import (
 	"fmt"
 	"time"
 	"github.com/pkg/errors"
-	"github.com/Ready-Stock/Noah/Database/pg/pgwire/pgerror"
 	"github.com/Ready-Stock/Noah/Database/pg/sql"
+
+	"github.com/Ready-Stock/Noah/Database/sql/pgwire/pgerror"
+	"github.com/Ready-Stock/Noah/Database/sql/pgwire"
+	"github.com/cockroachdb/cockroach/pkg/util/log"
+	"github.com/cockroachdb/cockroach/pkg/base"
 )
 
 const (
@@ -51,32 +55,11 @@ func StartIncomingConnection(in <-chan *net.TCPConn, out chan<- *net.TCPConn) {
 func handleConnection(conn *net.TCPConn) error {
 	fmt.Println("Handling connection from ", conn.RemoteAddr().String())
 
-	var buf ReadBuffer
-	_, err := buf.ReadUntypedMsg(conn)
-	if err != nil {
-		return err
-	}
-	version, err := buf.GetUint32()
-	if err != nil {
-		return err
-	}
+	pgwire.MakeServer(log.AmbientContext{
 
-	// sendErr := func(err error) error {
-	// 	msgBuilder := newWriteBuffer(s.metrics.BytesOutCount)
-	// 	_ /* err */ = writeErr(err, msgBuilder, conn)
-	// 	_ = conn.Close()
-	// 	return err
-	// }
+	}, base.Config{
 
-	if version != version30 {
-		return fmt.Errorf("unknown protocol version %d", version)
-	}
-	var sArgs sql.SessionArgs
-	if sArgs, err = parseOptions(buf.Msg); err != nil {
-		return pgerror.NewError(pgerror.CodeProtocolViolationError, err.Error())
-	}
-	fmt.Println("Connection for user ", sArgs.User)
-	return nil
+	},)
 }
 
 func parseOptions(data []byte) (sql.SessionArgs, error) {
@@ -107,5 +90,7 @@ func parseOptions(data []byte) (sql.SessionArgs, error) {
 	}
 	return args, nil
 }
+
+
 
 
