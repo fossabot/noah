@@ -15,17 +15,17 @@
 package pgwire
 
 import (
-	"context"
 	"fmt"
 	"time"
 
-	"github.com/cockroachdb/cockroach/pkg/sql/sqlbase"
+	//"github.com/cockroachdb/cockroach/pkg/sql/sqlbase"
 	"github.com/lib/pq/oid"
-	"github.com/pkg/errors"
+	//"github.com/pkg/errors"
 	"github.com/Ready-Stock/Noah/Database/sql/sessiondata"
 	"github.com/Ready-Stock/Noah/Database/sql"
-	"github.com/Ready-Stock/Noah/Database/sql/sem/tree"
+	//"github.com/Ready-Stock/Noah/Database/sql/sem/tree"
 	"github.com/Ready-Stock/Noah/Database/sql/pgwire/pgwirebase"
+
 )
 
 type completionMsgType int
@@ -68,7 +68,7 @@ type commandResult struct {
 	// this limit.
 	limit int
 
-	stmtType     tree.StatementType
+	//stmtType     tree.StatementType
 	descOpt      sql.RowDescOpt
 	rowsAffected int
 
@@ -84,7 +84,7 @@ type commandResult struct {
 func (c *conn) makeCommandResult(
 	descOpt sql.RowDescOpt,
 	pos sql.CmdPos,
-	stmt tree.Statement,
+	//stmt tree.Statement,
 	formatCodes []pgwirebase.FormatCode,
 	loc *time.Location,
 	be sessiondata.BytesEncodeFormat,
@@ -93,11 +93,11 @@ func (c *conn) makeCommandResult(
 		conn:              c,
 		pos:               pos,
 		descOpt:           descOpt,
-		stmtType:          stmt.StatementType(),
+		//stmtType:          stmt.StatementType(),
 		formatCodes:       formatCodes,
 		loc:               loc,
 		typ:               commandComplete,
-		cmdCompleteTag:    stmt.StatementTag(),
+		//cmdCompleteTag:    stmt.StatementTag(),
 		bytesEncodeFormat: be,
 	}
 }
@@ -111,57 +111,56 @@ func (c *conn) makeMiscResult(pos sql.CmdPos, typ completionMsgType) commandResu
 }
 
 // Close is part of the CommandResult interface.
-func (r *commandResult) Close(t sql.TransactionStatusIndicator) {
-	if r.errExpected && r.err == nil {
-		panic("expected err to be set on result by Close, but wasn't")
-	}
-
-	r.conn.writerState.fi.registerCmd(r.pos)
-	if r.err != nil {
-		// TODO(andrei): I'm not sure this is the best place to do error conversion.
-		r.conn.bufferErr(convertToErrWithPGCode(r.err))
-		return
-	}
-
-	if r.err == nil &&
-		r.limit != 0 &&
-		r.rowsAffected > r.limit &&
-		r.typ == commandComplete &&
-		r.stmtType == tree.Rows {
-
-		r.err = errors.Errorf("execute row count limits not supported: %d of %d",
-			r.limit, r.rowsAffected)
-		r.conn.bufferErr(convertToErrWithPGCode(r.err))
-	}
-
-	// Send a completion message, specific to the type of result.
-	switch r.typ {
-	case commandComplete:
-		tag := cookTag(
-			r.cmdCompleteTag, r.conn.writerState.tagBuf[:0], r.stmtType, r.rowsAffected,
-		)
-		r.conn.bufferCommandComplete(tag)
-	case parseComplete:
-		r.conn.bufferParseComplete()
-	case bindComplete:
-		r.conn.bufferBindComplete()
-	case closeComplete:
-		r.conn.bufferCloseComplete()
-	case readyForQuery:
-		r.conn.bufferReadyForQuery(byte(t))
-		// The error is saved on conn.err.
-		_ /* err */ = r.conn.Flush(r.pos)
-	case emptyQueryResponse:
-		r.conn.bufferEmptyQueryResponse()
-	case flush:
-		// The error is saved on conn.err.
-		_ /* err */ = r.conn.Flush(r.pos)
-	case noCompletionMsg:
-		// nothing to do
-	default:
-		panic(fmt.Sprintf("unknown type: %v", r.typ))
-	}
-}
+// func (r *commandResult) Close(t sql.TransactionStatusIndicator) {
+// 	if r.errExpected && r.err == nil {
+// 		panic("expected err to be set on result by Close, but wasn't")
+// 	}
+//
+// 	r.conn.writerState.fi.registerCmd(r.pos)
+// 	if r.err != nil {
+// 		// TODO(andrei): I'm not sure this is the best place to do error conversion.
+// 		r.conn.bufferErr(convertToErrWithPGCode(r.err))
+// 		return
+// 	}
+//
+// 	if r.err == nil &&
+// 		r.limit != 0 &&
+// 		r.rowsAffected > r.limit &&
+// 		r.typ == commandComplete {
+//
+// 		r.err = errors.Errorf("execute row count limits not supported: %d of %d",
+// 			r.limit, r.rowsAffected)
+// 		r.conn.bufferErr(convertToErrWithPGCode(r.err))
+// 	}
+//
+// 	// Send a completion message, specific to the type of result.
+// 	switch r.typ {
+// 	case commandComplete:
+// 		tag := cookTag(
+// 			r.cmdCompleteTag, r.conn.writerState.tagBuf[:0], r.stmtType, r.rowsAffected,
+// 		)
+// 		r.conn.bufferCommandComplete(tag)
+// 	case parseComplete:
+// 		r.conn.bufferParseComplete()
+// 	case bindComplete:
+// 		r.conn.bufferBindComplete()
+// 	case closeComplete:
+// 		r.conn.bufferCloseComplete()
+// 	case readyForQuery:
+// 		r.conn.bufferReadyForQuery(byte(t))
+// 		// The error is saved on conn.err.
+// 		_ /* err */ = r.conn.Flush(r.pos)
+// 	case emptyQueryResponse:
+// 		r.conn.bufferEmptyQueryResponse()
+// 	case flush:
+// 		// The error is saved on conn.err.
+// 		_ /* err */ = r.conn.Flush(r.pos)
+// 	case noCompletionMsg:
+// 		// nothing to do
+// 	default:
+// 		panic(fmt.Sprintf("unknown type: %v", r.typ))
+// 	}
+// }
 
 // CloseWithErr is part of the CommandResult interface.
 func (r *commandResult) CloseWithErr(err error) {
@@ -201,32 +200,32 @@ func (r *commandResult) OverwriteError(err error) {
 }
 
 // AddRow is part of the CommandResult interface.
-func (r *commandResult) AddRow(ctx context.Context, row tree.Datums) error {
-	if r.err != nil {
-		panic(fmt.Sprintf("can't call AddRow after having set error: %s",
-			r.err))
-	}
-	r.conn.writerState.fi.registerCmd(r.pos)
-	if err := r.conn.GetErr(); err != nil {
-		return err
-	}
-	if r.err != nil {
-		panic("can't send row after error")
-	}
-	r.rowsAffected++
-
-	r.conn.bufferRow(ctx, row, r.formatCodes, r.loc, r.bytesEncodeFormat)
-	_ /* flushed */, err := r.conn.maybeFlush(r.pos)
-	return err
-}
+// func (r *commandResult) AddRow(ctx context.Context, row tree.Datums) error {
+// 	if r.err != nil {
+// 		panic(fmt.Sprintf("can't call AddRow after having set error: %s",
+// 			r.err))
+// 	}
+// 	r.conn.writerState.fi.registerCmd(r.pos)
+// 	if err := r.conn.GetErr(); err != nil {
+// 		return err
+// 	}
+// 	if r.err != nil {
+// 		panic("can't send row after error")
+// 	}
+// 	r.rowsAffected++
+//
+// 	r.conn.bufferRow(ctx, row, r.formatCodes, r.loc, r.bytesEncodeFormat)
+// 	_ /* flushed */, err := r.conn.maybeFlush(r.pos)
+// 	return err
+// }
 
 // SetColumns is part of the CommandResult interface.
-func (r *commandResult) SetColumns(ctx context.Context, cols sqlbase.ResultColumns) {
-	r.conn.writerState.fi.registerCmd(r.pos)
-	if r.descOpt == sql.NeedRowDesc {
-		_ /* err */ = r.conn.writeRowDescription(ctx, cols, r.formatCodes, &r.conn.writerState.buf)
-	}
-}
+// func (r *commandResult) SetColumns(ctx context.Context, cols sqlbase.ResultColumns) {
+// 	r.conn.writerState.fi.registerCmd(r.pos)
+// 	if r.descOpt == sql.NeedRowDesc {
+// 		_ /* err */ = r.conn.writeRowDescription(ctx, cols, r.formatCodes, &r.conn.writerState.buf)
+// 	}
+// }
 
 // SetInTypes is part of the DescribeResult interface.
 func (r *commandResult) SetInTypes(types []oid.Oid) {
@@ -241,18 +240,18 @@ func (r *commandResult) SetNoDataRowDescription() {
 }
 
 // SetPrepStmtOutput is part of the DescribeResult interface.
-func (r *commandResult) SetPrepStmtOutput(ctx context.Context, cols sqlbase.ResultColumns) {
-	r.conn.writerState.fi.registerCmd(r.pos)
-	_ /* err */ = r.conn.writeRowDescription(ctx, cols, nil /* formatCodes */, &r.conn.writerState.buf)
-}
-
-// SetPortalOutput is part of the DescribeResult interface.
-func (r *commandResult) SetPortalOutput(
-	ctx context.Context, cols sqlbase.ResultColumns, formatCodes []pgwirebase.FormatCode,
-) {
-	r.conn.writerState.fi.registerCmd(r.pos)
-	_ /* err */ = r.conn.writeRowDescription(ctx, cols, formatCodes, &r.conn.writerState.buf)
-}
+// func (r *commandResult) SetPrepStmtOutput(ctx context.Context, cols sqlbase.ResultColumns) {
+// 	r.conn.writerState.fi.registerCmd(r.pos)
+// 	_ /* err */ = r.conn.writeRowDescription(ctx, cols, nil /* formatCodes */, &r.conn.writerState.buf)
+// }
+//
+// // SetPortalOutput is part of the DescribeResult interface.
+// func (r *commandResult) SetPortalOutput(
+// 	ctx context.Context, cols sqlbase.ResultColumns, formatCodes []pgwirebase.FormatCode,
+// ) {
+// 	r.conn.writerState.fi.registerCmd(r.pos)
+// 	_ /* err */ = r.conn.writeRowDescription(ctx, cols, formatCodes, &r.conn.writerState.buf)
+// }
 
 // IncrementRowsAffected is part of the CommandResult interface.
 func (r *commandResult) IncrementRowsAffected(n int) {
@@ -269,8 +268,8 @@ func (r *commandResult) SetLimit(n int) {
 	r.limit = n
 }
 
-// ResetStmtType is part of the CommandResult interface.
-func (r *commandResult) ResetStmtType(stmt tree.Statement) {
-	r.stmtType = stmt.StatementType()
-	r.cmdCompleteTag = stmt.StatementTag()
-}
+// // ResetStmtType is part of the CommandResult interface.
+// func (r *commandResult) ResetStmtType(stmt tree.Statement) {
+// 	r.stmtType = stmt.StatementType()
+// 	r.cmdCompleteTag = stmt.StatementTag()
+// }

@@ -54,6 +54,10 @@ var lookaheadKeywords = map[string]struct{}{
 	"time":       {},
 }
 
+var reservedKeywords = map[string]struct{}{
+
+}
+
 // isReservedKeyword returns true if the keyword is reserved, or needs
 // one extra token of lookahead.
 func isReservedKeyword(s string) bool {

@@ -4,13 +4,8 @@ import (
 	"net"
 	"fmt"
 	"time"
-	"github.com/pkg/errors"
-	"github.com/Ready-Stock/Noah/Database/pg/sql"
-
-	"github.com/Ready-Stock/Noah/Database/sql/pgwire/pgerror"
 	"github.com/Ready-Stock/Noah/Database/sql/pgwire"
-	"github.com/cockroachdb/cockroach/pkg/util/log"
-	"github.com/cockroachdb/cockroach/pkg/base"
+	"github.com/Ready-Stock/Noah/Database/base"
 )
 
 const (
@@ -55,40 +50,12 @@ func StartIncomingConnection(in <-chan *net.TCPConn, out chan<- *net.TCPConn) {
 func handleConnection(conn *net.TCPConn) error {
 	fmt.Println("Handling connection from ", conn.RemoteAddr().String())
 
-	pgwire.MakeServer(log.AmbientContext{
+	serv := pgwire.MakeServer(&base.Config{
+		Insecure:true,
+	})
+	serv.ServeConn(conn)
 
-	}, base.Config{
-
-	},)
-}
-
-func parseOptions(data []byte) (sql.SessionArgs, error) {
-	args := sql.SessionArgs{}
-	buf := ReadBuffer{Msg: data}
-	for {
-		key, err := buf.GetString()
-		if err != nil {
-			return sql.SessionArgs{}, errors.Errorf("error reading option key: %s", err)
-		}
-		if len(key) == 0 {
-			break
-		}
-		value, err := buf.GetString()
-		if err != nil {
-			return sql.SessionArgs{}, errors.Errorf("error reading option value: %s", err)
-		}
-		switch key {
-		case "database":
-			args.Database = value
-		case "user":
-			args.User = value
-		case "application_name":
-			args.ApplicationName = value
-		default:
-
-		}
-	}
-	return args, nil
+	return nil
 }
 
 

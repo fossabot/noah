@@ -24,18 +24,16 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/cockroachdb/cockroach/pkg/base"
-	"github.com/cockroachdb/cockroach/pkg/util/contextutil"
 	"github.com/cockroachdb/cockroach/pkg/util/envutil"
-	"github.com/cockroachdb/cockroach/pkg/util/log"
 	"github.com/cockroachdb/cockroach/pkg/util/metric"
 	"github.com/cockroachdb/cockroach/pkg/util/mon"
 	"github.com/cockroachdb/cockroach/pkg/util/stop"
 	"github.com/cockroachdb/cockroach/pkg/util/syncutil"
 	"github.com/Ready-Stock/Noah/Database/sql/pgwire/pgwirebase"
 	"github.com/Ready-Stock/Noah/Database/sql/pgwire/pgerror"
-	"github.com/Ready-Stock/Noah/Database/sql/sem/tree"
+	//"github.com/Ready-Stock/Noah/Database/sql/sem/tree"
 	"github.com/Ready-Stock/Noah/Database/sql"
+	"github.com/Ready-Stock/Noah/Database/base"
 )
 
 const (
@@ -287,24 +285,7 @@ func (s *Server) drainImpl(drainWait time.Duration, cancelWait time.Duration) er
 
 // ServeConn serves a single connection, driving the handshake process and
 // delegating to the appropriate connection type.
-func (s *Server) ServeConn(ctx context.Context, conn net.Conn) error {
-	s.mu.Lock()
-	draining := s.mu.draining
-	if !draining {
-		var cancel context.CancelFunc
-		ctx, cancel = contextutil.WithCancel(ctx)
-		done := make(chan struct{})
-		s.mu.connCancelMap[done] = cancel
-		defer func() {
-			cancel()
-			close(done)
-			s.mu.Lock()
-			delete(s.mu.connCancelMap, done)
-			s.mu.Unlock()
-		}()
-	}
-	s.mu.Unlock()
-
+func (s *Server) ServeConn(conn net.Conn) error { //ctx context.Context,
 	// If the Server is draining, we will use the connection only to send an
 	// error, so we don't count it in the stats. This makes sense since
 	// DrainClient() waits for that number to drop to zero,
@@ -366,29 +347,24 @@ func (s *Server) ServeConn(ctx context.Context, conn net.Conn) error {
 	if errSSLRequired {
 		return sendErr(pgerror.NewError(pgerror.CodeProtocolViolationError, ErrSSLRequired))
 	}
-	if draining {
-		return sendErr(newAdminShutdownErr(errors.New(ErrDraining)))
-	}
+	// if draining {
+	// 	return sendErr(newAdminShutdownErr(errors.New(ErrDraining)))
+	// }
 
 	var sArgs sql.SessionArgs
-	if sArgs, err = parseOptions(ctx, buf.Msg); err != nil {
+	if sArgs, err = parseOptions(buf.Msg); err != nil {
 		return sendErr(pgerror.NewError(pgerror.CodeProtocolViolationError, err.Error()))
 	}
-	sArgs.User = tree.Name(sArgs.User).Normalize()
+	//sArgs.User = tree.Name(sArgs.User).Normalize()
 
 	// Reserve some memory for this connection using the server's monitor. This
 	// reduces pressure on the shared pool because the server monitor allocates in
 	// chunks from the shared pool and these chunks should be larger than
 	// baseSQLMemoryBudget.
-	reserved := s.connMonitor.MakeBoundAccount()
-	if err := reserved.Grow(ctx, baseSQLMemoryBudget); err != nil {
-		return errors.Errorf("unable to pre-allocate %d bytes for this connection: %v",
-			baseSQLMemoryBudget, err)
-	}
-	return serveConn(ctx, conn, sArgs, reserved, s.IsDraining, s.stopper, s.cfg.Insecure)
+	return serveConn(conn, sArgs, s.IsDraining, s.stopper, s.cfg.Insecure)
 }
 
-func parseOptions(ctx context.Context, data []byte) (sql.SessionArgs, error) {
+func parseOptions(data []byte) (sql.SessionArgs, error) {
 	args := sql.SessionArgs{}
 	buf := pgwirebase.ReadBuffer{Msg: data}
 	for {
@@ -411,9 +387,7 @@ func parseOptions(ctx context.Context, data []byte) (sql.SessionArgs, error) {
 		case "application_name":
 			args.ApplicationName = value
 		default:
-			if log.V(1) {
-				log.Warningf(ctx, "unrecognized configuration parameter %q", key)
-			}
+			fmt.Println("unrecognized configuration parameter %q", key)
 		}
 	}
 	return args, nil

@@ -20,7 +20,7 @@ import (
 	"io"
 
 	"github.com/cockroachdb/cockroach/pkg/util"
-	"github.com/Ready-Stock/Noah/Database/sql/sem/tree"
+	//"github.com/Ready-Stock/Noah/Database/sql/sem/tree"
 	"github.com/Ready-Stock/Noah/Database/sql/pgwire/pgwirebase"
 )
 
@@ -42,15 +42,15 @@ type writeBuffer struct {
 	// putbuf or Datum.Format with variablePutbuf.
 	putbuf          [64]byte
 	variablePutbuf  bytes.Buffer
-	simpleFormatter tree.FmtCtx
-	arrayFormatter  tree.FmtCtx
+	//simpleFormatter tree.FmtCtx
+	//arrayFormatter  tree.FmtCtx
 }
 
 func newWriteBuffer() *writeBuffer {
 	b := &writeBuffer{
 	}
-	b.simpleFormatter = tree.MakeFmtCtx(&b.variablePutbuf, tree.FmtSimple)
-	b.arrayFormatter = tree.MakeFmtCtx(&b.variablePutbuf, tree.FmtArrays)
+	//b.simpleFormatter = tree.MakeFmtCtx(&b.variablePutbuf, tree.FmtSimple)
+	//b.arrayFormatter = tree.MakeFmtCtx(&b.variablePutbuf, tree.FmtArrays)
 	return b
 }
 
@@ -116,9 +116,9 @@ func (b *writeBuffer) writeLengthPrefixedString(s string) {
 
 // writeLengthPrefixedDatum writes a length-prefixed Datum in its
 // string representation. The length is encoded as an int32.
-func (b *writeBuffer) writeLengthPrefixedDatum(d tree.Datum) {
-	fmtCtx := tree.MakeFmtCtx(&b.variablePutbuf, tree.FmtSimple)
-	fmtCtx.FormatNode(d)
+func (b *writeBuffer) writeLengthPrefixedDatum() {
+	//fmtCtx := tree.MakeFmtCtx(&b.variablePutbuf, tree.FmtSimple)
+	//fmtCtx.FormatNode(d)
 	b.writeLengthPrefixedVariablePutbuf()
 }
 

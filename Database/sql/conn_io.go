@@ -28,9 +28,10 @@ import (
 	"github.com/cockroachdb/cockroach/pkg/sql/sqlbase"
 	"github.com/cockroachdb/cockroach/pkg/util/log"
 	"github.com/cockroachdb/cockroach/pkg/util/syncutil"
-	"github.com/Ready-Stock/Noah/Database/sql/sem/tree"
+	//"github.com/Ready-Stock/Noah/Database/sql/sem/tree"
 	"github.com/Ready-Stock/Noah/Database/sql/pgwire/pgwirebase"
 	"github.com/Ready-Stock/Noah/Database/sql/sessiondata"
+	"net"
 )
 
 // This file contains utils and interfaces used by a connExecutor to communicate
@@ -118,6 +119,15 @@ type StmtBuf struct {
 	}
 }
 
+type SessionArgs struct {
+	Database        string
+	User            string
+	ApplicationName string
+	// RemoteAddr is the client's address. This is nil iff this is an internal
+	// client.
+	RemoteAddr net.Addr
+}
+
 // Command is an interface implemented by all commands pushed by pgwire into the
 // buffer.
 type Command interface {
@@ -136,7 +146,7 @@ type ExecStmt struct {
 	// option is to keep track of the query as we got it from the client, except
 	// that we might have gotten a batch of them at once, in which case only the
 	// parser can do the splitting.
-	Stmt tree.Statement
+	//Stmt tree.Statement
 
 	// TimeReceived is the time at which the exec message was received
 	// from the client. Used to compute the service latency.
@@ -150,11 +160,11 @@ type ExecStmt struct {
 // command implements the Command interface.
 func (ExecStmt) command() {}
 
-func (e ExecStmt) String() string {
-	return fmt.Sprintf("ExecStmt: %s", e.Stmt.String())
-}
+// func (e ExecStmt) String() string {
+// 	return fmt.Sprintf("ExecStmt: %s", e.Stmt.String())
+// }
 
-var _ Command = ExecStmt{}
+//var _ Command = ExecStmt{}
 
 // ExecPortal is the Command for executing a portal.
 type ExecPortal struct {
@@ -181,8 +191,8 @@ type PrepareStmt struct {
 	Name string
 	// Stmt can be nil, in which case executing it should produce an "empty query
 	// response" message.
-	Stmt      tree.Statement
-	TypeHints tree.PlaceholderTypes
+	//Stmt      tree.Statement
+	//TypeHints tree.PlaceholderTypes
 	// RawTypeHints is the representation of type hints exactly as specified by
 	// the client.
 	RawTypeHints []oid.Oid
@@ -193,11 +203,11 @@ type PrepareStmt struct {
 // command implements the Command interface.
 func (PrepareStmt) command() {}
 
-func (p PrepareStmt) String() string {
-	return fmt.Sprintf("PrepareStmt: %s", p.Stmt.String())
-}
+// func (p PrepareStmt) String() string {
+// 	return fmt.Sprintf("PrepareStmt: %s", p.Stmt.String())
+// }
 
-var _ Command = PrepareStmt{}
+//var _ Command = PrepareStmt{}
 
 // DescribeStmt is the Command for producing info about a prepared statement or
 // portal.
@@ -243,7 +253,7 @@ type BindStmt struct {
 	// the datums are passes as type hints to the PrepareStmt command, so the
 	// inferred types should reflect that).
 	// If internalArgs is specified, Args and ArgFormatCodes are ignored.
-	internalArgs []tree.Datum
+	//internalArgs []tree.Datum
 }
 
 // command implements the Command interface.
@@ -305,7 +315,7 @@ var _ Command = Flush{}
 
 // CopyIn is the command for execution of the Copy-in pgwire subprotocol.
 type CopyIn struct {
-	Stmt *tree.CopyFrom
+	//Stmt *tree.CopyFrom
 	// Conn is the network connection. Execution of the CopyFrom statement takes
 	// control of the connection.
 	Conn pgwirebase.Conn
@@ -380,7 +390,7 @@ func (buf *StmtBuf) Close() {
 // waiting for this command to arrive, it will be woken up.
 //
 // An error is returned if the buffer has been closed.
-func (buf *StmtBuf) Push(ctx context.Context, cmd Command) error {
+func (buf *StmtBuf) Push(cmd Command) error { //ctx context.Context,
 	buf.mu.Lock()
 	defer buf.mu.Unlock()
 	if buf.mu.closed {
@@ -565,7 +575,7 @@ type ClientComm interface {
 	// which case every column will be encoded using the text encoding, otherwise
 	// it needs to contain a value for every column.
 	CreateStatementResult(
-		stmt tree.Statement,
+		//stmt tree.Statement,
 		descOpt RowDescOpt,
 		pos CmdPos,
 		formatCodes []pgwirebase.FormatCode,
@@ -619,7 +629,7 @@ type CommandResult interface {
 	// rows to be returned. We don't currently properly support this feature of
 	// the Postgres protocol; instead, we'll return an error if the number of rows
 	// produced is larger than this limit.
-	SetLimit(n int)
+	//SetLimit(n int)
 }
 
 // CommandResultErrBase is the subset of CommandResult dealing with setting a
@@ -695,13 +705,13 @@ type RestrictedCommandResult interface {
 	// ResetStmtType allows a client to change the statement type of the current
 	// result, from the original one set when the result was created trough
 	// ClientComm.createStatementResult.
-	ResetStmtType(stmt tree.Statement)
+	//ResetStmtType(stmt tree.Statement)
 
 	// AddRow accumulates a result row.
 	//
 	// The implementation cannot hold on to the row slice; it needs to make a
 	// shallow copy if it needs to.
-	AddRow(ctx context.Context, row tree.Datums) error
+	//AddRow(ctx context.Context, row tree.Datums) error
 
 	// IncrementRowsAffected increments a counter by n. This is used for all
 	// result types other than tree.Rows.
@@ -839,7 +849,7 @@ const discarded resCloseType = false
 // provided callback when closed.
 type bufferedCommandResult struct {
 	err          error
-	rows         []tree.Datums
+	//rows         []tree.Datums
 	rowsAffected int
 	cols         sqlbase.ResultColumns
 
@@ -862,21 +872,21 @@ func (r *bufferedCommandResult) SetColumns(_ context.Context, cols sqlbase.Resul
 	r.cols = cols
 }
 
-// ResetStmtType is part of the RestrictedCommandResult interface.
-func (r *bufferedCommandResult) ResetStmtType(stmt tree.Statement) {
-	panic("unimplemented")
-}
-
-// AddRow is part of the RestrictedCommandResult interface.
-func (r *bufferedCommandResult) AddRow(ctx context.Context, row tree.Datums) error {
-	if r.errOnly {
-		panic("AddRow() called when errOnly is set")
-	}
-	rowCopy := make(tree.Datums, len(row))
-	copy(rowCopy, row)
-	r.rows = append(r.rows, rowCopy)
-	return nil
-}
+// // ResetStmtType is part of the RestrictedCommandResult interface.
+// func (r *bufferedCommandResult) ResetStmtType(stmt tree.Statement) {
+// 	panic("unimplemented")
+// }
+//
+// // AddRow is part of the RestrictedCommandResult interface.
+// func (r *bufferedCommandResult) AddRow(ctx context.Context, row tree.Datums) error {
+// 	if r.errOnly {
+// 		panic("AddRow() called when errOnly is set")
+// 	}
+// 	rowCopy := make(tree.Datums, len(row))
+// 	copy(rowCopy, row)
+// 	r.rows = append(r.rows, rowCopy)
+// 	return nil
+// }
 
 // SetError is part of the RestrictedCommandResult interface.
 func (r *bufferedCommandResult) SetError(err error) {

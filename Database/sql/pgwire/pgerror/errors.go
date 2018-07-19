@@ -21,7 +21,7 @@ import (
 
 	"github.com/lib/pq"
 
-	"github.com/cockroachdb/cockroach/pkg/util/caller"
+	//"github.com/cockroachdb/cockroach/pkg/util/caller"
 	"github.com/pkg/errors"
 )
 
@@ -117,8 +117,9 @@ func (pg *Error) SetDetailf(f string, args ...interface{}) *Error {
 // makeSrcCtx creates a Error_Source value with contextual information
 // about the caller at the requested depth.
 func makeSrcCtx(depth int) Error_Source {
-	f, l, fun := caller.Lookup(depth + 1)
-	return Error_Source{File: f, Line: int32(l), Function: fun}
+	panic("test")
+	//f, l, fun := caller.Lookup(depth + 1)
+	//return Error_Source{File: f, Line: int32(l), Function: fun}
 }
 
 // GetPGCause returns an unwrapped Error.
