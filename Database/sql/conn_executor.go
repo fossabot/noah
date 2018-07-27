@@ -45,7 +45,7 @@ func (ex *connExecutor) run() error {
 			return err
 		}
 		fmt.Printf("[pos:%d] executing %s\n", pos, cmd)
-		switch tcmd := cmd.(type) {
+		switch cmd.(type) {
 		case ExecStmt:
 			ex.clientComm.CreateEmptyQueryResult(pos)
 

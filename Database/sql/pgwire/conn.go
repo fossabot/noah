@@ -36,6 +36,7 @@ import (
 	"github.com/Ready-Stock/Noah/Database/sql/sqlbase"
 	"github.com/Ready-Stock/Noah/Database/cluster"
 	"github.com/Ready-Stock/Noah/Configuration"
+	"github.com/Ready-Stock/pg_query_go"
 )
 
 const (
@@ -455,6 +456,12 @@ func (c *conn) handleParse(buf *pgwirebase.ReadBuffer) error {
 		}
 		inTypeHints[i] = oid.Oid(typ)
 	}
+
+	p, err := pg_query.Parse(query)
+	if err != nil {
+		return c.stmtBuf.Push(sql.SendError{Err: err})
+	}
+	fmt.Println("Query: ", p.Fingerprint())
 	// Prepare the mapping of SQL placeholder names to types. Pre-populate it with
 	// the type hints received from the client, if any.
 	// sqlTypeHints := make(tree.PlaceholderTypes)
