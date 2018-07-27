@@ -37,6 +37,8 @@ import (
 	"github.com/Ready-Stock/Noah/Database/cluster"
 	"github.com/Ready-Stock/Noah/Configuration"
 	"github.com/Ready-Stock/pg_query_go"
+	nodes "github.com/Ready-Stock/pg_query_go/nodes"
+	"github.com/Ready-Stock/Noah/Database/sql/pglex"
 )
 
 const (
@@ -439,7 +441,6 @@ func (c *conn) handleParse(buf *pgwirebase.ReadBuffer) error {
 		return c.stmtBuf.Push(sql.SendError{Err: err})
 	}
 	query, err := buf.GetString()
-	fmt.Println(query)
 	if err != nil {
 		return c.stmtBuf.Push(sql.SendError{Err: err})
 	}
@@ -461,7 +462,21 @@ func (c *conn) handleParse(buf *pgwirebase.ReadBuffer) error {
 	if err != nil {
 		return c.stmtBuf.Push(sql.SendError{Err: err})
 	}
-	fmt.Println("Query: ", p.Fingerprint())
+
+	for _, stmt := range p.Statements {
+		var err error
+		switch tstmt := stmt.(type) {
+		case nodes.RawStmt:
+			err = pglex.HandleRawStmt(tstmt)
+		}
+		if err != nil {
+			return c.stmtBuf.Push(sql.SendError{Err: err})
+		}
+	}
+
+	j, _ := p.MarshalJSON()
+	fmt.Println("Query: ", p.Query)
+	fmt.Println(string(j))
 	// Prepare the mapping of SQL placeholder names to types. Pre-populate it with
 	// the type hints received from the client, if any.
 	// sqlTypeHints := make(tree.PlaceholderTypes)
