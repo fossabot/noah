@@ -18,12 +18,9 @@ import (
 	"fmt"
 	"time"
 
-	//"github.com/cockroachdb/cockroach/pkg/sql/sqlbase"
 	"github.com/lib/pq/oid"
-	//"github.com/pkg/errors"
 	"github.com/Ready-Stock/Noah/Database/sql/sessiondata"
 	"github.com/Ready-Stock/Noah/Database/sql"
-	//"github.com/Ready-Stock/Noah/Database/sql/sem/tree"
 	"github.com/Ready-Stock/Noah/Database/sql/pgwire/pgwirebase"
 
 )
@@ -163,6 +160,8 @@ func (c *conn) makeMiscResult(pos sql.CmdPos, typ completionMsgType) commandResu
 // }
 
 // CloseWithErr is part of the CommandResult interface.
+
+
 func (r *commandResult) CloseWithErr(err error) {
 	if r.err != nil {
 		panic(fmt.Sprintf("can't overwrite err: %s with err: %s", r.err, err))

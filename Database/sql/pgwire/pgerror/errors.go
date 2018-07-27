@@ -21,7 +21,6 @@ import (
 
 	"github.com/lib/pq"
 
-	//"github.com/cockroachdb/cockroach/pkg/util/caller"
 	"github.com/pkg/errors"
 )
 
@@ -62,11 +61,11 @@ func formatMsgHintDetail(prefix, msg, hint, detail string) string {
 // NewErrorWithDepthf creates an Error and extracts the context
 // information at the specified depth level.
 func NewErrorWithDepthf(depth int, code string, format string, args ...interface{}) *Error {
-	srcCtx := makeSrcCtx(depth + 1)
+	//srcCtx := makeSrcCtx(depth + 1)
 	return &Error{
 		Message: fmt.Sprintf(format, args...),
 		Code:    code,
-		Source:  &srcCtx,
+		//Source:  &srcCtx,
 	}
 }
 
@@ -116,11 +115,11 @@ func (pg *Error) SetDetailf(f string, args ...interface{}) *Error {
 
 // makeSrcCtx creates a Error_Source value with contextual information
 // about the caller at the requested depth.
-func makeSrcCtx(depth int) Error_Source {
-	panic("test")
-	//f, l, fun := caller.Lookup(depth + 1)
-	//return Error_Source{File: f, Line: int32(l), Function: fun}
-}
+// func makeSrcCtx(depth int) Error_Source {
+// 	//panic("test")
+// 	//f, l, fun := caller.Lookup(depth + 1)
+// 	//return Error_Source{File: f, Line: int32(l), Function: fun}
+// }
 
 // GetPGCause returns an unwrapped Error.
 func GetPGCause(err error) (*Error, bool) {

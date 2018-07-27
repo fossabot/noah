@@ -20,7 +20,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cockroachdb/cockroach/pkg/storage/engine/enginepb"
 )
 
 // SessionData contains session parameters. They are all user-configurable.
@@ -35,7 +34,7 @@ type SessionData struct {
 	Database string
 	// DefaultIsolationLevel indicates the default isolation level of
 	// newly created transactions.
-	DefaultIsolationLevel enginepb.IsolationType
+	//DefaultIsolationLevel enginepb.IsolationType
 	// DefaultReadOnly indicates the default read-only status of newly created
 	// transactions.
 	DefaultReadOnly bool

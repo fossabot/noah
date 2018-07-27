@@ -18,7 +18,6 @@ import (
 	"bufio"
 	"bytes"
 	"context"
-	"crypto/tls"
 	"fmt"
 	"io"
 	"net"
@@ -32,23 +31,17 @@ import (
 
 
 	"github.com/Ready-Stock/Noah/Database/sql/pgwire/pgwirebase"
-	//"github.com/Ready-Stock/Noah/Database/sql/sem/tree"
 	"github.com/Ready-Stock/Noah/Database/sql/pgwire/pgerror"
 	"github.com/Ready-Stock/Noah/Database/sql"
-	//"github.com/Ready-Stock/Noah/Database/sql/sessiondata"
-	//"github.com/cockroachdb/cockroach/pkg/sql/sem/tree"
-	//"github.com/cockroachdb/cockroach/pkg/sql/sem/tree"
-	"github.com/cockroachdb/cockroach/pkg/util/stop"
-	"github.com/cockroachdb/cockroach/pkg/util/timeutil"
-	"github.com/cockroachdb/cockroach/pkg/sql/sqlbase"
-	"github.com/cockroachdb/cockroach/pkg/roachpb"
-	"github.com/cockroachdb/cockroach/pkg/security"
-	"github.com/cockroachdb/cockroach/pkg/build"
+	"github.com/Ready-Stock/Noah/Database/sql/sqlbase"
+	"github.com/Ready-Stock/Noah/Database/cluster"
+	"github.com/Ready-Stock/Noah/Configuration"
 )
 
 const (
 	authOK                int32 = 0
 	authCleartextPassword int32 = 3
+	authMD5Password		  int32 = 5
 )
 
 // conn implements a pgwire network connection (version 3 of the protocol,
@@ -131,8 +124,7 @@ type conn struct {
 func serveConn(
 	netConn net.Conn,
 	sArgs sql.SessionArgs,
-	draining func() bool,
-	//stopper *stop.Stopper,
+	sqlServer *sql.Server,
 	insecure bool,
 ) error {
 	sArgs.RemoteAddr = netConn.RemoteAddr()
@@ -141,13 +133,25 @@ func serveConn(
 
 	c := newConn(netConn, sArgs)
 
+	sendError := func(err error) error {
+		_ /* err */ = writeErr(err, c.msgBuilder, c.conn)
+		return err
+	}
+
+	if Conf.Configuration.Cluster.DenyConnectionIfNoNodes {
+		if len(cluster.Nodes) == 0 {
+			return sendError(errors.New("no nodes available in cluster"))
+		}
+	}
+
+
 	if err := c.handleAuthentication(insecure); err != nil {
 		_ = c.conn.Close()
 		return err
 	}
 
 	// Do the reading of commands from the network.
-	readingErr := c.serveImpl(draining)
+	readingErr := c.serveImpl(sqlServer)
 	return readingErr
 }
 
@@ -189,10 +193,7 @@ func (c *conn) GetErr() error {
 // sqlServer is used to create the command processor. As a special facility for
 // tests, sqlServer can be nil, in which case the command processor and the
 // write-side of the connection will not be created.
-func (c *conn) serveImpl(
-	draining func() bool,
-	stopper *stop.Stopper,
-) error {
+func (c *conn) serveImpl(sqlServer *sql.Server) error {
 	defer func() { _ = c.conn.Close() }()
 
 	// NOTE: We're going to write a few messages to the connection in this method,
@@ -225,18 +226,27 @@ func (c *conn) serveImpl(
 		// If the server is draining, we'll let the processor know by pushing a
 		// DrainRequest. This will make the processor quit whenever it finds a good
 		// time.
-		if draining() {
-			_ /* err */ = c.stmtBuf.Push(sql.DrainRequest{})
-		}
+		// if draining() {
+		// 	_ /* err */ = c.stmtBuf.Push(sql.DrainRequest{})
+		// }
 		return nil
 	})
 	c.rd = *bufio.NewReader(c.conn)
 
+
+
 	var wg sync.WaitGroup
 	var writerErr error
-	//_, stopProcessor := context.WithCancel(ctx)
+	if sqlServer != nil {
+		wg.Add(1)
+		go func() {
+			writerErr = sqlServer.ServeConn(c.stmtBuf, c)
+			// TODO(andrei): Should we sometimes transmit the writerErr's to the client?
+			wg.Done()
+		}()
+	}
 
-	var err error
+	//var err error
 	var terminateSeen bool
 	var doingExtendedQueryMessage bool
 
@@ -249,7 +259,7 @@ Loop:
 		}
 		fmt.Println("pgwire: processing %s", typ)
 
-		timeReceived := timeutil.Now()
+		timeReceived := time.Now().UTC()
 		switch typ {
 		case pgwirebase.ClientMsgSimpleQuery:
 			if doingExtendedQueryMessage {
@@ -297,9 +307,7 @@ Loop:
 			// protocol and encounters an error, everything until the next sync
 			// message has to be skipped. See:
 			// https://www.postgresql.org/docs/current/10/protocol-flow.html#PROTOCOL-FLOW-EXT-QUERY
-
-			err = c.stmtBuf.Push(sql.Sync{})
-
+			err = c.handleSync()
 		case pgwirebase.ClientMsgFlush:
 			doingExtendedQueryMessage = true
 			err = c.handleFlush()
@@ -332,15 +340,15 @@ Loop:
 	}
 	// If we're draining, let the client know by piling on an AdminShutdownError
 	// and flushing the buffer.
-	if draining() {
-		_ /* err */ = writeErr(
-			newAdminShutdownErr(err), c.msgBuilder, &c.writerState.buf)
-		_ /* n */, _ /* err */ = c.writerState.buf.WriteTo(c.conn)
-
-		// Swallow whatever error we might have gotten from the writer. If we're
-		// draining, it's probably a canceled context error.
-		return nil
-	}
+	// if draining() {
+	// 	_ /* err */ = writeErr(
+	// 		newAdminShutdownErr(err), c.msgBuilder, &c.writerState.buf)
+	// 	_ /* n */, _ /* err */ = c.writerState.buf.WriteTo(c.conn)
+	//
+	// 	// Swallow whatever error we might have gotten from the writer. If we're
+	// 	// draining, it's probably a canceled context error.
+	// 	return nil
+	// }
 	if writerErr != nil {
 		return writerErr
 	}
@@ -461,8 +469,15 @@ func (c *conn) handleParse(buf *pgwirebase.ReadBuffer) error {
 	// 	}
 	// 	sqlTypeHints[strconv.Itoa(i+1)] = v
 	// }
-
 	return nil
+	/*return c.stmtBuf.Push(sql.PrepareStmt{
+			Name:         name,
+			Stmt:         stmt,
+			TypeHints:    sqlTypeHints,
+			RawTypeHints: inTypeHints,
+			ParseStart:   startParse,
+			ParseEnd:     endParse,
+		})*/
 }
 
 // An error is returned iff the statement buffer has been closed. In that case,
@@ -654,15 +669,8 @@ func (c *conn) handleFlush() error {
 	return c.stmtBuf.Push(sql.Flush{})
 }
 
-// BeginCopyIn is part of the pgwirebase.Conn interface.
-func (c *conn) BeginCopyIn(ctx context.Context, columns []sqlbase.ResultColumn) error {
-	c.msgBuilder.initMsg(pgwirebase.ServerMsgCopyInResponse)
-	c.msgBuilder.writeByte(byte(pgwirebase.FormatText))
-	c.msgBuilder.putInt16(int16(len(columns)))
-	for range columns {
-		c.msgBuilder.putInt16(int16(pgwirebase.FormatText))
-	}
-	return c.msgBuilder.finishMsg(c.conn)
+func (c *conn) handleSync() error {
+	return c.stmtBuf.Push(sql.Sync{})
 }
 
 // SendCommandComplete is part of the pgwirebase.Conn interface.
@@ -711,17 +719,18 @@ func convertToErrWithPGCode(err error) error {
 	if err == nil {
 		return nil
 	}
-	switch tErr := err.(type) {
-	case *roachpb.HandledRetryableTxnError:
-		return sqlbase.NewRetryError(err)
-	case *roachpb.AmbiguousResultError:
-		// TODO(andrei): Once DistSQL starts executing writes, we'll need a
-		// different mechanism to marshal AmbiguousResultErrors from the executing
-		// nodes.
-		return sqlbase.NewStatementCompletionUnknownError(tErr)
-	default:
-		return err
-	}
+	return sqlbase.NewRetryError(err)
+	// switch tErr := err.(type) {
+	// case *roachpb.HandledRetryableTxnError:
+	//
+	// case *roachpb.AmbiguousResultError:
+	// 	// TODO(andrei): Once DistSQL starts executing writes, we'll need a
+	// 	// different mechanism to marshal AmbiguousResultErrors from the executing
+	// 	// nodes.
+	// 	return sqlbase.NewStatementCompletionUnknownError(tErr)
+	// default:
+	// 	return err
+	// }
 }
 
 // func cookTag(tagStr string, buf []byte, stmtType tree.StatementType, rowsAffected int) []byte {
@@ -918,47 +927,47 @@ func (c *conn) bufferNoDataMsg() {
 // case all columns will use FormatText.
 //
 // If an error is returned, it has also been saved on c.err.
-func (c *conn) writeRowDescription(
-	ctx context.Context,
-	columns []sqlbase.ResultColumn,
-	formatCodes []pgwirebase.FormatCode,
-	w io.Writer,
-) error {
-	// c.msgBuilder.initMsg(pgwirebase.ServerMsgRowDescription)
-	// c.msgBuilder.putInt16(int16(len(columns)))
-	// for i, column := range columns {
-	// 	if log.V(2) {
-	// 		log.Infof(ctx, "pgwire: writing column %s of type: %T", column.Name, column.Typ)
-	// 	}
-	// 	c.msgBuilder.writeTerminatedString(column.Name)
-	//
-	// 	typ := pgTypeForParserType(column.Typ)
-	// 	c.msgBuilder.putInt32(0) // Table OID (optional).
-	// 	c.msgBuilder.putInt16(0) // Column attribute ID (optional).
-	// 	c.msgBuilder.putInt32(int32(typ.oid))
-	// 	c.msgBuilder.putInt16(int16(typ.size))
-	// 	// The type modifier (atttypmod) is used to include various extra information
-	// 	// about the type being sent. -1 is used for values which don't make use of
-	// 	// atttypmod and is generally an acceptable catch-all for those that do.
-	// 	// See https://www.postgresql.org/docs/9.6/static/catalog-pg-attribute.html
-	// 	// for information on atttypmod. In theory we differ from Postgres by never
-	// 	// giving the scale/precision, and by not including the length of a VARCHAR,
-	// 	// but it's not clear if any drivers/ORMs depend on this.
-	// 	//
-	// 	// TODO(justin): It would be good to include this information when possible.
-	// 	c.msgBuilder.putInt32(-1)
-	// 	if formatCodes == nil {
-	// 		c.msgBuilder.putInt16(int16(pgwirebase.FormatText))
-	// 	} else {
-	// 		c.msgBuilder.putInt16(int16(formatCodes[i]))
-	// 	}
-	// }
-	// if err := c.msgBuilder.finishMsg(w); err != nil {
-	// 	c.setErr(err)
-	// 	return err
-	// }
-	return nil
-}
+// func (c *conn) writeRowDescription(
+// 	ctx context.Context,
+// 	columns []sqlbase.ResultColumn,
+// 	formatCodes []pgwirebase.FormatCode,
+// 	w io.Writer,
+// ) error {
+// 	// c.msgBuilder.initMsg(pgwirebase.ServerMsgRowDescription)
+// 	// c.msgBuilder.putInt16(int16(len(columns)))
+// 	// for i, column := range columns {
+// 	// 	if log.V(2) {
+// 	// 		log.Infof(ctx, "pgwire: writing column %s of type: %T", column.Name, column.Typ)
+// 	// 	}
+// 	// 	c.msgBuilder.writeTerminatedString(column.Name)
+// 	//
+// 	// 	typ := pgTypeForParserType(column.Typ)
+// 	// 	c.msgBuilder.putInt32(0) // Table OID (optional).
+// 	// 	c.msgBuilder.putInt16(0) // Column attribute ID (optional).
+// 	// 	c.msgBuilder.putInt32(int32(typ.oid))
+// 	// 	c.msgBuilder.putInt16(int16(typ.size))
+// 	// 	// The type modifier (atttypmod) is used to include various extra information
+// 	// 	// about the type being sent. -1 is used for values which don't make use of
+// 	// 	// atttypmod and is generally an acceptable catch-all for those that do.
+// 	// 	// See https://www.postgresql.org/docs/9.6/static/catalog-pg-attribute.html
+// 	// 	// for information on atttypmod. In theory we differ from Postgres by never
+// 	// 	// giving the scale/precision, and by not including the length of a VARCHAR,
+// 	// 	// but it's not clear if any drivers/ORMs depend on this.
+// 	// 	//
+// 	// 	// TODO(justin): It would be good to include this information when possible.
+// 	// 	c.msgBuilder.putInt32(-1)
+// 	// 	if formatCodes == nil {
+// 	// 		c.msgBuilder.putInt16(int16(pgwirebase.FormatText))
+// 	// 	} else {
+// 	// 		c.msgBuilder.putInt16(int16(formatCodes[i]))
+// 	// 	}
+// 	// }
+// 	// if err := c.msgBuilder.finishMsg(w); err != nil {
+// 	// 	c.setErr(err)
+// 	// 	return err
+// 	// }
+// 	return nil
+// }
 
 // Flush is part of the ClientComm interface.
 //
@@ -1086,10 +1095,10 @@ func (c *conn) CreatePrepareResult(pos sql.CmdPos) sql.ParseResult {
 }
 
 // CreateDescribeResult is part of the sql.ClientComm interface.
-func (c *conn) CreateDescribeResult(pos sql.CmdPos) sql.DescribeResult {
+/*func (c *conn) CreateDescribeResult(pos sql.CmdPos) sql.DescribeResult {
 	res := c.makeMiscResult(pos, noCompletionMsg)
 	return &res
-}
+}*/
 
 // CreateEmptyQueryResult is part of the sql.ClientComm interface.
 func (c *conn) CreateEmptyQueryResult(pos sql.CmdPos) sql.EmptyQueryResult {
@@ -1157,7 +1166,7 @@ func (c *conn) handleAuthentication(insecure bool) error { //ctx context.Context
 
 	// Check that the requested user exists and retrieve the hashed
 	// password in case password authentication is needed.
-	exists, hashedPassword :=  true, []byte("123")/*sql.GetUserHashedPassword(
+	exists, _ :=  true, []byte("123")/*sql.GetUserHashedPassword(
 		ctx, c.execCfg, &c.metrics.SQLMemMetrics, c.sessionArgs.User,
 	)*/
 	// if err != nil {
@@ -1165,38 +1174,44 @@ func (c *conn) handleAuthentication(insecure bool) error { //ctx context.Context
 	// }
 	if !exists {
 		return sendError(errors.Errorf("user %s does not exist", c.sessionArgs.User))
-	}
-
-	if tlsConn, ok := c.conn.(*tls.Conn); ok {
-		var authenticationHook security.UserAuthHook
-
-		tlsState := tlsConn.ConnectionState()
-		// If no certificates are provided, default to password
-		// authentication.
-		if len(tlsState.PeerCertificates) == 0 {
-			password, err := c.sendAuthPasswordRequest()
-			if err != nil {
-				return sendError(err)
-			}
-			authenticationHook = security.UserAuthPasswordHook(
-				insecure, password, hashedPassword,
-			)
-		} else {
-			// Normalize the username contained in the certificate.
-			// tlsState.PeerCertificates[0].Subject.CommonName = tree.Name(
-			// 	tlsState.PeerCertificates[0].Subject.CommonName,
-			// ).Normalize()
-			var err error
-			authenticationHook, err = security.UserAuthCertHook(insecure, &tlsState)
-			if err != nil {
-				return sendError(err)
-			}
-		}
-
-		if err := authenticationHook(c.sessionArgs.User, true /* public */); err != nil {
+	} else {
+		if r, err := c.sendAuthPasswordRequest(); err != nil {
 			return sendError(err)
+		} else {
+			fmt.Println("Received ", r)
 		}
 	}
+
+	// if tlsConn, ok := c.conn.(*tls.Conn); ok {
+	// 	var authenticationHook security.UserAuthHook
+	//
+	// 	tlsState := tlsConn.ConnectionState()
+	// 	// If no certificates are provided, default to password
+	// 	// authentication.
+	// 	if len(tlsState.PeerCertificates) == 0 {
+	// 		password, err := c.sendAuthPasswordRequest()
+	// 		if err != nil {
+	// 			return sendError(err)
+	// 		}
+	// 		authenticationHook = security.UserAuthPasswordHook(
+	// 			insecure, password, hashedPassword,
+	// 		)
+	// 	} else {
+	// 		// Normalize the username contained in the certificate.
+	// 		// tlsState.PeerCertificates[0].Subject.CommonName = tree.Name(
+	// 		// 	tlsState.PeerCertificates[0].Subject.CommonName,
+	// 		// ).Normalize()
+	// 		var err error
+	// 		authenticationHook, err = security.UserAuthCertHook(insecure, &tlsState)
+	// 		if err != nil {
+	// 			return sendError(err)
+	// 		}
+	// 	}
+	//
+	// 	if err := authenticationHook(c.sessionArgs.User, true /* public */); err != nil {
+	// 		return sendError(err)
+	// 	}
+	// }
 
 	c.msgBuilder.initMsg(pgwirebase.ServerMsgAuth)
 	c.msgBuilder.putInt32(authOK)
@@ -1241,7 +1256,6 @@ var statusReportParams = map[string]string{
 	// determine that the server is new enough.
 	"server_version": sql.PgServerVersion,
 	// The current CockroachDB version string.
-	"crdb_version": build.GetInfo().Short(),
 	// If this parameter is not present, some drivers (including Python's psycopg2)
 	// will add redundant backslash escapes for compatibility with non-standard
 	// backslash handling in older versions of postgres.
@@ -1284,7 +1298,7 @@ func (c *readTimeoutConn) Read(b []byte) (int, error) {
 		if err := c.checkExitConds(); err != nil {
 			return 0, err
 		}
-		if err := c.SetReadDeadline(timeutil.Now().Add(readTimeout)); err != nil {
+		if err := c.SetReadDeadline(time.Now().UTC().Add(readTimeout)); err != nil {
 			return 0, err
 		}
 		n, err := c.Conn.Read(b)

@@ -16,7 +16,6 @@ package pgwire
 
 import (
 	"context"
-	"crypto/tls"
 	"fmt"
 	"io"
 	"net"
@@ -24,16 +23,11 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/cockroachdb/cockroach/pkg/util/envutil"
-	"github.com/cockroachdb/cockroach/pkg/util/metric"
-	"github.com/cockroachdb/cockroach/pkg/util/mon"
-	"github.com/cockroachdb/cockroach/pkg/util/stop"
-	"github.com/cockroachdb/cockroach/pkg/util/syncutil"
 	"github.com/Ready-Stock/Noah/Database/sql/pgwire/pgwirebase"
 	"github.com/Ready-Stock/Noah/Database/sql/pgwire/pgerror"
-	//"github.com/Ready-Stock/Noah/Database/sql/sem/tree"
 	"github.com/Ready-Stock/Noah/Database/sql"
 	"github.com/Ready-Stock/Noah/Database/base"
+	"github.com/Ready-Stock/Noah/Database/util/syncutil"
 )
 
 const (
@@ -47,26 +41,6 @@ const (
 )
 
 // Fully-qualified names for metrics.
-var (
-	MetaConns = metric.Metadata{
-		Name:        "sql.conns",
-		Help:        "Number of active sql connections",
-		Measurement: "Connections",
-		Unit:        metric.Unit_COUNT,
-	}
-	MetaBytesIn = metric.Metadata{
-		Name:        "sql.bytesin",
-		Help:        "Number of sql bytes received",
-		Measurement: "SQL Bytes",
-		Unit:        metric.Unit_BYTES,
-	}
-	MetaBytesOut = metric.Metadata{
-		Name:        "sql.bytesout",
-		Help:        "Number of sql bytes sent",
-		Measurement: "SQL Bytes",
-		Unit:        metric.Unit_BYTES,
-	}
-)
 
 const (
 	version30  = 196608
@@ -76,10 +50,6 @@ const (
 // cancelMaxWait is the amount of time a draining server gives to sessions to
 // react to cancellation and return before a forceful shutdown.
 const cancelMaxWait = 1 * time.Second
-
-// baseSQLMemoryBudget is the amount of memory pre-allocated in each connection.
-var baseSQLMemoryBudget = envutil.EnvOrDefaultInt64("COCKROACH_BASE_SQL_MEMORY_BUDGET",
-	int64(2.1*float64(mon.DefaultPoolAllocationSize)))
 
 // connReservationBatchSize determines for how many connections memory
 // is pre-reserved at once.
@@ -96,8 +66,9 @@ type cancelChanMap map[chan struct{}]context.CancelFunc
 
 // Server implements the server side of the PostgreSQL wire protocol.
 type Server struct {
-	cfg        *base.Config
-	//execCfg    *sql.ExecutorConfig
+	cfg *base.Config
+	// execCfg    *sql.ExecutorConfig
+	SQLServer *sql.Server
 
 	mu struct {
 		syncutil.Mutex
@@ -108,30 +79,17 @@ type Server struct {
 		connCancelMap cancelChanMap
 		draining      bool
 	}
-
-	sqlMemoryPool mon.BytesMonitor
-	connMonitor   mon.BytesMonitor
-
-	stopper *stop.Stopper
 }
 
 // ServerMetrics is the set of metrics for the pgwire server.
-type ServerMetrics struct {
-	BytesInCount   *metric.Counter
-	BytesOutCount  *metric.Counter
-	Conns          *metric.Gauge
-}
-
 
 // noteworthySQLMemoryUsageBytes is the minimum size tracked by the
 // client SQL pool before the pool start explicitly logging overall
 // usage growth in the log.
-var noteworthySQLMemoryUsageBytes = envutil.EnvOrDefaultInt64("COCKROACH_NOTEWORTHY_SQL_MEMORY_USAGE", 100*1024*1024)
 
 // noteworthyConnMemoryUsageBytes is the minimum size tracked by the
 // connection monitor before the monitor start explicitly logging overall
 // usage growth in the log.
-var noteworthyConnMemoryUsageBytes = envutil.EnvOrDefaultInt64("COCKROACH_NOTEWORTHY_CONN_MEMORY_USAGE", 2*1024*1024)
 
 // MakeServer creates a Server.
 //
@@ -140,9 +98,9 @@ func MakeServer(
 	cfg *base.Config,
 ) *Server {
 	server := &Server{
-		cfg:        cfg,
+		cfg: cfg,
 	}
-
+	server.SQLServer = sql.NewServer()
 
 	server.mu.Lock()
 	server.mu.connCancelMap = make(cancelChanMap)
@@ -172,7 +130,6 @@ func (s *Server) IsDraining() bool {
 	defer s.mu.Unlock()
 	return s.mu.draining
 }
-
 
 // Drain prevents new connections from being served and waits for drainWait for
 // open connections to terminate before canceling them.
@@ -285,12 +242,11 @@ func (s *Server) drainImpl(drainWait time.Duration, cancelWait time.Duration) er
 
 // ServeConn serves a single connection, driving the handshake process and
 // delegating to the appropriate connection type.
-func (s *Server) ServeConn(conn net.Conn) error { //ctx context.Context,
+func (s *Server) ServeConn(conn net.Conn) error { // ctx context.Context,
 	// If the Server is draining, we will use the connection only to send an
 	// error, so we don't count it in the stats. This makes sense since
 	// DrainClient() waits for that number to drop to zero,
 	// so we don't want it to oscillate unnecessarily.
-
 
 	var buf pgwirebase.ReadBuffer
 	_, err := buf.ReadUntypedMsg(conn)
@@ -302,37 +258,37 @@ func (s *Server) ServeConn(conn net.Conn) error { //ctx context.Context,
 		return err
 	}
 	errSSLRequired := false
-	if version == versionSSL {
-		if len(buf.Msg) > 0 {
-			return errors.Errorf("unexpected data after SSLRequest: %q", buf.Msg)
-		}
-
-		if s.cfg.Insecure {
-			if _, err := conn.Write(sslUnsupported); err != nil {
-				return err
-			}
-		} else {
-			if _, err := conn.Write(sslSupported); err != nil {
-				return err
-			}
-			tlsConfig, err := s.cfg.GetServerTLSConfig()
-			if err != nil {
-				return err
-			}
-			conn = tls.Server(conn, tlsConfig)
-		}
-
-		_, err := buf.ReadUntypedMsg(conn)
-		if err != nil {
-			return err
-		}
-		version, err = buf.GetUint32()
-		if err != nil {
-			return err
-		}
-	} else if !s.cfg.Insecure {
-		errSSLRequired = true
-	}
+	// if version == versionSSL {
+	// 	if len(buf.Msg) > 0 {
+	// 		return errors.Errorf("unexpected data after SSLRequest: %q", buf.Msg)
+	// 	}
+	//
+	// 	if s.cfg.Insecure {
+	// 		if _, err := conn.Write(sslUnsupported); err != nil {
+	// 			return err
+	// 		}
+	// 	} else {
+	// 		if _, err := conn.Write(sslSupported); err != nil {
+	// 			return err
+	// 		}
+	// 		tlsConfig, err := s.cfg.GetServerTLSConfig()
+	// 		if err != nil {
+	// 			return err
+	// 		}
+	// 		conn = tls.Server(conn, tlsConfig)
+	// 	}
+	//
+	// 	_, err := buf.ReadUntypedMsg(conn)
+	// 	if err != nil {
+	// 		return err
+	// 	}
+	// 	version, err = buf.GetUint32()
+	// 	if err != nil {
+	// 		return err
+	// 	}
+	// } else if !s.cfg.Insecure {
+	// 	errSSLRequired = true
+	// }
 
 	sendErr := func(err error) error {
 		msgBuilder := newWriteBuffer()
@@ -355,13 +311,13 @@ func (s *Server) ServeConn(conn net.Conn) error { //ctx context.Context,
 	if sArgs, err = parseOptions(buf.Msg); err != nil {
 		return sendErr(pgerror.NewError(pgerror.CodeProtocolViolationError, err.Error()))
 	}
-	//sArgs.User = tree.Name(sArgs.User).Normalize()
+	// sArgs.User = tree.Name(sArgs.User).Normalize()
 
 	// Reserve some memory for this connection using the server's monitor. This
 	// reduces pressure on the shared pool because the server monitor allocates in
 	// chunks from the shared pool and these chunks should be larger than
 	// baseSQLMemoryBudget.
-	return serveConn(conn, sArgs, s.IsDraining, s.stopper, s.cfg.Insecure)
+	return serveConn(conn, sArgs, s.SQLServer, s.cfg.Insecure)
 }
 
 func parseOptions(data []byte) (sql.SessionArgs, error) {

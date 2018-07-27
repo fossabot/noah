@@ -2,6 +2,8 @@ admin_port: 8080
 database:
   read_buffer: 256
   advertise_address: 127.0.0.1:5433
+cluster:
+  deny_connection_if_no_nodes: false
 nodes:
   - node_id: 1
     address: 127.0.0.1:5432

@@ -15,12 +15,17 @@ var (
 type Config struct {
 	AdminPort int            `yaml:"admin_port"`
 	Database  DatabaseConfig `yaml:"database"`
+	Cluster ClusterConfig `yaml:"cluster"`
 	Nodes     []NodeConfig   `yaml:"nodes"`
 }
 
 type DatabaseConfig struct {
 	AdvertiseAddress string `yaml:"advertise_address"`
 	ReadBuffer       int    `yaml:"read_buffer"`
+}
+
+type ClusterConfig struct {
+	DenyConnectionIfNoNodes bool `yaml:"deny_connection_if_no_nodes"`
 }
 
 type NodeConfig struct {

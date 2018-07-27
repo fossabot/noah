@@ -25,13 +25,9 @@ import (
 	"github.com/pkg/errors"
 
 
-	"github.com/cockroachdb/cockroach/pkg/sql/sqlbase"
-	"github.com/cockroachdb/cockroach/pkg/util/log"
-	"github.com/cockroachdb/cockroach/pkg/util/syncutil"
-	//"github.com/Ready-Stock/Noah/Database/sql/sem/tree"
 	"github.com/Ready-Stock/Noah/Database/sql/pgwire/pgwirebase"
-	"github.com/Ready-Stock/Noah/Database/sql/sessiondata"
 	"net"
+	"github.com/Ready-Stock/Noah/Database/util/syncutil"
 )
 
 // This file contains utils and interfaces used by a connExecutor to communicate
@@ -160,9 +156,9 @@ type ExecStmt struct {
 // command implements the Command interface.
 func (ExecStmt) command() {}
 
-// func (e ExecStmt) String() string {
-// 	return fmt.Sprintf("ExecStmt: %s", e.Stmt.String())
-// }
+func (e ExecStmt) String() string {
+	return fmt.Sprintf("ExecStmt: %s", "test")
+}
 
 //var _ Command = ExecStmt{}
 
@@ -461,12 +457,14 @@ func (buf *StmtBuf) ltrim(ctx context.Context, pos CmdPos) {
 	buf.mu.Lock()
 	defer buf.mu.Unlock()
 	if pos < buf.mu.startPos {
-		log.Fatalf(ctx, "invalid ltrim position: %d. buf starting at: %d",
-			pos, buf.mu.startPos)
+		fmt.Printf("invalid ltrim position: %d. buf starting at: %d", pos, buf.mu.startPos)
+		//log.Fatalf(ctx, "invalid ltrim position: %d. buf starting at: %d",
+		//	pos, buf.mu.startPos)
 	}
 	if buf.mu.curPos < pos {
-		log.Fatalf(ctx, "invalid ltrim position: %d when cursor is: %d",
-			pos, buf.mu.curPos)
+		fmt.Printf("invalid ltrim position: %d when cursor is: %d", pos, buf.mu.curPos)
+		// log.Fatalf(ctx, "invalid ltrim position: %d when cursor is: %d",
+		// 	pos, buf.mu.curPos)
 	}
 	// Remove commands one by one.
 	for {
@@ -540,7 +538,8 @@ func (buf *StmtBuf) rewind(ctx context.Context, pos CmdPos) {
 	buf.mu.Lock()
 	defer buf.mu.Unlock()
 	if pos < buf.mu.startPos {
-		log.Fatalf(ctx, "attempting to rewind below buffer start")
+		fmt.Println("attempting to rewind below buffer start")
+		//log.Fatalf(ctx, "attempting to rewind below buffer start")
 	}
 	buf.mu.curPos = pos
 }
@@ -574,18 +573,18 @@ type ClientComm interface {
 	// It should be nil if statement type != Rows. Otherwise, it can be nil, in
 	// which case every column will be encoded using the text encoding, otherwise
 	// it needs to contain a value for every column.
-	CreateStatementResult(
-		//stmt tree.Statement,
-		descOpt RowDescOpt,
-		pos CmdPos,
-		formatCodes []pgwirebase.FormatCode,
-		loc *time.Location,
-		be sessiondata.BytesEncodeFormat,
-	) CommandResult
+	// CreateStatementResult(
+	// 	//stmt tree.Statement,
+	// 	descOpt RowDescOpt,
+	// 	pos CmdPos,
+	// 	formatCodes []pgwirebase.FormatCode,
+	// 	loc *time.Location,
+	// 	be sessiondata.BytesEncodeFormat,
+	// ) CommandResult
 	// CreatePrepareResult creates a result for a PrepareStmt command.
 	CreatePrepareResult(pos CmdPos) ParseResult
 	// CreateDescribeResult creates a result for a DescribeStmt command.
-	CreateDescribeResult(pos CmdPos) DescribeResult
+	//CreateDescribeResult(pos CmdPos) DescribeResult
 	// CreateBindResult creates a result for a BindStmt command.
 	CreateBindResult(pos CmdPos) BindResult
 	// CreateDeleteResult creates a result for a DeletePreparedStmt command.
@@ -670,7 +669,7 @@ type CommandResultClose interface {
 	// NOTE(andrei): We might want to tighten the contract if the results get any
 	// state that needs to be closed even when the whole connection is about to be
 	// terminated.
-	Close(TransactionStatusIndicator)
+	//Close(TransactionStatusIndicator)
 
 	// CloseWithErr is like Close, except it tells the client that an execution
 	// error has happened. All rows previously accumulated on the result might be
@@ -700,7 +699,7 @@ type RestrictedCommandResult interface {
 	// can be nil.
 	//
 	// This needs to be called (once) before AddRow.
-	SetColumns(context.Context, sqlbase.ResultColumns)
+	//SetColumns(context.Context, sqlbase.ResultColumns)
 
 	// ResetStmtType allows a client to change the statement type of the current
 	// result, from the original one set when the result was created trough
@@ -734,10 +733,10 @@ type DescribeResult interface {
 	SetNoDataRowDescription()
 	// SetPrepStmtOutput tells the client about the results schema of a prepared
 	// statement.
-	SetPrepStmtOutput(context.Context, sqlbase.ResultColumns)
+	//SetPrepStmtOutput(context.Context, sqlbase.ResultColumns)
 	// SetPortalOutput tells the client about the results schema and formatting of
 	// a portal.
-	SetPortalOutput(context.Context, sqlbase.ResultColumns, []pgwirebase.FormatCode)
+	//SetPortalOutput(context.Context, sqlbase.ResultColumns, []pgwirebase.FormatCode)
 }
 
 // ParseResult represents the result of a Parse command.
@@ -851,7 +850,7 @@ type bufferedCommandResult struct {
 	err          error
 	//rows         []tree.Datums
 	rowsAffected int
-	cols         sqlbase.ResultColumns
+	//cols         sqlbase.ResultColumns
 
 	// errOnly, if set, makes AddRow() panic. This can be used when the execution
 	// of the query is not expected to produce any results.
@@ -865,12 +864,12 @@ type bufferedCommandResult struct {
 var _ RestrictedCommandResult = &bufferedCommandResult{}
 
 // SetColumns is part of the RestrictedCommandResult interface.
-func (r *bufferedCommandResult) SetColumns(_ context.Context, cols sqlbase.ResultColumns) {
-	if r.errOnly {
-		panic("SetColumns() called when errOnly is set")
-	}
-	r.cols = cols
-}
+// func (r *bufferedCommandResult) SetColumns(_ context.Context, cols sqlbase.ResultColumns) {
+// 	if r.errOnly {
+// 		panic("SetColumns() called when errOnly is set")
+// 	}
+// 	r.cols = cols
+//}
 
 // // ResetStmtType is part of the RestrictedCommandResult interface.
 // func (r *bufferedCommandResult) ResetStmtType(stmt tree.Statement) {
