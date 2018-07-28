@@ -24,11 +24,10 @@ import (
 	"github.com/lib/pq/oid"
 	"github.com/pkg/errors"
 
-
 	"github.com/Ready-Stock/Noah/Database/sql/pgwire/pgwirebase"
 	"net"
 	"github.com/Ready-Stock/Noah/Database/util/syncutil"
-	node "github.com/Ready-Stock/pg_query_go/nodes"
+	"github.com/Ready-Stock/pg_query_go"
 )
 
 // This file contains utils and interfaces used by a connExecutor to communicate
@@ -130,7 +129,7 @@ type SessionArgs struct {
 type Command interface {
 	fmt.Stringer
 	command()
-	PGCommand() *node.RawStmt
+	PGCommand() *pg_query.ParsetreeList
 }
 
 // ExecStmt is the command for running a query sent through the "simple" pgwire
@@ -144,7 +143,7 @@ type ExecStmt struct {
 	// option is to keep track of the query as we got it from the client, except
 	// that we might have gotten a batch of them at once, in which case only the
 	// parser can do the splitting.
-	//Stmt tree.Statement
+	// Stmt tree.Statement
 
 	// TimeReceived is the time at which the exec message was received
 	// from the client. Used to compute the service latency.
@@ -162,11 +161,11 @@ func (e ExecStmt) String() string {
 	return fmt.Sprintf("ExecStmt: %s", "test")
 }
 
-func (e ExecStmt) PGCommand() *node.RawStmt {
+func (e ExecStmt) PGCommand() *pg_query.ParsetreeList {
 	return nil
 }
 
-//var _ Command = ExecStmt{}
+// var _ Command = ExecStmt{}
 
 // ExecPortal is the Command for executing a portal.
 type ExecPortal struct {
@@ -186,7 +185,7 @@ func (e ExecPortal) String() string {
 	return fmt.Sprintf("ExecPortal name: %q", e.Name)
 }
 
-func (e ExecPortal) PGCommand() *node.RawStmt {
+func (e ExecPortal) PGCommand() *pg_query.ParsetreeList {
 	return nil
 }
 
@@ -197,13 +196,14 @@ type PrepareStmt struct {
 	Name string
 	// Stmt can be nil, in which case executing it should produce an "empty query
 	// response" message.
-	//Stmt      tree.Statement
-	//TypeHints tree.PlaceholderTypes
+	// Stmt      tree.Statement
+	// TypeHints tree.PlaceholderTypes
 	// RawTypeHints is the representation of type hints exactly as specified by
 	// the client.
 	RawTypeHints []oid.Oid
 	ParseStart   time.Time
 	ParseEnd     time.Time
+	PGQuery      pg_query.ParsetreeList
 }
 
 // command implements the Command interface.
@@ -213,11 +213,11 @@ func (p PrepareStmt) String() string {
 	return fmt.Sprintf("PrepareStmt: %s", "prepare")
 }
 
-func (e PrepareStmt) PGCommand() *node.RawStmt {
-	return nil
+func (e PrepareStmt) PGCommand() *pg_query.ParsetreeList {
+	return &e.PGQuery
 }
 
-//var _ Command = PrepareStmt{}
+// var _ Command = PrepareStmt{}
 
 // DescribeStmt is the Command for producing info about a prepared statement or
 // portal.
@@ -233,7 +233,7 @@ func (d DescribeStmt) String() string {
 	return fmt.Sprintf("Describe: %q", d.Name)
 }
 
-func (e DescribeStmt) PGCommand() *node.RawStmt {
+func (e DescribeStmt) PGCommand() *pg_query.ParsetreeList {
 	return nil
 }
 
@@ -267,7 +267,7 @@ type BindStmt struct {
 	// the datums are passes as type hints to the PrepareStmt command, so the
 	// inferred types should reflect that).
 	// If internalArgs is specified, Args and ArgFormatCodes are ignored.
-	//internalArgs []tree.Datum
+	// internalArgs []tree.Datum
 }
 
 // command implements the Command interface.
@@ -277,7 +277,7 @@ func (b BindStmt) String() string {
 	return fmt.Sprintf("BindStmt: %q->%q", b.PreparedStatementName, b.PortalName)
 }
 
-func (e BindStmt) PGCommand() *node.RawStmt {
+func (e BindStmt) PGCommand() *pg_query.ParsetreeList {
 	return nil
 }
 
@@ -296,7 +296,7 @@ func (d DeletePreparedStmt) String() string {
 	return fmt.Sprintf("DeletePreparedStmt: %q", d.Name)
 }
 
-func (e DeletePreparedStmt) PGCommand() *node.RawStmt {
+func (e DeletePreparedStmt) PGCommand() *pg_query.ParsetreeList {
 	return nil
 }
 
@@ -320,7 +320,7 @@ func (Sync) String() string {
 	return "Sync"
 }
 
-func (e Sync) PGCommand() *node.RawStmt {
+func (e Sync) PGCommand() *pg_query.ParsetreeList {
 	return nil
 }
 
@@ -337,7 +337,7 @@ func (Flush) String() string {
 	return "Flush"
 }
 
-func (e Flush) PGCommand() *node.RawStmt {
+func (e Flush) PGCommand() *pg_query.ParsetreeList {
 	return nil
 }
 
@@ -345,7 +345,7 @@ var _ Command = Flush{}
 
 // CopyIn is the command for execution of the Copy-in pgwire subprotocol.
 type CopyIn struct {
-	//Stmt *tree.CopyFrom
+	// Stmt *tree.CopyFrom
 	// Conn is the network connection. Execution of the CopyFrom statement takes
 	// control of the connection.
 	Conn pgwirebase.Conn
@@ -361,7 +361,7 @@ func (CopyIn) String() string {
 	return "CopyIn"
 }
 
-func (e CopyIn) PGCommand() *node.RawStmt {
+func (e CopyIn) PGCommand() *pg_query.ParsetreeList {
 	return nil
 }
 
@@ -380,7 +380,7 @@ func (DrainRequest) String() string {
 	return "Drain"
 }
 
-func (e DrainRequest) PGCommand() *node.RawStmt {
+func (e DrainRequest) PGCommand() *pg_query.ParsetreeList {
 	return nil
 }
 
@@ -401,7 +401,7 @@ func (s SendError) String() string {
 	return fmt.Sprintf("SendError: %s", s.Err)
 }
 
-func (e SendError) PGCommand() *node.RawStmt {
+func (e SendError) PGCommand() *pg_query.ParsetreeList {
 	return nil
 }
 
@@ -432,7 +432,7 @@ func (buf *StmtBuf) Close() {
 // waiting for this command to arrive, it will be woken up.
 //
 // An error is returned if the buffer has been closed.
-func (buf *StmtBuf) Push(cmd Command) error { //ctx context.Context,
+func (buf *StmtBuf) Push(cmd Command) error { // ctx context.Context,
 	buf.mu.Lock()
 	defer buf.mu.Unlock()
 	if buf.mu.closed {
@@ -504,8 +504,8 @@ func (buf *StmtBuf) ltrim(ctx context.Context, pos CmdPos) {
 	defer buf.mu.Unlock()
 	if pos < buf.mu.startPos {
 		fmt.Printf("invalid ltrim position: %d. buf starting at: %d", pos, buf.mu.startPos)
-		//log.Fatalf(ctx, "invalid ltrim position: %d. buf starting at: %d",
-		//	pos, buf.mu.startPos)
+		// log.Fatalf(ctx, "invalid ltrim position: %d. buf starting at: %d",
+		// 	pos, buf.mu.startPos)
 	}
 	if buf.mu.curPos < pos {
 		fmt.Printf("invalid ltrim position: %d when cursor is: %d", pos, buf.mu.curPos)
@@ -585,7 +585,7 @@ func (buf *StmtBuf) rewind(ctx context.Context, pos CmdPos) {
 	defer buf.mu.Unlock()
 	if pos < buf.mu.startPos {
 		fmt.Println("attempting to rewind below buffer start")
-		//log.Fatalf(ctx, "attempting to rewind below buffer start")
+		// log.Fatalf(ctx, "attempting to rewind below buffer start")
 	}
 	buf.mu.curPos = pos
 }
@@ -630,7 +630,7 @@ type ClientComm interface {
 	// CreatePrepareResult creates a result for a PrepareStmt command.
 	CreatePrepareResult(pos CmdPos) ParseResult
 	// CreateDescribeResult creates a result for a DescribeStmt command.
-	//CreateDescribeResult(pos CmdPos) DescribeResult
+	// CreateDescribeResult(pos CmdPos) DescribeResult
 	// CreateBindResult creates a result for a BindStmt command.
 	CreateBindResult(pos CmdPos) BindResult
 	// CreateDeleteResult creates a result for a DeletePreparedStmt command.
@@ -674,7 +674,7 @@ type CommandResult interface {
 	// rows to be returned. We don't currently properly support this feature of
 	// the Postgres protocol; instead, we'll return an error if the number of rows
 	// produced is larger than this limit.
-	//SetLimit(n int)
+	// SetLimit(n int)
 }
 
 // CommandResultErrBase is the subset of CommandResult dealing with setting a
@@ -745,18 +745,18 @@ type RestrictedCommandResult interface {
 	// can be nil.
 	//
 	// This needs to be called (once) before AddRow.
-	//SetColumns(context.Context, sqlbase.ResultColumns)
+	// SetColumns(context.Context, sqlbase.ResultColumns)
 
 	// ResetStmtType allows a client to change the statement type of the current
 	// result, from the original one set when the result was created trough
 	// ClientComm.createStatementResult.
-	//ResetStmtType(stmt tree.Statement)
+	// ResetStmtType(stmt tree.Statement)
 
 	// AddRow accumulates a result row.
 	//
 	// The implementation cannot hold on to the row slice; it needs to make a
 	// shallow copy if it needs to.
-	//AddRow(ctx context.Context, row tree.Datums) error
+	// AddRow(ctx context.Context, row tree.Datums) error
 
 	// IncrementRowsAffected increments a counter by n. This is used for all
 	// result types other than tree.Rows.
@@ -779,10 +779,10 @@ type DescribeResult interface {
 	SetNoDataRowDescription()
 	// SetPrepStmtOutput tells the client about the results schema of a prepared
 	// statement.
-	//SetPrepStmtOutput(context.Context, sqlbase.ResultColumns)
+	// SetPrepStmtOutput(context.Context, sqlbase.ResultColumns)
 	// SetPortalOutput tells the client about the results schema and formatting of
 	// a portal.
-	//SetPortalOutput(context.Context, sqlbase.ResultColumns, []pgwirebase.FormatCode)
+	// SetPortalOutput(context.Context, sqlbase.ResultColumns, []pgwirebase.FormatCode)
 }
 
 // ParseResult represents the result of a Parse command.
@@ -893,10 +893,10 @@ const discarded resCloseType = false
 // bufferedCommandResult is a CommandResult that buffers rows and can call a
 // provided callback when closed.
 type bufferedCommandResult struct {
-	err          error
-	//rows         []tree.Datums
+	err error
+	// rows         []tree.Datums
 	rowsAffected int
-	//cols         sqlbase.ResultColumns
+	// cols         sqlbase.ResultColumns
 
 	// errOnly, if set, makes AddRow() panic. This can be used when the execution
 	// of the query is not expected to produce any results.
@@ -915,7 +915,7 @@ var _ RestrictedCommandResult = &bufferedCommandResult{}
 // 		panic("SetColumns() called when errOnly is set")
 // 	}
 // 	r.cols = cols
-//}
+// }
 
 // // ResetStmtType is part of the RestrictedCommandResult interface.
 // func (r *bufferedCommandResult) ResetStmtType(stmt tree.Statement) {

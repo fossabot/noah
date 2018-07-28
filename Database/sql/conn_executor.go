@@ -46,7 +46,7 @@ func (ex *connExecutor) run() error {
 		}
 		fmt.Printf("[pos:%d] executing %s\n", pos, cmd)
 		var res ResultBase
-		switch cmd.(type) {
+		switch tcmd := cmd.(type) {
 		case ExecStmt:
 
 		case ExecPortal:
@@ -54,6 +54,7 @@ func (ex *connExecutor) run() error {
 			// is taken from the portal.
 
 		case PrepareStmt:
+			fmt.Println("Len:", tcmd.PGQuery.Query)
 			res = ex.clientComm.CreatePrepareResult(pos)
 		case DescribeStmt:
 

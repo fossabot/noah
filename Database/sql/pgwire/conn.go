@@ -37,9 +37,7 @@ import (
 	"github.com/Ready-Stock/Noah/Database/cluster"
 	"github.com/Ready-Stock/Noah/Configuration"
 	"github.com/Ready-Stock/pg_query_go"
-	nodes "github.com/Ready-Stock/pg_query_go/nodes"
-	"github.com/Ready-Stock/Noah/Database/sql/pglex"
-)
+		)
 
 const (
 	authOK                int32 = 0
@@ -433,6 +431,7 @@ func (c *conn) handleParse(buf *pgwirebase.ReadBuffer) error {
 	// protocolErr is set if a protocol error has to be sent to the client. A
 	// stanza at the bottom of the function pushes instructions for sending this
 	// error.
+	startParse := time.Now().UTC()
 	var protocolErr *pgerror.Error
 
 	name, err := buf.GetString()
@@ -459,20 +458,13 @@ func (c *conn) handleParse(buf *pgwirebase.ReadBuffer) error {
 	}
 
 	p, err := pg_query.Parse(query)
+	p.Query = query
+	endParse := time.Now().UTC()
 	if err != nil {
 		return c.stmtBuf.Push(sql.SendError{Err: err})
 	}
 
-	for _, stmt := range p.Statements {
-		var err error
-		switch tstmt := stmt.(type) {
-		case nodes.RawStmt:
-			err = pglex.HandleRawStmt(tstmt)
-		}
-		if err != nil {
-			return c.stmtBuf.Push(sql.SendError{Err: err})
-		}
-	}
+
 
 	j, _ := p.MarshalJSON()
 	fmt.Println("Query: ", p.Query)
@@ -492,14 +484,12 @@ func (c *conn) handleParse(buf *pgwirebase.ReadBuffer) error {
 	// 	sqlTypeHints[strconv.Itoa(i+1)] = v
 	// }
 	return nil
-	/*return c.stmtBuf.Push(sql.PrepareStmt{
+	return c.stmtBuf.Push(sql.PrepareStmt{
 			Name:         name,
-			Stmt:         stmt,
-			TypeHints:    sqlTypeHints,
 			RawTypeHints: inTypeHints,
 			ParseStart:   startParse,
 			ParseEnd:     endParse,
-		})*/
+		})
 }
 
 // An error is returned iff the statement buffer has been closed. In that case,
