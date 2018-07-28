@@ -38,7 +38,6 @@ import (
 	"github.com/Ready-Stock/pg_query_go"
 	"github.com/Ready-Stock/Noah/Database/sql/sessiondata"
 	"github.com/Ready-Stock/Noah/Database/sql/sem/tree"
-	"github.com/cockroachdb/cockroach/pkg/util/log"
 )
 
 const (

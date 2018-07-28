@@ -24,14 +24,15 @@ import (
 
 	"github.com/pkg/errors"
 
+	"github.com/Ready-Stock/Noah/Database/sql/sem/tree"
 	"github.com/cockroachdb/cockroach/pkg/keys"
 	"github.com/cockroachdb/cockroach/pkg/settings/cluster"
 	"github.com/cockroachdb/cockroach/pkg/util/interval"
 	"github.com/cockroachdb/cockroach/pkg/roachpb"
 	"github.com/cockroachdb/cockroach/pkg/sql/opt"
-	"github.com/Ready-Stock/Noah/Database/sql/sem/tree"
 	"github.com/Ready-Stock/Noah/Database/util/encoding"
 	"github.com/Ready-Stock/Noah/Database/sql/sem/types"
+	"github.com/Ready-Stock/Noah/Database/sql/pgwire/pgerror"
 )
 
 // ID, ColumnID, FamilyID, and IndexID are all uint32, but are each given a
@@ -139,24 +140,7 @@ func (dir IndexDescriptor_Direction) ToEncodingDirection() (encoding.Direction, 
 // descriptor could not be found with the given id.
 var ErrDescriptorNotFound = errors.New("descriptor not found")
 
-// GetDatabaseDescFromID retrieves the database descriptor for the database
-// ID passed in using an existing txn. Returns an error if the descriptor
-// doesn't exist or if it exists and is not a database.
-func GetDatabaseDescFromID(
-	ctx context.Context, txn *client.Txn, id ID,
-) (*DatabaseDescriptor, error) {
-	desc := &Descriptor{}
-	descKey := MakeDescMetadataKey(id)
 
-	if err := txn.GetProto(ctx, descKey, desc); err != nil {
-		return nil, err
-	}
-	db := desc.GetDatabase()
-	if db == nil {
-		return nil, ErrDescriptorNotFound
-	}
-	return db, nil
-}
 
 // GetTableDescFromID retrieves the table descriptor for the table
 // ID passed in using an existing txn. Returns an error if the
@@ -2435,25 +2419,6 @@ func (desc *DatabaseDescriptor) SetName(name string) {
 	desc.Name = name
 }
 
-// Validate validates that the database descriptor is well formed.
-// Checks include validate the database name, and verifying that there
-// is at least one read and write user.
-func (desc *DatabaseDescriptor) Validate() error {
-	if err := validateName(desc.Name, "descriptor"); err != nil {
-		return err
-	}
-	if desc.ID == 0 {
-		return fmt.Errorf("invalid database ID %d", desc.ID)
-	}
-
-	// Fill in any incorrect privileges that may have been missed due to mixed-versions.
-	// TODO(mberhault): remove this in 2.1 (maybe 2.2) when privilege-fixing migrations have been
-	// run again and mixed-version clusters always write "good" descriptors.
-	desc.Privileges.MaybeFixPrivileges(desc.GetID())
-
-	// Validate the privilege descriptor.
-	return desc.Privileges.Validate(desc.GetID())
-}
 
 // GetID returns the ID of the descriptor.
 func (desc *Descriptor) GetID() ID {
@@ -2530,15 +2495,6 @@ func (desc *TableDescriptor) TableSpan() roachpb.Span {
 	return roachpb.Span{Key: prefix, EndKey: prefix.PrefixEnd()}
 }
 
-// GetDescMetadataKey returns the descriptor key for the table.
-func (desc TableDescriptor) GetDescMetadataKey() roachpb.Key {
-	return MakeDescMetadataKey(desc.ID)
-}
-
-// GetNameMetadataKey returns the namespace key for the table.
-func (desc TableDescriptor) GetNameMetadataKey() roachpb.Key {
-	return MakeNameMetadataKey(desc.ParentID, desc.Name)
-}
 
 // SQLString returns the SQL statement describing the column.
 func (desc *ColumnDescriptor) SQLString() string {

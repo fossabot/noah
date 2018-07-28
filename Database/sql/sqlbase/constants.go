@@ -14,7 +14,9 @@
 
 package sqlbase
 
-import "github.com/cockroachdb/cockroach/pkg/sql/sessiondata"
+import (
+	"github.com/Ready-Stock/Noah/Database/sql/sessiondata"
+)
 
 // DefaultSearchPath is the search path used by virgin sessions.
 var DefaultSearchPath = sessiondata.MakeSearchPath([]string{"public"})

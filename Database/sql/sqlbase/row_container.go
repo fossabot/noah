@@ -19,10 +19,9 @@ import (
 	"fmt"
 	"unsafe"
 
-	"github.com/cockroachdb/cockroach/pkg/sql/sem/tree"
-	"github.com/cockroachdb/cockroach/pkg/sql/sem/types"
-	"github.com/cockroachdb/cockroach/pkg/util"
-	"github.com/cockroachdb/cockroach/pkg/util/mon"
+	"github.com/Ready-Stock/Noah/Database/sql/sem/tree"
+	"github.com/Ready-Stock/Noah/Database/util"
+	"github.com/Ready-Stock/Noah/Database/sql/sem/types"
 )
 
 const (
@@ -70,7 +69,6 @@ type RowContainer struct {
 
 	// memAcc tracks the current memory consumption of this
 	// RowContainer.
-	memAcc mon.BoundAccount
 
 	// We should not copy this structure around; each copy would have a different
 	// memAcc (among other things like aliasing chunks).
@@ -157,19 +155,18 @@ func makeColTypeInfo(
 // test properly.  The trade-off is that very large table schemas or
 // column selections could cause unchecked and potentially dangerous
 // memory growth.
-func NewRowContainer(acc mon.BoundAccount, ti ColTypeInfo, rowCapacity int) *RowContainer {
+func NewRowContainer(ti ColTypeInfo, rowCapacity int) *RowContainer {
 	c := &RowContainer{}
-	c.Init(acc, ti, rowCapacity)
+	c.Init(ti, rowCapacity)
 	return c
 }
 
 // Init can be used instead of NewRowContainer if we have a RowContainer that is
 // already part of an on-heap structure.
-func (c *RowContainer) Init(acc mon.BoundAccount, ti ColTypeInfo, rowCapacity int) {
+func (c *RowContainer) Init(ti ColTypeInfo, rowCapacity int) {
 	nCols := ti.NumColumns()
 
 	c.numCols = nCols
-	c.memAcc = acc
 	c.preallocChunks = 1
 
 	if nCols != 0 {
@@ -211,7 +208,6 @@ func (c *RowContainer) Clear(ctx context.Context) {
 	c.chunks = nil
 	c.numRows = 0
 	c.deletedRows = 0
-	c.memAcc.Clear(ctx)
 }
 
 // UnsafeReset resets the container without releasing the associated memory. This
@@ -225,22 +221,19 @@ func (c *RowContainer) Clear(ctx context.Context) {
 func (c *RowContainer) UnsafeReset(ctx context.Context) error {
 	c.numRows = 0
 	c.deletedRows = 0
-	return c.memAcc.ResizeTo(ctx, int64(len(c.chunks))*c.chunkMemSize)
+	return nil
 }
 
 // Close releases the memory associated with the RowContainer.
 func (c *RowContainer) Close(ctx context.Context) {
 	c.chunks = nil
 	c.varSizedColumns = nil
-	c.memAcc.Close(ctx)
 }
 
 func (c *RowContainer) allocChunks(ctx context.Context, numChunks int) error {
 	datumsPerChunk := c.rowsPerChunk * c.numCols
 
-	if err := c.memAcc.Grow(ctx, c.chunkMemSize*int64(numChunks)); err != nil {
-		return err
-	}
+
 
 	if c.chunks == nil {
 		c.chunks = make([][]tree.Datum, 0, numChunks)
@@ -283,9 +276,7 @@ func (c *RowContainer) AddRow(ctx context.Context, row tree.Datums) (tree.Datums
 		c.numRows++
 		return nil, nil
 	}
-	if err := c.memAcc.Grow(ctx, c.rowSize(row)); err != nil {
-		return nil, err
-	}
+
 	chunk, pos := c.getChunkAndPos(c.numRows)
 	if chunk == len(c.chunks) {
 		numChunks := c.preallocChunks
@@ -345,7 +336,6 @@ func (c *RowContainer) PopFirst() {
 
 			// We don't have a context plumbed here, but that's ok: it's not actually
 			// used in the shrink paths.
-			c.memAcc.Shrink(context.TODO(), size)
 		}
 	}
 }
@@ -354,19 +344,12 @@ func (c *RowContainer) PopFirst() {
 // MemoryMonitor to determine whether the new row fits the
 // allowance.
 func (c *RowContainer) Replace(ctx context.Context, i int, newRow tree.Datums) error {
-	newSz := c.rowSize(newRow)
 	row := c.At(i)
-	oldSz := c.rowSize(row)
-	if newSz != oldSz {
-		if err := c.memAcc.Resize(ctx, oldSz, newSz); err != nil {
-			return err
-		}
-	}
 	copy(row, newRow)
 	return nil
 }
 
 // MemUsage returns the current accounted memory usage.
 func (c *RowContainer) MemUsage() int64 {
-	return c.memAcc.Used()
+	return 0
 }
