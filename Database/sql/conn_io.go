@@ -199,9 +199,9 @@ type PrepareStmt struct {
 // command implements the Command interface.
 func (PrepareStmt) command() {}
 
-// func (p PrepareStmt) String() string {
-// 	return fmt.Sprintf("PrepareStmt: %s", p.Stmt.String())
-// }
+func (p PrepareStmt) String() string {
+	return fmt.Sprintf("PrepareStmt: %s", "prepare")
+}
 
 //var _ Command = PrepareStmt{}
 
@@ -669,7 +669,7 @@ type CommandResultClose interface {
 	// NOTE(andrei): We might want to tighten the contract if the results get any
 	// state that needs to be closed even when the whole connection is about to be
 	// terminated.
-	//Close(TransactionStatusIndicator)
+	Close(TransactionStatusIndicator)
 
 	// CloseWithErr is like Close, except it tells the client that an execution
 	// error has happened. All rows previously accumulated on the result might be

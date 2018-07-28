@@ -45,14 +45,43 @@ func (ex *connExecutor) run() error {
 			return err
 		}
 		fmt.Printf("[pos:%d] executing %s\n", pos, cmd)
+		var res ResultBase
 		switch cmd.(type) {
 		case ExecStmt:
-			ex.clientComm.CreateEmptyQueryResult(pos)
 
 		case ExecPortal:
-			ex.clientComm.CreateEmptyQueryResult(pos)
+			// ExecPortal is handled like ExecStmt, except that the placeholder info
+			// is taken from the portal.
 
+		case PrepareStmt:
+			res = ex.clientComm.CreatePrepareResult(pos)
+		case DescribeStmt:
+
+		case BindStmt:
+			res = ex.clientComm.CreateBindResult(pos)
+		case DeletePreparedStmt:
+			res = ex.clientComm.CreateDeleteResult(pos)
+		case SendError:
+			res = ex.clientComm.CreateErrorResult(pos)
+		case Sync:
+			// Note that the Sync result will flush results to the network connection.
+			res = ex.clientComm.CreateSyncResult(pos)
+		case CopyIn:
+			res = ex.clientComm.CreateCopyInResult(pos)
+		case DrainRequest:
+			// We received a drain request. We terminate immediately if we're not in a
+			// transaction. If we are in a transaction, we'll finish as soon as a Sync
+			// command (i.e. the end of a batch) is processed outside of a
+			// transaction.
+
+		case Flush:
+			// Closing the res will flush the connection's buffer.
+		default:
+			panic(fmt.Sprintf("unsupported command type: %T", cmd))
 		}
+
 		ex.stmtBuf.advanceOne()
+
+		res.Close()
 	}
 }
