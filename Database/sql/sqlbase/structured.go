@@ -31,6 +31,7 @@ import (
 	"github.com/cockroachdb/cockroach/pkg/sql/opt"
 	"github.com/Ready-Stock/Noah/Database/sql/sem/tree"
 	"github.com/Ready-Stock/Noah/Database/util/encoding"
+	"github.com/Ready-Stock/Noah/Database/sql/sem/types"
 )
 
 // ID, ColumnID, FamilyID, and IndexID are all uint32, but are each given a
