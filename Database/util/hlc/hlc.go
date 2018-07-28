@@ -19,8 +19,7 @@
 package hlc
 
 import (
-	"context"
-	"fmt"
+		"fmt"
 	"sync/atomic"
 	"time"
 
@@ -28,7 +27,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/Ready-Stock/Noah/Database/util/syncutil"
 	"github.com/Ready-Stock/Noah/Database/util/timeutil"
-	"github.com/cockroachdb/cockroach/pkg/util/log"
 )
 
 // TODO(Tobias): Figure out if it would make sense to save some
@@ -269,12 +267,12 @@ func (c *Clock) Now() Timestamp {
 func (c *Clock) enforceWallTimeWithinBoundLocked() {
 	// WallTime should not cross the upper bound (if WallTimeUpperBound is set)
 	if c.mu.wallTimeUpperBound != 0 && c.mu.timestamp.WallTime > c.mu.wallTimeUpperBound {
-		log.Fatalf(
-			context.TODO(),
-			"wall time %d is not allowed to be greater than upper bound of %d.",
-			c.mu.timestamp.WallTime,
-			c.mu.wallTimeUpperBound,
-		)
+		// log.Fatalf(
+		// 	context.TODO(),
+		// 	"wall time %d is not allowed to be greater than upper bound of %d.",
+		// 	c.mu.timestamp.WallTime,
+		// 	c.mu.wallTimeUpperBound,
+		// )
 	}
 }
 
@@ -304,7 +302,7 @@ func (c *Clock) Update(rt Timestamp) Timestamp {
 	defer c.mu.Unlock()
 	updateT, err := c.updateLocked(rt, true)
 	if err != nil {
-		log.Warningf(context.TODO(), "%s - updating anyway", err)
+		//log.Warningf(context.TODO(), "%s - updating anyway", err)
 	}
 	return updateT
 }

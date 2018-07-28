@@ -40,12 +40,7 @@ import (
 	"github.com/Ready-Stock/Noah/Database/util/duration"
 	"github.com/Ready-Stock/Noah/Database/util/json"
 	"github.com/Ready-Stock/Noah/Database/util/arith"
-	a "github.com/cockroachdb/cockroach/pkg/base"
-	b "github.com/cockroachdb/cockroach/pkg/settings/cluster"
-	c "github.com/cockroachdb/cockroach/pkg/roachpb"
-	d "github.com/cockroachdb/cockroach/pkg/util/mon"
-	e "github.com/cockroachdb/cockroach/pkg/util/hlc"
-	"github.com/Ready-Stock/Noah/Database/base"
+	"github.com/Ready-Stock/Noah/Database/util/hlc"
 )
 
 var (
@@ -2521,37 +2516,37 @@ type EvalContext struct {
 }
 
 // MakeTestingEvalContext returns an EvalContext that includes a MemoryMonitor.
-func MakeTestingEvalContext(st *cluster.Settings) EvalContext {
-	monitor := mon.MakeMonitor(
-		"test-monitor",
-		mon.MemoryResource,
-		nil,           /* curCount */
-		nil,           /* maxHist */
-		-1,            /* increment */
-		math.MaxInt64, /* noteworthy */
-		st,
-	)
-	return MakeTestingEvalContextWithMon(st, &monitor)
-}
+// func MakeTestingEvalContext(st *cluster.Settings) EvalContext {
+// 	monitor := mon.MakeMonitor(
+// 		"test-monitor",
+// 		mon.MemoryResource,
+// 		nil,           /* curCount */
+// 		nil,           /* maxHist */
+// 		-1,            /* increment */
+// 		math.MaxInt64, /* noteworthy */
+// 		st,
+// 	)
+// 	return MakeTestingEvalContextWithMon(st, &monitor)
+// }
 
 // MakeTestingEvalContextWithMon returns an EvalContext with the given
 // MemoryMonitor. Ownership of the memory monitor is transferred to the
 // EvalContext so do not start or close the memory monitor.
-func MakeTestingEvalContextWithMon(st *cluster.Settings, monitor *mon.BytesMonitor) EvalContext {
-	ctx := EvalContext{
-		SessionData: &sessiondata.SessionData{},
-		Settings:    st,
-	}
-	monitor.Start(context.Background(), nil /* pool */, mon.MakeStandaloneBudget(math.MaxInt64))
-	ctx.Mon = monitor
-	ctx.CtxProvider = FixedCtxProvider{context.TODO()}
-	acc := monitor.MakeBoundAccount()
-	ctx.ActiveMemAcc = &acc
-	now := timeutil.Now()
-	ctx.SetTxnTimestamp(now)
-	ctx.SetStmtTimestamp(now)
-	return ctx
-}
+// func MakeTestingEvalContextWithMon(st *cluster.Settings, monitor *mon.BytesMonitor) EvalContext {
+// 	ctx := EvalContext{
+// 		SessionData: &sessiondata.SessionData{},
+// 		Settings:    st,
+// 	}
+// 	monitor.Start(context.Background(), nil /* pool */, mon.MakeStandaloneBudget(math.MaxInt64))
+// 	ctx.Mon = monitor
+// 	ctx.CtxProvider = FixedCtxProvider{context.TODO()}
+// 	acc := monitor.MakeBoundAccount()
+// 	ctx.ActiveMemAcc = &acc
+// 	now := timeutil.Now()
+// 	ctx.SetTxnTimestamp(now)
+// 	ctx.SetStmtTimestamp(now)
+// 	return ctx
+// }
 
 // PushIVarContainer replaces the current IVarContainer with a different one -
 // pushing the current one onto a stack to be replaced later once
@@ -3550,9 +3545,9 @@ func (expr *FuncExpr) Eval(ctx *EvalContext) (Datum, error) {
 		// If we are facing a retry error, in particular those generated
 		// by crdb_internal.force_retry(), propagate it unchanged, so that
 		// the executor can see it with the right type.
-		if _, ok := err.(*roachpb.HandledRetryableTxnError); ok {
-			return nil, err
-		}
+		// if _, ok := err.(*roachpb.HandledRetryableTxnError); ok {
+		// 	return nil, err
+		// }
 		// If we are facing an explicit error, propagate it unchanged.
 		fName := expr.Func.String()
 		if fName == `crdb_internal.force_error` {

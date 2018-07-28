@@ -19,9 +19,9 @@ import (
 	"fmt"
 
 	"github.com/Ready-Stock/Noah/Database/sql/sem/types"
-	"github.com/cockroachdb/cockroach/pkg/util"
 	"github.com/Ready-Stock/Noah/Database/sql/coltypes"
 	"github.com/Ready-Stock/Noah/Database/sql/lex"
+	"github.com/Ready-Stock/Noah/Database/util"
 )
 
 // Expr represents an expression.

@@ -19,7 +19,7 @@ import (
 	"math"
 	"time"
 
-	"github.com/cockroachdb/cockroach/pkg/util/timeutil"
+	"github.com/Ready-Stock/Noah/Database/util/timeutil"
 )
 
 // Timestamp constant values.

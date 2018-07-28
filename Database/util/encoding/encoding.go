@@ -30,10 +30,10 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/cockroachdb/apd"
-	"github.com/cockroachdb/cockroach/pkg/util/ipaddr"
-	"github.com/cockroachdb/cockroach/pkg/util/uuid"
 	"github.com/Ready-Stock/Noah/Database/util/timeutil"
 	"github.com/Ready-Stock/Noah/Database/util/duration"
+	"github.com/Ready-Stock/Noah/Database/util/ipaddr"
+	"github.com/Ready-Stock/Noah/Database/util/uuid"
 )
 
 const (
