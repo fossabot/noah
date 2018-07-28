@@ -24,10 +24,11 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/cockroachdb/cockroach/pkg/util/log"
-	"github.com/cockroachdb/cockroach/pkg/util/syncutil"
-	"github.com/cockroachdb/cockroach/pkg/util/timeutil"
+
 	"github.com/pkg/errors"
+	"github.com/Ready-Stock/Noah/Database/util/syncutil"
+	"github.com/Ready-Stock/Noah/Database/util/timeutil"
+	"github.com/cockroachdb/cockroach/pkg/util/log"
 )
 
 // TODO(Tobias): Figure out if it would make sense to save some
@@ -222,18 +223,18 @@ func (c *Clock) getPhysicalClockLocked() int64 {
 		interval := c.mu.lastPhysicalTime - newTime
 		if interval > int64(c.maxOffset/10) {
 			c.mu.monotonicityErrorsCount++
-			log.Warningf(context.TODO(), "backward time jump detected (%f seconds)", float64(-interval)/1e9)
+			//log.Warningf(context.TODO(), "backward time jump detected (%f seconds)", float64(-interval)/1e9)
 		}
 
 		if c.mu.forwardClockJumpCheckEnabled {
 			toleratedForwardClockJump := c.toleratedForwardClockJump()
 			if int64(toleratedForwardClockJump) <= -interval {
-				log.Fatalf(
+				/*log.Fatalf(
 					context.TODO(),
 					"detected forward time jump of %f seconds is not allowed with tolerance of %f seconds",
 					float64(-interval)/1e9,
 					float64(toleratedForwardClockJump)/1e9,
-				)
+				)*/
 			}
 		}
 	}
