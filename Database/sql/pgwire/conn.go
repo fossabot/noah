@@ -29,7 +29,6 @@ import (
 	"github.com/lib/pq/oid"
 	"github.com/pkg/errors"
 
-
 	"github.com/Ready-Stock/Noah/Database/sql/pgwire/pgwirebase"
 	"github.com/Ready-Stock/Noah/Database/sql/pgwire/pgerror"
 	"github.com/Ready-Stock/Noah/Database/sql"
@@ -37,12 +36,14 @@ import (
 	"github.com/Ready-Stock/Noah/Database/cluster"
 	"github.com/Ready-Stock/Noah/Configuration"
 	"github.com/Ready-Stock/pg_query_go"
-		)
+	"github.com/cockroachdb/cockroach/pkg/sql/sem/tree"
+	"github.com/Ready-Stock/Noah/Database/sql/sessiondata"
+)
 
 const (
 	authOK                int32 = 0
 	authCleartextPassword int32 = 3
-	authMD5Password		  int32 = 5
+	authMD5Password       int32 = 5
 )
 
 // conn implements a pgwire network connection (version 3 of the protocol,
@@ -145,7 +146,6 @@ func serveConn(
 		}
 	}
 
-
 	if err := c.handleAuthentication(insecure); err != nil {
 		_ = c.conn.Close()
 		return err
@@ -217,7 +217,6 @@ func (c *conn) serveImpl(sqlServer *sql.Server) error {
 		return err
 	}
 
-
 	// Once a session has been set up, the underlying net.Conn is switched to
 	// a conn that exits if the session's context is canceled.
 	c.conn = newReadTimeoutConn(c.conn, func() error {
@@ -234,8 +233,6 @@ func (c *conn) serveImpl(sqlServer *sql.Server) error {
 	})
 	c.rd = *bufio.NewReader(c.conn)
 
-
-
 	var wg sync.WaitGroup
 	var writerErr error
 	if sqlServer != nil {
@@ -247,7 +244,7 @@ func (c *conn) serveImpl(sqlServer *sql.Server) error {
 		}()
 	}
 
-	//var err error
+	// var err error
 	var terminateSeen bool
 	var doingExtendedQueryMessage bool
 
@@ -333,7 +330,7 @@ Loop:
 	// canceled our context and that's how we got here; in that case, this will
 	// be a no-op.
 	c.stmtBuf.Close()
-	//stopProcessor()
+	// stopProcessor()
 	wg.Wait()
 
 	if terminateSeen {
@@ -464,8 +461,6 @@ func (c *conn) handleParse(buf *pgwirebase.ReadBuffer) error {
 		return c.stmtBuf.Push(sql.SendError{Err: err})
 	}
 
-
-
 	j, _ := p.MarshalJSON()
 	fmt.Println("Query: ", p.Query)
 	fmt.Println(string(j))
@@ -483,13 +478,13 @@ func (c *conn) handleParse(buf *pgwirebase.ReadBuffer) error {
 	// 	}
 	// 	sqlTypeHints[strconv.Itoa(i+1)] = v
 	// }
-	return nil
 	return c.stmtBuf.Push(sql.PrepareStmt{
-			Name:         name,
-			RawTypeHints: inTypeHints,
-			ParseStart:   startParse,
-			ParseEnd:     endParse,
-		})
+		Name:         name,
+		RawTypeHints: inTypeHints,
+		ParseStart:   startParse,
+		ParseEnd:     endParse,
+		PGQuery:      *p,
+	})
 }
 
 // An error is returned iff the statement buffer has been closed. In that case,
@@ -785,33 +780,33 @@ func convertToErrWithPGCode(err error) error {
 // formatCodes describes the desired encoding for each column. It can be nil, in
 // which case all columns are encoded using the text encoding. Otherwise, it
 // needs to contain an entry for every column.
-// func (c *conn) bufferRow(
-// 	ctx context.Context,
-// 	row tree.Datums,
-// 	formatCodes []pgwirebase.FormatCode,
-// 	loc *time.Location,
-// 	be sessiondata.BytesEncodeFormat,
-// ) {
-// 	c.msgBuilder.initMsg(pgwirebase.ServerMsgDataRow)
-// 	c.msgBuilder.putInt16(int16(len(row)))
-// 	for i, col := range row {
-// 		fmtCode := pgwirebase.FormatText
-// 		if formatCodes != nil {
-// 			fmtCode = formatCodes[i]
-// 		}
-// 		switch fmtCode {
-// 		case pgwirebase.FormatText:
-// 			c.msgBuilder.writeTextDatum(ctx, col, loc, be)
-// 		case pgwirebase.FormatBinary:
-// 			c.msgBuilder.writeBinaryDatum(ctx, col, loc)
-// 		default:
-// 			c.msgBuilder.setError(errors.Errorf("unsupported format code %s", fmtCode))
-// 		}
-// 	}
-// 	if err := c.msgBuilder.finishMsg(&c.writerState.buf); err != nil {
-// 		panic(fmt.Sprintf("unexpected err from buffer: %s", err))
-// 	}
-// }
+func (c *conn) bufferRow(
+	ctx context.Context,
+	row tree.Datums,
+	formatCodes []pgwirebase.FormatCode,
+	loc *time.Location,
+	be sessiondata.BytesEncodeFormat,
+) {
+	c.msgBuilder.initMsg(pgwirebase.ServerMsgDataRow)
+	c.msgBuilder.putInt16(int16(len(row)))
+	for i, col := range row {
+		fmtCode := pgwirebase.FormatText
+		if formatCodes != nil {
+			fmtCode = formatCodes[i]
+		}
+		switch fmtCode {
+		case pgwirebase.FormatText:
+			c.msgBuilder.writeTextDatum(ctx, col, loc, be)
+		case pgwirebase.FormatBinary:
+			c.msgBuilder.writeBinaryDatum(ctx, col, loc)
+		default:
+			c.msgBuilder.setError(errors.Errorf("unsupported format code %s", fmtCode))
+		}
+	}
+	if err := c.msgBuilder.finishMsg(&c.writerState.buf); err != nil {
+		panic(fmt.Sprintf("unexpected err from buffer: %s", err))
+	}
+}
 
 func (c *conn) bufferReadyForQuery(txnStatus byte) {
 	c.msgBuilder.initMsg(pgwirebase.ServerMsgReady)
@@ -1007,7 +1002,7 @@ func (c *conn) Flush(pos sql.CmdPos) error {
 // maybeFlush flushes the buffer to the network connection if it exceeded
 // connResultsBufferSizeBytes.
 func (c *conn) maybeFlush(pos sql.CmdPos) (bool, error) {
-	if c.writerState.buf.Len() <= 1024 { //TODO:CHECK THIS OUT I HAVE NO IDEA WHAT IT DOES
+	if c.writerState.buf.Len() <= 1024 { // TODO:CHECK THIS OUT I HAVE NO IDEA WHAT IT DOES
 		return false, nil
 	}
 	return true, c.Flush(pos)
@@ -1169,7 +1164,7 @@ func (r *pgwireReader) ReadByte() (byte, error) {
 // name, if different from the one given initially. Note: at this
 // point the sql.Session does not exist yet! If need exists to access the
 // database to look up authentication data, use the internal executor.
-func (c *conn) handleAuthentication(insecure bool) error { //ctx context.Context,
+func (c *conn) handleAuthentication(insecure bool) error { // ctx context.Context,
 
 	sendError := func(err error) error {
 		_ /* err */ = writeErr(err, c.msgBuilder, c.conn)
@@ -1178,7 +1173,7 @@ func (c *conn) handleAuthentication(insecure bool) error { //ctx context.Context
 
 	// Check that the requested user exists and retrieve the hashed
 	// password in case password authentication is needed.
-	exists, _ :=  true, []byte("123")/*sql.GetUserHashedPassword(
+	exists, _ := true, []byte("123") /*sql.GetUserHashedPassword(
 		ctx, c.execCfg, &c.metrics.SQLMemMetrics, c.sessionArgs.User,
 	)*/
 	// if err != nil {

@@ -44,38 +44,46 @@ func (ex *connExecutor) run() error {
 			}
 			return err
 		}
-		fmt.Printf("[pos:%d] executing %s\n", pos, cmd)
+		fmt.Printf("[pos:%d] executing %s \n", pos, cmd)
 		var res ResultBase
 		switch tcmd := cmd.(type) {
 		case ExecStmt:
-
+			fmt.Println("TYPE: ExecStmt")
 		case ExecPortal:
 			// ExecPortal is handled like ExecStmt, except that the placeholder info
 			// is taken from the portal.
-
+			fmt.Println("TYPE: ExecPortal")
 		case PrepareStmt:
+			fmt.Println("TYPE: PrepareStmt")
 			fmt.Println("Len:", tcmd.PGQuery.Query)
 			res = ex.clientComm.CreatePrepareResult(pos)
 		case DescribeStmt:
-
+			fmt.Println("TYPE: DescribeStmt")
 		case BindStmt:
+			fmt.Println("TYPE: BindStmt")
 			res = ex.clientComm.CreateBindResult(pos)
 		case DeletePreparedStmt:
+			fmt.Println("TYPE: DeletePreparedStmt")
 			res = ex.clientComm.CreateDeleteResult(pos)
 		case SendError:
+			fmt.Println("TYPE: SendError")
 			res = ex.clientComm.CreateErrorResult(pos)
 		case Sync:
+			fmt.Println("TYPE: Sync")
 			// Note that the Sync result will flush results to the network connection.
 			res = ex.clientComm.CreateSyncResult(pos)
 		case CopyIn:
+			fmt.Println("TYPE: CopyIn")
 			res = ex.clientComm.CreateCopyInResult(pos)
 		case DrainRequest:
+			fmt.Println("TYPE: DrainRequest")
 			// We received a drain request. We terminate immediately if we're not in a
 			// transaction. If we are in a transaction, we'll finish as soon as a Sync
 			// command (i.e. the end of a batch) is processed outside of a
 			// transaction.
 
 		case Flush:
+			fmt.Println("TYPE: Flush")
 			// Closing the res will flush the connection's buffer.
 			res = ex.clientComm.CreateFlushResult(pos)
 		default:

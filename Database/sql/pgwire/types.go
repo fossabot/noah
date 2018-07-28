@@ -15,9 +15,12 @@
 package pgwire
 
 import (
-
 	"github.com/lib/pq/oid"
 
+	"github.com/pkg/errors"
+	"github.com/cockroachdb/cockroach/pkg/sql/sem/tree"
+	"time"
+	"github.com/cockroachdb/cockroach/pkg/util/log"
 )
 
 // pgType contains type metadata used in RowDescription messages.
@@ -48,140 +51,141 @@ type pgType struct {
 
 const secondsInDay = 24 * 60 * 60
 
-// func (b *writeBuffer) writeTextDatum(
-// 	ctx context.Context, d tree.Datum, sessionLoc *time.Location, be sessiondata.BytesEncodeFormat,
-// ) {
-// 	if log.V(2) {
-// 		log.Infof(ctx, "pgwire writing TEXT datum of type: %T, %#v", d, d)
-// 	}
-// 	if d == tree.DNull {
-// 		// NULL is encoded as -1; all other values have a length prefix.
-// 		b.putInt32(-1)
-// 		return
-// 	}
-//
-// 	switch _ := tree.UnwrapDatum(nil, d).(type) {
-// 	// case *tree.DBool:
-// 	// 	b.putInt32(1)
-// 	// 	if *v {
-// 	// 		b.writeByte('t')
-// 	// 	} else {
-// 	// 		b.writeByte('f')
-// 	// 	}
-// 	//
-// 	// case *tree.DInt:
-// 	// 	// Start at offset 4 because `putInt32` clobbers the first 4 bytes.
-// 	// 	s := strconv.AppendInt(b.putbuf[4:4], int64(*v), 10)
-// 	// 	b.putInt32(int32(len(s)))
-// 	// 	b.write(s)
-// 	//
-// 	// case *tree.DFloat:
-// 	// 	// Start at offset 4 because `putInt32` clobbers the first 4 bytes.
-// 	// 	s := strconv.AppendFloat(b.putbuf[4:4], float64(*v), 'f', -1, 64)
-// 	// 	b.putInt32(int32(len(s)))
-// 	// 	b.write(s)
-// 	//
-// 	// case *tree.DDecimal:
-// 	// 	b.writeLengthPrefixedDatum(v)
-// 	//
-// 	// case *tree.DBytes:
-// 	// 	result := lex.EncodeByteArrayToRawBytes(string(*v), be, false /* skipHexPrefix */)
-// 	// 	b.putInt32(int32(len(result)))
-// 	// 	b.write([]byte(result))
-// 	//
-// 	// case *tree.DUuid:
-// 	// 	b.writeLengthPrefixedString(v.UUID.String())
-// 	//
-// 	// case *tree.DIPAddr:
-// 	// 	b.writeLengthPrefixedString(v.IPAddr.String())
-// 	//
-// 	// case *tree.DString:
-// 	// 	b.writeLengthPrefixedString(string(*v))
-// 	//
-// 	// case *tree.DCollatedString:
-// 	// 	b.writeLengthPrefixedString(v.Contents)
-// 	//
-// 	// case *tree.DDate:
-// 	// 	t := timeutil.Unix(int64(*v)*secondsInDay, 0)
-// 	// 	// Start at offset 4 because `putInt32` clobbers the first 4 bytes.
-// 	// 	s := formatTs(t, nil, b.putbuf[4:4])
-// 	// 	b.putInt32(int32(len(s)))
-// 	// 	b.write(s)
-// 	//
-// 	// case *tree.DTime:
-// 	// 	// Start at offset 4 because `putInt32` clobbers the first 4 bytes.
-// 	// 	s := formatTime(timeofday.TimeOfDay(*v), b.putbuf[4:4])
-// 	// 	b.putInt32(int32(len(s)))
-// 	// 	b.write(s)
-// 	//
-// 	// case *tree.DTimeTZ:
-// 	// 	// Start at offset 4 because `putInt32` clobbers the first 4 bytes.
-// 	// 	s := formatTimeTZ(v, sessionLoc, b.putbuf[4:4])
-// 	// 	b.putInt32(int32(len(s)))
-// 	// 	b.write(s)
-// 	//
-// 	// case *tree.DTimestamp:
-// 	// 	// Start at offset 4 because `putInt32` clobbers the first 4 bytes.
-// 	// 	s := formatTs(v.Time, nil, b.putbuf[4:4])
-// 	// 	b.putInt32(int32(len(s)))
-// 	// 	b.write(s)
-// 	//
-// 	// case *tree.DTimestampTZ:
-// 	// 	// Start at offset 4 because `putInt32` clobbers the first 4 bytes.
-// 	// 	s := formatTs(v.Time, sessionLoc, b.putbuf[4:4])
-// 	// 	b.putInt32(int32(len(s)))
-// 	// 	b.write(s)
-// 	//
-// 	// case *tree.DInterval:
-// 	// 	b.writeLengthPrefixedString(v.ValueAsString())
-// 	//
-// 	// case *tree.DJSON:
-// 	// 	b.writeLengthPrefixedString(v.JSON.String())
-// 	//
-// 	// case *tree.DTuple:
-// 	// 	b.variablePutbuf.WriteString("(")
-// 	// 	for i, d := range v.D {
-// 	// 		if i > 0 {
-// 	// 			b.variablePutbuf.WriteString(",")
-// 	// 		}
-// 	// 		if d == tree.DNull {
-// 	// 			// Emit nothing on NULL.
-// 	// 			continue
-// 	// 		}
-// 	// 		b.simpleFormatter.FormatNode(d)
-// 	// 	}
-// 	// 	b.variablePutbuf.WriteString(")")
-// 	// 	b.writeLengthPrefixedVariablePutbuf()
-// 	//
-// 	// case *tree.DArray:
-// 	// 	// Arrays are serialized as a string of comma-separated values, surrounded
-// 	// 	// by braces.
-// 	// 	begin, sep, end := "{", ",", "}"
-// 	//
-// 	// 	switch d.ResolvedType().Oid() {
-// 	// 	case oid.T_int2vector, oid.T_oidvector:
-// 	// 		// vectors are serialized as a string of space-separated values.
-// 	// 		begin, sep, end = "", " ", ""
-// 	// 	}
-// 	//
-// 	// 	b.variablePutbuf.WriteString(begin)
-// 	// 	for i, d := range v.Array {
-// 	// 		if i > 0 {
-// 	// 			b.variablePutbuf.WriteString(sep)
-// 	// 		}
-// 	// 		// TODO(justin): add a test for nested arrays.
-// 	// 		b.arrayFormatter.FormatNode(d)
-// 	// 	}
-// 	// 	b.variablePutbuf.WriteString(end)
-// 	// 	b.writeLengthPrefixedVariablePutbuf()
-// 	//
-// 	// case *tree.DOid:
-// 	// 	b.writeLengthPrefixedDatum(v)
-//
-// 	default:
-// 		b.setError(errors.Errorf("unsupported type %T", d))
-// 	}
-// }
+func (b *writeBuffer) writeTextDatum(
+	ctx context.Context, d tree.Datum, sessionLoc *time.Location, be sessiondata.BytesEncodeFormat,
+) {
+	if log.V(2) {
+		log.Infof(ctx, "pgwire writing TEXT datum of type: %T, %#v", d, d)
+	}
+	if d == tree.DNull {
+		// NULL is encoded as -1; all other values have a length prefix.
+		b.putInt32(-1)
+		return
+	}
+
+	switch _ := tree.UnwrapDatum(nil, d).(type) {
+	// case *tree.DBool:
+	// 	b.putInt32(1)
+	// 	if *v {
+	// 		b.writeByte('t')
+	// 	} else {
+	// 		b.writeByte('f')
+	// 	}
+	//
+	// case *tree.DInt:
+	// 	// Start at offset 4 because `putInt32` clobbers the first 4 bytes.
+	// 	s := strconv.AppendInt(b.putbuf[4:4], int64(*v), 10)
+	// 	b.putInt32(int32(len(s)))
+	// 	b.write(s)
+	//
+	// case *tree.DFloat:
+	// 	// Start at offset 4 because `putInt32` clobbers the first 4 bytes.
+	// 	s := strconv.AppendFloat(b.putbuf[4:4], float64(*v), 'f', -1, 64)
+	// 	b.putInt32(int32(len(s)))
+	// 	b.write(s)
+	//
+	// case *tree.DDecimal:
+	// 	b.writeLengthPrefixedDatum(v)
+	//
+	// case *tree.DBytes:
+	// 	result := lex.EncodeByteArrayToRawBytes(string(*v), be, false /* skipHexPrefix */)
+	// 	b.putInt32(int32(len(result)))
+	// 	b.write([]byte(result))
+	//
+	// case *tree.DUuid:
+	// 	b.writeLengthPrefixedString(v.UUID.String())
+	//
+	// case *tree.DIPAddr:
+	// 	b.writeLengthPrefixedString(v.IPAddr.String())
+	//
+	// case *tree.DString:
+	// 	b.writeLengthPrefixedString(string(*v))
+	//
+	// case *tree.DCollatedString:
+	// 	b.writeLengthPrefixedString(v.Contents)
+	//
+	// case *tree.DDate:
+	// 	t := timeutil.Unix(int64(*v)*secondsInDay, 0)
+	// 	// Start at offset 4 because `putInt32` clobbers the first 4 bytes.
+	// 	s := formatTs(t, nil, b.putbuf[4:4])
+	// 	b.putInt32(int32(len(s)))
+	// 	b.write(s)
+	//
+	// case *tree.DTime:
+	// 	// Start at offset 4 because `putInt32` clobbers the first 4 bytes.
+	// 	s := formatTime(timeofday.TimeOfDay(*v), b.putbuf[4:4])
+	// 	b.putInt32(int32(len(s)))
+	// 	b.write(s)
+	//
+	// case *tree.DTimeTZ:
+	// 	// Start at offset 4 because `putInt32` clobbers the first 4 bytes.
+	// 	s := formatTimeTZ(v, sessionLoc, b.putbuf[4:4])
+	// 	b.putInt32(int32(len(s)))
+	// 	b.write(s)
+	//
+	// case *tree.DTimestamp:
+	// 	// Start at offset 4 because `putInt32` clobbers the first 4 bytes.
+	// 	s := formatTs(v.Time, nil, b.putbuf[4:4])
+	// 	b.putInt32(int32(len(s)))
+	// 	b.write(s)
+	//
+	// case *tree.DTimestampTZ:
+	// 	// Start at offset 4 because `putInt32` clobbers the first 4 bytes.
+	// 	s := formatTs(v.Time, sessionLoc, b.putbuf[4:4])
+	// 	b.putInt32(int32(len(s)))
+	// 	b.write(s)
+	//
+	// case *tree.DInterval:
+	// 	b.writeLengthPrefixedString(v.ValueAsString())
+	//
+	// case *tree.DJSON:
+	// 	b.writeLengthPrefixedString(v.JSON.String())
+	//
+	// case *tree.DTuple:
+	// 	b.variablePutbuf.WriteString("(")
+	// 	for i, d := range v.D {
+	// 		if i > 0 {
+	// 			b.variablePutbuf.WriteString(",")
+	// 		}
+	// 		if d == tree.DNull {
+	// 			// Emit nothing on NULL.
+	// 			continue
+	// 		}
+	// 		b.simpleFormatter.FormatNode(d)
+	// 	}
+	// 	b.variablePutbuf.WriteString(")")
+	// 	b.writeLengthPrefixedVariablePutbuf()
+	//
+	// case *tree.DArray:
+	// 	// Arrays are serialized as a string of comma-separated values, surrounded
+	// 	// by braces.
+	// 	begin, sep, end := "{", ",", "}"
+	//
+	// 	switch d.ResolvedType().Oid() {
+	// 	case oid.T_int2vector, oid.T_oidvector:
+	// 		// vectors are serialized as a string of space-separated values.
+	// 		begin, sep, end = "", " ", ""
+	// 	}
+	//
+	// 	b.variablePutbuf.WriteString(begin)
+	// 	for i, d := range v.Array {
+	// 		if i > 0 {
+	// 			b.variablePutbuf.WriteString(sep)
+	// 		}
+	// 		// TODO(justin): add a test for nested arrays.
+	// 		b.arrayFormatter.FormatNode(d)
+	// 	}
+	// 	b.variablePutbuf.WriteString(end)
+	// 	b.writeLengthPrefixedVariablePutbuf()
+	//
+	// case *tree.DOid:
+	// 	b.writeLengthPrefixedDatum(v)
+
+	default:
+		b.setError(errors.Errorf("unsupported type %T", d))
+	}
+}
+
 //
 // func (b *writeBuffer) writeBinaryDatum(
 // 	ctx context.Context, d tree.Datum, sessionLoc *time.Location,
