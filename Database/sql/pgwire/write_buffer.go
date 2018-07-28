@@ -49,8 +49,8 @@ type writeBuffer struct {
 func newWriteBuffer() *writeBuffer {
 	b := &writeBuffer{
 	}
-	//b.simpleFormatter = tree.MakeFmtCtx(&b.variablePutbuf, tree.FmtSimple)
-	//b.arrayFormatter = tree.MakeFmtCtx(&b.variablePutbuf, tree.FmtArrays)
+	b.simpleFormatter = tree.MakeFmtCtx(&b.variablePutbuf, tree.FmtSimple)
+	b.arrayFormatter = tree.MakeFmtCtx(&b.variablePutbuf, tree.FmtArrays)
 	return b
 }
 
