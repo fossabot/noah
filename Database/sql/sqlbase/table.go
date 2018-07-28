@@ -15,23 +15,23 @@
 package sqlbase
 
 import (
-	"context"
 	"fmt"
-	"sort"
 	"time"
 	"unicode/utf8"
 
 	"github.com/pkg/errors"
 
 	"github.com/cockroachdb/apd"
-	"github.com/cockroachdb/cockroach/pkg/keys"
-	"github.com/cockroachdb/cockroach/pkg/roachpb"
 	"github.com/Ready-Stock/Noah/Database/sql/coltypes"
 	"github.com/Ready-Stock/Noah/Database/sql/sem/types"
 	"github.com/Ready-Stock/Noah/Database/sql/sem/tree"
 	"github.com/Ready-Stock/Noah/Database/sql/pgwire/pgerror"
 	"github.com/Ready-Stock/Noah/Database/util/encoding"
 	"github.com/Ready-Stock/Noah/Database/util/timeofday"
+	"github.com/Ready-Stock/Noah/Database/util/json"
+	"github.com/Ready-Stock/Noah/Database/util/ipaddr"
+	"github.com/Ready-Stock/Noah/Database/util/uuid"
+	"github.com/Ready-Stock/Noah/Database/util/duration"
 )
 
 // aliasToVisibleTypeMap maps type aliases to ColumnType_VisibleType variants
@@ -397,26 +397,26 @@ func EncodeColumns(
 	return key, containsNull, nil
 }
 
-func appendEncDatumsToKey(
-	key roachpb.Key,
-	types []ColumnType,
-	values EncDatumRow,
-	dirs []IndexDescriptor_Direction,
-	alloc *DatumAlloc,
-) (roachpb.Key, error) {
-	for i, val := range values {
-		encoding := DatumEncoding_ASCENDING_KEY
-		if dirs[i] == IndexDescriptor_DESC {
-			encoding = DatumEncoding_DESCENDING_KEY
-		}
-		var err error
-		key, err = val.Encode(&types[i], alloc, encoding, key)
-		if err != nil {
-			return nil, err
-		}
-	}
-	return key, nil
-}
+// func appendEncDatumsToKey(
+// 	key roachpb.Key,
+// 	types []ColumnType,
+// 	values EncDatumRow,
+// 	dirs []IndexDescriptor_Direction,
+// 	alloc *DatumAlloc,
+// ) (roachpb.Key, error) {
+// 	for i, val := range values {
+// 		encoding := DatumEncoding_ASCENDING_KEY
+// 		if dirs[i] == IndexDescriptor_DESC {
+// 			encoding = DatumEncoding_DESCENDING_KEY
+// 		}
+// 		var err error
+// 		key, err = val.Encode(&types[i], alloc, encoding, key)
+// 		if err != nil {
+// 			return nil, err
+// 		}
+// 	}
+// 	return key, nil
+// }
 
 // MakeKeyFromEncDatums creates a key by concatenating keyPrefix with the
 // encodings of the given EncDatum values. The values correspond to
@@ -429,53 +429,53 @@ func appendEncDatumsToKey(
 //
 // Note that ExtraColumnIDs are not encoded, so the result isn't always a
 // full index key.
-func MakeKeyFromEncDatums(
-	types []ColumnType,
-	values EncDatumRow,
-	tableDesc *TableDescriptor,
-	index *IndexDescriptor,
-	keyPrefix []byte,
-	alloc *DatumAlloc,
-) (roachpb.Key, error) {
-	dirs := index.ColumnDirections
-	// Values may be a prefix of the index columns.
-	if len(values) > len(dirs) {
-		return nil, errors.Errorf("%d values, %d directions", len(values), len(dirs))
-	}
-	if len(values) != len(types) {
-		return nil, errors.Errorf("%d values, %d types", len(values), len(types))
-	}
-	// We know we will append to the key which will cause the capacity to grow
-	// so make it bigger from the get-go.
-	key := make(roachpb.Key, len(keyPrefix), len(keyPrefix)*2)
-	copy(key, keyPrefix)
-
-	if len(index.Interleave.Ancestors) > 0 {
-		for i, ancestor := range index.Interleave.Ancestors {
-			// The first ancestor is assumed to already be encoded in keyPrefix.
-			if i != 0 {
-				key = encoding.EncodeUvarintAscending(key, uint64(ancestor.TableID))
-				key = encoding.EncodeUvarintAscending(key, uint64(ancestor.IndexID))
-			}
-
-			length := int(ancestor.SharedPrefixLen)
-			var err error
-			key, err = appendEncDatumsToKey(key, types[:length], values[:length], dirs[:length], alloc)
-			if err != nil {
-				return nil, err
-			}
-			types, values, dirs = types[length:], values[length:], dirs[length:]
-
-			// Each ancestor is separated by an interleaved
-			// sentinel (0xfe).
-			key = encoding.EncodeInterleavedSentinel(key)
-		}
-
-		key = encoding.EncodeUvarintAscending(key, uint64(tableDesc.ID))
-		key = encoding.EncodeUvarintAscending(key, uint64(index.ID))
-	}
-	return appendEncDatumsToKey(key, types, values, dirs, alloc)
-}
+// func MakeKeyFromEncDatums(
+// 	types []ColumnType,
+// 	values EncDatumRow,
+// 	tableDesc *TableDescriptor,
+// 	index *IndexDescriptor,
+// 	keyPrefix []byte,
+// 	alloc *DatumAlloc,
+// ) (roachpb.Key, error) {
+// 	dirs := index.ColumnDirections
+// 	// Values may be a prefix of the index columns.
+// 	if len(values) > len(dirs) {
+// 		return nil, errors.Errorf("%d values, %d directions", len(values), len(dirs))
+// 	}
+// 	if len(values) != len(types) {
+// 		return nil, errors.Errorf("%d values, %d types", len(values), len(types))
+// 	}
+// 	// We know we will append to the key which will cause the capacity to grow
+// 	// so make it bigger from the get-go.
+// 	key := make(roachpb.Key, len(keyPrefix), len(keyPrefix)*2)
+// 	copy(key, keyPrefix)
+//
+// 	if len(index.Interleave.Ancestors) > 0 {
+// 		for i, ancestor := range index.Interleave.Ancestors {
+// 			// The first ancestor is assumed to already be encoded in keyPrefix.
+// 			if i != 0 {
+// 				key = encoding.EncodeUvarintAscending(key, uint64(ancestor.TableID))
+// 				key = encoding.EncodeUvarintAscending(key, uint64(ancestor.IndexID))
+// 			}
+//
+// 			length := int(ancestor.SharedPrefixLen)
+// 			var err error
+// 			key, err = appendEncDatumsToKey(key, types[:length], values[:length], dirs[:length], alloc)
+// 			if err != nil {
+// 				return nil, err
+// 			}
+// 			types, values, dirs = types[length:], values[length:], dirs[length:]
+//
+// 			// Each ancestor is separated by an interleaved
+// 			// sentinel (0xfe).
+// 			key = encoding.EncodeInterleavedSentinel(key)
+// 		}
+//
+// 		key = encoding.EncodeUvarintAscending(key, uint64(tableDesc.ID))
+// 		key = encoding.EncodeUvarintAscending(key, uint64(index.ID))
+// 	}
+// 	return appendEncDatumsToKey(key, types, values, dirs, alloc)
+// }
 
 // MakeFullKeyFromEncDatums creates a key by concatenating keyPrefix with
 // the encodings of the explicit EncDatum values followed by the encodings of
@@ -486,46 +486,46 @@ func MakeKeyFromEncDatums(
 // specifying the ExtraColumnIDs, so the result may not be a full key. This
 // function allows you to create a key by specifying the values for the
 // ExtraColumnID values as the implicitValues.
-func MakeFullKeyFromEncDatums(
-	explicitTypes []ColumnType,
-	explicitValues EncDatumRow,
-	implicitValues EncDatumRow,
-	tableDesc *TableDescriptor,
-	index *IndexDescriptor,
-	keyPrefix []byte,
-	alloc *DatumAlloc,
-) (roachpb.Key, error) {
-	prefix, err := MakeKeyFromEncDatums(explicitTypes, explicitValues, tableDesc, index, keyPrefix, alloc)
-	if err != nil {
-		return nil, err
-	}
-
-	primaryIndex := tableDesc.PrimaryIndex
-	extraColumns := index.ExtraColumnIDs
-	// PrimaryImplicitIdxs maps the position of the implicit column in the key
-	// to the appropriate column in the primary index.
-	primaryImplicitIdxs := make([]int, len(extraColumns))
-	for i, id := range extraColumns {
-		for j, primaryID := range primaryIndex.ColumnIDs {
-			if id == primaryID {
-				primaryImplicitIdxs[i] = j
-			}
-		}
-	}
-	implicitDirs := make([]IndexDescriptor_Direction, len(primaryImplicitIdxs))
-	for i, idx := range primaryImplicitIdxs {
-		implicitDirs[i] = primaryIndex.ColumnDirections[idx]
-	}
-	implicitTypes := make([]ColumnType, len(extraColumns))
-	for i, id := range extraColumns {
-		implicitTypes[i] = tableDesc.ColumnTypes()[id]
-	}
-	key, err := appendEncDatumsToKey(prefix, implicitTypes, implicitValues, implicitDirs, alloc)
-	if err != nil {
-		return nil, err
-	}
-	return key, nil
-}
+// func MakeFullKeyFromEncDatums(
+// 	explicitTypes []ColumnType,
+// 	explicitValues EncDatumRow,
+// 	implicitValues EncDatumRow,
+// 	tableDesc *TableDescriptor,
+// 	index *IndexDescriptor,
+// 	keyPrefix []byte,
+// 	alloc *DatumAlloc,
+// ) (roachpb.Key, error) {
+// 	prefix, err := MakeKeyFromEncDatums(explicitTypes, explicitValues, tableDesc, index, keyPrefix, alloc)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+//
+// 	primaryIndex := tableDesc.PrimaryIndex
+// 	extraColumns := index.ExtraColumnIDs
+// 	// PrimaryImplicitIdxs maps the position of the implicit column in the key
+// 	// to the appropriate column in the primary index.
+// 	primaryImplicitIdxs := make([]int, len(extraColumns))
+// 	for i, id := range extraColumns {
+// 		for j, primaryID := range primaryIndex.ColumnIDs {
+// 			if id == primaryID {
+// 				primaryImplicitIdxs[i] = j
+// 			}
+// 		}
+// 	}
+// 	implicitDirs := make([]IndexDescriptor_Direction, len(primaryImplicitIdxs))
+// 	for i, idx := range primaryImplicitIdxs {
+// 		implicitDirs[i] = primaryIndex.ColumnDirections[idx]
+// 	}
+// 	implicitTypes := make([]ColumnType, len(extraColumns))
+// 	for i, id := range extraColumns {
+// 		implicitTypes[i] = tableDesc.ColumnTypes()[id]
+// 	}
+// 	key, err := appendEncDatumsToKey(prefix, implicitTypes, implicitValues, implicitDirs, alloc)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	return key, nil
+// }
 
 // EncodeDatum encodes a datum (order-preserving encoding, suitable for keys).
 func EncodeDatum(b []byte, d tree.Datum) ([]byte, error) {
@@ -959,106 +959,106 @@ func DecodeKeyVals(
 // key/value entry, including secondary indexes.
 //
 // Don't use this function in the scan "hot path".
-func ExtractIndexKey(
-	a *DatumAlloc, tableDesc *TableDescriptor, entry client.KeyValue,
-) (roachpb.Key, error) {
-	indexID, key, err := DecodeIndexKeyPrefix(tableDesc, entry.Key)
-	if err != nil {
-		return nil, err
-	}
-	if indexID == tableDesc.PrimaryIndex.ID {
-		return entry.Key, nil
-	}
-
-	index, err := tableDesc.FindIndexByID(indexID)
-	if err != nil {
-		return nil, err
-	}
-
-	// Extract the values for index.ColumnIDs.
-	indexTypes, err := GetColumnTypes(tableDesc, index.ColumnIDs)
-	if err != nil {
-		return nil, err
-	}
-	values := make([]EncDatum, len(index.ColumnIDs))
-	dirs := make([]encoding.Direction, len(index.ColumnIDs))
-	for i, dir := range index.ColumnDirections {
-		dirs[i], err = dir.ToEncodingDirection()
-		if err != nil {
-			return nil, err
-		}
-	}
-	if len(index.Interleave.Ancestors) > 0 {
-		// TODO(dan): In the interleaved index case, we parse the key twice; once to
-		// find the index id so we can look up the descriptor, and once to extract
-		// the values. Only parse once.
-		var ok bool
-		_, ok, err = DecodeIndexKey(tableDesc, index, indexTypes, values, dirs, entry.Key)
-		if err != nil {
-			return nil, err
-		}
-		if !ok {
-			return nil, errors.Errorf("descriptor did not match key")
-		}
-	} else {
-		key, err = DecodeKeyVals(indexTypes, values, dirs, key)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	// Extract the values for index.ExtraColumnIDs
-	extraTypes, err := GetColumnTypes(tableDesc, index.ExtraColumnIDs)
-	if err != nil {
-		return nil, err
-	}
-	extraValues := make([]EncDatum, len(index.ExtraColumnIDs))
-	dirs = make([]encoding.Direction, len(index.ExtraColumnIDs))
-	for i := range index.ExtraColumnIDs {
-		// Implicit columns are always encoded Ascending.
-		dirs[i] = encoding.Ascending
-	}
-	extraKey := key
-	if index.Unique {
-		extraKey, err = entry.Value.GetBytes()
-		if err != nil {
-			return nil, err
-		}
-	}
-	_, err = DecodeKeyVals(extraTypes, extraValues, dirs, extraKey)
-	if err != nil {
-		return nil, err
-	}
-
-	// Encode the index key from its components.
-	colMap := make(map[ColumnID]int)
-	for i, columnID := range index.ColumnIDs {
-		colMap[columnID] = i
-	}
-	for i, columnID := range index.ExtraColumnIDs {
-		colMap[columnID] = i + len(index.ColumnIDs)
-	}
-	indexKeyPrefix := MakeIndexKeyPrefix(tableDesc, tableDesc.PrimaryIndex.ID)
-
-	decodedValues := make([]tree.Datum, len(values)+len(extraValues))
-	for i, value := range values {
-		err := value.EnsureDecoded(&indexTypes[i], a)
-		if err != nil {
-			return nil, err
-		}
-		decodedValues[i] = value.Datum
-	}
-	for i, value := range extraValues {
-		err := value.EnsureDecoded(&extraTypes[i], a)
-		if err != nil {
-			return nil, err
-		}
-		decodedValues[len(values)+i] = value.Datum
-	}
-	indexKey, _, err := EncodeIndexKey(
-		tableDesc, &tableDesc.PrimaryIndex, colMap, decodedValues, indexKeyPrefix)
-	return indexKey, err
-}
+// func ExtractIndexKey(
+// 	a *DatumAlloc, tableDesc *TableDescriptor, entry client.KeyValue,
+// ) (roachpb.Key, error) {
+// 	indexID, key, err := DecodeIndexKeyPrefix(tableDesc, entry.Key)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	if indexID == tableDesc.PrimaryIndex.ID {
+// 		return entry.Key, nil
+// 	}
+//
+// 	index, err := tableDesc.FindIndexByID(indexID)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+//
+// 	// Extract the values for index.ColumnIDs.
+// 	indexTypes, err := GetColumnTypes(tableDesc, index.ColumnIDs)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	values := make([]EncDatum, len(index.ColumnIDs))
+// 	dirs := make([]encoding.Direction, len(index.ColumnIDs))
+// 	for i, dir := range index.ColumnDirections {
+// 		dirs[i], err = dir.ToEncodingDirection()
+// 		if err != nil {
+// 			return nil, err
+// 		}
+// 	}
+// 	if len(index.Interleave.Ancestors) > 0 {
+// 		// TODO(dan): In the interleaved index case, we parse the key twice; once to
+// 		// find the index id so we can look up the descriptor, and once to extract
+// 		// the values. Only parse once.
+// 		var ok bool
+// 		_, ok, err = DecodeIndexKey(tableDesc, index, indexTypes, values, dirs, entry.Key)
+// 		if err != nil {
+// 			return nil, err
+// 		}
+// 		if !ok {
+// 			return nil, errors.Errorf("descriptor did not match key")
+// 		}
+// 	} else {
+// 		key, err = DecodeKeyVals(indexTypes, values, dirs, key)
+// 		if err != nil {
+// 			return nil, err
+// 		}
+// 	}
+//
+// 	// Extract the values for index.ExtraColumnIDs
+// 	extraTypes, err := GetColumnTypes(tableDesc, index.ExtraColumnIDs)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	extraValues := make([]EncDatum, len(index.ExtraColumnIDs))
+// 	dirs = make([]encoding.Direction, len(index.ExtraColumnIDs))
+// 	for i := range index.ExtraColumnIDs {
+// 		// Implicit columns are always encoded Ascending.
+// 		dirs[i] = encoding.Ascending
+// 	}
+// 	extraKey := key
+// 	if index.Unique {
+// 		extraKey, err = entry.Value.GetBytes()
+// 		if err != nil {
+// 			return nil, err
+// 		}
+// 	}
+// 	_, err = DecodeKeyVals(extraTypes, extraValues, dirs, extraKey)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+//
+// 	// Encode the index key from its components.
+// 	colMap := make(map[ColumnID]int)
+// 	for i, columnID := range index.ColumnIDs {
+// 		colMap[columnID] = i
+// 	}
+// 	for i, columnID := range index.ExtraColumnIDs {
+// 		colMap[columnID] = i + len(index.ColumnIDs)
+// 	}
+// 	indexKeyPrefix := MakeIndexKeyPrefix(tableDesc, tableDesc.PrimaryIndex.ID)
+//
+// 	decodedValues := make([]tree.Datum, len(values)+len(extraValues))
+// 	for i, value := range values {
+// 		err := value.EnsureDecoded(&indexTypes[i], a)
+// 		if err != nil {
+// 			return nil, err
+// 		}
+// 		decodedValues[i] = value.Datum
+// 	}
+// 	for i, value := range extraValues {
+// 		err := value.EnsureDecoded(&extraTypes[i], a)
+// 		if err != nil {
+// 			return nil, err
+// 		}
+// 		decodedValues[len(values)+i] = value.Datum
+// 	}
+// 	indexKey, _, err := EncodeIndexKey(
+// 		tableDesc, &tableDesc.PrimaryIndex, colMap, decodedValues, indexKeyPrefix)
+// 	return indexKey, err
+// }
 
 const datumAllocSize = 16      // Arbitrary, could be tuned.
 const datumAllocMultiplier = 4 // Arbitrary, could be tuned.
@@ -1699,8 +1699,8 @@ func decodeUntaggedDatum(a *DatumAlloc, t types.T, buf []byte) (tree.Datum, []by
 
 // IndexEntry represents an encoded key/value for an index entry.
 type IndexEntry struct {
-	Key   roachpb.Key
-	Value roachpb.Value
+	//Key   roachpb.Key
+	//Value roachpb.Value
 }
 
 // valueEncodedColumn represents a composite or stored column of a secondary
@@ -1761,128 +1761,128 @@ func EncodeInvertedIndexTableKeys(val tree.Datum, inKey []byte) (key [][]byte, e
 // EncodeSecondaryIndex encodes key/values for a secondary index. colMap maps
 // ColumnIDs to indices in `values`. This returns a slice of IndexEntry. Forward
 // indexes will return one value, while inverted indicies can return multiple values.
-func EncodeSecondaryIndex(
-	tableDesc *TableDescriptor,
-	secondaryIndex *IndexDescriptor,
-	colMap map[ColumnID]int,
-	values []tree.Datum,
-) ([]IndexEntry, error) {
-	secondaryIndexKeyPrefix := MakeIndexKeyPrefix(tableDesc, secondaryIndex.ID)
-
-	var containsNull = false
-	var secondaryKeys [][]byte
-	var err error
-	if secondaryIndex.Type == IndexDescriptor_INVERTED {
-		secondaryKeys, err = EncodeInvertedIndexKeys(tableDesc, secondaryIndex, colMap, values, secondaryIndexKeyPrefix)
-	} else {
-		var secondaryIndexKey []byte
-		secondaryIndexKey, containsNull, err = EncodeIndexKey(
-			tableDesc, secondaryIndex, colMap, values, secondaryIndexKeyPrefix)
-
-		secondaryKeys = [][]byte{secondaryIndexKey}
-	}
-	if err != nil {
-		return []IndexEntry{}, err
-	}
-
-	// Add the extra columns - they are encoded in ascending order which is done
-	// by passing nil for the encoding directions.
-	extraKey, _, err := EncodeColumns(secondaryIndex.ExtraColumnIDs, nil,
-		colMap, values, nil)
-	if err != nil {
-		return []IndexEntry{}, err
-	}
-
-	var entries = make([]IndexEntry, len(secondaryKeys))
-	for i, key := range secondaryKeys {
-		entry := IndexEntry{Key: key}
-
-		if !secondaryIndex.Unique || containsNull {
-			// If the index is not unique or it contains a NULL value, append
-			// extraKey to the key in order to make it unique.
-			entry.Key = append(entry.Key, extraKey...)
-		}
-
-		// Index keys are considered "sentinel" keys in that they do not have a
-		// column ID suffix.
-		entry.Key = keys.MakeFamilyKey(entry.Key, 0)
-
-		var entryValue []byte
-		if secondaryIndex.Unique {
-			// Note that a unique secondary index that contains a NULL column value
-			// will have extraKey appended to the key and stored in the value. We
-			// require extraKey to be appended to the key in order to make the key
-			// unique. We could potentially get rid of the duplication here but at
-			// the expense of complicating scanNode when dealing with unique
-			// secondary indexes.
-			entryValue = extraKey
-		} else {
-			// The zero value for an index-key is a 0-length bytes value.
-			entryValue = []byte{}
-		}
-
-		var cols []valueEncodedColumn
-		for _, id := range secondaryIndex.StoreColumnIDs {
-			cols = append(cols, valueEncodedColumn{id: id, isComposite: false})
-		}
-		for _, id := range secondaryIndex.CompositeColumnIDs {
-			cols = append(cols, valueEncodedColumn{id: id, isComposite: true})
-		}
-		sort.Sort(byID(cols))
-
-		var lastColID ColumnID
-		// Composite columns have their contents at the end of the value.
-		for _, col := range cols {
-			val := findColumnValue(col.id, colMap, values)
-			if val == tree.DNull || (col.isComposite && !val.(tree.CompositeDatum).IsComposite()) {
-				continue
-			}
-			if lastColID > col.id {
-				panic(fmt.Errorf("cannot write column id %d after %d", col.id, lastColID))
-			}
-			colIDDiff := col.id - lastColID
-			lastColID = col.id
-			entryValue, err = EncodeTableValue(entryValue, colIDDiff, val, nil)
-			if err != nil {
-				return []IndexEntry{}, err
-			}
-		}
-		entry.Value.SetBytes(entryValue)
-		entries[i] = entry
-	}
-
-	return entries, nil
-}
+// func EncodeSecondaryIndex(
+// 	tableDesc *TableDescriptor,
+// 	secondaryIndex *IndexDescriptor,
+// 	colMap map[ColumnID]int,
+// 	values []tree.Datum,
+// ) ([]IndexEntry, error) {
+// 	secondaryIndexKeyPrefix := MakeIndexKeyPrefix(tableDesc, secondaryIndex.ID)
+//
+// 	var containsNull = false
+// 	var secondaryKeys [][]byte
+// 	var err error
+// 	if secondaryIndex.Type == IndexDescriptor_INVERTED {
+// 		secondaryKeys, err = EncodeInvertedIndexKeys(tableDesc, secondaryIndex, colMap, values, secondaryIndexKeyPrefix)
+// 	} else {
+// 		var secondaryIndexKey []byte
+// 		secondaryIndexKey, containsNull, err = EncodeIndexKey(
+// 			tableDesc, secondaryIndex, colMap, values, secondaryIndexKeyPrefix)
+//
+// 		secondaryKeys = [][]byte{secondaryIndexKey}
+// 	}
+// 	if err != nil {
+// 		return []IndexEntry{}, err
+// 	}
+//
+// 	// Add the extra columns - they are encoded in ascending order which is done
+// 	// by passing nil for the encoding directions.
+// 	extraKey, _, err := EncodeColumns(secondaryIndex.ExtraColumnIDs, nil,
+// 		colMap, values, nil)
+// 	if err != nil {
+// 		return []IndexEntry{}, err
+// 	}
+//
+// 	var entries = make([]IndexEntry, len(secondaryKeys))
+// 	for i, key := range secondaryKeys {
+// 		entry := IndexEntry{Key: key}
+//
+// 		if !secondaryIndex.Unique || containsNull {
+// 			// If the index is not unique or it contains a NULL value, append
+// 			// extraKey to the key in order to make it unique.
+// 			entry.Key = append(entry.Key, extraKey...)
+// 		}
+//
+// 		// Index keys are considered "sentinel" keys in that they do not have a
+// 		// column ID suffix.
+// 		entry.Key = keys.MakeFamilyKey(entry.Key, 0)
+//
+// 		var entryValue []byte
+// 		if secondaryIndex.Unique {
+// 			// Note that a unique secondary index that contains a NULL column value
+// 			// will have extraKey appended to the key and stored in the value. We
+// 			// require extraKey to be appended to the key in order to make the key
+// 			// unique. We could potentially get rid of the duplication here but at
+// 			// the expense of complicating scanNode when dealing with unique
+// 			// secondary indexes.
+// 			entryValue = extraKey
+// 		} else {
+// 			// The zero value for an index-key is a 0-length bytes value.
+// 			entryValue = []byte{}
+// 		}
+//
+// 		var cols []valueEncodedColumn
+// 		for _, id := range secondaryIndex.StoreColumnIDs {
+// 			cols = append(cols, valueEncodedColumn{id: id, isComposite: false})
+// 		}
+// 		for _, id := range secondaryIndex.CompositeColumnIDs {
+// 			cols = append(cols, valueEncodedColumn{id: id, isComposite: true})
+// 		}
+// 		sort.Sort(byID(cols))
+//
+// 		var lastColID ColumnID
+// 		// Composite columns have their contents at the end of the value.
+// 		for _, col := range cols {
+// 			val := findColumnValue(col.id, colMap, values)
+// 			if val == tree.DNull || (col.isComposite && !val.(tree.CompositeDatum).IsComposite()) {
+// 				continue
+// 			}
+// 			if lastColID > col.id {
+// 				panic(fmt.Errorf("cannot write column id %d after %d", col.id, lastColID))
+// 			}
+// 			colIDDiff := col.id - lastColID
+// 			lastColID = col.id
+// 			entryValue, err = EncodeTableValue(entryValue, colIDDiff, val, nil)
+// 			if err != nil {
+// 				return []IndexEntry{}, err
+// 			}
+// 		}
+// 		entry.Value.SetBytes(entryValue)
+// 		entries[i] = entry
+// 	}
+//
+// 	return entries, nil
+// }
 
 // EncodeSecondaryIndexes encodes key/values for the secondary indexes. colMap
 // maps ColumnIDs to indices in `values`. secondaryIndexEntries is the return
 // value (passed as a parameter so the caller can reuse between rows) and is
 // expected to be the same length as indexes.
-func EncodeSecondaryIndexes(
-	tableDesc *TableDescriptor,
-	indexes []IndexDescriptor,
-	colMap map[ColumnID]int,
-	values []tree.Datum,
-	secondaryIndexEntries []IndexEntry,
-) ([]IndexEntry, error) {
-	if len(secondaryIndexEntries) != len(indexes) {
-		panic("Length of secondaryIndexEntries is not equal to the number of indexes.")
-	}
-	for i := range indexes {
-		entries, err := EncodeSecondaryIndex(tableDesc, &indexes[i], colMap, values)
-		if err != nil {
-			return secondaryIndexEntries, err
-		}
-		secondaryIndexEntries[i] = entries[0]
-
-		// This is specifically for inverted indexes which can have more than one entry
-		// associated with them.
-		if len(entries) > 1 {
-			secondaryIndexEntries = append(secondaryIndexEntries, entries[1:]...)
-		}
-	}
-	return secondaryIndexEntries, nil
-}
+// func EncodeSecondaryIndexes(
+// 	tableDesc *TableDescriptor,
+// 	indexes []IndexDescriptor,
+// 	colMap map[ColumnID]int,
+// 	values []tree.Datum,
+// 	secondaryIndexEntries []IndexEntry,
+// ) ([]IndexEntry, error) {
+// 	if len(secondaryIndexEntries) != len(indexes) {
+// 		panic("Length of secondaryIndexEntries is not equal to the number of indexes.")
+// 	}
+// 	for i := range indexes {
+// 		entries, err := EncodeSecondaryIndex(tableDesc, &indexes[i], colMap, values)
+// 		if err != nil {
+// 			return secondaryIndexEntries, err
+// 		}
+// 		secondaryIndexEntries[i] = entries[0]
+//
+// 		// This is specifically for inverted indexes which can have more than one entry
+// 		// associated with them.
+// 		if len(entries) > 1 {
+// 			secondaryIndexEntries = append(secondaryIndexEntries, entries[1:]...)
+// 		}
+// 	}
+// 	return secondaryIndexEntries, nil
+// }
 
 // CheckColumnType verifies that a given value is compatible
 // with the type requested by the column. If the value is a
@@ -1929,129 +1929,129 @@ func checkElementType(paramType types.T, columnType ColumnType) error {
 // MarshalColumnValue returns a Go primitive value equivalent of val, of the
 // type expected by col. If val's type is incompatible with col, or if
 // col's type is not yet implemented, an error is returned.
-func MarshalColumnValue(col ColumnDescriptor, val tree.Datum) (roachpb.Value, error) {
-	var r roachpb.Value
-
-	if val == tree.DNull {
-		return r, nil
-	}
-
-	switch col.Type.SemanticType {
-	case ColumnType_BOOL:
-		if v, ok := val.(*tree.DBool); ok {
-			r.SetBool(bool(*v))
-			return r, nil
-		}
-	case ColumnType_INT:
-		if v, ok := tree.AsDInt(val); ok {
-			r.SetInt(int64(v))
-			return r, nil
-		}
-	case ColumnType_FLOAT:
-		if v, ok := val.(*tree.DFloat); ok {
-			r.SetFloat(float64(*v))
-			return r, nil
-		}
-	case ColumnType_DECIMAL:
-		if v, ok := val.(*tree.DDecimal); ok {
-			err := r.SetDecimal(&v.Decimal)
-			return r, err
-		}
-	case ColumnType_STRING, ColumnType_NAME:
-		if v, ok := tree.AsDString(val); ok {
-			r.SetString(string(v))
-			return r, nil
-		}
-	case ColumnType_BYTES:
-		if v, ok := val.(*tree.DBytes); ok {
-			r.SetString(string(*v))
-			return r, nil
-		}
-	case ColumnType_DATE:
-		if v, ok := val.(*tree.DDate); ok {
-			r.SetInt(int64(*v))
-			return r, nil
-		}
-	case ColumnType_TIME:
-		if v, ok := val.(*tree.DTime); ok {
-			r.SetInt(int64(*v))
-			return r, nil
-		}
-	case ColumnType_TIMETZ:
-		if v, ok := val.(*tree.DTimeTZ); ok {
-			r.SetInt(int64(timeofday.FromTime(v.ToTime().UTC())))
-			return r, nil
-		}
-	case ColumnType_TIMESTAMP:
-		if v, ok := val.(*tree.DTimestamp); ok {
-			r.SetTime(v.Time)
-			return r, nil
-		}
-	case ColumnType_TIMESTAMPTZ:
-		if v, ok := val.(*tree.DTimestampTZ); ok {
-			r.SetTime(v.Time)
-			return r, nil
-		}
-	case ColumnType_INTERVAL:
-		if v, ok := val.(*tree.DInterval); ok {
-			err := r.SetDuration(v.Duration)
-			return r, err
-		}
-	case ColumnType_UUID:
-		if v, ok := val.(*tree.DUuid); ok {
-			r.SetBytes(v.GetBytes())
-			return r, nil
-		}
-	case ColumnType_INET:
-		if v, ok := val.(*tree.DIPAddr); ok {
-			data := v.ToBuffer(nil)
-			r.SetBytes(data)
-			return r, nil
-		}
-	case ColumnType_JSON:
-		if v, ok := val.(*tree.DJSON); ok {
-			data, err := json.EncodeJSON(nil, v.JSON)
-			if err != nil {
-				return r, err
-			}
-			r.SetBytes(data)
-			return r, nil
-		}
-	case ColumnType_ARRAY:
-		if v, ok := val.(*tree.DArray); ok {
-			if err := checkElementType(v.ParamTyp, col.Type); err != nil {
-				return r, err
-			}
-			b, err := encodeArray(v, nil)
-			if err != nil {
-				return r, err
-			}
-			r.SetBytes(b)
-			return r, nil
-		}
-	case ColumnType_COLLATEDSTRING:
-		if col.Type.Locale == nil {
-			panic("locale is required for COLLATEDSTRING")
-		}
-		if v, ok := val.(*tree.DCollatedString); ok {
-			if v.Locale == *col.Type.Locale {
-				r.SetString(v.Contents)
-				return r, nil
-			}
-			return r, fmt.Errorf("locale %q doesn't match locale %q of column %q",
-				v.Locale, *col.Type.Locale, col.Name)
-		}
-	case ColumnType_OID:
-		if v, ok := val.(*tree.DOid); ok {
-			r.SetInt(int64(v.DInt))
-			return r, nil
-		}
-	default:
-		return r, errors.Errorf("unsupported column type: %s", col.Type.SemanticType)
-	}
-	return r, fmt.Errorf("value type %s doesn't match type %s of column %q",
-		val.ResolvedType(), col.Type.SemanticType, col.Name)
-}
+// func MarshalColumnValue(col ColumnDescriptor, val tree.Datum) (roachpb.Value, error) {
+// 	var r roachpb.Value
+//
+// 	if val == tree.DNull {
+// 		return r, nil
+// 	}
+//
+// 	switch col.Type.SemanticType {
+// 	case ColumnType_BOOL:
+// 		if v, ok := val.(*tree.DBool); ok {
+// 			r.SetBool(bool(*v))
+// 			return r, nil
+// 		}
+// 	case ColumnType_INT:
+// 		if v, ok := tree.AsDInt(val); ok {
+// 			r.SetInt(int64(v))
+// 			return r, nil
+// 		}
+// 	case ColumnType_FLOAT:
+// 		if v, ok := val.(*tree.DFloat); ok {
+// 			r.SetFloat(float64(*v))
+// 			return r, nil
+// 		}
+// 	case ColumnType_DECIMAL:
+// 		if v, ok := val.(*tree.DDecimal); ok {
+// 			err := r.SetDecimal(&v.Decimal)
+// 			return r, err
+// 		}
+// 	case ColumnType_STRING, ColumnType_NAME:
+// 		if v, ok := tree.AsDString(val); ok {
+// 			r.SetString(string(v))
+// 			return r, nil
+// 		}
+// 	case ColumnType_BYTES:
+// 		if v, ok := val.(*tree.DBytes); ok {
+// 			r.SetString(string(*v))
+// 			return r, nil
+// 		}
+// 	case ColumnType_DATE:
+// 		if v, ok := val.(*tree.DDate); ok {
+// 			r.SetInt(int64(*v))
+// 			return r, nil
+// 		}
+// 	case ColumnType_TIME:
+// 		if v, ok := val.(*tree.DTime); ok {
+// 			r.SetInt(int64(*v))
+// 			return r, nil
+// 		}
+// 	case ColumnType_TIMETZ:
+// 		if v, ok := val.(*tree.DTimeTZ); ok {
+// 			r.SetInt(int64(timeofday.FromTime(v.ToTime().UTC())))
+// 			return r, nil
+// 		}
+// 	case ColumnType_TIMESTAMP:
+// 		if v, ok := val.(*tree.DTimestamp); ok {
+// 			r.SetTime(v.Time)
+// 			return r, nil
+// 		}
+// 	case ColumnType_TIMESTAMPTZ:
+// 		if v, ok := val.(*tree.DTimestampTZ); ok {
+// 			r.SetTime(v.Time)
+// 			return r, nil
+// 		}
+// 	case ColumnType_INTERVAL:
+// 		if v, ok := val.(*tree.DInterval); ok {
+// 			err := r.SetDuration(v.Duration)
+// 			return r, err
+// 		}
+// 	case ColumnType_UUID:
+// 		if v, ok := val.(*tree.DUuid); ok {
+// 			r.SetBytes(v.GetBytes())
+// 			return r, nil
+// 		}
+// 	case ColumnType_INET:
+// 		if v, ok := val.(*tree.DIPAddr); ok {
+// 			data := v.ToBuffer(nil)
+// 			r.SetBytes(data)
+// 			return r, nil
+// 		}
+// 	case ColumnType_JSON:
+// 		if v, ok := val.(*tree.DJSON); ok {
+// 			data, err := json.EncodeJSON(nil, v.JSON)
+// 			if err != nil {
+// 				return r, err
+// 			}
+// 			r.SetBytes(data)
+// 			return r, nil
+// 		}
+// 	case ColumnType_ARRAY:
+// 		if v, ok := val.(*tree.DArray); ok {
+// 			if err := checkElementType(v.ParamTyp, col.Type); err != nil {
+// 				return r, err
+// 			}
+// 			b, err := encodeArray(v, nil)
+// 			if err != nil {
+// 				return r, err
+// 			}
+// 			r.SetBytes(b)
+// 			return r, nil
+// 		}
+// 	case ColumnType_COLLATEDSTRING:
+// 		if col.Type.Locale == nil {
+// 			panic("locale is required for COLLATEDSTRING")
+// 		}
+// 		if v, ok := val.(*tree.DCollatedString); ok {
+// 			if v.Locale == *col.Type.Locale {
+// 				r.SetString(v.Contents)
+// 				return r, nil
+// 			}
+// 			return r, fmt.Errorf("locale %q doesn't match locale %q of column %q",
+// 				v.Locale, *col.Type.Locale, col.Name)
+// 		}
+// 	case ColumnType_OID:
+// 		if v, ok := val.(*tree.DOid); ok {
+// 			r.SetInt(int64(v.DInt))
+// 			return r, nil
+// 		}
+// 	default:
+// 		return r, errors.Errorf("unsupported column type: %s", col.Type.SemanticType)
+// 	}
+// 	return r, fmt.Errorf("value type %s doesn't match type %s of column %q",
+// 		val.ResolvedType(), col.Type.SemanticType, col.Name)
+// }
 
 const hasNullFlag = 1 << 4
 
@@ -2200,128 +2200,128 @@ func encodeArrayElement(b []byte, d tree.Datum) ([]byte, error) {
 // UnmarshalColumnValue decodes the value from a key-value pair using the type
 // expected by the column. An error is returned if the value's type does not
 // match the column's type.
-func UnmarshalColumnValue(a *DatumAlloc, typ ColumnType, value roachpb.Value) (tree.Datum, error) {
-	if value.RawBytes == nil {
-		return tree.DNull, nil
-	}
-
-	switch typ.SemanticType {
-	case ColumnType_BOOL:
-		v, err := value.GetBool()
-		if err != nil {
-			return nil, err
-		}
-		return tree.MakeDBool(tree.DBool(v)), nil
-	case ColumnType_INT:
-		v, err := value.GetInt()
-		if err != nil {
-			return nil, err
-		}
-		return a.NewDInt(tree.DInt(v)), nil
-	case ColumnType_FLOAT:
-		v, err := value.GetFloat()
-		if err != nil {
-			return nil, err
-		}
-		return a.NewDFloat(tree.DFloat(v)), nil
-	case ColumnType_DECIMAL:
-		v, err := value.GetDecimal()
-		if err != nil {
-			return nil, err
-		}
-		dd := a.NewDDecimal(tree.DDecimal{Decimal: v})
-		return dd, nil
-	case ColumnType_STRING:
-		v, err := value.GetBytes()
-		if err != nil {
-			return nil, err
-		}
-		return a.NewDString(tree.DString(v)), nil
-	case ColumnType_BYTES:
-		v, err := value.GetBytes()
-		if err != nil {
-			return nil, err
-		}
-		return a.NewDBytes(tree.DBytes(v)), nil
-	case ColumnType_DATE:
-		v, err := value.GetInt()
-		if err != nil {
-			return nil, err
-		}
-		return a.NewDDate(tree.DDate(v)), nil
-	case ColumnType_TIME:
-		v, err := value.GetInt()
-		if err != nil {
-			return nil, err
-		}
-		return a.NewDTime(tree.DTime(v)), nil
-	case ColumnType_TIMETZ:
-		v, err := value.GetInt()
-		if err != nil {
-			return nil, err
-		}
-		return a.NewDTimeTZ(tree.DTimeTZ{TimeOfDay: timeofday.FromInt(v), Location: time.UTC}), nil
-	case ColumnType_TIMESTAMP:
-		v, err := value.GetTime()
-		if err != nil {
-			return nil, err
-		}
-		return a.NewDTimestamp(tree.DTimestamp{Time: v}), nil
-	case ColumnType_TIMESTAMPTZ:
-		v, err := value.GetTime()
-		if err != nil {
-			return nil, err
-		}
-		return a.NewDTimestampTZ(tree.DTimestampTZ{Time: v}), nil
-	case ColumnType_INTERVAL:
-		d, err := value.GetDuration()
-		if err != nil {
-			return nil, err
-		}
-		return a.NewDInterval(tree.DInterval{Duration: d}), nil
-	case ColumnType_COLLATEDSTRING:
-		v, err := value.GetBytes()
-		if err != nil {
-			return nil, err
-		}
-		return tree.NewDCollatedString(string(v), *typ.Locale, &a.env), nil
-	case ColumnType_UUID:
-		v, err := value.GetBytes()
-		if err != nil {
-			return nil, err
-		}
-		u, err := uuid.FromBytes(v)
-		if err != nil {
-			return nil, err
-		}
-		return a.NewDUuid(tree.DUuid{UUID: u}), nil
-	case ColumnType_INET:
-		v, err := value.GetBytes()
-		if err != nil {
-			return nil, err
-		}
-		var ipAddr ipaddr.IPAddr
-		_, err = ipAddr.FromBuffer(v)
-		if err != nil {
-			return nil, err
-		}
-		return a.NewDIPAddr(tree.DIPAddr{IPAddr: ipAddr}), nil
-	case ColumnType_NAME:
-		v, err := value.GetBytes()
-		if err != nil {
-			return nil, err
-		}
-		return a.NewDName(tree.DString(v)), nil
-	case ColumnType_OID:
-		v, err := value.GetInt()
-		if err != nil {
-			return nil, err
-		}
-		return a.NewDOid(tree.MakeDOid(tree.DInt(v))), nil
-	default:
-		return nil, errors.Errorf("unsupported column type: %s", typ.SemanticType)
-	}
-}
+// func UnmarshalColumnValue(a *DatumAlloc, typ ColumnType, value roachpb.Value) (tree.Datum, error) {
+// 	if value.RawBytes == nil {
+// 		return tree.DNull, nil
+// 	}
+//
+// 	switch typ.SemanticType {
+// 	case ColumnType_BOOL:
+// 		v, err := value.GetBool()
+// 		if err != nil {
+// 			return nil, err
+// 		}
+// 		return tree.MakeDBool(tree.DBool(v)), nil
+// 	case ColumnType_INT:
+// 		v, err := value.GetInt()
+// 		if err != nil {
+// 			return nil, err
+// 		}
+// 		return a.NewDInt(tree.DInt(v)), nil
+// 	case ColumnType_FLOAT:
+// 		v, err := value.GetFloat()
+// 		if err != nil {
+// 			return nil, err
+// 		}
+// 		return a.NewDFloat(tree.DFloat(v)), nil
+// 	case ColumnType_DECIMAL:
+// 		v, err := value.GetDecimal()
+// 		if err != nil {
+// 			return nil, err
+// 		}
+// 		dd := a.NewDDecimal(tree.DDecimal{Decimal: v})
+// 		return dd, nil
+// 	case ColumnType_STRING:
+// 		v, err := value.GetBytes()
+// 		if err != nil {
+// 			return nil, err
+// 		}
+// 		return a.NewDString(tree.DString(v)), nil
+// 	case ColumnType_BYTES:
+// 		v, err := value.GetBytes()
+// 		if err != nil {
+// 			return nil, err
+// 		}
+// 		return a.NewDBytes(tree.DBytes(v)), nil
+// 	case ColumnType_DATE:
+// 		v, err := value.GetInt()
+// 		if err != nil {
+// 			return nil, err
+// 		}
+// 		return a.NewDDate(tree.DDate(v)), nil
+// 	case ColumnType_TIME:
+// 		v, err := value.GetInt()
+// 		if err != nil {
+// 			return nil, err
+// 		}
+// 		return a.NewDTime(tree.DTime(v)), nil
+// 	case ColumnType_TIMETZ:
+// 		v, err := value.GetInt()
+// 		if err != nil {
+// 			return nil, err
+// 		}
+// 		return a.NewDTimeTZ(tree.DTimeTZ{TimeOfDay: timeofday.FromInt(v), Location: time.UTC}), nil
+// 	case ColumnType_TIMESTAMP:
+// 		v, err := value.GetTime()
+// 		if err != nil {
+// 			return nil, err
+// 		}
+// 		return a.NewDTimestamp(tree.DTimestamp{Time: v}), nil
+// 	case ColumnType_TIMESTAMPTZ:
+// 		v, err := value.GetTime()
+// 		if err != nil {
+// 			return nil, err
+// 		}
+// 		return a.NewDTimestampTZ(tree.DTimestampTZ{Time: v}), nil
+// 	case ColumnType_INTERVAL:
+// 		d, err := value.GetDuration()
+// 		if err != nil {
+// 			return nil, err
+// 		}
+// 		return a.NewDInterval(tree.DInterval{Duration: d}), nil
+// 	case ColumnType_COLLATEDSTRING:
+// 		v, err := value.GetBytes()
+// 		if err != nil {
+// 			return nil, err
+// 		}
+// 		return tree.NewDCollatedString(string(v), *typ.Locale, &a.env), nil
+// 	case ColumnType_UUID:
+// 		v, err := value.GetBytes()
+// 		if err != nil {
+// 			return nil, err
+// 		}
+// 		u, err := uuid.FromBytes(v)
+// 		if err != nil {
+// 			return nil, err
+// 		}
+// 		return a.NewDUuid(tree.DUuid{UUID: u}), nil
+// 	case ColumnType_INET:
+// 		v, err := value.GetBytes()
+// 		if err != nil {
+// 			return nil, err
+// 		}
+// 		var ipAddr ipaddr.IPAddr
+// 		_, err = ipAddr.FromBuffer(v)
+// 		if err != nil {
+// 			return nil, err
+// 		}
+// 		return a.NewDIPAddr(tree.DIPAddr{IPAddr: ipAddr}), nil
+// 	case ColumnType_NAME:
+// 		v, err := value.GetBytes()
+// 		if err != nil {
+// 			return nil, err
+// 		}
+// 		return a.NewDName(tree.DString(v)), nil
+// 	case ColumnType_OID:
+// 		v, err := value.GetInt()
+// 		if err != nil {
+// 			return nil, err
+// 		}
+// 		return a.NewDOid(tree.MakeDOid(tree.DInt(v))), nil
+// 	default:
+// 		return nil, errors.Errorf("unsupported column type: %s", typ.SemanticType)
+// 	}
+// }
 
 // CheckValueWidth checks that the width (for strings, byte arrays, and
 // bit string) and scale (for decimals) of the value fits the specified
@@ -2415,142 +2415,142 @@ type ConstraintDetail struct {
 type tableLookupFn func(ID) (*TableDescriptor, error)
 
 // GetConstraintInfo returns a summary of all constraints on the table.
-func (desc *TableDescriptor) GetConstraintInfo(
-	ctx context.Context, txn *client.Txn,
-) (map[string]ConstraintDetail, error) {
-	var tableLookup tableLookupFn
-	if txn != nil {
-		tableLookup = func(id ID) (*TableDescriptor, error) {
-			return GetTableDescFromID(ctx, txn, id)
-		}
-	}
-	return desc.collectConstraintInfo(tableLookup)
-}
+// func (desc *TableDescriptor) GetConstraintInfo(
+// 	ctx context.Context, txn *client.Txn,
+// ) (map[string]ConstraintDetail, error) {
+// 	var tableLookup tableLookupFn
+// 	if txn != nil {
+// 		tableLookup = func(id ID) (*TableDescriptor, error) {
+// 			return GetTableDescFromID(ctx, txn, id)
+// 		}
+// 	}
+// 	return desc.collectConstraintInfo(tableLookup)
+// }
 
 // GetConstraintInfoWithLookup returns a summary of all constraints on the
 // table using the provided function to fetch a TableDescriptor from an ID.
-func (desc *TableDescriptor) GetConstraintInfoWithLookup(
-	tableLookup tableLookupFn,
-) (map[string]ConstraintDetail, error) {
-	return desc.collectConstraintInfo(tableLookup)
-}
-
-// CheckUniqueConstraints returns a non-nil error if a descriptor contains two
-// constraints with the same name.
-func (desc *TableDescriptor) CheckUniqueConstraints() error {
-	_, err := desc.collectConstraintInfo(nil)
-	return err
-}
+// func (desc *TableDescriptor) GetConstraintInfoWithLookup(
+// 	tableLookup tableLookupFn,
+// ) (map[string]ConstraintDetail, error) {
+// 	return desc.collectConstraintInfo(tableLookup)
+// }
+//
+// // CheckUniqueConstraints returns a non-nil error if a descriptor contains two
+// // constraints with the same name.
+// func (desc *TableDescriptor) CheckUniqueConstraints() error {
+// 	_, err := desc.collectConstraintInfo(nil)
+// 	return err
+// }
 
 // if `tableLookup` is non-nil, provide a full summary of constraints, otherwise just
 // check that constraints have unique names.
-func (desc *TableDescriptor) collectConstraintInfo(
-	tableLookup tableLookupFn,
-) (map[string]ConstraintDetail, error) {
-	info := make(map[string]ConstraintDetail)
-
-	// Indexes provide PK, Unique and FK constraints.
-	indexes := desc.AllNonDropIndexes()
-	for i := range indexes {
-		index := &indexes[i]
-		if index.ID == desc.PrimaryIndex.ID {
-			if _, ok := info[index.Name]; ok {
-				return nil, errors.Errorf("duplicate constraint name: %q", index.Name)
-			}
-			colHiddenMap := make(map[ColumnID]bool, len(desc.Columns))
-			for i, column := range desc.Columns {
-				colHiddenMap[column.ID] = desc.Columns[i].Hidden
-			}
-			// Don't include constraints against only hidden columns.
-			// This prevents the auto-created rowid primary key index from showing up
-			// in show constraints.
-			hidden := true
-			for _, id := range index.ColumnIDs {
-				if !colHiddenMap[id] {
-					hidden = false
-					break
-				}
-			}
-			if hidden {
-				continue
-			}
-			detail := ConstraintDetail{Kind: ConstraintTypePK}
-			if tableLookup != nil {
-				detail.Columns = index.ColumnNames
-				detail.Index = index
-			}
-			info[index.Name] = detail
-		} else if index.Unique {
-			if _, ok := info[index.Name]; ok {
-				return nil, errors.Errorf("duplicate constraint name: %q", index.Name)
-			}
-			detail := ConstraintDetail{Kind: ConstraintTypeUnique}
-			if tableLookup != nil {
-				detail.Columns = index.ColumnNames
-				detail.Index = index
-			}
-			info[index.Name] = detail
-		}
-
-		if index.ForeignKey.IsSet() {
-			if _, ok := info[index.ForeignKey.Name]; ok {
-				return nil, errors.Errorf("duplicate constraint name: %q", index.ForeignKey.Name)
-			}
-			detail := ConstraintDetail{Kind: ConstraintTypeFK}
-			detail.Unvalidated = index.ForeignKey.Validity == ConstraintValidity_Unvalidated
-			numCols := len(index.ColumnIDs)
-			if index.ForeignKey.SharedPrefixLen > 0 {
-				numCols = int(index.ForeignKey.SharedPrefixLen)
-			}
-			detail.Columns = index.ColumnNames[:numCols]
-			detail.Index = index
-
-			if tableLookup != nil {
-				other, err := tableLookup(index.ForeignKey.Table)
-				if err != nil {
-					return nil, errors.Wrapf(err, "error resolving table %d referenced in foreign key",
-						index.ForeignKey.Table)
-				}
-				otherIdx, err := other.FindIndexByID(index.ForeignKey.Index)
-				if err != nil {
-					return nil, errors.Wrapf(err, "error resolving index %d in table %s referenced "+
-						"in foreign key", index.ForeignKey.Index, other.Name)
-				}
-				detail.Details = fmt.Sprintf("%s.%v", other.Name, otherIdx.ColumnNames)
-				detail.FK = &index.ForeignKey
-				detail.ReferencedTable = other
-				detail.ReferencedIndex = otherIdx
-			}
-			info[index.ForeignKey.Name] = detail
-		}
-	}
-
-	for _, c := range desc.Checks {
-		if _, ok := info[c.Name]; ok {
-			return nil, errors.Errorf("duplicate constraint name: %q", c.Name)
-		}
-		detail := ConstraintDetail{Kind: ConstraintTypeCheck}
-		detail.Unvalidated = c.Validity == ConstraintValidity_Unvalidated
-		if tableLookup != nil {
-			detail.Details = c.Expr
-			detail.CheckConstraint = c
-
-			colsUsed, err := c.ColumnsUsed(desc)
-			if err != nil {
-				return nil, errors.Wrapf(err, "error computing columns used in check constraint %q", c.Name)
-			}
-			for _, colID := range colsUsed {
-				col, err := desc.FindColumnByID(colID)
-				if err != nil {
-					return nil, errors.Wrapf(err, "error finding column %d in table %s", colID, desc.Name)
-				}
-				detail.Columns = append(detail.Columns, col.Name)
-			}
-		}
-		info[c.Name] = detail
-	}
-	return info, nil
-}
+// func (desc *TableDescriptor) collectConstraintInfo(
+// 	tableLookup tableLookupFn,
+// ) (map[string]ConstraintDetail, error) {
+// 	info := make(map[string]ConstraintDetail)
+//
+// 	// Indexes provide PK, Unique and FK constraints.
+// 	indexes := desc.AllNonDropIndexes()
+// 	for i := range indexes {
+// 		index := &indexes[i]
+// 		if index.ID == desc.PrimaryIndex.ID {
+// 			if _, ok := info[index.Name]; ok {
+// 				return nil, errors.Errorf("duplicate constraint name: %q", index.Name)
+// 			}
+// 			colHiddenMap := make(map[ColumnID]bool, len(desc.Columns))
+// 			for i, column := range desc.Columns {
+// 				colHiddenMap[column.ID] = desc.Columns[i].Hidden
+// 			}
+// 			// Don't include constraints against only hidden columns.
+// 			// This prevents the auto-created rowid primary key index from showing up
+// 			// in show constraints.
+// 			hidden := true
+// 			for _, id := range index.ColumnIDs {
+// 				if !colHiddenMap[id] {
+// 					hidden = false
+// 					break
+// 				}
+// 			}
+// 			if hidden {
+// 				continue
+// 			}
+// 			detail := ConstraintDetail{Kind: ConstraintTypePK}
+// 			if tableLookup != nil {
+// 				detail.Columns = index.ColumnNames
+// 				detail.Index = index
+// 			}
+// 			info[index.Name] = detail
+// 		} else if index.Unique {
+// 			if _, ok := info[index.Name]; ok {
+// 				return nil, errors.Errorf("duplicate constraint name: %q", index.Name)
+// 			}
+// 			detail := ConstraintDetail{Kind: ConstraintTypeUnique}
+// 			if tableLookup != nil {
+// 				detail.Columns = index.ColumnNames
+// 				detail.Index = index
+// 			}
+// 			info[index.Name] = detail
+// 		}
+//
+// 		if index.ForeignKey.IsSet() {
+// 			if _, ok := info[index.ForeignKey.Name]; ok {
+// 				return nil, errors.Errorf("duplicate constraint name: %q", index.ForeignKey.Name)
+// 			}
+// 			detail := ConstraintDetail{Kind: ConstraintTypeFK}
+// 			detail.Unvalidated = index.ForeignKey.Validity == ConstraintValidity_Unvalidated
+// 			numCols := len(index.ColumnIDs)
+// 			if index.ForeignKey.SharedPrefixLen > 0 {
+// 				numCols = int(index.ForeignKey.SharedPrefixLen)
+// 			}
+// 			detail.Columns = index.ColumnNames[:numCols]
+// 			detail.Index = index
+//
+// 			if tableLookup != nil {
+// 				other, err := tableLookup(index.ForeignKey.Table)
+// 				if err != nil {
+// 					return nil, errors.Wrapf(err, "error resolving table %d referenced in foreign key",
+// 						index.ForeignKey.Table)
+// 				}
+// 				otherIdx, err := other.FindIndexByID(index.ForeignKey.Index)
+// 				if err != nil {
+// 					return nil, errors.Wrapf(err, "error resolving index %d in table %s referenced "+
+// 						"in foreign key", index.ForeignKey.Index, other.Name)
+// 				}
+// 				detail.Details = fmt.Sprintf("%s.%v", other.Name, otherIdx.ColumnNames)
+// 				detail.FK = &index.ForeignKey
+// 				detail.ReferencedTable = other
+// 				detail.ReferencedIndex = otherIdx
+// 			}
+// 			info[index.ForeignKey.Name] = detail
+// 		}
+// 	}
+//
+// 	for _, c := range desc.Checks {
+// 		if _, ok := info[c.Name]; ok {
+// 			return nil, errors.Errorf("duplicate constraint name: %q", c.Name)
+// 		}
+// 		detail := ConstraintDetail{Kind: ConstraintTypeCheck}
+// 		detail.Unvalidated = c.Validity == ConstraintValidity_Unvalidated
+// 		if tableLookup != nil {
+// 			detail.Details = c.Expr
+// 			detail.CheckConstraint = c
+//
+// 			colsUsed, err := c.ColumnsUsed(desc)
+// 			if err != nil {
+// 				return nil, errors.Wrapf(err, "error computing columns used in check constraint %q", c.Name)
+// 			}
+// 			for _, colID := range colsUsed {
+// 				col, err := desc.FindColumnByID(colID)
+// 				if err != nil {
+// 					return nil, errors.Wrapf(err, "error finding column %d in table %s", colID, desc.Name)
+// 				}
+// 				detail.Columns = append(detail.Columns, col.Name)
+// 			}
+// 		}
+// 		info[c.Name] = detail
+// 	}
+// 	return info, nil
+// }
 
 // MakePrimaryIndexKey creates a key prefix that corresponds to a table row
 // (in the primary index); it is intended for tests.
@@ -2560,54 +2560,54 @@ func (desc *TableDescriptor) collectConstraintInfo(
 //  - bool (converts to DBool)
 //  - int (converts to DInt)
 //  - string (converts to DString)
-func MakePrimaryIndexKey(desc *TableDescriptor, vals ...interface{}) (roachpb.Key, error) {
-	index := &desc.PrimaryIndex
-	if len(vals) > len(index.ColumnIDs) {
-		return nil, errors.Errorf("got %d values, PK has %d columns", len(vals), len(index.ColumnIDs))
-	}
-	datums := make([]tree.Datum, len(vals))
-	for i, v := range vals {
-		switch v := v.(type) {
-		case bool:
-			datums[i] = tree.MakeDBool(tree.DBool(v))
-		case int:
-			datums[i] = tree.NewDInt(tree.DInt(v))
-		case string:
-			datums[i] = tree.NewDString(v)
-		case tree.Datum:
-			datums[i] = v
-		default:
-			return nil, errors.Errorf("unexpected value type %T", v)
-		}
-		// Check that the value type matches.
-		colID := index.ColumnIDs[i]
-		for _, c := range desc.Columns {
-			if c.ID == colID {
-				colTyp, err := DatumTypeToColumnType(datums[i].ResolvedType())
-				if err != nil {
-					return nil, err
-				}
-				if t := colTyp.SemanticType; t != c.Type.SemanticType {
-					return nil, errors.Errorf("column %d of type %s, got value of type %s", i, c.Type.SemanticType, t)
-				}
-				break
-			}
-		}
-	}
-	// Create the ColumnID to index in datums slice map needed by
-	// MakeIndexKeyPrefix.
-	colIDToRowIndex := make(map[ColumnID]int)
-	for i := range vals {
-		colIDToRowIndex[index.ColumnIDs[i]] = i
-	}
-
-	keyPrefix := MakeIndexKeyPrefix(desc, index.ID)
-	key, _, err := EncodeIndexKey(desc, index, colIDToRowIndex, datums, keyPrefix)
-	if err != nil {
-		return nil, err
-	}
-	return roachpb.Key(key), nil
-}
+// func MakePrimaryIndexKey(desc *TableDescriptor, vals ...interface{}) (roachpb.Key, error) {
+// 	index := &desc.PrimaryIndex
+// 	if len(vals) > len(index.ColumnIDs) {
+// 		return nil, errors.Errorf("got %d values, PK has %d columns", len(vals), len(index.ColumnIDs))
+// 	}
+// 	datums := make([]tree.Datum, len(vals))
+// 	for i, v := range vals {
+// 		switch v := v.(type) {
+// 		case bool:
+// 			datums[i] = tree.MakeDBool(tree.DBool(v))
+// 		case int:
+// 			datums[i] = tree.NewDInt(tree.DInt(v))
+// 		case string:
+// 			datums[i] = tree.NewDString(v)
+// 		case tree.Datum:
+// 			datums[i] = v
+// 		default:
+// 			return nil, errors.Errorf("unexpected value type %T", v)
+// 		}
+// 		// Check that the value type matches.
+// 		colID := index.ColumnIDs[i]
+// 		for _, c := range desc.Columns {
+// 			if c.ID == colID {
+// 				colTyp, err := DatumTypeToColumnType(datums[i].ResolvedType())
+// 				if err != nil {
+// 					return nil, err
+// 				}
+// 				if t := colTyp.SemanticType; t != c.Type.SemanticType {
+// 					return nil, errors.Errorf("column %d of type %s, got value of type %s", i, c.Type.SemanticType, t)
+// 				}
+// 				break
+// 			}
+// 		}
+// 	}
+// 	// Create the ColumnID to index in datums slice map needed by
+// 	// MakeIndexKeyPrefix.
+// 	colIDToRowIndex := make(map[ColumnID]int)
+// 	for i := range vals {
+// 		colIDToRowIndex[index.ColumnIDs[i]] = i
+// 	}
+//
+// 	keyPrefix := MakeIndexKeyPrefix(desc, index.ID)
+// 	key, _, err := EncodeIndexKey(desc, index, colIDToRowIndex, datums, keyPrefix)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	return roachpb.Key(key), nil
+// }
 
 // IndexKeyEquivSignature parses an index key if and only if the index key
 // belongs to a table where its equivalence signature and all its interleave
@@ -2806,28 +2806,28 @@ func maxKeyTokens(index *IndexDescriptor, containsNull bool) int {
 // We can thus push forward the start key from /1/#/2 to /2. If the start key
 // was /1, we cannot push this forwards since that is the first key we want
 // to read.
-func AdjustStartKeyForInterleave(index *IndexDescriptor, start roachpb.Key) (roachpb.Key, error) {
-	keyTokens, containsNull, err := encoding.DecomposeKeyTokens(start)
-	if err != nil {
-		return roachpb.Key{}, err
-	}
-	nIndexTokens := maxKeyTokens(index, containsNull)
-
-	// This is either the index's own key or one of its ancestor's key.
-	// Nothing to do.
-	if len(keyTokens) <= nIndexTokens {
-		return start, nil
-	}
-
-	// len(keyTokens) > nIndexTokens, so this must be a child key.
-	// Transform /1/#/2 --> /2.
-	firstNTokenLen := 0
-	for _, token := range keyTokens[:nIndexTokens] {
-		firstNTokenLen += len(token)
-	}
-
-	return start[:firstNTokenLen].PrefixEnd(), nil
-}
+// func AdjustStartKeyForInterleave(index *IndexDescriptor, start roachpb.Key) (roachpb.Key, error) {
+// 	keyTokens, containsNull, err := encoding.DecomposeKeyTokens(start)
+// 	if err != nil {
+// 		return roachpb.Key{}, err
+// 	}
+// 	nIndexTokens := maxKeyTokens(index, containsNull)
+//
+// 	// This is either the index's own key or one of its ancestor's key.
+// 	// Nothing to do.
+// 	if len(keyTokens) <= nIndexTokens {
+// 		return start, nil
+// 	}
+//
+// 	// len(keyTokens) > nIndexTokens, so this must be a child key.
+// 	// Transform /1/#/2 --> /2.
+// 	firstNTokenLen := 0
+// 	for _, token := range keyTokens[:nIndexTokens] {
+// 		firstNTokenLen += len(token)
+// 	}
+//
+// 	return start[:firstNTokenLen].PrefixEnd(), nil
+// }
 
 // AdjustEndKeyForInterleave returns an exclusive end key. It does two things:
 //    - determines the end key based on the prior: inclusive vs exclusive
@@ -2842,119 +2842,119 @@ func AdjustStartKeyForInterleave(index *IndexDescriptor, start roachpb.Key) (roa
 // DO NOT pass in any keys that have been invoked with PrefixEnd: this may
 // cause issues when trying to decode the key tokens.
 // AdjustEndKeyForInterleave is idempotent upon successive invocation(s).
-func AdjustEndKeyForInterleave(
-	table *TableDescriptor, index *IndexDescriptor, end roachpb.Key, inclusive bool,
-) (roachpb.Key, error) {
-	if index.Type == IndexDescriptor_INVERTED {
-		return end.PrefixEnd(), nil
-	}
-
-	// To illustrate, suppose we have the interleaved hierarchy
-	//    parent
-	//	child
-	//	  grandchild
-	// Suppose our target index is child.
-	keyTokens, containsNull, err := encoding.DecomposeKeyTokens(end)
-	if err != nil {
-		return roachpb.Key{}, err
-	}
-	nIndexTokens := maxKeyTokens(index, containsNull)
-
-	// Sibling/nibling keys: it is possible for this key to be part
-	// of a sibling tree in the interleaved hierarchy, especially after
-	// partitioning on range split keys.
-	// As such, a sibling may be interpretted as an ancestor (if the sibling
-	// has fewer key-encoded columns) or a descendant (if the sibling has
-	// more key-encoded columns). Similarly for niblings.
-	// This is fine because if the sibling is sorted before or after the
-	// current index (child in our example), it is not possible for us to
-	// adjust the sibling key such that we add or remove child (the current
-	// index's) rows from our span.
-
-	if index.ID != table.PrimaryIndex.ID || len(keyTokens) < nIndexTokens {
-		// Case 1: secondary index, parent key or partial child key:
-		// Secondary indexes cannot have interleaved rows.
-		// We cannot adjust or tighten parent keys with respect to a
-		// child index.
-		// Partial child keys e.g. /1/#/1 vs /1/#/1/2 cannot have
-		// interleaved rows.
-		// Nothing to do besides making the end key exclusive if it was
-		// initially inclusive.
-		if inclusive {
-			end = end.PrefixEnd()
-		}
-		return end, nil
-	}
-
-	if len(keyTokens) == nIndexTokens {
-		// Case 2: child key
-
-		lastToken := keyTokens[len(keyTokens)-1]
-		_, isNotNullDesc := encoding.DecodeIfNotNullDescending(lastToken)
-		// If this is the child's key and the last value in the key is
-		// NotNullDesc, then it does not need (read: shouldn't) to be
-		// tightened.
-		// For example, the query with IS NOT NULL may generate
-		// the end key
-		//    /1/#/NOTNULLDESC
-		if isNotNullDesc {
-			if inclusive {
-				end = end.PrefixEnd()
-			}
-			return end, nil
-		}
-
-		// We only want to UndoPrefixEnd if the end key passed is not
-		// inclusive initially.
-		if !inclusive {
-			lastType := encoding.PeekType(lastToken)
-			if lastType == encoding.Bytes || lastType == encoding.BytesDesc || lastType == encoding.Decimal {
-				// If the last value is of type Decimals or
-				// Bytes then this is more difficult since the
-				// escape term is the last value.
-				// TODO(richardwu): Figure out how to go back 1
-				// logical bytes/decimal value.
-				return end, nil
-			}
-
-			// We first iterate back to the previous key value
-			//    /1/#/1 --> /1/#/0
-			undoPrefixEnd, ok := encoding.UndoPrefixEnd(end)
-			if !ok {
-				return end, nil
-			}
-			end = undoPrefixEnd
-		}
-
-		// /1/#/0 --> /1/#/0/#
-		return encoding.EncodeInterleavedSentinel(end), nil
-	}
-
-	// len(keyTokens) > nIndexTokens
-	// Case 3: tightened child, sibling/nibling, or grandchild key
-
-	// Case 3a: tightened child key
-	// This could from a previous invocation of AdjustEndKeyForInterleave.
-	// For example, if during index selection the key for child was
-	// tightened
-	//	/1/#/2 --> /1/#/1/#
-	// We don't really want to tighten on '#' again.
-	if _, isSentinel := encoding.DecodeIfInterleavedSentinel(keyTokens[nIndexTokens]); isSentinel && len(keyTokens)-1 == nIndexTokens {
-		if inclusive {
-			end = end.PrefixEnd()
-		}
-		return end, nil
-	}
-
-	// Case 3b/c: sibling/nibling or grandchild key
-	// Ideally, we want to form
-	//    /1/#/2/#/3 --> /1/#/2/#
-	// We truncate up to and including the interleave sentinel (or next
-	// sibling/nibling column value) after the last index key token.
-	firstNTokenLen := 0
-	for _, token := range keyTokens[:nIndexTokens] {
-		firstNTokenLen += len(token)
-	}
-
-	return end[:firstNTokenLen+1], nil
-}
+// func AdjustEndKeyForInterleave(
+// 	table *TableDescriptor, index *IndexDescriptor, end roachpb.Key, inclusive bool,
+// ) (roachpb.Key, error) {
+// 	if index.Type == IndexDescriptor_INVERTED {
+// 		return end.PrefixEnd(), nil
+// 	}
+//
+// 	// To illustrate, suppose we have the interleaved hierarchy
+// 	//    parent
+// 	//	child
+// 	//	  grandchild
+// 	// Suppose our target index is child.
+// 	keyTokens, containsNull, err := encoding.DecomposeKeyTokens(end)
+// 	if err != nil {
+// 		return roachpb.Key{}, err
+// 	}
+// 	nIndexTokens := maxKeyTokens(index, containsNull)
+//
+// 	// Sibling/nibling keys: it is possible for this key to be part
+// 	// of a sibling tree in the interleaved hierarchy, especially after
+// 	// partitioning on range split keys.
+// 	// As such, a sibling may be interpretted as an ancestor (if the sibling
+// 	// has fewer key-encoded columns) or a descendant (if the sibling has
+// 	// more key-encoded columns). Similarly for niblings.
+// 	// This is fine because if the sibling is sorted before or after the
+// 	// current index (child in our example), it is not possible for us to
+// 	// adjust the sibling key such that we add or remove child (the current
+// 	// index's) rows from our span.
+//
+// 	if index.ID != table.PrimaryIndex.ID || len(keyTokens) < nIndexTokens {
+// 		// Case 1: secondary index, parent key or partial child key:
+// 		// Secondary indexes cannot have interleaved rows.
+// 		// We cannot adjust or tighten parent keys with respect to a
+// 		// child index.
+// 		// Partial child keys e.g. /1/#/1 vs /1/#/1/2 cannot have
+// 		// interleaved rows.
+// 		// Nothing to do besides making the end key exclusive if it was
+// 		// initially inclusive.
+// 		if inclusive {
+// 			end = end.PrefixEnd()
+// 		}
+// 		return end, nil
+// 	}
+//
+// 	if len(keyTokens) == nIndexTokens {
+// 		// Case 2: child key
+//
+// 		lastToken := keyTokens[len(keyTokens)-1]
+// 		_, isNotNullDesc := encoding.DecodeIfNotNullDescending(lastToken)
+// 		// If this is the child's key and the last value in the key is
+// 		// NotNullDesc, then it does not need (read: shouldn't) to be
+// 		// tightened.
+// 		// For example, the query with IS NOT NULL may generate
+// 		// the end key
+// 		//    /1/#/NOTNULLDESC
+// 		if isNotNullDesc {
+// 			if inclusive {
+// 				end = end.PrefixEnd()
+// 			}
+// 			return end, nil
+// 		}
+//
+// 		// We only want to UndoPrefixEnd if the end key passed is not
+// 		// inclusive initially.
+// 		if !inclusive {
+// 			lastType := encoding.PeekType(lastToken)
+// 			if lastType == encoding.Bytes || lastType == encoding.BytesDesc || lastType == encoding.Decimal {
+// 				// If the last value is of type Decimals or
+// 				// Bytes then this is more difficult since the
+// 				// escape term is the last value.
+// 				// TODO(richardwu): Figure out how to go back 1
+// 				// logical bytes/decimal value.
+// 				return end, nil
+// 			}
+//
+// 			// We first iterate back to the previous key value
+// 			//    /1/#/1 --> /1/#/0
+// 			undoPrefixEnd, ok := encoding.UndoPrefixEnd(end)
+// 			if !ok {
+// 				return end, nil
+// 			}
+// 			end = undoPrefixEnd
+// 		}
+//
+// 		// /1/#/0 --> /1/#/0/#
+// 		return encoding.EncodeInterleavedSentinel(end), nil
+// 	}
+//
+// 	// len(keyTokens) > nIndexTokens
+// 	// Case 3: tightened child, sibling/nibling, or grandchild key
+//
+// 	// Case 3a: tightened child key
+// 	// This could from a previous invocation of AdjustEndKeyForInterleave.
+// 	// For example, if during index selection the key for child was
+// 	// tightened
+// 	//	/1/#/2 --> /1/#/1/#
+// 	// We don't really want to tighten on '#' again.
+// 	if _, isSentinel := encoding.DecodeIfInterleavedSentinel(keyTokens[nIndexTokens]); isSentinel && len(keyTokens)-1 == nIndexTokens {
+// 		if inclusive {
+// 			end = end.PrefixEnd()
+// 		}
+// 		return end, nil
+// 	}
+//
+// 	// Case 3b/c: sibling/nibling or grandchild key
+// 	// Ideally, we want to form
+// 	//    /1/#/2/#/3 --> /1/#/2/#
+// 	// We truncate up to and including the interleave sentinel (or next
+// 	// sibling/nibling column value) after the last index key token.
+// 	firstNTokenLen := 0
+// 	for _, token := range keyTokens[:nIndexTokens] {
+// 		firstNTokenLen += len(token)
+// 	}
+//
+// 	return end[:firstNTokenLen+1], nil
+// }
