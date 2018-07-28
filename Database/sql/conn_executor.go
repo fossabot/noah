@@ -82,7 +82,8 @@ func (ex *connExecutor) run() error {
 		}
 
 		ex.stmtBuf.advanceOne()
-
-		res.Close()
+		if res != nil {
+			res.Close(IdleTxnBlock)
+		}
 	}
 }
