@@ -76,6 +76,7 @@ func (ex *connExecutor) run() error {
 
 		case Flush:
 			// Closing the res will flush the connection's buffer.
+			res = ex.clientComm.CreateFlushResult(pos)
 		default:
 			panic(fmt.Sprintf("unsupported command type: %T", cmd))
 		}
