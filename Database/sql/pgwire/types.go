@@ -16,25 +16,22 @@ package pgwire
 
 import (
 	"github.com/lib/pq/oid"
-
 	"github.com/pkg/errors"
 	"time"
-
-	"github.com/Ready-Stock/Noah/Database/sql/sem/types"
-	"github.com/Ready-Stock/Noah/Database/sql/sem/tree"
-	"github.com/Ready-Stock/Noah/Database/sql/sessiondata"
 	"strconv"
-	"github.com/cockroachdb/cockroach/pkg/util/timeutil"
-	"github.com/Ready-Stock/Noah/Database/sql/lex"
-	"github.com/Ready-Stock/Noah/Database/util/timeofday"
-	"github.com/cockroachdb/cockroach/pkg/util/log"
 	"math"
 	"math/big"
 	"strings"
-	"github.com/cockroachdb/cockroach/pkg/util/ipaddr"
 	"net"
 	"github.com/Ready-Stock/Noah/Database/sql/pgwire/pgwirebase"
 	"github.com/Ready-Stock/Noah/Database/util/duration"
+	"github.com/Ready-Stock/Noah/Database/util/timeutil"
+	"github.com/Ready-Stock/Noah/Database/util/ipaddr"
+	"github.com/Ready-Stock/Noah/Database/sql/sem/types"
+	"github.com/Ready-Stock/Noah/Database/sql/sem/tree"
+	"github.com/Ready-Stock/Noah/Database/sql/sessiondata"
+	"github.com/Ready-Stock/Noah/Database/sql/lex"
+	"github.com/Ready-Stock/Noah/Database/util/timeofday"
 )
 
 // pgType contains type metadata used in RowDescription messages.

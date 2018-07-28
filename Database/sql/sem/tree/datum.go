@@ -38,15 +38,14 @@ import (
 	"github.com/Ready-Stock/Noah/Database/sql/lex"
 	"github.com/Ready-Stock/Noah/Database/sql/sem/types"
 	"github.com/Ready-Stock/Noah/Database/sql/pgwire/pgerror"
-	"github.com/cockroachdb/cockroach/pkg/roachpb"
-	"github.com/cockroachdb/cockroach/pkg/util/uuid"
-	"github.com/cockroachdb/cockroach/pkg/util/uint128"
-	"github.com/cockroachdb/cockroach/pkg/util/json"
-	"github.com/cockroachdb/cockroach/pkg/util/ipaddr"
 	"github.com/Ready-Stock/Noah/Database/util/stringencoding"
 	"github.com/Ready-Stock/Noah/Database/util/timeofday"
 	"github.com/Ready-Stock/Noah/Database/util/timeutil"
 	"github.com/Ready-Stock/Noah/Database/util/duration"
+	"github.com/Ready-Stock/Noah/Database/util/json"
+	"github.com/Ready-Stock/Noah/Database/util/uuid"
+	"github.com/Ready-Stock/Noah/Database/util/uint128"
+	"github.com/Ready-Stock/Noah/Database/util/ipaddr"
 )
 
 var (
@@ -886,8 +885,9 @@ func (d *DString) Prev(_ *EvalContext) (Datum, bool) {
 }
 
 // Next implements the Datum interface.
-func (d *DString) Next(_ *EvalContext) (Datum, bool) {
-	return NewDString(string(roachpb.Key(*d).Next())), true
+func (d *DString) Next(e *EvalContext) (Datum, bool) {
+	return NewDString(d.String()), true
+	//return NewDString(string(roachpb.Key(*d).Next())), true
 }
 
 // IsMax implements the Datum interface.
@@ -1116,7 +1116,9 @@ func (d *DBytes) Prev(_ *EvalContext) (Datum, bool) {
 
 // Next implements the Datum interface.
 func (d *DBytes) Next(_ *EvalContext) (Datum, bool) {
-	return NewDBytes(DBytes(roachpb.Key(*d).Next())), true
+	dt := *d
+	return NewDBytes(dt), true
+	//return NewDBytes(DBytes(roachpb.Key(*d).Next())), true
 }
 
 // IsMax implements the Datum interface.

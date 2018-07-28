@@ -26,6 +26,7 @@ import (
 	"github.com/Ready-Stock/Noah/Database/sql/sem/types"
 	"github.com/Ready-Stock/Noah/Database/sql/pgwire/pgerror"
 	"github.com/Ready-Stock/Noah/Database/sql/coltypes"
+	"github.com/Ready-Stock/Noah/Database/sql/lex"
 )
 
 // Constant is an constant literal expression which may be resolved to more than one type.

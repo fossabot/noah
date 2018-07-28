@@ -36,8 +36,8 @@ import (
 	"github.com/Ready-Stock/Noah/Database/cluster"
 	"github.com/Ready-Stock/Noah/Configuration"
 	"github.com/Ready-Stock/pg_query_go"
-	"github.com/cockroachdb/cockroach/pkg/sql/sem/tree"
 	"github.com/Ready-Stock/Noah/Database/sql/sessiondata"
+	"github.com/Ready-Stock/Noah/Database/sql/sem/tree"
 )
 
 const (
@@ -796,9 +796,9 @@ func (c *conn) bufferRow(
 		}
 		switch fmtCode {
 		case pgwirebase.FormatText:
-			c.msgBuilder.writeTextDatum(ctx, col, loc, be)
+			c.msgBuilder.writeTextDatum(col, loc, be)
 		case pgwirebase.FormatBinary:
-			c.msgBuilder.writeBinaryDatum(ctx, col, loc)
+			c.msgBuilder.writeBinaryDatum(col, loc)
 		default:
 			c.msgBuilder.setError(errors.Errorf("unsupported format code %s", fmtCode))
 		}

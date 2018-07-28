@@ -22,6 +22,7 @@ import (
 
 	"github.com/Ready-Stock/Noah/Database/sql/pgwire/pgerror"
 	"github.com/Ready-Stock/Noah/Database/util/duration"
+	"github.com/Ready-Stock/Noah/Database/sql/sem/types"
 )
 
 type intervalLexer struct {

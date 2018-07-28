@@ -21,6 +21,7 @@ import (
 	"github.com/Ready-Stock/Noah/Database/sql/sem/types"
 	"github.com/cockroachdb/cockroach/pkg/util"
 	"github.com/Ready-Stock/Noah/Database/sql/coltypes"
+	"github.com/Ready-Stock/Noah/Database/sql/lex"
 )
 
 // Expr represents an expression.

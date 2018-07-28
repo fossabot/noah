@@ -403,12 +403,12 @@ func (*Execute) StatementTag() string { return "EXECUTE" }
 func (*Execute) independentFromParallelizedPriors() {}
 
 // StatementType implements the Statement interface.
-func (*Explain) StatementType() StatementType { return Rows }
-
-// StatementTag returns a short string identifying the type of statement.
-func (*Explain) StatementTag() string { return "EXPLAIN" }
-
-func (*Explain) hiddenFromStats() {}
+// func (*Explain) StatementType() StatementType { return Rows }
+//
+// // StatementTag returns a short string identifying the type of statement.
+// func (*Explain) StatementTag() string { return "EXPLAIN" }
+//
+// func (*Explain) hiddenFromStats() {}
 
 // StatementType implements the Statement interface.
 func (*Export) StatementType() StatementType { return Rows }
@@ -425,12 +425,12 @@ func (*Grant) StatementTag() string { return "GRANT" }
 func (*Grant) hiddenFromStats() {}
 
 // StatementType implements the Statement interface.
-func (*GrantRole) StatementType() StatementType { return DDL }
-
-// StatementTag returns a short string identifying the type of statement.
-func (*GrantRole) StatementTag() string { return "GRANT" }
-
-func (*GrantRole) hiddenFromStats() {}
+// func (*GrantRole) StatementType() StatementType { return DDL }
+//
+// // StatementTag returns a short string identifying the type of statement.
+// func (*GrantRole) StatementTag() string { return "GRANT" }
+//
+// func (*GrantRole) hiddenFromStats() {}
 
 // StatementType implements the Statement interface.
 func (n *Insert) StatementType() StatementType { return n.Returning.statementType() }
@@ -516,21 +516,21 @@ func (*Restore) StatementTag() string { return "RESTORE" }
 
 func (*Restore) hiddenFromShowQueries() {}
 
-// StatementType implements the Statement interface.
-func (*Revoke) StatementType() StatementType { return DDL }
-
-// StatementTag returns a short string identifying the type of statement.
-func (*Revoke) StatementTag() string { return "REVOKE" }
-
-func (*Revoke) hiddenFromStats() {}
-
-// StatementType implements the Statement interface.
-func (*RevokeRole) StatementType() StatementType { return DDL }
-
-// StatementTag returns a short string identifying the type of statement.
-func (*RevokeRole) StatementTag() string { return "REVOKE" }
-
-func (*RevokeRole) hiddenFromStats() {}
+// // StatementType implements the Statement interface.
+// func (*Revoke) StatementType() StatementType { return DDL }
+//
+// // StatementTag returns a short string identifying the type of statement.
+// func (*Revoke) StatementTag() string { return "REVOKE" }
+//
+// func (*Revoke) hiddenFromStats() {}
+//
+// // StatementType implements the Statement interface.
+// func (*RevokeRole) StatementType() StatementType { return DDL }
+//
+// // StatementTag returns a short string identifying the type of statement.
+// func (*RevokeRole) StatementTag() string { return "REVOKE" }
+//
+// func (*RevokeRole) hiddenFromStats() {}
 
 // StatementType implements the Statement interface.
 func (*RollbackToSavepoint) StatementType() StatementType { return Ack }
@@ -899,10 +899,10 @@ func (n *DropView) String() string                  { return AsString(n) }
 func (n *DropSequence) String() string              { return AsString(n) }
 func (n *DropUser) String() string                  { return AsString(n) }
 func (n *Execute) String() string                   { return AsString(n) }
-func (n *Explain) String() string                   { return AsString(n) }
+//func (n *Explain) String() string                   { return AsString(n) }
 func (n *Export) String() string                    { return AsString(n) }
-func (n *Grant) String() string                     { return AsString(n) }
-func (n *GrantRole) String() string                 { return AsString(n) }
+// func (n *Grant) String() string                     { return AsString(n) }
+//func (n *GrantRole) String() string                 { return AsString(n) }
 func (n *Insert) String() string                    { return AsString(n) }
 func (n *Import) String() string                    { return AsString(n) }
 func (n *ParenSelect) String() string               { return AsString(n) }
@@ -914,8 +914,8 @@ func (n *RenameDatabase) String() string            { return AsString(n) }
 func (n *RenameIndex) String() string               { return AsString(n) }
 func (n *RenameTable) String() string               { return AsString(n) }
 func (n *Restore) String() string                   { return AsString(n) }
-func (n *Revoke) String() string                    { return AsString(n) }
-func (n *RevokeRole) String() string                { return AsString(n) }
+//func (n *Revoke) String() string                    { return AsString(n) }
+//func (n *RevokeRole) String() string                { return AsString(n) }
 func (n *RollbackToSavepoint) String() string       { return AsString(n) }
 func (n *RollbackTransaction) String() string       { return AsString(n) }
 func (n *Savepoint) String() string                 { return AsString(n) }

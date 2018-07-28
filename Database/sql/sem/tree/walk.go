@@ -776,21 +776,21 @@ func (stmt *Delete) WalkStmt(v Visitor) Statement {
 }
 
 // CopyNode makes a copy of this Statement without recursing in any child Statements.
-func (stmt *Explain) CopyNode() *Explain {
-	stmtCopy := *stmt
-	stmtCopy.Options = append([]string(nil), stmt.Options...)
-	return &stmtCopy
-}
-
-// WalkStmt is part of the WalkableStmt interface.
-func (stmt *Explain) WalkStmt(v Visitor) Statement {
-	s, changed := WalkStmt(v, stmt.Statement)
-	if changed {
-		stmt = stmt.CopyNode()
-		stmt.Statement = s
-	}
-	return stmt
-}
+// func (stmt *Explain) CopyNode() *Explain {
+// 	stmtCopy := *stmt
+// 	stmtCopy.Options = append([]string(nil), stmt.Options...)
+// 	return &stmtCopy
+// }
+//
+// // WalkStmt is part of the WalkableStmt interface.
+// func (stmt *Explain) WalkStmt(v Visitor) Statement {
+// 	s, changed := WalkStmt(v, stmt.Statement)
+// 	if changed {
+// 		stmt = stmt.CopyNode()
+// 		stmt.Statement = s
+// 	}
+// 	return stmt
+// }
 
 // CopyNode makes a copy of this Statement without recursing in any child Statements.
 func (stmt *Insert) CopyNode() *Insert {
@@ -1288,7 +1288,7 @@ func (stmt *ValuesClause) WalkStmt(v Visitor) Statement {
 var _ WalkableStmt = &CreateTable{}
 var _ WalkableStmt = &Backup{}
 var _ WalkableStmt = &Delete{}
-var _ WalkableStmt = &Explain{}
+//var _ WalkableStmt = &Explain{}
 var _ WalkableStmt = &Insert{}
 var _ WalkableStmt = &Import{}
 var _ WalkableStmt = &ParenSelect{}
