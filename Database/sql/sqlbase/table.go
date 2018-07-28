@@ -31,6 +31,7 @@ import (
 	"github.com/Ready-Stock/Noah/Database/sql/sem/tree"
 	"github.com/Ready-Stock/Noah/Database/sql/pgwire/pgerror"
 	"github.com/Ready-Stock/Noah/Database/util/encoding"
+	"github.com/Ready-Stock/Noah/Database/util/timeofday"
 )
 
 // aliasToVisibleTypeMap maps type aliases to ColumnType_VisibleType variants
