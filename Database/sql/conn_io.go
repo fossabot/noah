@@ -28,6 +28,7 @@ import (
 	"github.com/Ready-Stock/Noah/Database/sql/pgwire/pgwirebase"
 	"net"
 	"github.com/Ready-Stock/Noah/Database/util/syncutil"
+	node "github.com/Ready-Stock/pg_query_go/nodes"
 )
 
 // This file contains utils and interfaces used by a connExecutor to communicate
@@ -129,6 +130,7 @@ type SessionArgs struct {
 type Command interface {
 	fmt.Stringer
 	command()
+	PGCommand() *node.RawStmt
 }
 
 // ExecStmt is the command for running a query sent through the "simple" pgwire
@@ -160,6 +162,10 @@ func (e ExecStmt) String() string {
 	return fmt.Sprintf("ExecStmt: %s", "test")
 }
 
+func (e ExecStmt) PGCommand() *node.RawStmt {
+	return nil
+}
+
 //var _ Command = ExecStmt{}
 
 // ExecPortal is the Command for executing a portal.
@@ -178,6 +184,10 @@ func (ExecPortal) command() {}
 
 func (e ExecPortal) String() string {
 	return fmt.Sprintf("ExecPortal name: %q", e.Name)
+}
+
+func (e ExecPortal) PGCommand() *node.RawStmt {
+	return nil
 }
 
 var _ Command = ExecPortal{}
@@ -203,6 +213,10 @@ func (p PrepareStmt) String() string {
 	return fmt.Sprintf("PrepareStmt: %s", "prepare")
 }
 
+func (e PrepareStmt) PGCommand() *node.RawStmt {
+	return nil
+}
+
 //var _ Command = PrepareStmt{}
 
 // DescribeStmt is the Command for producing info about a prepared statement or
@@ -217,6 +231,10 @@ func (DescribeStmt) command() {}
 
 func (d DescribeStmt) String() string {
 	return fmt.Sprintf("Describe: %q", d.Name)
+}
+
+func (e DescribeStmt) PGCommand() *node.RawStmt {
+	return nil
 }
 
 var _ Command = DescribeStmt{}
@@ -259,6 +277,10 @@ func (b BindStmt) String() string {
 	return fmt.Sprintf("BindStmt: %q->%q", b.PreparedStatementName, b.PortalName)
 }
 
+func (e BindStmt) PGCommand() *node.RawStmt {
+	return nil
+}
+
 var _ Command = BindStmt{}
 
 // DeletePreparedStmt is the Command for freeing a prepared statement.
@@ -272,6 +294,10 @@ func (DeletePreparedStmt) command() {}
 
 func (d DeletePreparedStmt) String() string {
 	return fmt.Sprintf("DeletePreparedStmt: %q", d.Name)
+}
+
+func (e DeletePreparedStmt) PGCommand() *node.RawStmt {
+	return nil
 }
 
 var _ Command = DeletePreparedStmt{}
@@ -294,6 +320,10 @@ func (Sync) String() string {
 	return "Sync"
 }
 
+func (e Sync) PGCommand() *node.RawStmt {
+	return nil
+}
+
 var _ Command = Sync{}
 
 // Flush is a Command asking for the results of all previous commands to be
@@ -305,6 +335,10 @@ func (Flush) command() {}
 
 func (Flush) String() string {
 	return "Flush"
+}
+
+func (e Flush) PGCommand() *node.RawStmt {
+	return nil
 }
 
 var _ Command = Flush{}
@@ -327,6 +361,10 @@ func (CopyIn) String() string {
 	return "CopyIn"
 }
 
+func (e CopyIn) PGCommand() *node.RawStmt {
+	return nil
+}
+
 var _ Command = CopyIn{}
 
 // DrainRequest represents a notice that the server is draining and command
@@ -340,6 +378,10 @@ func (DrainRequest) command() {}
 
 func (DrainRequest) String() string {
 	return "Drain"
+}
+
+func (e DrainRequest) PGCommand() *node.RawStmt {
+	return nil
 }
 
 var _ Command = DrainRequest{}
@@ -357,6 +399,10 @@ func (SendError) command() {}
 
 func (s SendError) String() string {
 	return fmt.Sprintf("SendError: %s", s.Err)
+}
+
+func (e SendError) PGCommand() *node.RawStmt {
+	return nil
 }
 
 var _ Command = SendError{}
