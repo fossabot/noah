@@ -1054,18 +1054,18 @@ func (cl *clientConnLock) RTrim(ctx context.Context, pos sql.CmdPos) {
 	}
 }
 
-// CreateStatementResult is part of the sql.ClientComm interface.
-// func (c *conn) CreateStatementResult(
-// 	stmt tree.Statement,
-// 	descOpt sql.RowDescOpt,
-// 	pos sql.CmdPos,
-// 	formatCodes []pgwirebase.FormatCode,
-// 	loc *time.Location,
-// 	be sessiondata.BytesEncodeFormat,
-// ) sql.CommandResult {
-// 	res := c.makeCommandResult(descOpt, pos, stmt, formatCodes, loc, be)
-// 	return &res
-// }
+//CreateStatementResult is part of the sql.ClientComm interface.
+func (c *conn) CreateStatementResult(
+	stmt pg_query.ParsetreeList,
+	descOpt sql.RowDescOpt,
+	pos sql.CmdPos,
+	formatCodes []pgwirebase.FormatCode,
+	loc *time.Location,
+	be sessiondata.BytesEncodeFormat,
+) sql.CommandResult {
+	res := c.makeCommandResult(descOpt, pos, stmt, formatCodes, loc, be)
+	return &res
+}
 
 // CreateSyncResult is part of the sql.ClientComm interface.
 func (c *conn) CreateSyncResult(pos sql.CmdPos) sql.SyncResult {

@@ -24,6 +24,7 @@ import (
 	"github.com/Ready-Stock/Noah/Database/sql/pgwire/pgwirebase"
 
 	"github.com/pkg/errors"
+	"github.com/Ready-Stock/pg_query_go"
 )
 
 type completionMsgType int
@@ -82,7 +83,7 @@ type commandResult struct {
 func (c *conn) makeCommandResult(
 	descOpt sql.RowDescOpt,
 	pos sql.CmdPos,
-// stmt tree.Statement,
+	stmt pg_query.ParsetreeList,
 	formatCodes []pgwirebase.FormatCode,
 	loc *time.Location,
 	be sessiondata.BytesEncodeFormat,

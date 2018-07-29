@@ -28,6 +28,7 @@ import (
 	"net"
 	"github.com/Ready-Stock/Noah/Database/util/syncutil"
 	"github.com/Ready-Stock/pg_query_go"
+	"github.com/Ready-Stock/Noah/Database/sql/sessiondata"
 )
 
 // This file contains utils and interfaces used by a connExecutor to communicate
@@ -619,14 +620,14 @@ type ClientComm interface {
 	// It should be nil if statement type != Rows. Otherwise, it can be nil, in
 	// which case every column will be encoded using the text encoding, otherwise
 	// it needs to contain a value for every column.
-	// CreateStatementResult(
-	// 	//stmt tree.Statement,
-	// 	descOpt RowDescOpt,
-	// 	pos CmdPos,
-	// 	formatCodes []pgwirebase.FormatCode,
-	// 	loc *time.Location,
-	// 	be sessiondata.BytesEncodeFormat,
-	// ) CommandResult
+	CreateStatementResult(
+		stmt pg_query.ParsetreeList,
+		descOpt RowDescOpt,
+		pos CmdPos,
+		formatCodes []pgwirebase.FormatCode,
+		loc *time.Location,
+		be sessiondata.BytesEncodeFormat,
+	) CommandResult
 	// CreatePrepareResult creates a result for a PrepareStmt command.
 	CreatePrepareResult(pos CmdPos) ParseResult
 	// CreateDescribeResult creates a result for a DescribeStmt command.

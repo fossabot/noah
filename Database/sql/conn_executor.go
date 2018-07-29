@@ -16,7 +16,7 @@ type connExecutor struct {
 	stmtBuf            *StmtBuf
 	clientComm         ClientComm
 	prepStmtsNamespace prepStmtNamespace
-	curStmt            pg_query.ParsetreeList
+	curStmt            *pg_query.ParsetreeList
 }
 
 type prepStmtNamespace struct {
@@ -141,6 +141,20 @@ func (ex *connExecutor) run() error {
 				Types:     portal.Stmt.Types,
 				Values:    portal.Qargs,
 			}
+
+			if portal.Stmt.Statement == nil {
+				res = ex.clientComm.CreateEmptyQueryResult(pos)
+				break
+			}
+
+			stmtRes := ex.clientComm.CreateStatementResult(
+				*portal.Stmt.Statement,
+				// The client is using the extended protocol, so no row description is
+				// needed.
+				DontNeedRowDesc,
+				pos, portal.OutFormats,
+				ex.sessionData.Location, ex.sessionData.BytesEncodeFormat)
+			stmtRes.SetLimit(tcmd.Limit)
 
 		case PrepareStmt:
 			fmt.Println("TYPE: PrepareStmt")
