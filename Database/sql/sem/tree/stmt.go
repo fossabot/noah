@@ -25,6 +25,8 @@ package tree
 
 import (
 	"fmt"
+	"github.com/Ready-Stock/pg_query_go"
+	"github.com/Ready-Stock/Noah/Database/sql/pgwire/pgerror"
 )
 
 // Instructions for creating new types: If a type needs to satisfy an
@@ -70,6 +72,16 @@ const (
 	// being executed.
 	Unknown
 )
+
+func GetStatementType(stmt pg_query.ParsetreeList) (*StatementType, error) {
+	if len(stmt.Statements) == 0 {
+		return nil, pgerror.NewErrorf(pgerror.CodeSyntaxError, "no statements provided")
+	} else {
+		switch stmt.Statements[0].(type) {
+
+		}
+	}
+}
 
 // Statement represents a statement.
 type Statement interface {

@@ -16,15 +16,14 @@ package pgwire
 
 import (
 	"fmt"
-	"time"
-
-	"github.com/lib/pq/oid"
+		"github.com/lib/pq/oid"
 	"github.com/Ready-Stock/Noah/Database/sql/sessiondata"
 	"github.com/Ready-Stock/Noah/Database/sql"
 	"github.com/Ready-Stock/Noah/Database/sql/pgwire/pgwirebase"
 
 	"github.com/pkg/errors"
 	"github.com/Ready-Stock/pg_query_go"
+	"github.com/Ready-Stock/Noah/Database/sql/sem/tree"
 )
 
 type completionMsgType int
@@ -47,8 +46,6 @@ const (
 type commandResult struct {
 	// conn is the parent connection of this commandResult.
 	conn *conn
-	// loc is the current time zone as set in the SQL session.
-	loc *time.Location
 	// bytesEncodeFormat is the current byte array encoding format as set in the SQL session.
 	bytesEncodeFormat sessiondata.BytesEncodeFormat
 	// pos identifies the position of the command within the connection.
@@ -67,7 +64,7 @@ type commandResult struct {
 	// this limit.
 	limit int
 
-	// stmtType     tree.StatementType
+	stmtType     tree.StatementType
 	descOpt      sql.RowDescOpt
 	rowsAffected int
 
@@ -85,7 +82,6 @@ func (c *conn) makeCommandResult(
 	pos sql.CmdPos,
 	stmt pg_query.ParsetreeList,
 	formatCodes []pgwirebase.FormatCode,
-	loc *time.Location,
 	be sessiondata.BytesEncodeFormat,
 ) commandResult {
 	return commandResult{
@@ -94,7 +90,6 @@ func (c *conn) makeCommandResult(
 		descOpt: descOpt,
 		// stmtType:          stmt.StatementType(),
 		formatCodes: formatCodes,
-		loc:         loc,
 		typ:         commandComplete,
 		// cmdCompleteTag:    stmt.StatementTag(),
 		bytesEncodeFormat: be,
