@@ -3,8 +3,7 @@ package Conf
 import (
 	"flag"
 	"io/ioutil"
-	"gopkg.in/yaml.v2"
-	"fmt"
+		"fmt"
 	"os"
 	"encoding/json"
 )
@@ -58,13 +57,13 @@ func ParseConfiguration() {
 }
 
 func SaveConfiguration() {
-	configPath := flag.String("config", "config.yaml", "Path to the Noah config file.")
+	configPath := flag.String("config", "config.json", "Path to the Noah config file.")
 
 	if *configPath == "" {
 		panic("Error, config path cannot be blank!")
 	}
 
-	if config, err := yaml.Marshal(Configuration); err != nil {
+	if config, err := json.Marshal(Configuration); err != nil {
 		fmt.Errorf("Error, could not serialize config!")
 	} else if err := ioutil.WriteFile(*configPath, config, os.ModeExclusive); err != nil {
 		fmt.Errorf("Error, could not save config!")
