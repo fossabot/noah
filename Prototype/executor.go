@@ -6,12 +6,14 @@ import (
 	"errors"
 	query "github.com/Ready-Stock/pg_query_go/nodes"
 	"github.com/Ready-Stock/Noah/Prototype/queries"
+	"fmt"
 )
 
 func InjestQuery(query string) error {
 	if parsed, err := pgq.Parse(query); err != nil {
 		return err
 	} else {
+		fmt.Printf("Injesting Query: %s \n", query)
 		return handleParseTree(*parsed)
 	}
 }

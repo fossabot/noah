@@ -1,24 +1,76 @@
 package cluster
 
-import "github.com/Ready-Stock/Noah/Prototype"
+import (
+	data "github.com/Ready-Stock/Noah/Prototype/datums"
+		"math/rand"
+)
 
 var (
-	Nodes = map[int64]Node {
-		1: Node {
+	Nodes = map[int]data.Node {
+		1: {
 			NodeID: 1,
 			Name: "Node A",
 		},
-		2: Node {
+		2: {
 			NodeID: 2,
 			Name: "Node B",
 		},
-		3: Node {
+		3: {
 			NodeID: 3,
 			Name: "Node C",
 		},
-		4: Node {
+		4: {
 			NodeID: 4,
 			Name: "Node D",
 		},
 	}
+
+	Tables = map[string]data.Table {
+		"products": {
+			TableName:"products",
+			IsGlobal:false,
+		},
+		"users": {
+			TableName:"users",
+			IsGlobal:true,
+		},
+	}
+
+	Accounts = map[int]data.Account {
+		1: {
+			AccountID: 1,
+			AccountName: "Test Account 1",
+			NodeIDs: []int{ 1, 2 },
+		},
+		2: {
+			AccountID: 2,
+			AccountName: "Elliot's Account",
+			NodeIDs: []int{ 3, 4 },
+		},
+	}
 )
+
+func GetRandomNode() data.Node {
+	i := rand.Intn(len(Nodes))
+	var v data.Node
+	for _, v = range Nodes {
+		if i == 0 {
+			break
+		}
+		i--
+	}
+	return v
+}
+
+func GetNodeForAccount(account_id int) data.Node {
+	i := rand.Intn(len(Accounts[account_id].NodeIDs))
+	var v data.Node
+	for x := range Accounts[account_id].NodeIDs {
+		if i == 0 {
+			v = Nodes[x]
+			break
+		}
+		i--
+	}
+	return v
+}
