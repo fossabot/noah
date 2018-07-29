@@ -17,13 +17,13 @@ func TestSelectSimpleAll1(t *testing.T) {
 }
 
 func Benchmark_InjestQuery_SelectSimpleAll1(t *testing.B) {
-	if err := InjestQuery("SELECT product_id,sku,title FROM products LIMIT 1;"); err != nil {
+	if err := InjestQuery("SELECT products.product_id FROM products WHERE (account_id = '1') AND (product_id = '2') LIMIT 10 OFFSET 0;"); err != nil {
 		t.Error(err)
 	}
 }
 
 func TestSelectSimpleAccount1(t *testing.T) {
-	if err := InjestQuery("SELECT product_id,sku,title FROM products WHERE account_id=1 AND product_id=2 LIMIT 1;"); err != nil {
+	if err := InjestQuery("SELECT product_id,sku,title FROM products WHERE (account_id = '2') LIMIT 1;"); err != nil {
 		t.Error(err)
 	}
 }

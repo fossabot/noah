@@ -3,6 +3,7 @@ package cluster
 import (
 	data "github.com/Ready-Stock/Noah/Prototype/datums"
 		"math/rand"
+		"time"
 )
 
 var (
@@ -63,14 +64,7 @@ func GetRandomNode() data.Node {
 }
 
 func GetNodeForAccount(account_id int) data.Node {
-	i := rand.Intn(len(Accounts[account_id].NodeIDs))
-	var v data.Node
-	for x := range Accounts[account_id].NodeIDs {
-		if i == 0 {
-			v = Nodes[x]
-			break
-		}
-		i--
-	}
-	return v
+	rand.Seed(time.Now().Unix())
+	return Nodes[Accounts[account_id].NodeIDs[rand.Intn(len(Accounts[account_id].NodeIDs))]]
+
 }
