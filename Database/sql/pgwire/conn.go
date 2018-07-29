@@ -490,20 +490,19 @@ func (c *conn) handleParse(buf *pgwirebase.ReadBuffer) error {
 // An error is returned iff the statement buffer has been closed. In that case,
 // the connection should be considered toast.
 func (c *conn) handleDescribe(buf *pgwirebase.ReadBuffer) error {
-	// typ, err := buf.GetPrepareType()
-	// if err != nil {
-	// 	return c.stmtBuf.Push(ctx, sql.SendError{Err: err})
-	// }
-	// name, err := buf.GetString()
-	// if err != nil {
-	// 	return c.stmtBuf.Push(ctx, sql.SendError{Err: err})
-	// }
-	// return c.stmtBuf.Push(
-	// 	ctx,
-	// 	sql.DescribeStmt{
-	// 		Name: name,
-	// 		Type: typ,
-	// 	})
+	typ, err := buf.GetPrepareType()
+	if err != nil {
+		return c.stmtBuf.Push(sql.SendError{Err: err})
+	}
+	name, err := buf.GetString()
+	if err != nil {
+		return c.stmtBuf.Push(sql.SendError{Err: err})
+	}
+	return c.stmtBuf.Push(
+		sql.DescribeStmt{
+			Name: name,
+			Type: typ,
+		})
 	return nil
 }
 

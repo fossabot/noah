@@ -3,16 +3,85 @@ package sql
 import (
 	"io"
 	"fmt"
+	"github.com/Ready-Stock/Noah/Database/sql/pgwire/pgerror"
+	"github.com/Ready-Stock/Noah/Database/sql/sem/tree"
+	"github.com/Ready-Stock/pg_query_go"
 )
 
 type Server struct {
-
 }
 
 type connExecutor struct {
-	server *Server
-	stmtBuf *StmtBuf
-	clientComm ClientComm
+	server             *Server
+	stmtBuf            *StmtBuf
+	clientComm         ClientComm
+	prepStmtsNamespace prepStmtNamespace
+	curStmt            pg_query.ParsetreeList
+}
+
+type prepStmtNamespace struct {
+	// prepStmts contains the prepared statements currently available on the
+	// session.
+	prepStmts map[string]prepStmtEntry
+	// portals contains the portals currently available on the session.
+	portals map[string]portalEntry
+}
+
+type prepStmtEntry struct {
+	*PreparedStatement
+	portals map[string]struct{}
+}
+
+func (pe *prepStmtEntry) copy() prepStmtEntry {
+	cpy := prepStmtEntry{}
+	cpy.PreparedStatement = pe.PreparedStatement
+	cpy.portals = make(map[string]struct{})
+	for pname := range pe.portals {
+		cpy.portals[pname] = struct{}{}
+	}
+	return cpy
+}
+
+type portalEntry struct {
+	*PreparedPortal
+	psName string
+}
+
+// resetTo resets a namespace to equate another one (`to`). Prep stmts and portals
+// that are present in ns but not in to are deallocated.
+//
+// A (pointer to) empty `to` can be passed in to deallocate everything.
+func (ns *prepStmtNamespace) resetTo(to *prepStmtNamespace) {
+	for name, ps := range ns.prepStmts {
+		bps, ok := to.prepStmts[name]
+		// If the prepared statement didn't exist before (including if a statement
+		// with the same name existed, but it was different), close it.
+		if !ok || bps.PreparedStatement != ps.PreparedStatement {
+			ps.close()
+		}
+	}
+	for name, p := range ns.portals {
+		bp, ok := to.portals[name]
+		// If the prepared statement didn't exist before (including if a statement
+		// with the same name existed, but it was different), close it.
+		if !ok || bp.PreparedPortal != p.PreparedPortal {
+			p.close()
+		}
+	}
+	*ns = to.copy()
+}
+
+func (ns *prepStmtNamespace) copy() prepStmtNamespace {
+	var cpy prepStmtNamespace
+	cpy.prepStmts = make(map[string]prepStmtEntry)
+	for name, psEntry := range ns.prepStmts {
+		cpy.prepStmts[name] = psEntry.copy()
+	}
+	cpy.portals = make(map[string]portalEntry)
+	for name, p := range ns.portals {
+		cpy.portals[name] = p
+	}
+	return cpy
 }
 
 func NewServer() *Server {
@@ -28,9 +97,13 @@ func (s *Server) ServeConn(stmtBuf *StmtBuf, clientComm ClientComm) error {
 
 func (s *Server) newConnExecutor(stmtBuf *StmtBuf, clientComm ClientComm) *connExecutor {
 	ex := &connExecutor{
-		server:      s,
-		stmtBuf:     stmtBuf,
-		clientComm:  clientComm,
+		server:     s,
+		stmtBuf:    stmtBuf,
+		clientComm: clientComm,
+		prepStmtsNamespace: prepStmtNamespace{
+			prepStmts: make(map[string]prepStmtEntry),
+			portals:   make(map[string]portalEntry),
+		},
 	}
 	return ex
 }
@@ -53,6 +126,22 @@ func (ex *connExecutor) run() error {
 			// ExecPortal is handled like ExecStmt, except that the placeholder info
 			// is taken from the portal.
 			fmt.Println("TYPE: ExecPortal")
+			portal, ok := ex.prepStmtsNamespace.portals[tcmd.Name]
+			if !ok {
+				err = pgerror.NewErrorf(pgerror.CodeInvalidCursorNameError, "unknown portal %q", tcmd.Name)
+				// ev = eventNonRetriableErr{IsCommit: fsm.False}
+				// payload = eventNonRetriableErrPayload{err: err}
+				res = ex.clientComm.CreateErrorResult(pos)
+				break
+			}
+			ex.curStmt = portal.Stmt.Statement
+
+			pinfo := &tree.PlaceholderInfo{
+				TypeHints: portal.Stmt.TypeHints,
+				Types:     portal.Stmt.Types,
+				Values:    portal.Qargs,
+			}
+
 		case PrepareStmt:
 			fmt.Println("TYPE: PrepareStmt")
 			fmt.Println("Len:", tcmd.PGQuery.Query)
