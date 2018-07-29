@@ -3,10 +3,10 @@ package sql
 import (
 	"github.com/lib/pq/oid"
 	"strconv"
+	"fmt"
 	"github.com/Ready-Stock/Noah/Database/sql/pgwire/pgerror"
 	"github.com/Ready-Stock/Noah/Database/sql/pgwire/pgwirebase"
 	"github.com/Ready-Stock/Noah/Database/util/fsm"
-	"fmt"
 	"github.com/Ready-Stock/Noah/Database/sql/sem/tree"
 	"github.com/cockroachdb/cockroach/pkg/util/log"
 )
@@ -28,7 +28,7 @@ func (ex *connExecutor) execPrepare(parseCmd PrepareStmt) (fsm.Event, fsm.EventP
 		}
 	} else {
 		// Deallocate the unnamed statement, if it exists.
-		ex.deletePreparedStmt(ctx, "")
+		ex.deletePreparedStmt("")
 	}
 
 	ps, err := ex.addPreparedStmt(parseCmd.Name, parseCmd.PGQuery, parseCmd.TypeHints)
@@ -197,4 +197,21 @@ func (ex *connExecutor) prepare(stmt pg_query.ParsetreeList, placeholderHints tr
 	}
 
 	return prepared, nil
+}
+
+func (ex *connExecutor) deletePreparedStmt(name string) {
+	psEntry, ok := ex.prepStmtsNamespace.prepStmts[name]
+	if !ok {
+		return
+	}
+	// If the prepared statement only exists in prepStmtsNamespace, it's up to us
+	// to close it.
+	baseP, inBase := ex.extraTxnState.prepStmtsNamespaceAtTxnRewindPos.prepStmts[name]
+	if !inBase || (baseP.PreparedStatement != psEntry.PreparedStatement) {
+		psEntry.close(ctx)
+	}
+	for portalName := range psEntry.portals {
+		ex.deletePortal(ctx, portalName)
+	}
+	delete(ex.prepStmtsNamespace.prepStmts, name)
 }
