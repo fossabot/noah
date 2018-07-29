@@ -6,6 +6,7 @@ import (
 	"gopkg.in/yaml.v2"
 	"fmt"
 	"os"
+	"encoding/json"
 )
 
 var (
@@ -13,32 +14,32 @@ var (
 )
 
 type Config struct {
-	AdminPort int            `yaml:"admin_port"`
-	Database  DatabaseConfig `yaml:"database"`
-	Cluster ClusterConfig `yaml:"cluster"`
-	Nodes     []NodeConfig   `yaml:"nodes"`
+	AdminPort int            `json:"admin_port"`
+	Database  DatabaseConfig `json:"database"`
+	Cluster ClusterConfig `json:"cluster"`
+	Nodes     []NodeConfig   `json:"nodes"`
 }
 
 type DatabaseConfig struct {
-	AdvertiseAddress string `yaml:"advertise_address"`
-	ReadBuffer       int    `yaml:"read_buffer"`
+	AdvertiseAddress string `json:"advertise_address"`
+	ReadBuffer       int    `json:"read_buffer"`
 }
 
 type ClusterConfig struct {
-	DenyConnectionIfNoNodes bool `yaml:"deny_connection_if_no_nodes"`
+	DenyConnectionIfNoNodes bool `json:"deny_connection_if_no_nodes"`
 }
 
 type NodeConfig struct {
-	NodeID   int    `yaml:"node_id"`
-	Address  string `yaml:"address"`
-	Database string `yaml:"database"`
-	User     string `yaml:"user"`
-	Password string `yaml:"password"`
-	Shards   int64  `yaml:"shards"`
+	NodeID   int    `json:"node_id"`
+	Address  string `json:"address"`
+	Database string `json:"database"`
+	User     string `json:"user"`
+	Password string `json:"password"`
+	Shards   int64  `json:"shards"`
 }
 
 func ParseConfiguration() {
-	configPath := flag.String("config", "config.yaml", "Path to the Noah config file.")
+	configPath := flag.String("config", "config.json", "Path to the Noah config file.")
 
 	if *configPath == "" {
 		panic("Error, config path cannot be blank!")
@@ -49,7 +50,7 @@ func ParseConfiguration() {
 		panic("Could not find config file from (" + string(*configPath) + ")")
 	}
 	var config Config
-	err = yaml.Unmarshal(dat, &config)
+	err = json.Unmarshal(dat, &config)
 	if err != nil {
 		panic("Could not read config file from (" + string(*configPath) + ")")
 	}
