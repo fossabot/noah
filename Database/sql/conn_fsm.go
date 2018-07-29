@@ -229,345 +229,345 @@ func (eventTxnReleased) Event()     {}
 // in and out of transactions need to have access to both contexts.
 //
 //go:generate ../util/fsm/gen/reports.sh TxnStateTransitions stateNoTxn
-var TxnStateTransitions = Compile(Pattern{
-	// NoTxn
-	//
-	// Note that we don't handle any errors in this state. The connExecutor is
-	// supposed to send an eventTxnStart before any other statement that may
-	// generate an error.
-	stateNoTxn{}: {
-		eventTxnStart{Var("implicitTxn")}: {
-			Description: "BEGIN, or before a statement running as an implicit txn",
-			Next:        stateOpen{ImplicitTxn: Var("implicitTxn"), RetryIntent: False},
-			Action: func(args Args) error {
-				return args.Extended.(*txnState).noTxnToOpen(
-					args.Ctx, args.Event.(eventTxnStart),
-					args.Payload.(eventTxnStartPayload))
-			},
-		},
-		eventNonRetriableErr{IsCommit: Any}: {
-			// This event doesn't change state, but it produces a skipBatch advance
-			// code.
-			Description: "anything but BEGIN or extended protocol command error",
-			Next:        stateNoTxn{},
-			Action: func(args Args) error {
-				ts := args.Extended.(*txnState)
-				ts.setAdvanceInfo(skipBatch, noRewind, noEvent)
-				return nil
-			},
-		},
-	},
-
-	/// Open
-	stateOpen{ImplicitTxn: Any, RetryIntent: Any}: {
-		eventTxnFinish{}: {
-			Description: "COMMIT/ROLLBACK, or after a statement running as an implicit txn",
-			Next:        stateNoTxn{},
-			Action: func(args Args) error {
-				ts := args.Extended.(*txnState)
-				ts.finishSQLTxn()
-				ts.setAdvanceInfo(
-					advanceOne, noRewind, args.Payload.(eventTxnFinishPayload).toEvent())
-				return nil
-			},
-		},
-		// Handle the error on COMMIT cases: we move to NoTxn as per Postgres error
-		// semantics.
-		eventRetriableErr{CanAutoRetry: False, IsCommit: True}: {
-			Description: "Retriable err on COMMIT",
-			Next:        stateNoTxn{},
-			Action:      cleanupAndFinish,
-		},
-		eventNonRetriableErr{IsCommit: True}: {
-			Next:   stateNoTxn{},
-			Action: cleanupAndFinish,
-		},
-	},
-	stateOpen{ImplicitTxn: Var("implicitTxn"), RetryIntent: Var("retryIntent")}: {
-		// This is the case where we auto-retry.
-		eventRetriableErr{CanAutoRetry: True, IsCommit: Any}: {
-			// We leave the transaction in Open. In particular, we don't move to
-			// RestartWait, as there'd be nothing to move us back from RestartWait to
-			// Open.
-			// Note: Preparing the KV txn for restart has already happened by this
-			// point.
-			Description: "Retriable err; will auto-retry",
-			Next:        stateOpen{ImplicitTxn: Var("implicitTxn"), RetryIntent: Var("retryIntent")},
-			Action: func(args Args) error {
-				// The caller will call rewCap.rewindAndUnlock().
-				args.Extended.(*txnState).setAdvanceInfo(
-					rewind,
-					args.Payload.(eventRetriableErrPayload).rewCap,
-					txnRestart)
-				return nil
-			},
-		},
-	},
-	// Handle the errors in implicit txns. They move us to NoTxn.
-	stateOpen{ImplicitTxn: True, RetryIntent: False}: {
-		eventRetriableErr{CanAutoRetry: False, IsCommit: False}: {
-			Next:   stateNoTxn{},
-			Action: cleanupAndFinish,
-		},
-		eventNonRetriableErr{IsCommit: False}: {
-			Next:   stateNoTxn{},
-			Action: cleanupAndFinish,
-		},
-	},
-	// Handle the errors in explicit txns. They move us to Aborted.
-	stateOpen{ImplicitTxn: False, RetryIntent: Var("retryIntent")}: {
-		eventNonRetriableErr{IsCommit: False}: {
-			Next: stateAborted{RetryIntent: Var("retryIntent")},
-			Action: func(args Args) error {
-				ts := args.Extended.(*txnState)
-				ts.mu.txn.CleanupOnError(ts.Ctx, args.Payload.(payloadWithError).errorCause())
-				ts.setAdvanceInfo(skipBatch, noRewind, txnAborted)
-				ts.txnAbortCount.Inc(1)
-				return nil
-			},
-		},
-		// SAVEPOINT cockroach_restart: we just change the state (RetryIntent) if it
-		// wasn't set already.
-		eventRetryIntentSet{}: {
-			Description: "SAVEPOINT cockroach_restart",
-			Next:        stateOpen{ImplicitTxn: False, RetryIntent: True},
-			Action: func(args Args) error {
-				// We flush after setting the retry intent; we know what statement
-				// caused this event and we don't need to rewind past it.
-				args.Extended.(*txnState).setAdvanceInfo(advanceOne, noRewind, noEvent)
-				return nil
-			},
-		},
-	},
-	stateOpen{ImplicitTxn: False, RetryIntent: False}: {
-		// Retriable errors when RetryIntent is not set behave like non-retriable
-		// errors.
-		eventRetriableErr{CanAutoRetry: False, IsCommit: False}: {
-			Description: "RetryIntent not set, so handled like non-retriable err",
-			Next:        stateAborted{RetryIntent: False},
-			Action: func(args Args) error {
-				ts := args.Extended.(*txnState)
-				ts.mu.txn.CleanupOnError(ts.Ctx, args.Payload.(payloadWithError).errorCause())
-				ts.setAdvanceInfo(skipBatch, noRewind, txnAborted)
-				ts.txnAbortCount.Inc(1)
-				return nil
-			},
-		},
-	},
-	stateOpen{ImplicitTxn: False, RetryIntent: True}: {
-		eventRetriableErr{CanAutoRetry: False, IsCommit: False}: {
-			Next: stateRestartWait{},
-			Action: func(args Args) error {
-				// Note: Preparing the KV txn for restart has already happened by this
-				// point.
-				args.Extended.(*txnState).setAdvanceInfo(skipBatch, noRewind, txnRestart)
-				return nil
-			},
-		},
-		eventTxnReleased{}: {
-			Description: "RELEASE SAVEPOINT cockroach_restart",
-			Next:        stateCommitWait{},
-			Action: func(args Args) error {
-				args.Extended.(*txnState).setAdvanceInfo(advanceOne, noRewind, txnCommit)
-				return nil
-			},
-		},
-		// ROLLBACK TO SAVEPOINT
-		eventTxnRestart{}: {
-			Description: "ROLLBACK TO SAVEPOINT cockroach_restart",
-			Next:        stateOpen{ImplicitTxn: False, RetryIntent: True},
-			Action: func(args Args) error {
-				state := args.Extended.(*txnState)
-				// NOTE: We don't bump the txn timestamp on this restart. Should we?
-				// Well, if we generally supported savepoints and one would issue a
-				// rollback to a regular savepoint, clearly we couldn't bump the
-				// timestamp in that case. In the special case of the cockroach_restart
-				// savepoint, it's not clear to me what a user's expectation might be.
-				state.mu.txn.Proto().Restart(
-					0 /* userPriority */, 0 /* upgradePriority */, hlc.Timestamp{})
-				args.Extended.(*txnState).setAdvanceInfo(advanceOne, noRewind, txnRestart)
-				return nil
-			},
-		},
-	},
-
-	/// Aborted
-	//
-	// Note that we don't handle any error events here. Any statement but a
-	// ROLLBACK is expected to not be passed to the state machine.
-	stateAborted{RetryIntent: Var("retryIntent")}: {
-		eventTxnFinish{}: {
-			Description: "ROLLBACK",
-			Next:        stateNoTxn{},
-			Action: func(args Args) error {
-				ts := args.Extended.(*txnState)
-				ts.finishSQLTxn()
-				ts.setAdvanceInfo(
-					advanceOne, noRewind, args.Payload.(eventTxnFinishPayload).toEvent())
-				return nil
-			},
-		},
-		eventNonRetriableErr{IsCommit: Any}: {
-			// This event doesn't change state, but it returns a skipBatch code.
-			Description: "any other statement",
-			Next:        stateAborted{RetryIntent: Var("retryIntent")},
-			Action: func(args Args) error {
-				args.Extended.(*txnState).setAdvanceInfo(skipBatch, noRewind, noEvent)
-				return nil
-			},
-		},
-	},
-	stateAborted{RetryIntent: True}: {
-		// ROLLBACK TO SAVEPOINT. We accept this in the Aborted state for the
-		// convenience of clients who want to issue ROLLBACK TO SAVEPOINT regardless
-		// of the preceding query error.
-		eventTxnStart{ImplicitTxn: False}: {
-			Description: "ROLLBACK TO SAVEPOINT cockroach_restart",
-			Next:        stateOpen{ImplicitTxn: False, RetryIntent: True},
-			Action: func(args Args) error {
-				ts := args.Extended.(*txnState)
-				ts.finishSQLTxn()
-
-				payload := args.Payload.(eventTxnStartPayload)
-
-				// Note that we pass the connection's context here, not args.Ctx which
-				// was the previous txn's context.
-				ts.resetForNewSQLTxn(
-					ts.connCtx,
-					explicitTxn,
-					payload.txnSQLTimestamp, payload.iso, payload.pri, payload.readOnly,
-					nil, /* txn */
-					args.Payload.(eventTxnStartPayload).tranCtx,
-				)
-				ts.setAdvanceInfo(advanceOne, noRewind, noEvent)
-				return nil
-			},
-		},
-	},
-
-	stateRestartWait{}: {
-		// ROLLBACK (and also COMMIT which acts like ROLLBACK)
-		eventTxnFinish{}: {
-			Description: "ROLLBACK",
-			Next:        stateNoTxn{},
-			Action: func(args Args) error {
-				ts := args.Extended.(*txnState)
-				ts.finishSQLTxn()
-				ts.setAdvanceInfo(
-					advanceOne, noRewind, args.Payload.(eventTxnFinishPayload).toEvent())
-				return nil
-			},
-		},
-		// ROLLBACK TO SAVEPOINT
-		eventTxnRestart{}: {
-			Description: "ROLLBACK TO SAVEPOINT cockroach_restart",
-			Next:        stateOpen{ImplicitTxn: False, RetryIntent: True},
-			Action: func(args Args) error {
-				args.Extended.(*txnState).setAdvanceInfo(advanceOne, noRewind, txnRestart)
-				return nil
-			},
-		},
-		eventNonRetriableErr{IsCommit: Any}: {
-			Next: stateAborted{RetryIntent: True},
-			Action: func(args Args) error {
-				ts := args.Extended.(*txnState)
-				ts.mu.txn.CleanupOnError(ts.Ctx, args.Payload.(eventNonRetriableErrPayload).err)
-				ts.setAdvanceInfo(skipBatch, noRewind, txnAborted)
-				ts.txnAbortCount.Inc(1)
-				return nil
-			},
-		},
-	},
-
-	stateCommitWait{}: {
-		eventTxnFinish{}: {
-			Description: "COMMIT",
-			Next:        stateNoTxn{},
-			Action: func(args Args) error {
-				ts := args.Extended.(*txnState)
-				ts.finishSQLTxn()
-				ts.setAdvanceInfo(
-					advanceOne, noRewind, args.Payload.(eventTxnFinishPayload).toEvent())
-				return nil
-			},
-		},
-		eventNonRetriableErr{IsCommit: Any}: {
-			// This event doesn't change state, but it returns a skipBatch code.
-			//
-			// Note that we don't expect any errors from error on COMMIT in this
-			// state.
-			Description: "any other statement",
-			Next:        stateCommitWait{},
-			Action: func(args Args) error {
-				args.Extended.(*txnState).setAdvanceInfo(skipBatch, noRewind, noEvent)
-				return nil
-			},
-		},
-	},
-})
-
-// cleanupAndFinish rolls back the KV txn and finishes the SQL txn.
-func cleanupAndFinish(args Args) error {
-	ts := args.Extended.(*txnState)
-	ts.mu.txn.CleanupOnError(ts.Ctx, args.Payload.(payloadWithError).errorCause())
-	ts.finishSQLTxn()
-	ts.setAdvanceInfo(skipBatch, noRewind, txnAborted)
-	return nil
-}
-
-// noTxnToOpen implements the side effects of starting a txn. It also calls
-// setAdvanceInfo().
-func (ts *txnState) noTxnToOpen(
-	connCtx context.Context, ev eventTxnStart, payload eventTxnStartPayload,
-) error {
-	txnTyp := explicitTxn
-	advCode := advanceOne
-	if ev.ImplicitTxn.Get() {
-		txnTyp = implicitTxn
-		// For an implicit txn, we want the statement that produced the event to be
-		// executed again (this time in state Open).
-		advCode = stayInPlace
-	}
-
-	ts.resetForNewSQLTxn(
-		connCtx,
-		txnTyp,
-		payload.txnSQLTimestamp,
-		payload.iso,
-		payload.pri,
-		payload.readOnly,
-		nil, /* txn */
-		payload.tranCtx,
-	)
-	ts.setAdvanceInfo(advCode, noRewind, txnStart)
-	return nil
-}
-
-// BoundTxnStateTransitions is the state machine used by the InternalExecutor
-// when running SQL inside a higher-level txn. It's a very limited state
-// machine: it doesn't allow starting or finishing txns, auto-retries, etc.
-var BoundTxnStateTransitions = Compile(Pattern{
-	stateOpen{ImplicitTxn: False, RetryIntent: False}: {
-		// We accept eventNonRetriableErr with both IsCommit={True, False}, even
-		// those this state machine does not support COMMIT statements because
-		// connExecutor.close() sends an eventNonRetriableErr{IsCommit: True} event.
-		eventNonRetriableErr{IsCommit: Any}: {
-			Next: stateInternalError{},
-			Action: func(args Args) error {
-				ts := args.Extended.(*txnState)
-				ts.finishSQLTxn()
-				ts.setAdvanceInfo(skipBatch, noRewind, txnAborted)
-				return nil
-			},
-		},
-		eventRetriableErr{CanAutoRetry: Any, IsCommit: False}: {
-			Next: stateInternalError{},
-			Action: func(args Args) error {
-				ts := args.Extended.(*txnState)
-				ts.finishSQLTxn()
-				ts.setAdvanceInfo(skipBatch, noRewind, txnAborted)
-				return nil
-			},
-		},
-	},
-})
+// var TxnStateTransitions = Compile(Pattern{
+// 	// NoTxn
+// 	//
+// 	// Note that we don't handle any errors in this state. The connExecutor is
+// 	// supposed to send an eventTxnStart before any other statement that may
+// 	// generate an error.
+// 	stateNoTxn{}: {
+// 		eventTxnStart{Var("implicitTxn")}: {
+// 			Description: "BEGIN, or before a statement running as an implicit txn",
+// 			Next:        stateOpen{ImplicitTxn: Var("implicitTxn"), RetryIntent: False},
+// 			Action: func(args Args) error {
+// 				return args.Extended.(*txnState).noTxnToOpen(
+// 					args.Ctx, args.Event.(eventTxnStart),
+// 					args.Payload.(eventTxnStartPayload))
+// 			},
+// 		},
+// 		eventNonRetriableErr{IsCommit: Any}: {
+// 			// This event doesn't change state, but it produces a skipBatch advance
+// 			// code.
+// 			Description: "anything but BEGIN or extended protocol command error",
+// 			Next:        stateNoTxn{},
+// 			Action: func(args Args) error {
+// 				ts := args.Extended.(*txnState)
+// 				ts.setAdvanceInfo(skipBatch, noRewind, noEvent)
+// 				return nil
+// 			},
+// 		},
+// 	},
+//
+// 	/// Open
+// 	stateOpen{ImplicitTxn: Any, RetryIntent: Any}: {
+// 		eventTxnFinish{}: {
+// 			Description: "COMMIT/ROLLBACK, or after a statement running as an implicit txn",
+// 			Next:        stateNoTxn{},
+// 			Action: func(args Args) error {
+// 				ts := args.Extended.(*txnState)
+// 				ts.finishSQLTxn()
+// 				ts.setAdvanceInfo(
+// 					advanceOne, noRewind, args.Payload.(eventTxnFinishPayload).toEvent())
+// 				return nil
+// 			},
+// 		},
+// 		// Handle the error on COMMIT cases: we move to NoTxn as per Postgres error
+// 		// semantics.
+// 		eventRetriableErr{CanAutoRetry: False, IsCommit: True}: {
+// 			Description: "Retriable err on COMMIT",
+// 			Next:        stateNoTxn{},
+// 			Action:      cleanupAndFinish,
+// 		},
+// 		eventNonRetriableErr{IsCommit: True}: {
+// 			Next:   stateNoTxn{},
+// 			Action: cleanupAndFinish,
+// 		},
+// 	},
+// 	stateOpen{ImplicitTxn: Var("implicitTxn"), RetryIntent: Var("retryIntent")}: {
+// 		// This is the case where we auto-retry.
+// 		eventRetriableErr{CanAutoRetry: True, IsCommit: Any}: {
+// 			// We leave the transaction in Open. In particular, we don't move to
+// 			// RestartWait, as there'd be nothing to move us back from RestartWait to
+// 			// Open.
+// 			// Note: Preparing the KV txn for restart has already happened by this
+// 			// point.
+// 			Description: "Retriable err; will auto-retry",
+// 			Next:        stateOpen{ImplicitTxn: Var("implicitTxn"), RetryIntent: Var("retryIntent")},
+// 			Action: func(args Args) error {
+// 				// The caller will call rewCap.rewindAndUnlock().
+// 				args.Extended.(*txnState).setAdvanceInfo(
+// 					rewind,
+// 					args.Payload.(eventRetriableErrPayload).rewCap,
+// 					txnRestart)
+// 				return nil
+// 			},
+// 		},
+// 	},
+// 	// Handle the errors in implicit txns. They move us to NoTxn.
+// 	stateOpen{ImplicitTxn: True, RetryIntent: False}: {
+// 		eventRetriableErr{CanAutoRetry: False, IsCommit: False}: {
+// 			Next:   stateNoTxn{},
+// 			Action: cleanupAndFinish,
+// 		},
+// 		eventNonRetriableErr{IsCommit: False}: {
+// 			Next:   stateNoTxn{},
+// 			Action: cleanupAndFinish,
+// 		},
+// 	},
+// 	// Handle the errors in explicit txns. They move us to Aborted.
+// 	stateOpen{ImplicitTxn: False, RetryIntent: Var("retryIntent")}: {
+// 		eventNonRetriableErr{IsCommit: False}: {
+// 			Next: stateAborted{RetryIntent: Var("retryIntent")},
+// 			Action: func(args Args) error {
+// 				ts := args.Extended.(*txnState)
+// 				ts.mu.txn.CleanupOnError(ts.Ctx, args.Payload.(payloadWithError).errorCause())
+// 				ts.setAdvanceInfo(skipBatch, noRewind, txnAborted)
+// 				ts.txnAbortCount.Inc(1)
+// 				return nil
+// 			},
+// 		},
+// 		// SAVEPOINT cockroach_restart: we just change the state (RetryIntent) if it
+// 		// wasn't set already.
+// 		eventRetryIntentSet{}: {
+// 			Description: "SAVEPOINT cockroach_restart",
+// 			Next:        stateOpen{ImplicitTxn: False, RetryIntent: True},
+// 			Action: func(args Args) error {
+// 				// We flush after setting the retry intent; we know what statement
+// 				// caused this event and we don't need to rewind past it.
+// 				args.Extended.(*txnState).setAdvanceInfo(advanceOne, noRewind, noEvent)
+// 				return nil
+// 			},
+// 		},
+// 	},
+// 	stateOpen{ImplicitTxn: False, RetryIntent: False}: {
+// 		// Retriable errors when RetryIntent is not set behave like non-retriable
+// 		// errors.
+// 		eventRetriableErr{CanAutoRetry: False, IsCommit: False}: {
+// 			Description: "RetryIntent not set, so handled like non-retriable err",
+// 			Next:        stateAborted{RetryIntent: False},
+// 			Action: func(args Args) error {
+// 				ts := args.Extended.(*txnState)
+// 				ts.mu.txn.CleanupOnError(ts.Ctx, args.Payload.(payloadWithError).errorCause())
+// 				ts.setAdvanceInfo(skipBatch, noRewind, txnAborted)
+// 				ts.txnAbortCount.Inc(1)
+// 				return nil
+// 			},
+// 		},
+// 	},
+// 	stateOpen{ImplicitTxn: False, RetryIntent: True}: {
+// 		eventRetriableErr{CanAutoRetry: False, IsCommit: False}: {
+// 			Next: stateRestartWait{},
+// 			Action: func(args Args) error {
+// 				// Note: Preparing the KV txn for restart has already happened by this
+// 				// point.
+// 				args.Extended.(*txnState).setAdvanceInfo(skipBatch, noRewind, txnRestart)
+// 				return nil
+// 			},
+// 		},
+// 		eventTxnReleased{}: {
+// 			Description: "RELEASE SAVEPOINT cockroach_restart",
+// 			Next:        stateCommitWait{},
+// 			Action: func(args Args) error {
+// 				args.Extended.(*txnState).setAdvanceInfo(advanceOne, noRewind, txnCommit)
+// 				return nil
+// 			},
+// 		},
+// 		// ROLLBACK TO SAVEPOINT
+// 		eventTxnRestart{}: {
+// 			Description: "ROLLBACK TO SAVEPOINT cockroach_restart",
+// 			Next:        stateOpen{ImplicitTxn: False, RetryIntent: True},
+// 			Action: func(args Args) error {
+// 				state := args.Extended.(*txnState)
+// 				// NOTE: We don't bump the txn timestamp on this restart. Should we?
+// 				// Well, if we generally supported savepoints and one would issue a
+// 				// rollback to a regular savepoint, clearly we couldn't bump the
+// 				// timestamp in that case. In the special case of the cockroach_restart
+// 				// savepoint, it's not clear to me what a user's expectation might be.
+// 				state.mu.txn.Proto().Restart(
+// 					0 /* userPriority */, 0 /* upgradePriority */, hlc.Timestamp{})
+// 				args.Extended.(*txnState).setAdvanceInfo(advanceOne, noRewind, txnRestart)
+// 				return nil
+// 			},
+// 		},
+// 	},
+//
+// 	/// Aborted
+// 	//
+// 	// Note that we don't handle any error events here. Any statement but a
+// 	// ROLLBACK is expected to not be passed to the state machine.
+// 	stateAborted{RetryIntent: Var("retryIntent")}: {
+// 		eventTxnFinish{}: {
+// 			Description: "ROLLBACK",
+// 			Next:        stateNoTxn{},
+// 			Action: func(args Args) error {
+// 				ts := args.Extended.(*txnState)
+// 				ts.finishSQLTxn()
+// 				ts.setAdvanceInfo(
+// 					advanceOne, noRewind, args.Payload.(eventTxnFinishPayload).toEvent())
+// 				return nil
+// 			},
+// 		},
+// 		eventNonRetriableErr{IsCommit: Any}: {
+// 			// This event doesn't change state, but it returns a skipBatch code.
+// 			Description: "any other statement",
+// 			Next:        stateAborted{RetryIntent: Var("retryIntent")},
+// 			Action: func(args Args) error {
+// 				args.Extended.(*txnState).setAdvanceInfo(skipBatch, noRewind, noEvent)
+// 				return nil
+// 			},
+// 		},
+// 	},
+// 	stateAborted{RetryIntent: True}: {
+// 		// ROLLBACK TO SAVEPOINT. We accept this in the Aborted state for the
+// 		// convenience of clients who want to issue ROLLBACK TO SAVEPOINT regardless
+// 		// of the preceding query error.
+// 		eventTxnStart{ImplicitTxn: False}: {
+// 			Description: "ROLLBACK TO SAVEPOINT cockroach_restart",
+// 			Next:        stateOpen{ImplicitTxn: False, RetryIntent: True},
+// 			Action: func(args Args) error {
+// 				ts := args.Extended.(*txnState)
+// 				ts.finishSQLTxn()
+//
+// 				payload := args.Payload.(eventTxnStartPayload)
+//
+// 				// Note that we pass the connection's context here, not args.Ctx which
+// 				// was the previous txn's context.
+// 				ts.resetForNewSQLTxn(
+// 					ts.connCtx,
+// 					explicitTxn,
+// 					payload.txnSQLTimestamp, payload.iso, payload.pri, payload.readOnly,
+// 					nil, /* txn */
+// 					args.Payload.(eventTxnStartPayload).tranCtx,
+// 				)
+// 				ts.setAdvanceInfo(advanceOne, noRewind, noEvent)
+// 				return nil
+// 			},
+// 		},
+// 	},
+//
+// 	stateRestartWait{}: {
+// 		// ROLLBACK (and also COMMIT which acts like ROLLBACK)
+// 		eventTxnFinish{}: {
+// 			Description: "ROLLBACK",
+// 			Next:        stateNoTxn{},
+// 			Action: func(args Args) error {
+// 				ts := args.Extended.(*txnState)
+// 				ts.finishSQLTxn()
+// 				ts.setAdvanceInfo(
+// 					advanceOne, noRewind, args.Payload.(eventTxnFinishPayload).toEvent())
+// 				return nil
+// 			},
+// 		},
+// 		// ROLLBACK TO SAVEPOINT
+// 		eventTxnRestart{}: {
+// 			Description: "ROLLBACK TO SAVEPOINT cockroach_restart",
+// 			Next:        stateOpen{ImplicitTxn: False, RetryIntent: True},
+// 			Action: func(args Args) error {
+// 				args.Extended.(*txnState).setAdvanceInfo(advanceOne, noRewind, txnRestart)
+// 				return nil
+// 			},
+// 		},
+// 		eventNonRetriableErr{IsCommit: Any}: {
+// 			Next: stateAborted{RetryIntent: True},
+// 			Action: func(args Args) error {
+// 				ts := args.Extended.(*txnState)
+// 				ts.mu.txn.CleanupOnError(ts.Ctx, args.Payload.(eventNonRetriableErrPayload).err)
+// 				ts.setAdvanceInfo(skipBatch, noRewind, txnAborted)
+// 				ts.txnAbortCount.Inc(1)
+// 				return nil
+// 			},
+// 		},
+// 	},
+//
+// 	stateCommitWait{}: {
+// 		eventTxnFinish{}: {
+// 			Description: "COMMIT",
+// 			Next:        stateNoTxn{},
+// 			Action: func(args Args) error {
+// 				ts := args.Extended.(*txnState)
+// 				ts.finishSQLTxn()
+// 				ts.setAdvanceInfo(
+// 					advanceOne, noRewind, args.Payload.(eventTxnFinishPayload).toEvent())
+// 				return nil
+// 			},
+// 		},
+// 		eventNonRetriableErr{IsCommit: Any}: {
+// 			// This event doesn't change state, but it returns a skipBatch code.
+// 			//
+// 			// Note that we don't expect any errors from error on COMMIT in this
+// 			// state.
+// 			Description: "any other statement",
+// 			Next:        stateCommitWait{},
+// 			Action: func(args Args) error {
+// 				args.Extended.(*txnState).setAdvanceInfo(skipBatch, noRewind, noEvent)
+// 				return nil
+// 			},
+// 		},
+// 	},
+// })
+//
+// // cleanupAndFinish rolls back the KV txn and finishes the SQL txn.
+// func cleanupAndFinish(args Args) error {
+// 	ts := args.Extended.(*txnState)
+// 	ts.mu.txn.CleanupOnError(ts.Ctx, args.Payload.(payloadWithError).errorCause())
+// 	ts.finishSQLTxn()
+// 	ts.setAdvanceInfo(skipBatch, noRewind, txnAborted)
+// 	return nil
+// }
+//
+// // noTxnToOpen implements the side effects of starting a txn. It also calls
+// // setAdvanceInfo().
+// func (ts *txnState) noTxnToOpen(
+// 	connCtx context.Context, ev eventTxnStart, payload eventTxnStartPayload,
+// ) error {
+// 	txnTyp := explicitTxn
+// 	advCode := advanceOne
+// 	if ev.ImplicitTxn.Get() {
+// 		txnTyp = implicitTxn
+// 		// For an implicit txn, we want the statement that produced the event to be
+// 		// executed again (this time in state Open).
+// 		advCode = stayInPlace
+// 	}
+//
+// 	ts.resetForNewSQLTxn(
+// 		connCtx,
+// 		txnTyp,
+// 		payload.txnSQLTimestamp,
+// 		payload.iso,
+// 		payload.pri,
+// 		payload.readOnly,
+// 		nil, /* txn */
+// 		payload.tranCtx,
+// 	)
+// 	ts.setAdvanceInfo(advCode, noRewind, txnStart)
+// 	return nil
+// }
+//
+// // BoundTxnStateTransitions is the state machine used by the InternalExecutor
+// // when running SQL inside a higher-level txn. It's a very limited state
+// // machine: it doesn't allow starting or finishing txns, auto-retries, etc.
+// var BoundTxnStateTransitions = Compile(Pattern{
+// 	stateOpen{ImplicitTxn: False, RetryIntent: False}: {
+// 		// We accept eventNonRetriableErr with both IsCommit={True, False}, even
+// 		// those this state machine does not support COMMIT statements because
+// 		// connExecutor.close() sends an eventNonRetriableErr{IsCommit: True} event.
+// 		eventNonRetriableErr{IsCommit: Any}: {
+// 			Next: stateInternalError{},
+// 			Action: func(args Args) error {
+// 				ts := args.Extended.(*txnState)
+// 				ts.finishSQLTxn()
+// 				ts.setAdvanceInfo(skipBatch, noRewind, txnAborted)
+// 				return nil
+// 			},
+// 		},
+// 		eventRetriableErr{CanAutoRetry: Any, IsCommit: False}: {
+// 			Next: stateInternalError{},
+// 			Action: func(args Args) error {
+// 				ts := args.Extended.(*txnState)
+// 				ts.finishSQLTxn()
+// 				ts.setAdvanceInfo(skipBatch, noRewind, txnAborted)
+// 				return nil
+// 			},
+// 		},
+// 	},
+// })
