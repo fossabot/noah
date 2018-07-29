@@ -533,7 +533,7 @@ func (c *conn) handleClose(buf *pgwirebase.ReadBuffer) error {
 // An error is returned iff the statement buffer has been closed. In that case,
 // the connection should be considered toast.
 func (c *conn) handleBind(buf *pgwirebase.ReadBuffer) error {
-	_, err := buf.GetString()
+	portalName, err := buf.GetString()
 	if err != nil {
 		return c.stmtBuf.Push(sql.SendError{Err: err})
 	}
@@ -640,16 +640,14 @@ func (c *conn) handleBind(buf *pgwirebase.ReadBuffer) error {
 			columnFormatCodes[i] = pgwirebase.FormatCode(ch)
 		}
 	}
-	return nil
-	// return c.stmtBuf.Push(
-	// 	ctx,
-	// 	sql.BindStmt{
-	// 		PreparedStatementName: statementName,
-	// 		PortalName:            portalName,
-	// 		Args:                  qargs,
-	// 		ArgFormatCodes:        qArgFormatCodes,
-	// 		OutFormats:            columnFormatCodes,
-	// 	})
+	return c.stmtBuf.Push(
+	sql.BindStmt{
+		PreparedStatementName: statementName,
+		PortalName:            portalName,
+		Args:                  qargs,
+		ArgFormatCodes:        qArgFormatCodes,
+		OutFormats:            columnFormatCodes,
+	})
 }
 
 // An error is returned iff the statement buffer has been closed. In that case,
