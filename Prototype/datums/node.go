@@ -1,6 +1,6 @@
 package datums
 
 type Node struct {
-	NodeID int64
+	NodeID int
 	Name string
 }

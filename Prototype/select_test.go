@@ -25,7 +25,8 @@ var (
 
 func Test_Selects(t *testing.T) {
 	for _, q := range SelectQueries {
-		if err := InjestQuery(q); err != nil {
+		context := Start()
+		if err := InjestQuery(&context, q); err != nil {
 			t.Error(err)
 		}
 	}
@@ -33,7 +34,8 @@ func Test_Selects(t *testing.T) {
 
 func Test_SelectFunctions(t *testing.T) {
 	for _, q := range FunctionQueries {
-		if err := InjestQuery(q); err != nil {
+		context := Start()
+		if err := InjestQuery(&context, q); err != nil {
 			t.Error(err)
 		}
 	}
@@ -42,7 +44,8 @@ func Test_SelectFunctions(t *testing.T) {
 
 
 func Benchmark_Select(b *testing.B) {
-	if err := InjestQuery("SELECT products.product_id,variations.variation_id FROM products INNER JOIN variations ON variations.product_id=products.product_id INNER JOIN users ON users.id=products.id INNER JOIN temp ON temp.id=products.product_id WHERE (product.id = 1 or product.test = true) and (products.account_id = '1') LIMIT 10 OFFSET 0;"); err != nil {
+	context := Start()
+	if err := InjestQuery(&context, "SELECT products.product_id,variations.variation_id FROM products INNER JOIN variations ON variations.product_id=products.product_id INNER JOIN users ON users.id=products.id INNER JOIN temp ON temp.id=products.product_id WHERE (product.id = 1 or product.test = true) and (products.account_id = '1') LIMIT 10 OFFSET 0;"); err != nil {
 		b.Error(err)
 	}
 }

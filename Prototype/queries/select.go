@@ -7,13 +7,14 @@ import (
 	"errors"
 	data "github.com/Ready-Stock/Noah/Prototype/datums"
 	"strconv"
+	"github.com/Ready-Stock/Noah/Prototype/context"
 )
 
-func HandleSelect(stmt pg_query.SelectStmt) error {
+func HandleSelect(ctx *context.SessionContext, stmt pg_query.SelectStmt) error {
 	fmt.Printf("Preparing Select Query\n")
 	j, _ := stmt.MarshalJSON()
 	fmt.Println(string(j))
-	if node, err := getTargetNodeForQuery(stmt); err != nil {
+	if node, err := getTargetNodeForSelect(stmt); err != nil {
 		return err
 	} else if node == nil {
 		return errors.New("no node targeted for select query")
@@ -24,7 +25,7 @@ func HandleSelect(stmt pg_query.SelectStmt) error {
 	return nil
 }
 
-func getTargetNodeForQuery(stmt pg_query.SelectStmt) (*data.Node, error) {
+func getTargetNodeForSelect(stmt pg_query.SelectStmt) (*data.Node, error) {
 	var node data.Node
 	if len(stmt.FromClause.Items) == 0 {
 		switch stmt.TargetList.Items[0].(pg_query.ResTarget).Val.(type) {
