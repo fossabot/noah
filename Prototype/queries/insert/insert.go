@@ -8,8 +8,8 @@ import (
 	"github.com/Ready-Stock/Noah/Prototype/cluster"
 	"github.com/kataras/go-errors"
 	"strconv"
-			pgq "github.com/Ready-Stock/pg_query_go"
-		"github.com/Ready-Stock/Noah/Prototype/distributor"
+	pgq "github.com/Ready-Stock/pg_query_go"
+	"github.com/Ready-Stock/Noah/Prototype/distributor"
 )
 
 var (
@@ -28,7 +28,7 @@ type InsertStatement struct {
 func CreateInsertStatment(stmt pg_query.InsertStmt, tree pgq.ParsetreeList) InsertStatement {
 	return InsertStatement{
 		Statement: stmt,
-		Query: tree.Query,
+		Query:     tree.Query,
 	}
 }
 
@@ -61,10 +61,19 @@ func (stmt InsertStatement) HandleInsert(ctx *context.SessionContext) error {
 			}
 		}
 		responses := distributor.DistributeQuery(stmt.Query, nodes)
+		errs := 0
+		err := errors.New("could not perform insert on all nodes needed")
 		for _, response := range responses {
 			if response.Error != nil {
 				fmt.Printf("error, query failed on node (%d) query: %s\n\terror: %s\n", response.NodeID, stmt.Query, response.Error.Error())
+				err.AppendErr(response.Error)
+				errs++
 			}
+		}
+		if errs > 0 {
+			fmt.Printf("Queries failed on some or all nodes, transaction will be rolled back!\n")
+			distributor.DistributeQuery("ROLLBACK;", nodes)
+			return err
 		}
 	}
 

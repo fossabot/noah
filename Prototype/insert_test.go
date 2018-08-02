@@ -32,6 +32,7 @@ func Test_Inserts(t *testing.T) {
 			if err := InjestQuery(&context, Query); err != nil {
 				t.Error(err)
 				t.Fail()
+				break
 			}
 		}
 		fmt.Println("")

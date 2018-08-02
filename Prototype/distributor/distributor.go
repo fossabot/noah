@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"sync"
 	_ "github.com/lib/pq"
-		"github.com/Ready-Stock/Noah/Prototype/datums"
+	"github.com/Ready-Stock/Noah/Prototype/datums"
 )
 
 type QueryResult struct {
@@ -22,19 +22,19 @@ func DistributeQuery(query string, nodes []datums.Node) []QueryResult {
 			defer wg.Done()
 			if db, err := sql.Open("postgres", node.ConnectionString); err != nil {
 				responses[index] = QueryResult{
-					Error:err,
-					NodeID:node.NodeID,
+					Error:  err,
+					NodeID: node.NodeID,
 				}
 			} else {
 				if rows, err := db.Query(query); err != nil {
 					responses[index] = QueryResult{
-						Error:err,
-						NodeID:node.NodeID,
+						Error:  err,
+						NodeID: node.NodeID,
 					}
 				} else {
 					responses[index] = QueryResult{
-						Rows:rows,
-						NodeID:node.NodeID,
+						Rows:   rows,
+						NodeID: node.NodeID,
 					}
 				}
 			}
