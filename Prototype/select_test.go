@@ -4,8 +4,8 @@ import (
 	"testing"
 )
 
-func Test_Selects(t *testing.T) {
-	queries := []string{
+var (
+	SelectQueries = []string{
 		"SELECT 1",
 		"SELECT 1;",
 		"SELECT products.product_id,products.sku FROM products WHERE account_id=1;",
@@ -14,10 +14,35 @@ func Test_Selects(t *testing.T) {
 		"SELECT products.product_id FROM products WHERE (account_id = '1') AND (product_id = '2') LIMIT 10 OFFSET 0;",
 		"SELECT products.product_id FROM products WHERE (products.account_id = '1') AND (products.product_id = '2') LIMIT 10 OFFSET 0;",
 		"SELECT products.product_id,variations.variation_id FROM products INNER JOIN variations ON variations.product_id=products.product_id INNER JOIN users ON users.id=products.id WHERE (account_id = '2') LIMIT 10 OFFSET 0;",
+		"SELECT products.product_id,variations.variation_id FROM products INNER JOIN variations ON variations.product_id=products.product_id INNER JOIN users ON users.id=products.id INNER JOIN temp ON temp.id=products.product_id WHERE (account_id = '2') LIMIT 10 OFFSET 0;",
+		"SELECT products.product_id,variations.variation_id FROM products INNER JOIN variations ON variations.product_id=products.product_id INNER JOIN users ON users.id=products.id INNER JOIN temp ON temp.id=products.product_id WHERE (product.id = 1 or product.test = true) and (products.account_id = '1') LIMIT 10 OFFSET 0;",
 	}
-	for _, q := range queries {
+	FunctionQueries = []string {
+		"SELECT do_test('test');",
+		"SELECT CURRENT_TIMESTAMP;",
+	}
+)
+
+func Test_Selects(t *testing.T) {
+	for _, q := range SelectQueries {
 		if err := InjestQuery(q); err != nil {
 			t.Error(err)
 		}
+	}
+}
+
+func Test_SelectFunctions(t *testing.T) {
+	for _, q := range FunctionQueries {
+		if err := InjestQuery(q); err != nil {
+			t.Error(err)
+		}
+	}
+}
+
+
+
+func Benchmark_Select(b *testing.B) {
+	if err := InjestQuery("SELECT products.product_id,variations.variation_id FROM products INNER JOIN variations ON variations.product_id=products.product_id INNER JOIN users ON users.id=products.id INNER JOIN temp ON temp.id=products.product_id WHERE (product.id = 1 or product.test = true) and (products.account_id = '1') LIMIT 10 OFFSET 0;"); err != nil {
+		b.Error(err)
 	}
 }
