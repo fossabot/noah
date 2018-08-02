@@ -45,7 +45,6 @@ func HandleInsert(ctx *context.SessionContext, stmt pg_query.InsertStmt) error {
 					return err
 				}
 			}
-
 		}
 		for _, node := range nodes {
 			fmt.Printf("Sending insert to node (%d) \n", node.NodeID)

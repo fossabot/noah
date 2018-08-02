@@ -35,6 +35,11 @@ var (
 			TableName:"users",
 			IsGlobal:true,
 		},
+		"accounts": {
+			TableName:"accounts",
+			IsGlobal:true,
+			IsTenantTable:true,
+		},
 	}
 
 	Accounts = map[int]data.Account {
