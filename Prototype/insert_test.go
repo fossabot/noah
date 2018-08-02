@@ -2,6 +2,7 @@ package Prototype
 
 import (
 	"testing"
+	"fmt"
 )
 
 var (
@@ -10,6 +11,11 @@ var (
 			"BEGIN;",
 			"INSERT INTO products (account_id,sku,title) VALUES(1,'test','test');",
 			"ROLLBACK;",
+		},
+		{
+			"BEGIN;",
+			"INSERT INTO products (account_id,sku,title) VALUES(1,'test','test');",
+			"COMMIT;",
 		},
 	}
 )
@@ -23,5 +29,6 @@ func Test_Inserts(t *testing.T) {
 				t.Fail()
 			}
 		}
+		fmt.Println("")
 	}
 }

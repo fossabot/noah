@@ -1,4 +1,4 @@
-package queries
+package transaction
 
 import (
 	"github.com/Ready-Stock/pg_query_go/nodes"
@@ -15,6 +15,7 @@ func HandleTransaction(ctx *context.SessionContext, stmt pg_query.TransactionStm
 	case pg_query.TRANS_STMT_BEGIN, pg_query.TRANS_STMT_START:
 		ctx.TransactionState = context.StateInTxn
 	case pg_query.TRANS_STMT_COMMIT:
+		return commit(ctx)
 	case pg_query.TRANS_STMT_ROLLBACK:
 		return rollback(ctx)
 	case pg_query.TRANS_STMT_SAVEPOINT:
@@ -50,5 +51,22 @@ func rollback(ctx *context.SessionContext) error {
 }
 
 func commit(ctx *context.SessionContext) error  {
-	
+	if ctx.TransactionState != context.StateInTxn {
+		return errors.New("cannot commit transaction, no transaction has been created")
+	} else {
+		nodesInTran := make([]context.NodeContext, 0)
+		for _, n := range ctx.Nodes {
+			if n.TransactionState == context.StateInTxn {
+				nodesInTran = append(nodesInTran, n)
+			}
+		}
+		if len(nodesInTran) == 0 {
+			return errors.New("cannot commit transaction, no nodes have a pending transaction")
+		} else {
+			for _, node := range nodesInTran {
+				fmt.Printf("Sent (COMMIT) to node (%d)\n", node.NodeID)
+			}
+			return nil
+		}
+	}
 }

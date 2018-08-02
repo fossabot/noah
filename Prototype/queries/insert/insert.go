@@ -1,4 +1,4 @@
-package queries
+package insert
 
 import (
 	"github.com/Ready-Stock/pg_query_go/nodes"

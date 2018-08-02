@@ -1,11 +1,13 @@
 package Prototype
 
 import (
-	//"github.com/Ready-Stock/pg_query_go/nodes"
+	// "github.com/Ready-Stock/pg_query_go/nodes"
 	pgq "github.com/Ready-Stock/pg_query_go"
 	"errors"
 	query "github.com/Ready-Stock/pg_query_go/nodes"
-	"github.com/Ready-Stock/Noah/Prototype/queries"
+	"github.com/Ready-Stock/Noah/Prototype/queries/select"
+	_transaction "github.com/Ready-Stock/Noah/Prototype/queries/transaction"
+	_insert "github.com/Ready-Stock/Noah/Prototype/queries/insert"
 	"fmt"
 	"github.com/Ready-Stock/Noah/Prototype/context"
 )
@@ -13,10 +15,9 @@ import (
 func Start() context.SessionContext {
 	return context.SessionContext{
 		TransactionState: context.StateNoTxn,
-		Nodes: map[int]context.NodeContext{},
+		Nodes:            map[int]context.NodeContext{},
 	}
 }
-
 
 func InjestQuery(ctx *context.SessionContext, query string) error {
 	if parsed, err := pgq.Parse(query); err != nil {
@@ -117,7 +118,7 @@ func handleParseTree(ctx *context.SessionContext, tree pgq.ParsetreeList) error 
 		case query.ImportForeignSchemaStmt:
 		case query.IndexStmt:
 		case query.InsertStmt:
-			return queries.HandleInsert(ctx, stmt)
+			return _insert.HandleInsert(ctx, stmt)
 		case query.ListenStmt:
 		case query.LoadStmt:
 		case query.LockStmt:
@@ -131,10 +132,10 @@ func handleParseTree(ctx *context.SessionContext, tree pgq.ParsetreeList) error 
 		case query.RuleStmt:
 		case query.SecLabelStmt:
 		case query.SelectStmt:
-			return queries.HandleSelect(ctx, stmt)
+			return _select.HandleSelect(ctx, stmt)
 		case query.SetOperationStmt:
 		case query.TransactionStmt:
-			return queries.HandleTransaction(ctx, stmt)
+			return _transaction.HandleTransaction(ctx, stmt)
 		case query.TruncateStmt:
 		case query.UnlistenStmt:
 		case query.UpdateStmt:
