@@ -7,14 +7,19 @@ import (
 
 var (
 	InsertQueries = [][]string {
+		// {
+		// 	"BEGIN;",
+		// 	"INSERT INTO products (account_id,sku,title) VALUES(1,'test','test');",
+		// 	"ROLLBACK;",
+		// },
+		// {
+		// 	"BEGIN;",
+		// 	"INSERT INTO products (account_id,sku,title) VALUES(1,'test','test');",
+		// 	"COMMIT;",
+		// },
 		{
 			"BEGIN;",
-			"INSERT INTO products (account_id,sku,title) VALUES(1,'test','test');",
-			"ROLLBACK;",
-		},
-		{
-			"BEGIN;",
-			"INSERT INTO products (account_id,sku,title) VALUES(1,'test','test');",
+			"INSERT INTO accounts (account_id,account_name) VALUES(NEW_ID(),'Elliots Account');",
 			"COMMIT;",
 		},
 	}

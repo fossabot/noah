@@ -8,25 +8,41 @@ import (
 	"github.com/Ready-Stock/Noah/Prototype/cluster"
 	"github.com/kataras/go-errors"
 	"strconv"
+	"database/sql"
+	"sync"
+	pgq "github.com/Ready-Stock/pg_query_go"
+	"github.com/Ready-Stock/Noah/Prototype/queries"
 )
 
 var (
 	errorInsertWithoutTransaction = errors.New("inserts can only be performed from within a transaction")
 	errorCouldNotFindTable        = errors.New("could not find table (%s) in metadata")
-	errorRelationIsNull			  = errors.New("relation is null")
-	errorNoAccountIDColumn		  = errors.New("could not find column designating tenant_id")
-	errorAccountIDInvalid 		  = errors.New("tenant_id (%d) is not valid")
+	errorRelationIsNull           = errors.New("relation is null")
+	errorNoAccountIDColumn        = errors.New("could not find column designating tenant_id")
+	errorAccountIDInvalid         = errors.New("tenant_id (%d) is not valid")
 )
 
-func HandleInsert(ctx *context.SessionContext, stmt pg_query.InsertStmt) error {
+type InsertStatement struct {
+	Statement pg_query.InsertStmt
+	Query     string
+}
+
+func CreateInsertStatment(stmt pg_query.InsertStmt, tree pgq.ParsetreeList) InsertStatement {
+	return InsertStatement{
+		Statement: stmt,
+		Query: tree.Query,
+	}
+}
+
+func (stmt InsertStatement) HandleInsert(ctx *context.SessionContext) error {
 	fmt.Printf("Preparing Insert Query\n")
-	j, _ := stmt.MarshalJSON()
+	j, _ := stmt.Statement.MarshalJSON()
 	fmt.Println(string(j))
 	if ctx.TransactionState != context.StateInTxn {
 		return errorInsertWithoutTransaction
 	}
 
-	if nodes, err := getTargetNodesForInsert(stmt); err != nil {
+	if nodes, err := getTargetNodesForInsert(stmt.Statement); err != nil {
 		return err
 	} else {
 		for _, node := range nodes {
@@ -46,8 +62,40 @@ func HandleInsert(ctx *context.SessionContext, stmt pg_query.InsertStmt) error {
 				}
 			}
 		}
-		for _, node := range nodes {
+		responses := make([]queries.QueryResult, len(nodes))
+		var wg sync.WaitGroup
+		wg.Add(len(nodes))
+		for index, node := range nodes {
 			fmt.Printf("Sending insert to node (%d) \n", node.NodeID)
+			go func(index int, node data.Node) {
+				defer wg.Done()
+				fmt.Printf("\tConnecting to node (%d)\n", node.NodeID)
+				if db, err := sql.Open("postgres", "user=postgres dbname=ready sslmode=none host=localhost port=5432 password=Spring!2016 connect_timeout=3"); err != nil {
+					fmt.Printf("\tFailed to connect to node (%d)\n", node.NodeID)
+					responses[index] = queries.QueryResult{
+						NodeID: node.NodeID,
+						Error:err,
+					}
+				} else {
+					if rows, err := db.Query(stmt.Query); err != nil {
+						responses[index] = queries.QueryResult{
+							NodeID: node.NodeID,
+							Error:err,
+						}
+					} else {
+						responses[index] = queries.QueryResult{
+							NodeID: node.NodeID,
+							Rows:rows,
+						}
+					}
+				}
+			}(index, node)
+		}
+		wg.Wait()
+		for _, response := range responses {
+			if response.Error != nil {
+
+			}
 		}
 	}
 
@@ -58,11 +106,19 @@ func getTargetNodesForInsert(stmt pg_query.InsertStmt) ([]data.Node, error) {
 	if global, err := getTargetTableIsGlobal(stmt); err != nil {
 		return nil, err
 	} else if global {
-		nodes := make([]data.Node, len(cluster.Nodes))
-		for i, n := range cluster.Nodes {
-			nodes[i] = n
+		if tenant, err := getTargetTableIsTenantTable(stmt); err != nil {
+			return nil, err
+		} else {
+			if tenant {
+				fmt.Printf("CREATING NEW TENANT!\n")
+			}
+			nodes := make([]data.Node, 0)
+			for _, n := range cluster.Nodes {
+				nodes = append(nodes, n)
+			}
+			return nodes, nil
 		}
-		return nodes, nil
+
 	} else {
 		account_id_index := -1
 		for i, res := range stmt.Cols.Items {
@@ -117,6 +173,18 @@ func getTargetTableIsGlobal(stmt pg_query.InsertStmt) (bool, error) {
 			return false, errorCouldNotFindTable.Format(*stmt.Relation.Relname)
 		} else {
 			return table.IsGlobal, nil
+		}
+	} else {
+		return false, errorRelationIsNull
+	}
+}
+
+func getTargetTableIsTenantTable(stmt pg_query.InsertStmt) (bool, error) {
+	if stmt.Relation != nil && stmt.Relation.Relname != nil {
+		if table, ok := cluster.Tables[*stmt.Relation.Relname]; !ok {
+			return false, errorCouldNotFindTable.Format(*stmt.Relation.Relname)
+		} else {
+			return table.IsTenantTable, nil
 		}
 	} else {
 		return false, errorRelationIsNull

@@ -1,15 +1,15 @@
 package Prototype
 
 import (
-	// "github.com/Ready-Stock/pg_query_go/nodes"
 	pgq "github.com/Ready-Stock/pg_query_go"
 	"errors"
+	"fmt"
+	"github.com/Ready-Stock/Noah/Prototype/context"
 	query "github.com/Ready-Stock/pg_query_go/nodes"
 	"github.com/Ready-Stock/Noah/Prototype/queries/select"
 	_transaction "github.com/Ready-Stock/Noah/Prototype/queries/transaction"
 	_insert "github.com/Ready-Stock/Noah/Prototype/queries/insert"
-	"fmt"
-	"github.com/Ready-Stock/Noah/Prototype/context"
+	_update "github.com/Ready-Stock/Noah/Prototype/queries/update"
 )
 
 func Start() context.SessionContext {
@@ -118,7 +118,7 @@ func handleParseTree(ctx *context.SessionContext, tree pgq.ParsetreeList) error 
 		case query.ImportForeignSchemaStmt:
 		case query.IndexStmt:
 		case query.InsertStmt:
-			return _insert.HandleInsert(ctx, stmt)
+			return _insert.CreateInsertStatment(stmt, tree).HandleInsert(ctx)
 		case query.ListenStmt:
 		case query.LoadStmt:
 		case query.LockStmt:
@@ -139,6 +139,7 @@ func handleParseTree(ctx *context.SessionContext, tree pgq.ParsetreeList) error 
 		case query.TruncateStmt:
 		case query.UnlistenStmt:
 		case query.UpdateStmt:
+			return _update.HandleUpdate(ctx, stmt)
 		case query.VacuumStmt:
 		case query.VariableSetStmt:
 		case query.VariableShowStmt:
