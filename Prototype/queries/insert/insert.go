@@ -8,10 +8,8 @@ import (
 	"github.com/Ready-Stock/Noah/Prototype/cluster"
 	"github.com/kataras/go-errors"
 	"strconv"
-	"database/sql"
-	"sync"
-	pgq "github.com/Ready-Stock/pg_query_go"
-	"github.com/Ready-Stock/Noah/Prototype/queries"
+			pgq "github.com/Ready-Stock/pg_query_go"
+		"github.com/Ready-Stock/Noah/Prototype/distributor"
 )
 
 var (
@@ -62,39 +60,10 @@ func (stmt InsertStatement) HandleInsert(ctx *context.SessionContext) error {
 				}
 			}
 		}
-		responses := make([]queries.QueryResult, len(nodes))
-		var wg sync.WaitGroup
-		wg.Add(len(nodes))
-		for index, node := range nodes {
-			fmt.Printf("Sending insert to node (%d) \n", node.NodeID)
-			go func(index int, node data.Node) {
-				defer wg.Done()
-				fmt.Printf("\tConnecting to node (%d)\n", node.NodeID)
-				if db, err := sql.Open("postgres", "user=postgres dbname=ready sslmode=none host=localhost port=5432 password=Spring!2016 connect_timeout=3"); err != nil {
-					fmt.Printf("\tFailed to connect to node (%d)\n", node.NodeID)
-					responses[index] = queries.QueryResult{
-						NodeID: node.NodeID,
-						Error:err,
-					}
-				} else {
-					if rows, err := db.Query(stmt.Query); err != nil {
-						responses[index] = queries.QueryResult{
-							NodeID: node.NodeID,
-							Error:err,
-						}
-					} else {
-						responses[index] = queries.QueryResult{
-							NodeID: node.NodeID,
-							Rows:rows,
-						}
-					}
-				}
-			}(index, node)
-		}
-		wg.Wait()
+		responses := distributor.DistributeQuery(stmt.Query, nodes)
 		for _, response := range responses {
 			if response.Error != nil {
-
+				fmt.Printf("error, query failed on node (%d) query: %s\n\terror: %s\n", response.NodeID, stmt.Query, response.Error.Error())
 			}
 		}
 	}
