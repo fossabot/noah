@@ -6,6 +6,7 @@ import (
 	_ "github.com/lib/pq"
 	"github.com/Ready-Stock/Noah/Prototype/cluster"
 	"github.com/kataras/go-errors"
+	"fmt"
 )
 
 type TxnState string
@@ -77,6 +78,8 @@ func (ctx *SessionContext) DistributeQuery(query string, nodes ...int) Distribut
 						NodeID: node.NodeID,
 					}
 					errs <- err
+					updated_nodes <- node
+					return
 				} else {
 					if tx, err := db.Begin(); err != nil {
 						results <- QueryResult{
@@ -84,6 +87,8 @@ func (ctx *SessionContext) DistributeQuery(query string, nodes ...int) Distribut
 							NodeID: node.NodeID,
 						}
 						errs <- err
+						updated_nodes <- node
+						return
 					} else {
 						node.TX = tx
 						node.DB = db
@@ -91,7 +96,6 @@ func (ctx *SessionContext) DistributeQuery(query string, nodes ...int) Distribut
 					}
 				}
 			}
-
 			if rows, err := node.TX.Query(query); err != nil {
 				results <- QueryResult{
 					Error:  err,
@@ -106,18 +110,20 @@ func (ctx *SessionContext) DistributeQuery(query string, nodes ...int) Distribut
 				errs <- nil
 			}
 			updated_nodes <- node
+			return
 		}(index, node)
 	}
 	wg.Wait()
-	for updated_node := range updated_nodes {
-		ctx.Nodes[updated_node.NodeID] = updated_node
-	}
-	for err := range errs {
+	for i := 0; i < len(nodes); i++ {
+		node := <- updated_nodes
+		ctx.Nodes[node.NodeID] = node
+
+		err := <- errs
 		if err != nil {
 			response.Errors = append(response.Errors, err)
 		}
-	}
-	for result := range results {
+
+		result := <- results
 		response.Results = append(response.Results, result)
 	}
 	response.Success = len(response.Errors) == 0
@@ -125,6 +131,7 @@ func (ctx *SessionContext) DistributeQuery(query string, nodes ...int) Distribut
 }
 
 func (ctx *SessionContext) DoTxnOnAllNodes(action TxnAction, nodes ...int) DistributedResponse {
+	fmt.Printf("Sending (%s) to nodes\n", action)
 	response := DistributedResponse{
 		Success: true,
 		Results: make([]QueryResult, 0),
@@ -145,6 +152,12 @@ func (ctx *SessionContext) DoTxnOnAllNodes(action TxnAction, nodes ...int) Distr
 						NodeID: node_id,
 					}
 					errs <- err
+				} else {
+					results <- QueryResult{
+						Error:  nil,
+						NodeID: node_id,
+					}
+					errs <- nil
 				}
 			case TxnRollback:
 				if err := ctx.Nodes[node_id].TX.Rollback(); err != nil {
@@ -153,6 +166,12 @@ func (ctx *SessionContext) DoTxnOnAllNodes(action TxnAction, nodes ...int) Distr
 						NodeID: node_id,
 					}
 					errs <- err
+				} else {
+					results <- QueryResult{
+						Error:  nil,
+						NodeID: node_id,
+					}
+					errs <- nil
 				}
 			default:
 				err := errors.New("invalid action type (%s)").Format(action)
@@ -165,15 +184,15 @@ func (ctx *SessionContext) DoTxnOnAllNodes(action TxnAction, nodes ...int) Distr
 		}(index, node)
 	}
 	wg.Wait()
-	for err := range errs {
+	for i := 0; i < len(nodes); i++ {
+		err := <- errs
 		if err != nil {
 			response.Errors = append(response.Errors, err)
 		}
-	}
-	for result := range results {
+
+		result := <- results
 		response.Results = append(response.Results, result)
 	}
-	response.Success = len(response.Errors) == 0
 	response.Success = len(response.Errors) == 0
 	return response
 }
