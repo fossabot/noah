@@ -11,18 +11,22 @@ var (
 		1: {
 			NodeID: 1,
 			Name: "Node A",
+			ConnectionString:"postgresql://postgres:Spring!2016@localhost:5432/ready_one",
 		},
 		2: {
 			NodeID: 2,
 			Name: "Node B",
+			ConnectionString:"postgresql://postgres:Spring!2016@localhost:5432/ready_two",
 		},
 		3: {
 			NodeID: 3,
 			Name: "Node C",
+			ConnectionString:"postgresql://postgres:Spring!2016@localhost:5432/ready_three",
 		},
 		4: {
 			NodeID: 4,
 			Name: "Node D",
+			ConnectionString:"postgresql://postgres:Spring!2016@localhost:5432/ready_four",
 		},
 	}
 
