@@ -10,6 +10,7 @@ import (
 	_transaction "github.com/Ready-Stock/Noah/Prototype/queries/transaction"
 	_insert "github.com/Ready-Stock/Noah/Prototype/queries/insert"
 	_update "github.com/Ready-Stock/Noah/Prototype/queries/update"
+	_create "github.com/Ready-Stock/Noah/Prototype/queries/create"
 )
 
 func Start() context.SessionContext {
@@ -91,9 +92,12 @@ func handleParseTree(ctx *context.SessionContext, tree pgq.ParsetreeList) error 
 		case query.CreateSeqStmt:
 		case query.CreateStatsStmt:
 		case query.CreateStmt:
+			return _create.CreateCreateStatment(stmt, tree).HandleCreate(ctx)
 		case query.CreateSubscriptionStmt:
 		case query.CreateTableAsStmt:
+			fmt.Println("CREATE TABLE AS STMT\n")
 		case query.CreateTableSpaceStmt:
+			fmt.Println("CREATE TABLE SPACE STMT\n")
 		case query.CreateTransformStmt:
 		case query.CreateTrigStmt:
 		case query.CreateUserMappingStmt:
