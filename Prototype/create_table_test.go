@@ -19,8 +19,8 @@ var (
 		// },
 		{
 			"BEGIN;",
-			"CREATE TABLE public.xyz (test_id BIGINT PRIMARY KEY NOT NULL, testint INT, message VARCHAR);",
-			"ROLLBACK;",
+			"CREATE TABLE public.asd1 (test_id BIGINT PRIMARY KEY NOT NULL, testint INT, message VARCHAR) WITH (type='global');",
+			"COMMIT;",
 		},
 	}
 )
@@ -30,6 +30,11 @@ func Test_CreateTable(t *testing.T) {
 		context := Start()
 		for _, Query := range QuerySet {
 			if err := InjestQuery(&context, Query); err != nil {
+				fmt.Printf("ERROR ON CLUSTER: %s\n", err.Error())
+				if err := InjestQuery(&context, "ROLLBACK;"); err != nil {
+					t.Error(err)
+					t.Fail()
+				}
 				t.Error(err)
 				t.Fail()
 				break

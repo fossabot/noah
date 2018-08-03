@@ -5,10 +5,8 @@ import (
 	pgq "github.com/Ready-Stock/pg_query_go"
 	"github.com/Ready-Stock/Noah/Prototype/context"
 	"fmt"
-	"github.com/Ready-Stock/Noah/Prototype/datums"
-	"github.com/Ready-Stock/Noah/Prototype/cluster"
-	"github.com/Ready-Stock/Noah/Prototype/distributor"
-	)
+		"github.com/Ready-Stock/Noah/Prototype/cluster"
+		)
 
 type CreateStatement struct {
 	Statement pg_query.CreateStmt
@@ -35,28 +33,10 @@ func (stmt CreateStatement) HandleCreate(ctx *context.SessionContext) error {
 		fmt.Printf("Found identity column at index: (%d) name: (%s)\n", id_index, id_name)
 	}
 
-	nodes := stmt.getAllNodes()
+	ids := stmt.getAllNodes()
 
-	for _, node := range nodes {
-		if cachedNode, ok := ctx.Nodes[node.NodeID]; !ok {
-			ctx.Nodes[node.NodeID] = context.NodeContext{
-				TransactionState: context.StateNoTxn,
-				NodeID:           node.NodeID,
-			}
-			fmt.Printf("Node (%d) was has been added to this context \n", node.NodeID)
-			if err := stmt.continueOrStartTransaction(ctx, ctx.Nodes[node.NodeID]); err != nil {
-				return err
-			}
-		} else {
-			fmt.Printf("Node (%d) is already in the current context \n", node.NodeID)
-			if err := stmt.continueOrStartTransaction(ctx, cachedNode); err != nil {
-				return err
-			}
-		}
-	}
-
-	responses := distributor.DistributeQuery(stmt.Query, nodes...)
-	return stmt.handleQueryResponse(responses, nodes...)
+	response := ctx.DistributeQuery(stmt.Query, ids...)
+	return ctx.HandleResponse(response)
 }
 
 func (stmt CreateStatement) hasIdentityColumn() (bool, int, string) {
@@ -76,54 +56,10 @@ func (stmt CreateStatement) hasIdentityColumn() (bool, int, string) {
 	return false, identity_index, ""
 }
 
-func (stmt CreateStatement) getAllNodes() ([]datums.Node) {
-	nodes := make([]datums.Node, 0)
+func (stmt CreateStatement) getAllNodes() ([]int) {
+	ids := make([]int, 0)
 	for _, node := range cluster.Nodes {
-		nodes = append(nodes, node)
+		ids = append(ids, node.NodeID)
 	}
-	return nodes
-}
-
-func (stmt CreateStatement) continueOrStartTransaction(ctx *context.SessionContext, node context.NodeContext) error {
-	if node.TransactionState != context.StateInTxn {
-		responses := distributor.DistributeQuery("BEGIN;", cluster.Nodes[node.NodeID])
-		for _, response := range responses {
-			if response.Error != nil {
-				return response.Error
-			}
-		}
-		fmt.Printf("Sent (BEGIN) to node (%d) successfully\n", node.NodeID)
-		node.TransactionState = context.StateInTxn
-		ctx.Nodes[node.NodeID] = node
-		return nil
-	} else {
-		fmt.Printf("Node (%d) already in transaction\n", node.NodeID)
-		return nil
-	}
-}
-
-func (stmt CreateStatement) handleQueryResponse(responses []distributor.QueryResult, nodes ...datums.Node) error {
-	success := true
-	var err error
-	for _, response := range responses {
-		if response.Error != nil {
-			success = false
-			err = response.Error
-			break
-		}
-	}
-	if success {
-		return nil
-	} else {
-		fmt.Printf("SENDING ROLLBACK TO NODES \n")
-		finalize := distributor.DistributeQuery("ROLLBACK;", nodes...)
-		for _, response := range finalize {
-			if response.Error != nil {
-				fmt.Printf("FAILED TO ROLLBACK ON NODE (%d)\n", response.NodeID)
-				return response.Error
-			}
-		}
-		fmt.Printf("SUCCESSFULLY ROLLED BACK ANY CHANGES ON NODES \n")
-		return err
-	}
+	return ids
 }

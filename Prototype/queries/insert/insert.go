@@ -4,13 +4,11 @@ import (
 	"github.com/Ready-Stock/pg_query_go/nodes"
 	"github.com/Ready-Stock/Noah/Prototype/context"
 	"fmt"
-	data "github.com/Ready-Stock/Noah/Prototype/datums"
-	"github.com/Ready-Stock/Noah/Prototype/cluster"
+		"github.com/Ready-Stock/Noah/Prototype/cluster"
 	"github.com/kataras/go-errors"
 	"strconv"
 	pgq "github.com/Ready-Stock/pg_query_go"
-	"github.com/Ready-Stock/Noah/Prototype/distributor"
-)
+	)
 
 var (
 	errorInsertWithoutTransaction = errors.New("inserts can only be performed from within a transaction")
@@ -43,44 +41,12 @@ func (stmt InsertStatement) HandleInsert(ctx *context.SessionContext) error {
 	if nodes, err := getTargetNodesForInsert(stmt.Statement); err != nil {
 		return err
 	} else {
-		for _, node := range nodes {
-			if cachedNode, ok := ctx.Nodes[node.NodeID]; !ok {
-				ctx.Nodes[node.NodeID] = context.NodeContext{
-					TransactionState: context.StateNoTxn,
-					NodeID:           node.NodeID,
-				}
-				fmt.Printf("Node (%d) was has been added to this context \n", node.NodeID)
-				if err := continueOrStartTransaction(ctx, ctx.Nodes[node.NodeID]); err != nil {
-					return err
-				}
-			} else {
-				fmt.Printf("Node (%d) is already in the current context \n", node.NodeID)
-				if err := continueOrStartTransaction(ctx, cachedNode); err != nil {
-					return err
-				}
-			}
-		}
-		responses := distributor.DistributeQuery(stmt.Query, nodes...)
-		errs := 0
-		err := errors.New("could not perform insert on all nodes needed")
-		for _, response := range responses {
-			if response.Error != nil {
-				fmt.Printf("error, query failed on node (%d) query: %s\n\terror: %s\n", response.NodeID, stmt.Query, response.Error.Error())
-				err.AppendErr(response.Error)
-				errs++
-			}
-		}
-		if errs > 0 {
-			fmt.Printf("Queries failed on some or all nodes, transaction will be rolled back!\n")
-			distributor.DistributeQuery("ROLLBACK;", nodes...)
-			return err
-		}
+		response := ctx.DistributeQuery(stmt.Query, nodes...)
+		return ctx.HandleResponse(response)
 	}
-
-	return nil
 }
 
-func getTargetNodesForInsert(stmt pg_query.InsertStmt) ([]data.Node, error) {
+func getTargetNodesForInsert(stmt pg_query.InsertStmt) ([]int, error) {
 	if global, err := getTargetTableIsGlobal(stmt); err != nil {
 		return nil, err
 	} else if global {
@@ -90,13 +56,12 @@ func getTargetNodesForInsert(stmt pg_query.InsertStmt) ([]data.Node, error) {
 			if tenant {
 				fmt.Printf("CREATING NEW TENANT!\n")
 			}
-			nodes := make([]data.Node, 0)
+			nodes := make([]int, 0)
 			for _, n := range cluster.Nodes {
-				nodes = append(nodes, n)
+				nodes = append(nodes, n.NodeID)
 			}
 			return nodes, nil
 		}
-
 	} else {
 		account_id_index := -1
 		for i, res := range stmt.Cols.Items {
@@ -133,15 +98,11 @@ func getTargetNodesForInsert(stmt pg_query.InsertStmt) ([]data.Node, error) {
 	}
 }
 
-func getInsertNodesForAccountID(account_id int) ([]data.Node, error) {
+func getInsertNodesForAccountID(account_id int) ([]int, error) {
 	if account, ok := cluster.Accounts[account_id]; !ok {
 		return nil, errorAccountIDInvalid.Format(account_id)
 	} else {
-		nodes := make([]data.Node, len(account.NodeIDs))
-		for i, nid := range account.NodeIDs {
-			nodes[i] = cluster.Nodes[nid]
-		}
-		return nodes, nil
+		return account.NodeIDs, nil
 	}
 }
 
@@ -166,17 +127,5 @@ func getTargetTableIsTenantTable(stmt pg_query.InsertStmt) (bool, error) {
 		}
 	} else {
 		return false, errorRelationIsNull
-	}
-}
-
-func continueOrStartTransaction(ctx *context.SessionContext, node context.NodeContext) error {
-	if node.TransactionState != context.StateInTxn {
-		fmt.Printf("Sent (BEGIN) to node (%d)\n", node.NodeID)
-		node.TransactionState = context.StateInTxn
-		ctx.Nodes[node.NodeID] = node
-		return nil
-	} else {
-		fmt.Printf("Node (%d) already in transaction\n", node.NodeID)
-		return nil
 	}
 }
