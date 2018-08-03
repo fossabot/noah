@@ -11,6 +11,7 @@ import (
 	_insert "github.com/Ready-Stock/Noah/Prototype/queries/insert"
 	_update "github.com/Ready-Stock/Noah/Prototype/queries/update"
 	_create "github.com/Ready-Stock/Noah/Prototype/queries/create"
+	_comment "github.com/Ready-Stock/Noah/Prototype/queries/comment"
 )
 
 func Start() context.SessionContext {
@@ -69,6 +70,7 @@ func handleParseTree(ctx *context.SessionContext, tree pgq.ParsetreeList) error 
 		case query.ClosePortalStmt:
 		case query.ClusterStmt:
 		case query.CommentStmt:
+			return _comment.CreateCommentStatment(stmt, tree).HandleComment(ctx)
 		case query.CompositeTypeStmt:
 		case query.ConstraintsSetStmt:
 		case query.CopyStmt:
