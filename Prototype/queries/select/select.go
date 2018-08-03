@@ -35,10 +35,12 @@ func (stmt SelectStatement) HandleSelect(ctx *context.SessionContext) (*sql.Rows
 	} else {
 		fmt.Printf("Sending Query To Node ID (%d)\n", node.NodeID)
 		response := ctx.DistributeQuery(stmt.Query, node.NodeID)
-		if response.Errors
+		if response.Success {
+			return &response.Rows, nil
+		} else {
+			return nil, response.Errors[0]
+		}
 	}
-
-	return nil, nil
 }
 
 func getTargetNodeForSelect(stmt pg_query.SelectStmt) (*data.Node, error) {

@@ -23,9 +23,9 @@ func Start() context.SessionContext {
 	}
 }
 
-func InjestQuery(ctx *context.SessionContext, query string) error {
+func InjestQuery(ctx *context.SessionContext, query string) (*sql.Rows, error) {
 	if parsed, err := pgq.Parse(query); err != nil {
-		return err
+		return nil, err
 	} else {
 		fmt.Printf("Injesting Query: %s \n", query)
 		return handleParseTree(ctx, *parsed)
@@ -34,7 +34,7 @@ func InjestQuery(ctx *context.SessionContext, query string) error {
 
 func handleParseTree(ctx *context.SessionContext, tree pgq.ParsetreeList) (*sql.Rows, error) {
 	if len(tree.Statements) == 0 {
-		return errors.New("no statements provided")
+		return nil, errors.New("no statements provided")
 	} else {
 		raw := tree.Statements[0].(query.RawStmt)
 		switch stmt := raw.Stmt.(type) {
@@ -152,9 +152,9 @@ func handleParseTree(ctx *context.SessionContext, tree pgq.ParsetreeList) (*sql.
 		case query.VariableShowStmt:
 		case query.ViewStmt:
 		default:
-			return errors.New("invalid or unsupported query type")
+			return nil, errors.New("invalid or unsupported query type")
 		}
-		return nil
+		return nil, nil
 	}
-	return nil
+	return nil, nil
 }

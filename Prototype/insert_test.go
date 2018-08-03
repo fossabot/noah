@@ -29,7 +29,7 @@ func Test_Inserts(t *testing.T) {
 	for _, QuerySet := range InsertQueries {
 		context := Start()
 		for _, Query := range QuerySet {
-			if err := InjestQuery(&context, Query); err != nil {
+			if _, err := InjestQuery(&context, Query); err != nil {
 				t.Error(err)
 				t.Fail()
 				break

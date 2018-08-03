@@ -132,7 +132,7 @@ func (ctx *SessionContext) DistributeQuery(query string, nodes ...int) Distribut
 
 		rows := <- returned_rows
 		if rows != nil {
-			response.Rows.
+
 		}
 	}
 	response.Success = len(response.Errors) == 0

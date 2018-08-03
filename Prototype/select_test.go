@@ -2,6 +2,7 @@ package Prototype
 
 import (
 	"testing"
+	"fmt"
 )
 
 var (
@@ -23,10 +24,23 @@ var (
 	}
 )
 
+func Test_Select1(t *testing.T) {
+	context := Start()
+	if rows, err := InjestQuery(&context, "SELECT 1;"); err != nil {
+		t.Error(err)
+	} else {
+		for rows.Next() {
+			var col = ""
+			rows.Scan(&col)
+			fmt.Printf("Row (%s)", col)
+		}
+	}
+}
+
 func Test_Selects(t *testing.T) {
 	for _, q := range SelectQueries {
 		context := Start()
-		if err := InjestQuery(&context, q); err != nil {
+		if _, err := InjestQuery(&context, q); err != nil {
 			t.Error(err)
 		}
 	}
@@ -35,7 +49,7 @@ func Test_Selects(t *testing.T) {
 func Test_SelectFunctions(t *testing.T) {
 	for _, q := range FunctionQueries {
 		context := Start()
-		if err := InjestQuery(&context, q); err != nil {
+		if _, err := InjestQuery(&context, q); err != nil {
 			t.Error(err)
 		}
 	}
@@ -45,7 +59,7 @@ func Test_SelectFunctions(t *testing.T) {
 
 func Benchmark_Select(b *testing.B) {
 	context := Start()
-	if err := InjestQuery(&context, "SELECT products.product_id,variations.variation_id FROM products INNER JOIN variations ON variations.product_id=products.product_id INNER JOIN users ON users.id=products.id INNER JOIN temp ON temp.id=products.product_id WHERE (product.id = 1 or product.test = true) and (products.account_id = '1') LIMIT 10 OFFSET 0;"); err != nil {
+	if _, err := InjestQuery(&context, "SELECT products.product_id,variations.variation_id FROM products INNER JOIN variations ON variations.product_id=products.product_id INNER JOIN users ON users.id=products.id INNER JOIN temp ON temp.id=products.product_id WHERE (product.id = 1 or product.test = true) and (products.account_id = '1') LIMIT 10 OFFSET 0;"); err != nil {
 		b.Error(err)
 	}
 }
