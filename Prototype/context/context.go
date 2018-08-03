@@ -49,11 +49,12 @@ type QueryResult struct {
 func (ctx *SessionContext) DistributeQuery(query string, nodes ...int) DistributedResponse {
 	response := DistributedResponse{
 		Success: true,
-		Results: make([]QueryResult, len(nodes)),
+		Results: make([]QueryResult, 0),
 		Errors:  make([]error, 0),
 	}
-	updated_nodes := make(chan *NodeContext, len(nodes))
-	errors := make([]error, len(nodes))
+	updated_nodes := make(chan NodeContext, len(nodes))
+	results := make(chan QueryResult, len(nodes))
+	errs := make(chan error, len(nodes))
 	var wg sync.WaitGroup
 	wg.Add(len(nodes))
 	for index, node := range nodes {
@@ -71,18 +72,18 @@ func (ctx *SessionContext) DistributeQuery(query string, nodes ...int) Distribut
 			}
 			if node.DB == nil {
 				if db, err := sql.Open("postgres", cluster.Nodes[node.NodeID].ConnectionString); err != nil {
-					response.Results[index] = QueryResult{
+					results <- QueryResult{
 						Error:  err,
 						NodeID: node.NodeID,
 					}
-					errors[index] = err
+					errs <- err
 				} else {
 					if tx, err := db.Begin(); err != nil {
-						response.Results[index] = QueryResult{
+						results <- QueryResult{
 							Error:  err,
 							NodeID: node.NodeID,
 						}
-						errors[index] = err
+						errs <- err
 					} else {
 						node.TX = tx
 						node.DB = db
@@ -92,26 +93,32 @@ func (ctx *SessionContext) DistributeQuery(query string, nodes ...int) Distribut
 			}
 
 			if rows, err := node.TX.Query(query); err != nil {
-				response.Results[index] = QueryResult{
+				results <- QueryResult{
 					Error:  err,
 					NodeID: node.NodeID,
 				}
-				errors[index] = err
+				errs <- err
 			} else {
-				response.Results[index] = QueryResult{
+				results <- QueryResult{
 					Rows:   rows,
 					NodeID: node.NodeID,
 				}
-				errors[index] = nil
+				errs <- nil
 			}
-			ctx.Nodes[node_id] = node
+			updated_nodes <- node
 		}(index, node)
 	}
 	wg.Wait()
-	for _, err := range errors {
+	for updated_node := range updated_nodes {
+		ctx.Nodes[updated_node.NodeID] = updated_node
+	}
+	for err := range errs {
 		if err != nil {
 			response.Errors = append(response.Errors, err)
 		}
+	}
+	for result := range results {
+		response.Results = append(response.Results, result)
 	}
 	response.Success = len(response.Errors) == 0
 	return response
@@ -120,10 +127,11 @@ func (ctx *SessionContext) DistributeQuery(query string, nodes ...int) Distribut
 func (ctx *SessionContext) DoTxnOnAllNodes(action TxnAction, nodes ...int) DistributedResponse {
 	response := DistributedResponse{
 		Success: true,
-		Results: make([]QueryResult, len(nodes)),
+		Results: make([]QueryResult, 0),
 		Errors:  make([]error, 0),
 	}
-	errors := make([]error, len(nodes))
+	errs := make(chan error, len(nodes))
+	results := make(chan QueryResult, len(nodes))
 	var wg sync.WaitGroup
 	wg.Add(len(nodes))
 	for index, node := range nodes {
@@ -132,29 +140,40 @@ func (ctx *SessionContext) DoTxnOnAllNodes(action TxnAction, nodes ...int) Distr
 			switch action {
 			case TxnCommit:
 				if err := ctx.Nodes[node_id].TX.Commit(); err != nil {
-					response.Results[index] = QueryResult{
+					results <- QueryResult{
 						Error:  err,
 						NodeID: node_id,
 					}
-					errors[index] = err
+					errs <- err
 				}
 			case TxnRollback:
 				if err := ctx.Nodes[node_id].TX.Rollback(); err != nil {
-					response.Results[index] = QueryResult{
+					results <- QueryResult{
 						Error:  err,
 						NodeID: node_id,
 					}
-					errors[index] = err
+					errs <- err
 				}
+			default:
+				err := errors.New("invalid action type (%s)").Format(action)
+				results <- QueryResult{
+					Error:  err,
+					NodeID: node_id,
+				}
+				errs <- err
 			}
 		}(index, node)
 	}
 	wg.Wait()
-	for _, err := range errors {
+	for err := range errs {
 		if err != nil {
 			response.Errors = append(response.Errors, err)
 		}
 	}
+	for result := range results {
+		response.Results = append(response.Results, result)
+	}
+	response.Success = len(response.Errors) == 0
 	response.Success = len(response.Errors) == 0
 	return response
 }
