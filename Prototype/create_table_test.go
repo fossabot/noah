@@ -3,6 +3,7 @@ package Prototype
 import (
 	"testing"
 	"fmt"
+	"github.com/Ready-Stock/Noah/Prototype/cluster"
 )
 
 var (
@@ -19,13 +20,16 @@ var (
 		// },
 		{
 			"BEGIN;",
-			"CREATE TABLE public.asd1 (test_id BIGINT PRIMARY KEY NOT NULL, testint INT, message VARCHAR) WITH (type='global');",
+			"DROP TABLE IF EXISTS public.asd3;",
+			"CREATE TABLE public.asd3 (test_id BIGINT PRIMARY KEY NOT NULL, testint INT, message VARCHAR);",
+			"COMMENT ON TABLE public.asd3 IS 'GLOBAL';",
 			"COMMIT;",
 		},
 	}
 )
 
 func Test_CreateTable(t *testing.T) {
+	fmt.Printf("%d Table(s) in metadata\n", len(cluster.Tables))
 	for _, QuerySet := range createQueries {
 		context := Start()
 		for _, Query := range QuerySet {
@@ -42,4 +46,5 @@ func Test_CreateTable(t *testing.T) {
 		}
 		fmt.Println("")
 	}
+	fmt.Printf("%d Table(s) in metadata\n", len(cluster.Tables))
 }

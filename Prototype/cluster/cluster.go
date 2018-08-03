@@ -1,13 +1,13 @@
 package cluster
 
 import (
-	data "github.com/Ready-Stock/Noah/Prototype/datums"
+	 "github.com/Ready-Stock/Noah/Prototype/datums"
 		"math/rand"
 		"time"
 )
 
 var (
-	Nodes = map[int]data.Node {
+	Nodes = map[int]datums.Node {
 		1: {
 			NodeID: 1,
 			Name: "Node A",
@@ -30,7 +30,7 @@ var (
 		},
 	}
 
-	Tables = map[string]data.Table {
+	Tables = map[string]datums.Table {
 		"products": {
 			TableName:"products",
 			IsGlobal:false,
@@ -46,7 +46,7 @@ var (
 		},
 	}
 
-	Accounts = map[int]data.Account {
+	Accounts = map[int]datums.Account {
 		1: {
 			AccountID: 1,
 			AccountName: "Test Account 1",
@@ -60,9 +60,9 @@ var (
 	}
 )
 
-func GetRandomNode() data.Node {
+func GetRandomNode() datums.Node {
 	i := rand.Intn(len(Nodes))
-	var v data.Node
+	var v datums.Node
 	for _, v = range Nodes {
 		if i == 0 {
 			break
@@ -72,7 +72,7 @@ func GetRandomNode() data.Node {
 	return v
 }
 
-func GetNodeForAccount(account_id int) data.Node {
+func GetNodeForAccount(account_id int) datums.Node {
 	rand.Seed(time.Now().Unix())
 	return Nodes[Accounts[account_id].NodeIDs[rand.Intn(len(Accounts[account_id].NodeIDs))]]
 

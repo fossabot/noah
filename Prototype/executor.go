@@ -12,6 +12,7 @@ import (
 	_update "github.com/Ready-Stock/Noah/Prototype/queries/update"
 	_create "github.com/Ready-Stock/Noah/Prototype/queries/create"
 	_comment "github.com/Ready-Stock/Noah/Prototype/queries/comment"
+	_drop "github.com/Ready-Stock/Noah/Prototype/queries/drop"
 )
 
 func Start() context.SessionContext {
@@ -97,9 +98,7 @@ func handleParseTree(ctx *context.SessionContext, tree pgq.ParsetreeList) error 
 			return _create.CreateCreateStatment(stmt, tree).HandleCreate(ctx)
 		case query.CreateSubscriptionStmt:
 		case query.CreateTableAsStmt:
-			fmt.Println("CREATE TABLE AS STMT\n")
 		case query.CreateTableSpaceStmt:
-			fmt.Println("CREATE TABLE SPACE STMT\n")
 		case query.CreateTransformStmt:
 		case query.CreateTrigStmt:
 		case query.CreateUserMappingStmt:
@@ -113,6 +112,7 @@ func handleParseTree(ctx *context.SessionContext, tree pgq.ParsetreeList) error 
 		case query.DropOwnedStmt:
 		case query.DropRoleStmt:
 		case query.DropStmt:
+			return _drop.CreateDropStatment(stmt, tree).HandleComment(ctx)
 		case query.DropSubscriptionStmt:
 		case query.DropTableSpaceStmt:
 		case query.DropUserMappingStmt:

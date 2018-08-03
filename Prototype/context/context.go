@@ -52,6 +52,7 @@ func (ctx *SessionContext) DistributeQuery(query string, nodes ...int) Distribut
 		Results: make([]QueryResult, len(nodes)),
 		Errors:  make([]error, 0),
 	}
+	updated_nodes := make(chan *NodeContext, len(nodes))
 	errors := make([]error, len(nodes))
 	var wg sync.WaitGroup
 	wg.Add(len(nodes))
@@ -60,12 +61,11 @@ func (ctx *SessionContext) DistributeQuery(query string, nodes ...int) Distribut
 			defer wg.Done()
 			var node NodeContext
 			if n, ok := ctx.Nodes[node_id]; !ok {
-				ctx.Nodes[node_id] = NodeContext{
+				node = NodeContext{
 					NodeID:           node_id,
 					DB:               nil,
 					TransactionState: StateNoTxn,
 				}
-				node = ctx.Nodes[node_id]
 			} else {
 				node = n
 			}
@@ -169,4 +169,12 @@ func (ctx *SessionContext) HandleResponse(response DistributedResponse) error {
 	} else {
 		return nil
 	}
+}
+
+func (ctx *SessionContext) GetAllNodes() ([]int) {
+	ids := make([]int, 0)
+	for _, node := range cluster.Nodes {
+		ids = append(ids, node.NodeID)
+	}
+	return ids
 }

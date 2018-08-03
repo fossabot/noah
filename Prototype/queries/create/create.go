@@ -5,8 +5,9 @@ import (
 	pgq "github.com/Ready-Stock/pg_query_go"
 	"github.com/Ready-Stock/Noah/Prototype/context"
 	"fmt"
-		"github.com/Ready-Stock/Noah/Prototype/cluster"
-		)
+	"github.com/Ready-Stock/Noah/Prototype/cluster"
+	"github.com/Ready-Stock/Noah/Prototype/datums"
+)
 
 type CreateStatement struct {
 	Statement pg_query.CreateStmt
@@ -33,9 +34,19 @@ func (stmt CreateStatement) HandleCreate(ctx *context.SessionContext) error {
 		fmt.Printf("Found identity column at index: (%d) name: (%s)\n", id_index, id_name)
 	}
 
-	ids := stmt.getAllNodes()
+	ids := ctx.GetAllNodes()
 
 	response := ctx.DistributeQuery(stmt.Query, ids...)
+
+	if response.Success {
+		cluster.Tables[*stmt.Statement.Relation.Relname] = datums.Table{
+			TableName:*stmt.Statement.Relation.Relname,
+			IsGlobal:false,
+			IsTenantTable:false,
+			IdentityColumn:id_name,
+		}
+	}
+
 	return ctx.HandleResponse(response)
 }
 
@@ -54,12 +65,4 @@ func (stmt CreateStatement) hasIdentityColumn() (bool, int, string) {
 		}
 	}
 	return false, identity_index, ""
-}
-
-func (stmt CreateStatement) getAllNodes() ([]int) {
-	ids := make([]int, 0)
-	for _, node := range cluster.Nodes {
-		ids = append(ids, node.NodeID)
-	}
-	return ids
 }

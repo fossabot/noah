@@ -1,4 +1,4 @@
-package comment
+package drop
 
 import (
 	"github.com/Ready-Stock/pg_query_go/nodes"
@@ -7,20 +7,20 @@ import (
 	"fmt"
 )
 
-type CommentStatement struct {
-	Statement pg_query.CommentStmt
+type DropStatement struct {
+	Statement pg_query.DropStmt
 	Query     string
 }
 
-func CreateCommentStatment(stmt pg_query.CommentStmt, tree pgq.ParsetreeList) CommentStatement {
-	return CommentStatement{
+func CreateDropStatment(stmt pg_query.DropStmt, tree pgq.ParsetreeList) DropStatement {
+	return DropStatement{
 		Statement: stmt,
 		Query:     tree.Query,
 	}
 }
 
-func (stmt CommentStatement) HandleComment(ctx *context.SessionContext) error {
-	fmt.Printf("Preparing Comment Query\n")
+func (stmt DropStatement) HandleComment(ctx *context.SessionContext) error {
+	fmt.Printf("Preparing Drop Query\n")
 	j, _ := stmt.Statement.MarshalJSON()
 	fmt.Println(string(j))
 	ids := ctx.GetAllNodes()
