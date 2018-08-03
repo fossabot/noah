@@ -1,0 +1,332 @@
+{
+  "CreateStmt": {
+    "relation": {
+      "RangeVar": {
+        "catalogname": null,
+        "schemaname": null,
+        "relname": "test",
+        "inh": true,
+        "relpersistence": 112,
+        "alias": null,
+        "location": 13
+      }
+    },
+    "tableElts": {
+      "List": {
+        "items": [
+          {
+            "ColumnDef": {
+              "colname": "test_id",
+              "typeName": {
+                "TypeName": {
+                  "names": {
+                    "List": {
+                      "items": [
+                        {
+                          "String": {
+                            "str": "pg_catalog"
+                          }
+                        },
+                        {
+                          "String": {
+                            "str": "int8"
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  "typeOid": 0,
+                  "setof": false,
+                  "pct_type": false,
+                  "typmods": {
+                    "List": {
+                      "items": null
+                    }
+                  },
+                  "typemod": -1,
+                  "arrayBounds": {
+                    "List": {
+                      "items": null
+                    }
+                  },
+                  "location": 27
+                }
+              },
+              "inhcount": 0,
+              "is_local": true,
+              "is_not_null": false,
+              "is_from_type": false,
+              "is_from_parent": false,
+              "storage": 0,
+              "raw_default": null,
+              "cooked_default": null,
+              "identity": 0,
+              "collClause": null,
+              "collOid": 0,
+              "constraints": {
+                "List": {
+                  "items": [
+                    {
+                      "Constraint": {
+                        "contype": 5,
+                        "conname": null,
+                        "deferrable": false,
+                        "initdeferred": false,
+                        "location": 34,
+                        "is_no_inherit": false,
+                        "raw_expr": null,
+                        "cooked_expr": null,
+                        "generated_when": 0,
+                        "keys": {
+                          "List": {
+                            "items": null
+                          }
+                        },
+                        "exclusions": {
+                          "List": {
+                            "items": null
+                          }
+                        },
+                        "options": {
+                          "List": {
+                            "items": null
+                          }
+                        },
+                        "indexname": null,
+                        "indexspace": null,
+                        "access_method": null,
+                        "where_clause": null,
+                        "pktable": null,
+                        "fk_attrs": {
+                          "List": {
+                            "items": null
+                          }
+                        },
+                        "pk_attrs": {
+                          "List": {
+                            "items": null
+                          }
+                        },
+                        "fk_matchtype": 0,
+                        "fk_upd_action": 0,
+                        "fk_del_action": 0,
+                        "old_conpfeqop": {
+                          "List": {
+                            "items": null
+                          }
+                        },
+                        "old_pktable_oid": 0,
+                        "skip_validation": false,
+                        "initially_valid": false
+                      }
+                    },
+                    {
+                      "Constraint": {
+                        "contype": 1,
+                        "conname": null,
+                        "deferrable": false,
+                        "initdeferred": false,
+                        "location": 46,
+                        "is_no_inherit": false,
+                        "raw_expr": null,
+                        "cooked_expr": null,
+                        "generated_when": 0,
+                        "keys": {
+                          "List": {
+                            "items": null
+                          }
+                        },
+                        "exclusions": {
+                          "List": {
+                            "items": null
+                          }
+                        },
+                        "options": {
+                          "List": {
+                            "items": null
+                          }
+                        },
+                        "indexname": null,
+                        "indexspace": null,
+                        "access_method": null,
+                        "where_clause": null,
+                        "pktable": null,
+                        "fk_attrs": {
+                          "List": {
+                            "items": null
+                          }
+                        },
+                        "pk_attrs": {
+                          "List": {
+                            "items": null
+                          }
+                        },
+                        "fk_matchtype": 0,
+                        "fk_upd_action": 0,
+                        "fk_del_action": 0,
+                        "old_conpfeqop": {
+                          "List": {
+                            "items": null
+                          }
+                        },
+                        "old_pktable_oid": 0,
+                        "skip_validation": false,
+                        "initially_valid": false
+                      }
+                    }
+                  ]
+                }
+              },
+              "fdwoptions": {
+                "List": {
+                  "items": null
+                }
+              },
+              "location": 19
+            }
+          },
+          {
+            "ColumnDef": {
+              "colname": "testint",
+              "typeName": {
+                "TypeName": {
+                  "names": {
+                    "List": {
+                      "items": [
+                        {
+                          "String": {
+                            "str": "pg_catalog"
+                          }
+                        },
+                        {
+                          "String": {
+                            "str": "int4"
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  "typeOid": 0,
+                  "setof": false,
+                  "pct_type": false,
+                  "typmods": {
+                    "List": {
+                      "items": null
+                    }
+                  },
+                  "typemod": -1,
+                  "arrayBounds": {
+                    "List": {
+                      "items": null
+                    }
+                  },
+                  "location": 64
+                }
+              },
+              "inhcount": 0,
+              "is_local": true,
+              "is_not_null": false,
+              "is_from_type": false,
+              "is_from_parent": false,
+              "storage": 0,
+              "raw_default": null,
+              "cooked_default": null,
+              "identity": 0,
+              "collClause": null,
+              "collOid": 0,
+              "constraints": {
+                "List": {
+                  "items": null
+                }
+              },
+              "fdwoptions": {
+                "List": {
+                  "items": null
+                }
+              },
+              "location": 56
+            }
+          },
+          {
+            "ColumnDef": {
+              "colname": "message",
+              "typeName": {
+                "TypeName": {
+                  "names": {
+                    "List": {
+                      "items": [
+                        {
+                          "String": {
+                            "str": "citext"
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  "typeOid": 0,
+                  "setof": false,
+                  "pct_type": false,
+                  "typmods": {
+                    "List": {
+                      "items": null
+                    }
+                  },
+                  "typemod": -1,
+                  "arrayBounds": {
+                    "List": {
+                      "items": null
+                    }
+                  },
+                  "location": 77
+                }
+              },
+              "inhcount": 0,
+              "is_local": true,
+              "is_not_null": false,
+              "is_from_type": false,
+              "is_from_parent": false,
+              "storage": 0,
+              "raw_default": null,
+              "cooked_default": null,
+              "identity": 0,
+              "collClause": null,
+              "collOid": 0,
+              "constraints": {
+                "List": {
+                  "items": null
+                }
+              },
+              "fdwoptions": {
+                "List": {
+                  "items": null
+                }
+              },
+              "location": 69
+            }
+          }
+        ]
+      }
+    },
+    "inhRelations": {
+      "List": {
+        "items": null
+      }
+    },
+    "partbound": null,
+    "partspec": null,
+    "ofTypename": null,
+    "constraints": {
+      "List": {
+        "items": null
+      }
+    },
+    "options": {
+      "List": {
+        "items": null
+      }
+    },
+    "oncommit": 0,
+    "tablespacename": null,
+    "if_not_exists": false
+  }
+}

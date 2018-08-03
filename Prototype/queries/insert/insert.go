@@ -60,7 +60,7 @@ func (stmt InsertStatement) HandleInsert(ctx *context.SessionContext) error {
 				}
 			}
 		}
-		responses := distributor.DistributeQuery(stmt.Query, nodes)
+		responses := distributor.DistributeQuery(stmt.Query, nodes...)
 		errs := 0
 		err := errors.New("could not perform insert on all nodes needed")
 		for _, response := range responses {
@@ -72,7 +72,7 @@ func (stmt InsertStatement) HandleInsert(ctx *context.SessionContext) error {
 		}
 		if errs > 0 {
 			fmt.Printf("Queries failed on some or all nodes, transaction will be rolled back!\n")
-			distributor.DistributeQuery("ROLLBACK;", nodes)
+			distributor.DistributeQuery("ROLLBACK;", nodes...)
 			return err
 		}
 	}

@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"github.com/Ready-Stock/Noah/Prototype/context"
 	"github.com/kataras/go-errors"
+	"github.com/Ready-Stock/Noah/Prototype/distributor"
+	"github.com/Ready-Stock/Noah/Prototype/datums"
+	"github.com/Ready-Stock/Noah/Prototype/cluster"
 )
 
 func HandleTransaction(ctx *context.SessionContext, stmt pg_query.TransactionStmt) error {
@@ -33,19 +36,30 @@ func rollback(ctx *context.SessionContext) error {
 	if ctx.TransactionState != context.StateInTxn {
 		return errors.New("cannot rollback transaction, no transaction has been created")
 	} else {
-		nodesInTran := make([]context.NodeContext, 0)
+		nodesInTran := make([]datums.Node, 0)
 		for _, n := range ctx.Nodes {
 			if n.TransactionState == context.StateInTxn {
-				nodesInTran = append(nodesInTran, n)
+				nodesInTran = append(nodesInTran, cluster.Nodes[n.NodeID])
 			}
 		}
 		if len(nodesInTran) == 0 {
 			return errors.New("cannot rollback transaction, no nodes have a pending transaction")
 		} else {
-			for _, node := range nodesInTran {
-				fmt.Printf("Sent (ROLLBACK) to node (%d)\n", node.NodeID)
+			responses := distributor.DistributeQuery("ROLLBACK;", nodesInTran...)
+			success := true
+			var err error
+			for _, response := range responses {
+				if response.Error != nil {
+					success = false
+					err = response.Error
+					break
+				}
 			}
-			return nil
+			if success {
+				return nil
+			} else {
+				return err
+			}
 		}
 	}
 }
@@ -54,19 +68,30 @@ func commit(ctx *context.SessionContext) error  {
 	if ctx.TransactionState != context.StateInTxn {
 		return errors.New("cannot commit transaction, no transaction has been created")
 	} else {
-		nodesInTran := make([]context.NodeContext, 0)
+		nodesInTran := make([]datums.Node, 0)
 		for _, n := range ctx.Nodes {
 			if n.TransactionState == context.StateInTxn {
-				nodesInTran = append(nodesInTran, n)
+				nodesInTran = append(nodesInTran, cluster.Nodes[n.NodeID])
 			}
 		}
 		if len(nodesInTran) == 0 {
 			return errors.New("cannot commit transaction, no nodes have a pending transaction")
 		} else {
-			for _, node := range nodesInTran {
-				fmt.Printf("Sent (COMMIT) to node (%d)\n", node.NodeID)
+			responses := distributor.DistributeQuery("COMMIT;", nodesInTran...)
+			success := true
+			var err error
+			for _, response := range responses {
+				if response.Error != nil {
+					success = false
+					err = response.Error
+					break
+				}
 			}
-			return nil
+			if success {
+				return nil
+			} else {
+				return err
+			}
 		}
 	}
 }

@@ -19,8 +19,8 @@ var (
 		// },
 		{
 			"BEGIN;",
-			"CREATE TABLE test (test_id BIGINT PRIMARY KEY NOT NULL, testint INT, message CITEXT);",
-			"COMMIT;",
+			"CREATE TABLE public.xyz (test_id BIGINT PRIMARY KEY NOT NULL, testint INT, message VARCHAR);",
+			"ROLLBACK;",
 		},
 	}
 )

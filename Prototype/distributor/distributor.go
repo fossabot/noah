@@ -13,7 +13,7 @@ type QueryResult struct {
 	NodeID int
 }
 
-func DistributeQuery(query string, nodes []datums.Node) []QueryResult {
+func DistributeQuery(query string, nodes ...datums.Node) []QueryResult {
 	responses := make([]QueryResult, len(nodes))
 	var wg sync.WaitGroup
 	wg.Add(len(nodes))

@@ -11,22 +11,22 @@ var (
 		1: {
 			NodeID: 1,
 			Name: "Node A",
-			ConnectionString:"postgresql://postgres:Spring!2016@localhost:5432/ready_one",
+			ConnectionString:"postgresql://postgres:Spring!2016@localhost:5432/ready_one?sslmode=disable",
 		},
 		2: {
 			NodeID: 2,
 			Name: "Node B",
-			ConnectionString:"postgresql://postgres:Spring!2016@localhost:5432/ready_two",
+			ConnectionString:"postgresql://postgres:Spring!2016@localhost:5432/ready_two?sslmode=disable",
 		},
 		3: {
 			NodeID: 3,
 			Name: "Node C",
-			ConnectionString:"postgresql://postgres:Spring!2016@localhost:5432/ready_three",
+			ConnectionString:"postgresql://postgres:Spring!2016@localhost:5432/ready_three?sslmode=disable",
 		},
 		4: {
 			NodeID: 4,
 			Name: "Node D",
-			ConnectionString:"postgresql://postgres:Spring!2016@localhost:5432/ready_four",
+			ConnectionString:"postgresql://postgres:Spring!2016@localhost:5432/ready_four?sslmode=disable",
 		},
 	}
 
