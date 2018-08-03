@@ -13,6 +13,7 @@ import (
 	_create "github.com/Ready-Stock/Noah/Prototype/queries/create"
 	_comment "github.com/Ready-Stock/Noah/Prototype/queries/comment"
 	_drop "github.com/Ready-Stock/Noah/Prototype/queries/drop"
+	"database/sql"
 )
 
 func Start() context.SessionContext {
@@ -31,7 +32,7 @@ func InjestQuery(ctx *context.SessionContext, query string) error {
 	}
 }
 
-func handleParseTree(ctx *context.SessionContext, tree pgq.ParsetreeList) error {
+func handleParseTree(ctx *context.SessionContext, tree pgq.ParsetreeList) (*sql.Rows, error) {
 	if len(tree.Statements) == 0 {
 		return errors.New("no statements provided")
 	} else {
@@ -71,7 +72,7 @@ func handleParseTree(ctx *context.SessionContext, tree pgq.ParsetreeList) error 
 		case query.ClosePortalStmt:
 		case query.ClusterStmt:
 		case query.CommentStmt:
-			return _comment.CreateCommentStatment(stmt, tree).HandleComment(ctx)
+			return nil, _comment.CreateCommentStatment(stmt, tree).HandleComment(ctx)
 		case query.CompositeTypeStmt:
 		case query.ConstraintsSetStmt:
 		case query.CopyStmt:
@@ -95,7 +96,7 @@ func handleParseTree(ctx *context.SessionContext, tree pgq.ParsetreeList) error 
 		case query.CreateSeqStmt:
 		case query.CreateStatsStmt:
 		case query.CreateStmt:
-			return _create.CreateCreateStatment(stmt, tree).HandleCreate(ctx)
+			return nil, _create.CreateCreateStatment(stmt, tree).HandleCreate(ctx)
 		case query.CreateSubscriptionStmt:
 		case query.CreateTableAsStmt:
 		case query.CreateTableSpaceStmt:
@@ -112,7 +113,7 @@ func handleParseTree(ctx *context.SessionContext, tree pgq.ParsetreeList) error 
 		case query.DropOwnedStmt:
 		case query.DropRoleStmt:
 		case query.DropStmt:
-			return _drop.CreateDropStatment(stmt, tree).HandleComment(ctx)
+			return nil, _drop.CreateDropStatment(stmt, tree).HandleComment(ctx)
 		case query.DropSubscriptionStmt:
 		case query.DropTableSpaceStmt:
 		case query.DropUserMappingStmt:
@@ -124,7 +125,7 @@ func handleParseTree(ctx *context.SessionContext, tree pgq.ParsetreeList) error 
 		case query.ImportForeignSchemaStmt:
 		case query.IndexStmt:
 		case query.InsertStmt:
-			return _insert.CreateInsertStatment(stmt, tree).HandleInsert(ctx)
+			return nil, _insert.CreateInsertStatment(stmt, tree).HandleInsert(ctx)
 		case query.ListenStmt:
 		case query.LoadStmt:
 		case query.LockStmt:
@@ -138,14 +139,14 @@ func handleParseTree(ctx *context.SessionContext, tree pgq.ParsetreeList) error 
 		case query.RuleStmt:
 		case query.SecLabelStmt:
 		case query.SelectStmt:
-			return _select.HandleSelect(ctx, stmt)
+			return _select.CreateSelectStatement(stmt, tree).HandleSelect(ctx)
 		case query.SetOperationStmt:
 		case query.TransactionStmt:
-			return _transaction.HandleTransaction(ctx, stmt)
+			return nil, _transaction.HandleTransaction(ctx, stmt)
 		case query.TruncateStmt:
 		case query.UnlistenStmt:
 		case query.UpdateStmt:
-			return _update.HandleUpdate(ctx, stmt)
+			return nil, _update.HandleUpdate(ctx, stmt)
 		case query.VacuumStmt:
 		case query.VariableSetStmt:
 		case query.VariableShowStmt:

@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/Ready-Stock/Noah/Prototype/cluster"
 	"github.com/kataras/go-errors"
+	"strings"
 )
 
 var (
@@ -37,7 +38,7 @@ func (stmt CommentStatement) HandleComment(ctx *context.SessionContext) error {
 		if tblmeta, ok := cluster.Tables[table]; !ok {
 			return errorTableNotFound.Format(table)
 		} else {
-			switch *stmt.Statement.Comment {
+			switch strings.ToUpper(*stmt.Statement.Comment) {
 			case "GLOBAL":
 				tblmeta.IsGlobal = true
 				tblmeta.IsTenantTable = false

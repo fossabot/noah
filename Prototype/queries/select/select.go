@@ -5,24 +5,40 @@ import (
 	"fmt"
 	"github.com/Ready-Stock/Noah/Prototype/cluster"
 	"errors"
+	pgq "github.com/Ready-Stock/pg_query_go"
 	data "github.com/Ready-Stock/Noah/Prototype/datums"
 	"strconv"
 	"github.com/Ready-Stock/Noah/Prototype/context"
+	"database/sql"
 )
 
-func HandleSelect(ctx *context.SessionContext, stmt pg_query.SelectStmt) error {
+type SelectStatement struct {
+	Statement pg_query.SelectStmt
+	Query     string
+}
+
+func CreateSelectStatement(stmt pg_query.SelectStmt, tree pgq.ParsetreeList) SelectStatement {
+	return SelectStatement{
+		Statement: stmt,
+		Query:     tree.Query,
+	}
+}
+
+func (stmt SelectStatement) HandleSelect(ctx *context.SessionContext) (*sql.Rows, error) {
 	fmt.Printf("Preparing Select Query\n")
-	j, _ := stmt.MarshalJSON()
+	j, _ := stmt.Statement.MarshalJSON()
 	fmt.Println(string(j))
-	if node, err := getTargetNodeForSelect(stmt); err != nil {
-		return err
+	if node, err := getTargetNodeForSelect(stmt.Statement); err != nil {
+		return nil, err
 	} else if node == nil {
-		return errors.New("no node targeted for select query")
+		return nil, errors.New("no node targeted for select query")
 	} else {
 		fmt.Printf("Sending Query To Node ID (%d)\n", node.NodeID)
+		response := ctx.DistributeQuery(stmt.Query, node.NodeID)
+		if response.Errors
 	}
 
-	return nil
+	return nil, nil
 }
 
 func getTargetNodeForSelect(stmt pg_query.SelectStmt) (*data.Node, error) {

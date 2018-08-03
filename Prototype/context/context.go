@@ -40,9 +40,9 @@ type DistributedResponse struct {
 	Success bool
 	Results []QueryResult
 	Errors  []error
+	Rows    sql.Rows
 }
 type QueryResult struct {
-	Rows   *sql.Rows
 	Error  error
 	NodeID int
 }
@@ -56,6 +56,7 @@ func (ctx *SessionContext) DistributeQuery(query string, nodes ...int) Distribut
 	updated_nodes := make(chan NodeContext, len(nodes))
 	results := make(chan QueryResult, len(nodes))
 	errs := make(chan error, len(nodes))
+	returned_rows := make(chan *sql.Rows, len(nodes))
 	var wg sync.WaitGroup
 	wg.Add(len(nodes))
 	for index, node := range nodes {
@@ -79,6 +80,7 @@ func (ctx *SessionContext) DistributeQuery(query string, nodes ...int) Distribut
 					}
 					errs <- err
 					updated_nodes <- node
+					returned_rows <- nil
 					return
 				} else {
 					if tx, err := db.Begin(); err != nil {
@@ -88,6 +90,7 @@ func (ctx *SessionContext) DistributeQuery(query string, nodes ...int) Distribut
 						}
 						errs <- err
 						updated_nodes <- node
+						returned_rows <- nil
 						return
 					} else {
 						node.TX = tx
@@ -102,12 +105,13 @@ func (ctx *SessionContext) DistributeQuery(query string, nodes ...int) Distribut
 					NodeID: node.NodeID,
 				}
 				errs <- err
+				returned_rows <- nil
 			} else {
 				results <- QueryResult{
-					Rows:   rows,
 					NodeID: node.NodeID,
 				}
 				errs <- nil
+				returned_rows <- rows
 			}
 			updated_nodes <- node
 			return
@@ -125,6 +129,11 @@ func (ctx *SessionContext) DistributeQuery(query string, nodes ...int) Distribut
 
 		result := <- results
 		response.Results = append(response.Results, result)
+
+		rows := <- returned_rows
+		if rows != nil {
+			response.Rows.
+		}
 	}
 	response.Success = len(response.Errors) == 0
 	return response
