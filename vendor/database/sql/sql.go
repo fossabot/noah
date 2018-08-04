@@ -2568,7 +2568,7 @@ type Rows struct {
 }
 
 func (rs *Rows) ReadBuffer() []byte {
-	return rs.lastcols.([]byte)
+	return nil
 }
 
 func (rs *Rows) initContextClose(ctx, txctx context.Context) {

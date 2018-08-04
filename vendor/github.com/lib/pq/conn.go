@@ -1442,6 +1442,7 @@ func (rs *rows) Next(dest []driver.Value) (err error) {
 				}
 				dest[i] = decode(&conn.parameterStatus, rs.rb.next(l), rs.colTyps[i].OID, rs.colFmts[i])
 			}
+
 			return
 		case 'T':
 			rs.colNames, rs.colFmts, rs.colTyps = parsePortalRowDescribe(&rs.rb)
