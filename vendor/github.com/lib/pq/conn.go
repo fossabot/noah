@@ -1356,6 +1356,10 @@ type rows struct {
 	tag      string
 }
 
+func (rs *rows) ReadBuffer() ([]byte) {
+	return rs.rb
+}
+
 func (rs *rows) Close() error {
 	if finish := rs.finish; finish != nil {
 		defer finish()

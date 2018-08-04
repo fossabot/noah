@@ -5,6 +5,7 @@
     <content url="file://$MODULE_DIR$" />
     <content url="file://$MODULE_DIR$/vendor/database/sql" />
     <content url="file://$MODULE_DIR$/vendor/github.com/Ready-Stock/pg_query_go" />
+    <content url="file://$MODULE_DIR$/vendor/github.com/lib/pq" />
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>

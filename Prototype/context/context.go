@@ -131,6 +131,10 @@ func (ctx *SessionContext) DistributeQuery(query string, nodes ...int) Distribut
 		response.Results = append(response.Results, result)
 
 		rows := <- returned_rows
+		rows.Next()
+		bytes := rows.ReadBuffer()
+		fmt.Println(string(bytes))
+
 		if rows != nil {
 
 		}

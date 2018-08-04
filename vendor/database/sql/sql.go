@@ -2567,6 +2567,10 @@ type Rows struct {
 	lastcols []driver.Value
 }
 
+func (rs *Rows) ReadBuffer() []byte {
+	return rs.lastcols.([]byte)
+}
+
 func (rs *Rows) initContextClose(ctx, txctx context.Context) {
 	ctx, rs.cancel = context.WithCancel(ctx)
 	go rs.awaitDone(ctx, txctx)

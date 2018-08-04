@@ -384,6 +384,8 @@ type Rows interface {
 	// should be taken when closing Rows not to modify
 	// a buffer held in dest.
 	Next(dest []Value) error
+
+	ReadBuffer() []byte
 }
 
 // RowsNextResultSet extends the Rows interface by providing a way to signal
