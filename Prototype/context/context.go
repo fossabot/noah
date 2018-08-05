@@ -7,7 +7,7 @@ import (
 	"github.com/Ready-Stock/Noah/Prototype/cluster"
 	"github.com/kataras/go-errors"
 	"fmt"
-)
+	)
 
 type TxnState string
 

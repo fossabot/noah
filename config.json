@@ -10,17 +10,43 @@
   "nodes": [
     {
       "node_id": 1,
-      "address": "127.0.0.1:5432",
-      "database": "ready",
-      "user": "postgres",
-      "password": "Spring!2016"
-    },
-    {
-      "node_id": 1,
-      "address": "127.0.0.1:5432",
+      "address": "127.0.0.1",
+      "port": 5432,
       "database": "ready_one",
       "user": "postgres",
-      "password": "Spring!2016"
+      "password": "Spring!2016",
+      "region": "us-central1",
+      "replica_of": null
+    },
+    {
+      "node_id": 2,
+      "address": "127.0.0.1",
+      "port": 5432,
+      "database": "ready_two",
+      "user": "postgres",
+      "password": "Spring!2016",
+      "region": "us-central1",
+      "replica_of": null
+    },
+    {
+      "node_id": 3,
+      "address": "127.0.0.1",
+      "port": 5432,
+      "database": "ready_three",
+      "user": "postgres",
+      "password": "Spring!2016",
+      "region": "us-central1",
+      "replica_of": null
+    },
+    {
+      "node_id": 4,
+      "address": "127.0.0.1",
+      "port": 5432,
+      "database": "ready_four",
+      "user": "postgres",
+      "password": "Spring!2016",
+      "region": "us-central1",
+      "replica_of": null
     }
   ]
 }
