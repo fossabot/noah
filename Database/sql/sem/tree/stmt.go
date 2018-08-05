@@ -25,9 +25,7 @@ package tree
 
 import (
 	"fmt"
-	"github.com/Ready-Stock/pg_query_go"
-	"github.com/Ready-Stock/Noah/Database/sql/pgwire/pgerror"
-)
+		)
 
 // Instructions for creating new types: If a type needs to satisfy an
 // interface, declare that function along with that interface. This
@@ -73,15 +71,15 @@ const (
 	Unknown
 )
 
-func GetStatementType(stmt pg_query.ParsetreeList) (*StatementType, error) {
-	if len(stmt.Statements) == 0 {
-		return nil, pgerror.NewErrorf(pgerror.CodeSyntaxError, "no statements provided")
-	} else {
-		switch stmt.Statements[0].(type) {
-
-		}
-	}
-}
+// func GetStatementType(stmt pg_query.ParsetreeList) (*StatementType, error) {
+// 	if len(stmt.Statements) == 0 {
+// 		return nil, pgerror.NewErrorf(pgerror.CodeSyntaxError, "no statements provided")
+// 	} else {
+// 		switch stmt.Statements[0].(type) {
+//
+// 		}
+// 	}
+// }
 
 // Statement represents a statement.
 type Statement interface {

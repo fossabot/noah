@@ -9,6 +9,7 @@ import (
 	"github.com/Ready-Stock/Noah/Database/util/fsm"
 	"github.com/Ready-Stock/Noah/Database/sql/sem/tree"
 	"github.com/cockroachdb/cockroach/pkg/util/log"
+	"github.com/Ready-Stock/pg_query_go"
 )
 
 func (ex *connExecutor) execPrepare(parseCmd PrepareStmt) (fsm.Event, fsm.EventPayload) {
