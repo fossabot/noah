@@ -6,7 +6,6 @@ import (
 	"github.com/Ready-Stock/Noah/Database/sql/pgwire/pgerror"
 	"github.com/Ready-Stock/Noah/Database/sql/sem/tree"
 	"github.com/Ready-Stock/pg_query_go"
-	"github.com/Ready-Stock/Noah/Database/sql/context"
 )
 
 type Server struct {
@@ -15,7 +14,7 @@ type Server struct {
 type connExecutor struct {
 	server             *Server
 	stmtBuf            *StmtBuf
-	context			   context.Context
+	clientComm         ClientComm
 	prepStmtsNamespace prepStmtNamespace
 	curStmt            *pg_query.ParsetreeList
 }
@@ -91,16 +90,16 @@ func NewServer() *Server {
 	}
 }
 
-func (s *Server) ServeConn(stmtBuf *StmtBuf, ctx context.Context) error {
-	ex := s.newConnExecutor(stmtBuf, ctx)
+func (s *Server) ServeConn(stmtBuf *StmtBuf, clientComm ClientComm) error {
+	ex := s.newConnExecutor(stmtBuf, clientComm)
 	return ex.run()
 }
 
-func (s *Server) newConnExecutor(stmtBuf *StmtBuf, ctx context.Context) *connExecutor {
+func (s *Server) newConnExecutor(stmtBuf *StmtBuf, clientComm ClientComm) *connExecutor {
 	ex := &connExecutor{
 		server:     s,
 		stmtBuf:    stmtBuf,
-		context: 	ctx,
+		clientComm: clientComm,
 		prepStmtsNamespace: prepStmtNamespace{
 			prepStmts: make(map[string]prepStmtEntry),
 			portals:   make(map[string]portalEntry),
@@ -132,7 +131,7 @@ func (ex *connExecutor) run() error {
 				err = pgerror.NewErrorf(pgerror.CodeInvalidCursorNameError, "unknown portal %q", tcmd.Name)
 				// ev = eventNonRetriableErr{IsCommit: fsm.False}
 				// payload = eventNonRetriableErrPayload{err: err}
-				res = ex.context.ClientComm.CreateErrorResult(pos)
+				res = ex.clientComm.CreateErrorResult(pos)
 				break
 			}
 			ex.curStmt = portal.Stmt.Statement
@@ -144,11 +143,11 @@ func (ex *connExecutor) run() error {
 			}
 
 			if portal.Stmt.Statement == nil {
-				res = ex.context.ClientComm.CreateEmptyQueryResult(pos)
+				res = ex.clientComm.CreateEmptyQueryResult(pos)
 				break
 			}
 
-			stmtRes := ex.context.ClientComm.CreateStatementResult(
+			stmtRes := ex.clientComm.CreateStatementResult(
 				*portal.Stmt.Statement,
 				// The client is using the extended protocol, so no row description is
 				// needed.
@@ -160,25 +159,25 @@ func (ex *connExecutor) run() error {
 		case PrepareStmt:
 			fmt.Println("TYPE: PrepareStmt")
 			fmt.Println("Len:", tcmd.PGQuery.Query)
-			res = ex.context.ClientComm.CreatePrepareResult(pos)
+			res = ex.clientComm.CreatePrepareResult(pos)
 		case DescribeStmt:
 			fmt.Println("TYPE: DescribeStmt")
 		case BindStmt:
 			fmt.Println("TYPE: BindStmt")
-			res = ex.context.ClientComm.CreateBindResult(pos)
+			res = ex.clientComm.CreateBindResult(pos)
 		case DeletePreparedStmt:
 			fmt.Println("TYPE: DeletePreparedStmt")
-			res = ex.context.ClientComm.CreateDeleteResult(pos)
+			res = ex.clientComm.CreateDeleteResult(pos)
 		case SendError:
 			fmt.Println("TYPE: SendError")
-			res = ex.context.ClientComm.CreateErrorResult(pos)
+			res = ex.clientComm.CreateErrorResult(pos)
 		case Sync:
 			fmt.Println("TYPE: Sync")
 			// Note that the Sync result will flush results to the network connection.
-			res = ex.context.ClientComm.CreateSyncResult(pos)
+			res = ex.clientComm.CreateSyncResult(pos)
 		case CopyIn:
 			fmt.Println("TYPE: CopyIn")
-			res = ex.context.ClientComm.CreateCopyInResult(pos)
+			res = ex.clientComm.CreateCopyInResult(pos)
 		case DrainRequest:
 			fmt.Println("TYPE: DrainRequest")
 			// We received a drain request. We terminate immediately if we're not in a
@@ -189,7 +188,7 @@ func (ex *connExecutor) run() error {
 		case Flush:
 			fmt.Println("TYPE: Flush")
 			// Closing the res will flush the connection's buffer.
-			res = ex.context.ClientComm.CreateFlushResult(pos)
+			res = ex.clientComm.CreateFlushResult(pos)
 		default:
 			panic(fmt.Sprintf("unsupported command type: %T", cmd))
 		}
