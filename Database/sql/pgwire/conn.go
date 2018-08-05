@@ -1063,7 +1063,7 @@ func (c *conn) CreateStatementResult(
 	loc *time.Location,
 	be sessiondata.BytesEncodeFormat,
 ) sql.CommandResult {
-	res := c.makeCommandResult(descOpt, pos, stmt, formatCodes, loc, be)
+	res := c.makeCommandResult(descOpt, pos, stmt, formatCodes, be)
 	return &res
 }
 

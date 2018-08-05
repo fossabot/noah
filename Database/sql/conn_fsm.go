@@ -29,8 +29,6 @@ import (
 	// with that package; therefor this file should stay as small as possible.
 	. "github.com/Ready-Stock/Noah/Database/util/fsm"
 	"github.com/Ready-Stock/Noah/Database/sql/sem/tree"
-	"github.com/cockroachdb/cockroach/pkg/storage/engine/enginepb"
-	"github.com/cockroachdb/cockroach/pkg/roachpb"
 )
 
 // Constants for the String() representation of the session states. Shared with
@@ -110,10 +108,10 @@ type eventTxnStart struct {
 	ImplicitTxn Bool
 }
 type eventTxnStartPayload struct {
-	tranCtx transitionCtx
+	//tranCtx transitionCtx
 
-	iso enginepb.IsolationType
-	pri roachpb.UserPriority
+	//iso enginepb.IsolationType
+	//pri roachpb.UserPriority
 	// txnSQLTimestamp is the timestamp that statements executed in the
 	// transaction that is started by this event will report for now(),
 	// current_timestamp(), transaction_timestamp().
@@ -122,18 +120,18 @@ type eventTxnStartPayload struct {
 }
 
 func makeEventTxnStartPayload(
-	iso enginepb.IsolationType,
-	pri roachpb.UserPriority,
+	//iso enginepb.IsolationType,
+	//pri roachpb.UserPriority,
 	readOnly tree.ReadWriteMode,
 	txnSQLTimestamp time.Time,
-	tranCtx transitionCtx,
+	//tranCtx transitionCtx,
 ) eventTxnStartPayload {
 	return eventTxnStartPayload{
-		iso:             iso,
-		pri:             pri,
+		//iso:             iso,
+		//pri:             pri,
 		readOnly:        readOnly,
 		txnSQLTimestamp: txnSQLTimestamp,
-		tranCtx:         tranCtx,
+		//tranCtx:         tranCtx,
 	}
 }
 
@@ -149,12 +147,12 @@ type eventTxnFinishPayload struct {
 }
 
 // toEvent turns the eventTxnFinishPayload into a txnEvent.
-func (e eventTxnFinishPayload) toEvent() txnEvent {
-	if e.commit {
-		return txnCommit
-	}
-	return txnAborted
-}
+// func (e eventTxnFinishPayload) toEvent() txnEvent {
+// 	if e.commit {
+// 		return txnCommit
+// 	}
+// 	return txnAborted
+// }
 
 type eventTxnRestart struct{}
 

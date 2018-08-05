@@ -3,9 +3,7 @@ package sql
 import (
 	"io"
 	"fmt"
-	"github.com/Ready-Stock/Noah/Database/sql/pgwire/pgerror"
-	"github.com/Ready-Stock/Noah/Database/sql/sem/tree"
-	"github.com/Ready-Stock/pg_query_go"
+			"github.com/Ready-Stock/pg_query_go"
 )
 
 type Server struct {
@@ -123,38 +121,38 @@ func (ex *connExecutor) run() error {
 		case ExecStmt:
 			fmt.Println("TYPE: ExecStmt")
 		case ExecPortal:
-			// ExecPortal is handled like ExecStmt, except that the placeholder info
-			// is taken from the portal.
-			fmt.Println("TYPE: ExecPortal")
-			portal, ok := ex.prepStmtsNamespace.portals[tcmd.Name]
-			if !ok {
-				err = pgerror.NewErrorf(pgerror.CodeInvalidCursorNameError, "unknown portal %q", tcmd.Name)
-				// ev = eventNonRetriableErr{IsCommit: fsm.False}
-				// payload = eventNonRetriableErrPayload{err: err}
-				res = ex.clientComm.CreateErrorResult(pos)
-				break
-			}
-			ex.curStmt = portal.Stmt.Statement
-
-			pinfo := &tree.PlaceholderInfo{
-				TypeHints: portal.Stmt.TypeHints,
-				Types:     portal.Stmt.Types,
-				Values:    portal.Qargs,
-			}
-
-			if portal.Stmt.Statement == nil {
-				res = ex.clientComm.CreateEmptyQueryResult(pos)
-				break
-			}
-
-			stmtRes := ex.clientComm.CreateStatementResult(
-				*portal.Stmt.Statement,
-				// The client is using the extended protocol, so no row description is
-				// needed.
-				DontNeedRowDesc,
-				pos, portal.OutFormats,
-				ex.sessionData.Location, ex.sessionData.BytesEncodeFormat)
-			stmtRes.SetLimit(tcmd.Limit)
+			// // ExecPortal is handled like ExecStmt, except that the placeholder info
+			// // is taken from the portal.
+			// fmt.Println("TYPE: ExecPortal")
+			// portal, ok := ex.prepStmtsNamespace.portals[tcmd.Name]
+			// if !ok {
+			// 	err = pgerror.NewErrorf(pgerror.CodeInvalidCursorNameError, "unknown portal %q", tcmd.Name)
+			// 	// ev = eventNonRetriableErr{IsCommit: fsm.False}
+			// 	// payload = eventNonRetriableErrPayload{err: err}
+			// 	res = ex.clientComm.CreateErrorResult(pos)
+			// 	break
+			// }
+			// ex.curStmt = portal.Stmt.Statement
+			//
+			// pinfo := &tree.PlaceholderInfo{
+			// 	TypeHints: portal.Stmt.TypeHints,
+			// 	Types:     portal.Stmt.Types,
+			// 	Values:    portal.Qargs,
+			// }
+			//
+			// if portal.Stmt.Statement == nil {
+			// 	res = ex.clientComm.CreateEmptyQueryResult(pos)
+			// 	break
+			// }
+			//
+			// stmtRes := ex.clientComm.CreateStatementResult(
+			// 	*portal.Stmt.Statement,
+			// 	// The client is using the extended protocol, so no row description is
+			// 	// needed.
+			// 	DontNeedRowDesc,
+			// 	pos, portal.OutFormats,
+			// 	ex.sessionData.Location, ex.sessionData.BytesEncodeFormat)
+			// stmtRes.SetLimit(tcmd.Limit)
 
 		case PrepareStmt:
 			fmt.Println("TYPE: PrepareStmt")
