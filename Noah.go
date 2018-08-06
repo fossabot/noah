@@ -17,9 +17,6 @@ func main() {
 		panic(err)
 	}
 	defer db.Close()
-	s, err := db.GetSequence([]byte("test1"), 1)
-	id, err := s.Next()
-	fmt.Printf("NEW ID: %d", id)
 	Conf.ParseConfiguration()
 	fmt.Println("Starting admin application with port:", Conf.Configuration.AdminPort)
 	cluster.SetupNodes()
