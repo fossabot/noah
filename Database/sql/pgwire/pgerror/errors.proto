@@ -13,7 +13,7 @@
 // permissions and limitations under the License.
 
 syntax = "proto3";
-package cockroach.pgerror;
+package noah.pgerror;
 option go_package = "pgerror";
 
 // Error contains all Postgres wire protocol error fields.

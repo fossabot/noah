@@ -18,7 +18,7 @@ import (
 	"context"
 	"github.com/lib/pq/oid"
 	"github.com/Ready-Stock/Noah/Database/sql/sem/tree"
-	"github.com/Ready-Stock/Noah/Database/sql/sqlbase"
+	//"github.com/Ready-Stock/Noah/Database/sql/sqlbase"
 	"github.com/Ready-Stock/Noah/Database/sql/pgwire/pgwirebase"
 	"github.com/Ready-Stock/pg_query_go"
 )
@@ -45,7 +45,7 @@ type PreparedStatement struct {
 	// These may differ from the types in TypeHints, if a user provides an
 	// imprecise type hint like sending an int for an oid comparison.
 	Types   tree.PlaceholderTypes
-	Columns sqlbase.ResultColumns
+	//Columns sqlbase.ResultColumns
 
 	// InTypes represents the inferred types for placeholder, using protocol
 	// identifiers. Used for reporting on Describe.
