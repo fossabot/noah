@@ -20,7 +20,6 @@ import (
 	"math"
 	"math/big"
 	"net"
-	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -1797,50 +1796,51 @@ var timeFormats = []string{
 }
 
 var (
-	tzMatch        = regexp.MustCompile(` [+-]`)
-	loneZeroRMatch = regexp.MustCompile(`:(\d(?:[^\d]|$))`)
+	//tzMatch        = regexp.MustCompile(` [+-]`)
+	//loneZeroRMatch = regexp.MustCompile(`:(\d(?:[^\d]|$))`)
 )
 
 func parseTimestampInLocation(s string, loc *time.Location, typ types.T) (time.Time, error) {
 	origS := s
-	l := len(s)
-	if loneZeroRMatch.MatchString(s) {
-		// HACK: go doesn't handle offsets that are not zero-padded from psql/jdbc.
-		// Thus, if we see `2015-10-05 3:0:5 +0:0:0` we need to change it to
-		// `... 3:00:50 +00:00:00`.
-		s = loneZeroRMatch.ReplaceAllString(s, ":0${1}")
-		// This must be run twice, since ReplaceAllString doesn't touch overlapping
-		// matches and thus wouldn't fix a string of the form 3:3:3.
-		s = loneZeroRMatch.ReplaceAllString(s, ":0${1}")
-	}
-
-	if loc := tzMatch.FindStringIndex(s); loc != nil && l > loc[1] {
-		// Remove `:` characters from timezone specifier and pad to 6 digits. A
-		// leading 0 will be added if there are an odd number of digits in the
-		// specifier, since this is short-hand for an offset with number of hours
-		// equal to the leading digit.
-		// This converts all timezone specifiers to the stdNumSecondsTz format in
-		// time/format.go: `-070000`.
-		tzPos := loc[1]
-		tzSpec := strings.Replace(s[tzPos:], ":", "", -1)
-		if len(tzSpec)%2 == 1 {
-			tzSpec = "0" + tzSpec
-		}
-		if len(tzSpec) < 6 {
-			tzSpec += strings.Repeat("0", 6-len(tzSpec))
-		}
-		s = s[:tzPos] + tzSpec
-	}
-
-	for _, format := range timeFormats {
-		if t, err := time.ParseInLocation(format, s, loc); err == nil {
-			if err := checkForMissingZone(t, loc); err != nil {
-				return time.Time{}, makeParseError(origS, typ, err)
-			}
-			return t, nil
-		}
-	}
 	return time.Time{}, makeParseError(origS, typ, nil)
+	// l := len(s)
+	// if loneZeroRMatch.MatchString(s) {
+	// 	// HACK: go doesn't handle offsets that are not zero-padded from psql/jdbc.
+	// 	// Thus, if we see `2015-10-05 3:0:5 +0:0:0` we need to change it to
+	// 	// `... 3:00:50 +00:00:00`.
+	// 	s = loneZeroRMatch.ReplaceAllString(s, ":0${1}")
+	// 	// This must be run twice, since ReplaceAllString doesn't touch overlapping
+	// 	// matches and thus wouldn't fix a string of the form 3:3:3.
+	// 	s = loneZeroRMatch.ReplaceAllString(s, ":0${1}")
+	// }
+	//
+	// if loc := tzMatch.FindStringIndex(s); loc != nil && l > loc[1] {
+	// 	// Remove `:` characters from timezone specifier and pad to 6 digits. A
+	// 	// leading 0 will be added if there are an odd number of digits in the
+	// 	// specifier, since this is short-hand for an offset with number of hours
+	// 	// equal to the leading digit.
+	// 	// This converts all timezone specifiers to the stdNumSecondsTz format in
+	// 	// time/format.go: `-070000`.
+	// 	tzPos := loc[1]
+	// 	tzSpec := strings.Replace(s[tzPos:], ":", "", -1)
+	// 	if len(tzSpec)%2 == 1 {
+	// 		tzSpec = "0" + tzSpec
+	// 	}
+	// 	if len(tzSpec) < 6 {
+	// 		tzSpec += strings.Repeat("0", 6-len(tzSpec))
+	// 	}
+	// 	s = s[:tzPos] + tzSpec
+	// }
+	//
+	// for _, format := range timeFormats {
+	// 	if t, err := time.ParseInLocation(format, s, loc); err == nil {
+	// 		if err := checkForMissingZone(t, loc); err != nil {
+	// 			return time.Time{}, makeParseError(origS, typ, err)
+	// 		}
+	// 		return t, nil
+	// 	}
+	// }
+	// return time.Time{}, makeParseError(origS, typ, nil)
 }
 
 // Unfortunately Go is very strict when parsing abbreviated zone names -- with
