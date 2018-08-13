@@ -12,6 +12,7 @@
     <content url="file://$MODULE_DIR$/vendor/github.com/Ready-Stock/pg_query_go" />
     <content url="file://$MODULE_DIR$/vendor/github.com/lib/pq" />
     <content url="file://$MODULE_DIR$/../badger" />
+    <content url="file://$MODULE_DIR$/../pg_query_go" />
     <content url="file://$MODULE_DIR$/../pgx" />
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
