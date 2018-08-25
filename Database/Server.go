@@ -8,6 +8,7 @@ import (
 	"github.com/Ready-Stock/Noah/Database/sql/pgwire"
 	"github.com/Ready-Stock/Noah/Database/base"
 	"time"
+	"github.com/Ready-Stock/Noah/Database/system"
 )
 
 const (
@@ -47,7 +48,7 @@ type Server struct {
 
 }
 
-func Start() error  {
+func Start(sctx *system.SContext) error  {
 	if addr, err := net.ResolveTCPAddr("tcp", Conf.Configuration.Database.AdvertiseAddress); err != nil {
 		return errors.Errorf("unable to resolve RPC address %q: %v", Conf.Configuration.Database.AdvertiseAddress, err)
 	} else {
@@ -58,8 +59,8 @@ func Start() error  {
 
 		pending, complete := make(chan *net.TCPConn), make(chan *net.TCPConn)
 
-		for i := 0; i < 5; i++ {
-			go StartIncomingConnection(pending, complete)
+		for i := 0; i < 100; i++ {
+			go StartIncomingConnection(sctx, pending, complete)
 		}
 
 		for {
@@ -74,21 +75,19 @@ func Start() error  {
 	}
 }
 
-func StartIncomingConnection(in <-chan *net.TCPConn, out chan<- *net.TCPConn) {
+func StartIncomingConnection(sctx *system.SContext, in <-chan *net.TCPConn, out chan<- *net.TCPConn) {
 	for conn := range in {
-		handleConnection(conn)
+		handleConnection(sctx, conn)
 		out <- conn
 	}
 }
 
-func handleConnection(conn *net.TCPConn) error {
+func handleConnection(sctx *system.SContext, conn *net.TCPConn) error {
 	fmt.Println("Handling connection from ", conn.RemoteAddr().String())
-
 	serv := pgwire.MakeServer(&base.Config{
 		Insecure:true,
 	})
-	serv.ServeConn(conn)
-
+	serv.ServeConn(sctx, conn)
 	return nil
 }
 

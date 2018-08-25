@@ -3,7 +3,8 @@ package sql
 import (
 	"io"
 	"fmt"
-			"github.com/Ready-Stock/pg_query_go"
+	"github.com/Ready-Stock/pg_query_go"
+	"github.com/Ready-Stock/Noah/Database/sql/context"
 )
 
 type Server struct {
@@ -15,6 +16,7 @@ type connExecutor struct {
 	clientComm         ClientComm
 	prepStmtsNamespace prepStmtNamespace
 	curStmt            *pg_query.ParsetreeList
+	context            *context.NContext
 }
 
 type prepStmtNamespace struct {
