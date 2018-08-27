@@ -26,6 +26,7 @@ import (
 
 
 	"github.com/Ready-Stock/Noah/Database/sql/pgwire/pgerror"
+	"fmt"
 )
 
 const secondsInDay = 24 * 60 * 60
@@ -125,7 +126,10 @@ func (b *ReadBuffer) GetString() (string, error) {
 	// read buffer. It is effectively the same as: "s := string(b.Msg[:pos])"
 	s := b.Msg[:pos]
 	b.Msg = b.Msg[pos+1:]
-	return *((*string)(unsafe.Pointer(&s))), nil
+	r := *((*string)(unsafe.Pointer(&s)))
+	t := string(s)
+	fmt.Println(t)
+	return r, nil
 }
 
 // GetPrepareType returns the buffer's contents as a PrepareType.

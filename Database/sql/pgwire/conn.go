@@ -32,13 +32,14 @@ import (
 	"github.com/Ready-Stock/Noah/Database/sql/pgwire/pgwirebase"
 	"github.com/Ready-Stock/Noah/Database/sql/pgwire/pgerror"
 	"github.com/Ready-Stock/Noah/Database/sql"
-	//"github.com/Ready-Stock/Noah/Database/sql/sqlbase"
 	"github.com/Ready-Stock/Noah/Database/cluster"
 	"github.com/Ready-Stock/Noah/Configuration"
 	"github.com/Ready-Stock/pg_query_go"
+	pgnodes "github.com/Ready-Stock/pg_query_go/nodes"
 	"github.com/Ready-Stock/Noah/Database/sql/sessiondata"
 	"github.com/Ready-Stock/Noah/Database/sql/sem/tree"
 	"github.com/Ready-Stock/Noah/Database/sql/sqlbase"
+	"reflect"
 )
 
 const (
@@ -433,7 +434,6 @@ func (c *conn) handleParse(buf *pgwirebase.ReadBuffer) error {
 	var protocolErr *pgerror.Error
 
 	name, err := buf.GetString()
-	fmt.Println(name)
 	if protocolErr != nil {
 		return c.stmtBuf.Push(sql.SendError{Err: err})
 	}
@@ -441,6 +441,7 @@ func (c *conn) handleParse(buf *pgwirebase.ReadBuffer) error {
 	if err != nil {
 		return c.stmtBuf.Push(sql.SendError{Err: err})
 	}
+
 	// The client may provide type information for (some of) the placeholders.
 	numQArgTypes, err := buf.GetUint16()
 	if err != nil {
@@ -738,40 +739,44 @@ func convertToErrWithPGCode(err error) error {
 	// }
 }
 
-// func cookTag(tagStr string, buf []byte, stmtType tree.StatementType, rowsAffected int) []byte {
-// 	if tagStr == "INSERT" {
-// 		// From the postgres docs (49.5. Message Formats):
-// 		// `INSERT oid rows`... oid is the object ID of the inserted row if
-// 		//	rows is 1 and the target table has OIDs; otherwise oid is 0.
-// 		tagStr = "INSERT 0"
-// 	}
-// 	tag := append(buf, tagStr...)
-//
-// 	switch stmtType {
-// 	case tree.RowsAffected:
-// 		tag = append(tag, ' ')
-// 		tag = strconv.AppendInt(tag, int64(rowsAffected), 10)
-//
-// 	case tree.Rows:
-// 		tag = append(tag, ' ')
-// 		tag = strconv.AppendUint(tag, uint64(rowsAffected), 10)
-//
-// 	case tree.Ack, tree.DDL:
-// 		if tagStr == "SELECT" {
-// 			tag = append(tag, ' ')
-// 			tag = strconv.AppendInt(tag, int64(rowsAffected), 10)
-// 		}
-//
-// 	case tree.CopyIn:
-// 		// Nothing to do. The CommandComplete message has been sent elsewhere.
-// 		panic(fmt.Sprintf("CopyIn statements should have been handled elsewhere " +
-// 			"and not produce results"))
-// 	default:
-// 		panic(fmt.Sprintf("unexpected result type %v", stmtType))
-// 	}
-//
-// 	return tag
-// }
+func cookTag(tagStr string, buf []byte, stmt pgnodes.Node, rowsAffected int) []byte {
+	if tagStr == "INSERT" {
+		// From the postgres docs (49.5. Message Formats):
+		// `INSERT oid rows`... oid is the object ID of the inserted row if
+		//	rows is 1 and the target table has OIDs; otherwise oid is 0.
+		tagStr = "INSERT 0"
+	}
+	tag := append(buf, tagStr...)
+
+	switch t := stmt.(type) {
+	default:
+		panic(fmt.Sprintf("unexpected result type %v", reflect.TypeOf(t).Name()))
+	}
+	// switch stmtType {
+	// case tree.RowsAffected:
+	// 	tag = append(tag, ' ')
+	// 	tag = strconv.AppendInt(tag, int64(rowsAffected), 10)
+	//
+	// case tree.Rows:
+	// 	tag = append(tag, ' ')
+	// 	tag = strconv.AppendUint(tag, uint64(rowsAffected), 10)
+	//
+	// case tree.Ack, tree.DDL:
+	// 	if tagStr == "SELECT" {
+	// 		tag = append(tag, ' ')
+	// 		tag = strconv.AppendInt(tag, int64(rowsAffected), 10)
+	// 	}
+	//
+	// case tree.CopyIn:
+	// 	// Nothing to do. The CommandComplete message has been sent elsewhere.
+	// 	panic(fmt.Sprintf("CopyIn statements should have been handled elsewhere " +
+	// 		"and not produce results"))
+	// default:
+	// 	panic(fmt.Sprintf("unexpected result type %v", stmtType))
+	// }
+
+	return tag
+}
 
 // bufferRow serializes a row and adds it to the buffer.
 //
@@ -1060,11 +1065,8 @@ func (c *conn) CreateStatementResult(
 	stmt pg_query.ParsetreeList,
 	descOpt sql.RowDescOpt,
 	pos sql.CmdPos,
-	formatCodes []pgwirebase.FormatCode,
-	loc *time.Location,
-	be sessiondata.BytesEncodeFormat,
 ) sql.CommandResult {
-	res := c.makeCommandResult(descOpt, pos, stmt, formatCodes, be)
+	res := c.makeCommandResult(descOpt, pos, stmt)
 	return &res
 }
 
@@ -1099,10 +1101,10 @@ func (c *conn) CreatePrepareResult(pos sql.CmdPos) sql.ParseResult {
 }
 
 // CreateDescribeResult is part of the sql.ClientComm interface.
-/*func (c *conn) CreateDescribeResult(pos sql.CmdPos) sql.DescribeResult {
+func (c *conn) CreateDescribeResult(pos sql.CmdPos) sql.DescribeResult {
 	res := c.makeMiscResult(pos, noCompletionMsg)
 	return &res
-}*/
+}
 
 // CreateEmptyQueryResult is part of the sql.ClientComm interface.
 func (c *conn) CreateEmptyQueryResult(pos sql.CmdPos) sql.EmptyQueryResult {

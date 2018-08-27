@@ -16,9 +16,7 @@ package sql
 
 import (
 	"context"
-	"github.com/lib/pq/oid"
 	"github.com/Ready-Stock/Noah/Database/sql/sem/tree"
-	//"github.com/Ready-Stock/Noah/Database/sql/sqlbase"
 	"github.com/Ready-Stock/Noah/Database/sql/pgwire/pgwirebase"
 	"github.com/Ready-Stock/pg_query_go"
 )
@@ -31,25 +29,14 @@ type PreparedStatement struct {
 	// the future to present a contextual error message based on location
 	// information.
 	Str string
-	// AnonymizedStr is the anonymized statement string suitable for recording
-	// in statement statistics.
-	AnonymizedStr string
-	// Statement is the parsed, prepared SQL statement. It may be nil if the
-	// prepared statement is empty.
-	Statement *pg_query.ParsetreeList
-	// TypeHints contains the types of the placeholders set by the client. It
-	// dictates how input parameters for those placeholders will be parsed. If a
-	// placeholder has no type hint, it will be populated during type checking.
-	TypeHints tree.PlaceholderTypes
-	// Types contains the final types of the placeholders, after type checking.
-	// These may differ from the types in TypeHints, if a user provides an
-	// imprecise type hint like sending an int for an oid comparison.
-	Types   tree.PlaceholderTypes
-	//Columns sqlbase.ResultColumns
 
-	// InTypes represents the inferred types for placeholder, using protocol
-	// identifiers. Used for reporting on Describe.
-	InTypes []oid.Oid
+	// Statement is the parse tree from pg_query.
+	// This is used later to modify the query on the fly.
+	Statement *pg_query.ParsetreeList
+
+	// TODO(andrei): The connExecutor doesn't use this. Delete it once the
+	// Executor is gone.
+	portalNames map[string]struct{}
 }
 
 func (p *PreparedStatement) close() {
@@ -82,19 +69,11 @@ type PreparedPortal struct {
 // newPreparedPortal creates a new PreparedPortal.
 //
 // When no longer in use, the PreparedPortal needs to be close()d.
-func (ex *connExecutor) newPreparedPortal(
-	ctx context.Context,
-	name string,
-	stmt *PreparedStatement,
-	qargs tree.QueryArguments,
-	outFormats []pgwirebase.FormatCode,
-) (*PreparedPortal, error) {
-	portal := &PreparedPortal{
+func (ex *connExecutor) newPreparedPortal(stmt *PreparedStatement) PreparedPortal {
+	portal := PreparedPortal{
 		Stmt:       stmt,
-		Qargs:      qargs,
-		OutFormats: outFormats,
 	}
-	return portal, nil
+	return portal
 }
 
 func (p *PreparedPortal) close() {

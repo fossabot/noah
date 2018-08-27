@@ -5,7 +5,7 @@ import (
 )
 
 type SContext struct {
-	badger *badger.DB
+	Badger *badger.DB
 }
 
 func (sctx *SContext) LogError(err error) {

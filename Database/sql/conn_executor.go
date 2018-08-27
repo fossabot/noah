@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"github.com/Ready-Stock/pg_query_go"
 	"github.com/Ready-Stock/Noah/Database/sql/context"
-)
+	"github.com/Ready-Stock/Noah/Database/sql/pgwire/pgerror"
+	"github.com/Ready-Stock/Noah/Database/util/fsm"
+	)
 
 type Server struct {
 }
@@ -119,52 +121,47 @@ func (ex *connExecutor) run() error {
 		}
 		fmt.Printf("[pos:%d] executing %s \n", pos, cmd)
 		var res ResultBase
+		var payload fsm.EventPayload
 		switch tcmd := cmd.(type) {
 		case ExecStmt:
 			fmt.Println("TYPE: ExecStmt")
 		case ExecPortal:
-			// // ExecPortal is handled like ExecStmt, except that the placeholder info
-			// // is taken from the portal.
-			// fmt.Println("TYPE: ExecPortal")
-			// portal, ok := ex.prepStmtsNamespace.portals[tcmd.Name]
-			// if !ok {
-			// 	err = pgerror.NewErrorf(pgerror.CodeInvalidCursorNameError, "unknown portal %q", tcmd.Name)
-			// 	// ev = eventNonRetriableErr{IsCommit: fsm.False}
-			// 	// payload = eventNonRetriableErrPayload{err: err}
-			// 	res = ex.clientComm.CreateErrorResult(pos)
-			// 	break
-			// }
-			// ex.curStmt = portal.Stmt.Statement
-			//
-			// pinfo := &tree.PlaceholderInfo{
-			// 	TypeHints: portal.Stmt.TypeHints,
-			// 	Types:     portal.Stmt.Types,
-			// 	Values:    portal.Qargs,
-			// }
-			//
-			// if portal.Stmt.Statement == nil {
-			// 	res = ex.clientComm.CreateEmptyQueryResult(pos)
-			// 	break
-			// }
-			//
-			// stmtRes := ex.clientComm.CreateStatementResult(
-			// 	*portal.Stmt.Statement,
-			// 	// The client is using the extended protocol, so no row description is
-			// 	// needed.
-			// 	DontNeedRowDesc,
-			// 	pos, portal.OutFormats,
-			// 	ex.sessionData.Location, ex.sessionData.BytesEncodeFormat)
-			// stmtRes.SetLimit(tcmd.Limit)
+			b := []byte(tcmd.Name)
+			fmt.Println("Command Name: " + string(b))
+			portal, ok := ex.prepStmtsNamespace.portals[tcmd.Name]
+			if !ok {
+				err = pgerror.NewErrorf(pgerror.CodeInvalidCursorNameError, "unknown portal %q", tcmd.Name)
+				payload = eventNonRetriableErrPayload{err: err}
+				res = ex.clientComm.CreateErrorResult(pos)
+				break
+			}
+			fmt.Printf("portal resolved to: %s", portal.Stmt.Str)
+			ex.curStmt = portal.Stmt.Statement
 
+			if portal.Stmt.Statement == nil {
+				res = ex.clientComm.CreateEmptyQueryResult(pos)
+				break
+			}
+
+			stmtRes := ex.clientComm.CreateStatementResult(
+				*portal.Stmt.Statement,
+				// The client is using the extended protocol, so no row description is
+				// needed.
+				DontNeedRowDesc, pos)
+			res = stmtRes
+			err = ex.execStmt(*ex.curStmt, stmtRes, pos)
 		case PrepareStmt:
 			fmt.Println("TYPE: PrepareStmt")
 			fmt.Println("Len:", tcmd.PGQuery.Query)
 			res = ex.clientComm.CreatePrepareResult(pos)
+			err = ex.execPrepare(tcmd)
 		case DescribeStmt:
-			fmt.Println("TYPE: DescribeStmt")
+			descRes := ex.clientComm.CreateDescribeResult(pos)
+			res = descRes
 		case BindStmt:
 			fmt.Println("TYPE: BindStmt")
 			res = ex.clientComm.CreateBindResult(pos)
+			err = ex.execBind(tcmd)
 		case DeletePreparedStmt:
 			fmt.Println("TYPE: DeletePreparedStmt")
 			res = ex.clientComm.CreateDeleteResult(pos)
@@ -193,9 +190,24 @@ func (ex *connExecutor) run() error {
 			panic(fmt.Sprintf("unsupported command type: %T", cmd))
 		}
 
-		ex.stmtBuf.advanceOne()
-		if res != nil {
-			res.Close(IdleTxnBlock)
+		if err != nil {
+			res.CloseWithErr(err)
+		} else {
+			resErr := res.Err()
+			pe, ok := payload.(payloadWithError)
+			if ok {
+				// error stuff here
+			}
+			if resErr == nil && ok {
+				//ex.server.recordError(pe.errorCause())
+				// Depending on whether the result has the error already or not, we have
+				// to call either Close or CloseWithErr.
+				res.CloseWithErr(pe.errorCause())
+			} else {
+				//ex.server.recordError(resErr)
+				res.Close(IdleTxnBlock)
+			}
 		}
+		ex.stmtBuf.advanceOne()
 	}
 }

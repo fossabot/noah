@@ -19,9 +19,7 @@ import (
 		"github.com/lib/pq/oid"
 	"github.com/Ready-Stock/Noah/Database/sql/sessiondata"
 	"github.com/Ready-Stock/Noah/Database/sql"
-	"github.com/Ready-Stock/Noah/Database/sql/pgwire/pgwirebase"
-
-	"github.com/pkg/errors"
+		"github.com/pkg/errors"
 	"github.com/Ready-Stock/pg_query_go"
 	"github.com/Ready-Stock/Noah/Database/sql/sem/tree"
 )
@@ -65,6 +63,9 @@ type commandResult struct {
 	limit int
 
 	stmtType     tree.StatementType
+
+	stmt 		 pg_query.ParsetreeList
+
 	descOpt      sql.RowDescOpt
 	rowsAffected int
 
@@ -74,25 +75,20 @@ type commandResult struct {
 	// meaning that all columns will be encoded in the text format (this is the
 	// case for queries executed through the simple protocol). Otherwise, it needs
 	// to have an entry for every column.
-	formatCodes []pgwirebase.FormatCode
 }
 
 func (c *conn) makeCommandResult(
 	descOpt sql.RowDescOpt,
 	pos sql.CmdPos,
 	stmt pg_query.ParsetreeList,
-	formatCodes []pgwirebase.FormatCode,
-	be sessiondata.BytesEncodeFormat,
 ) commandResult {
 	return commandResult{
 		conn:    c,
 		pos:     pos,
 		descOpt: descOpt,
 		// stmtType:          stmt.StatementType(),
-		formatCodes: formatCodes,
 		typ:         commandComplete,
 		// cmdCompleteTag:    stmt.StatementTag(),
-		bytesEncodeFormat: be,
 	}
 }
 
@@ -132,10 +128,10 @@ func (r *commandResult) Close(t sql.TransactionStatusIndicator) {
 	case commandComplete:
 		panic("not handling command complete yet.")
 
-		// tag := cookTag(
-		// 	r.cmdCompleteTag, r.conn.writerState.tagBuf[:0], r.stmtType, r.rowsAffected,
-		// )
-		//r.conn.bufferCommandComplete(tag)
+		tag := cookTag(
+		 	r.cmdCompleteTag, r.conn.writerState.tagBuf[:0], r.stmt, r.rowsAffected,
+		)
+		r.conn.bufferCommandComplete(tag)
 	case parseComplete:
 		r.conn.bufferParseComplete()
 	case bindComplete:

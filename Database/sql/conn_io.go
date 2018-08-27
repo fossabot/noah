@@ -28,8 +28,7 @@ import (
 	"net"
 	"github.com/Ready-Stock/Noah/Database/util/syncutil"
 	"github.com/Ready-Stock/pg_query_go"
-	"github.com/Ready-Stock/Noah/Database/sql/sessiondata"
-)
+	)
 
 // This file contains utils and interfaces used by a connExecutor to communicate
 // with a SQL client. There's StmtBuf used for input and ClientComm used for
@@ -624,14 +623,11 @@ type ClientComm interface {
 		stmt pg_query.ParsetreeList,
 		descOpt RowDescOpt,
 		pos CmdPos,
-		formatCodes []pgwirebase.FormatCode,
-		loc *time.Location,
-		be sessiondata.BytesEncodeFormat,
 	) CommandResult
 	// CreatePrepareResult creates a result for a PrepareStmt command.
 	CreatePrepareResult(pos CmdPos) ParseResult
 	// CreateDescribeResult creates a result for a DescribeStmt command.
-	// CreateDescribeResult(pos CmdPos) DescribeResult
+	CreateDescribeResult(pos CmdPos) DescribeResult
 	// CreateBindResult creates a result for a BindStmt command.
 	CreateBindResult(pos CmdPos) BindResult
 	// CreateDeleteResult creates a result for a DeletePreparedStmt command.
