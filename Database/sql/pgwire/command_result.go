@@ -128,10 +128,10 @@ func (r *commandResult) Close(t sql.TransactionStatusIndicator) {
 	case commandComplete:
 		panic("not handling command complete yet.")
 
-		tag := cookTag(
-		 	r.cmdCompleteTag, r.conn.writerState.tagBuf[:0], r.stmt, r.rowsAffected,
-		)
-		r.conn.bufferCommandComplete(tag)
+		// tag := cookTag(
+		//  	r.cmdCompleteTag, r.conn.writerState.tagBuf[:0], r.stmt, r.rowsAffected,
+		// )
+		// r.conn.bufferCommandComplete(tag)
 	case parseComplete:
 		r.conn.bufferParseComplete()
 	case bindComplete:
