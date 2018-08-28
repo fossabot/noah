@@ -2,16 +2,16 @@ package main
 
 import (
 	"fmt"
-	"github.com/Ready-Stock/Noah/Configuration"
-	"github.com/Ready-Stock/Noah/Database"
+	"github.com/Ready-Stock/Noah/db"
 	"github.com/Ready-Stock/badger"
-	"github.com/Ready-Stock/Noah/Database/system"
+	"github.com/Ready-Stock/Noah/db/system"
+	"github.com/Ready-Stock/Noah/conf"
 )
 
 func main() {
 	opts := badger.DefaultOptions
-	opts.Dir = "badge"
-	opts.ValueDir = "badge"
+	opts.Dir = ""
+	opts.ValueDir = ""
 	badge, err := badger.Open(opts)
 	if err != nil {
 		panic(err)
@@ -20,15 +20,13 @@ func main() {
 		Badger: badge,
 	}
 	defer badge.Close()
-	Conf.ParseConfiguration()
-	if err := sctx.UpsertNodes(Conf.Configuration.Nodes); err != nil {
+	conf.ParseConfiguration()
+	if err := sctx.UpsertNodes(conf.Configuration.Nodes); err != nil {
 		panic(err)
 	}
 	if err := sctx.StartConnectionPool(); err != nil {
 		panic(err)
 	}
-	conn, _ := sctx.GetConnection(1)
-	fmt.Println(conn.IsAlive())
-	fmt.Println("Starting admin application with port:", Conf.Configuration.AdminPort)
+	fmt.Println("Starting admin application with port:", conf.Configuration.AdminPort)
 	Database.Start(&sctx)
 }
