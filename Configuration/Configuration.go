@@ -3,7 +3,7 @@ package Conf
 import (
 	"flag"
 	"io/ioutil"
-		"fmt"
+	"fmt"
 	"os"
 	"encoding/json"
 )
@@ -15,7 +15,7 @@ var (
 type Config struct {
 	AdminPort int            `json:"admin_port"`
 	Database  DatabaseConfig `json:"database"`
-	Cluster ClusterConfig `json:"cluster"`
+	Cluster   ClusterConfig  `json:"cluster"`
 	Nodes     []NodeConfig   `json:"nodes"`
 }
 
@@ -25,16 +25,17 @@ type DatabaseConfig struct {
 }
 
 type ClusterConfig struct {
-	DenyConnectionIfNoNodes bool `json:"deny_connection_if_no_nodes"`
+	DenyConnectionIfNoNodes    bool `json:"deny_connection_if_no_nodes"`
+	StartingConnectionsPerNode int  `json:"starting_connections_per_node"`
 }
 
 type NodeConfig struct {
 	NodeID   int    `json:"node_id"`
 	Address  string `json:"address"`
+	Port 	 uint16	`json:"port"`
 	Database string `json:"database"`
 	User     string `json:"user"`
 	Password string `json:"password"`
-	Shards   int64  `json:"shards"`
 }
 
 func ParseConfiguration() {

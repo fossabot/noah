@@ -5,7 +5,8 @@
     "advertise_address": "127.0.0.1:5433"
   },
   "cluster": {
-    "deny_connection_if_no_nodes": false
+    "deny_connection_if_no_nodes": false,
+    "starting_connections_per_node": 2
   },
   "nodes": [
     {

@@ -4,6 +4,7 @@ import (
 	"github.com/Ready-Stock/pg_query_go"
 	query "github.com/Ready-Stock/pg_query_go/nodes"
 	"errors"
+	"github.com/Ready-Stock/Noah/Database/sql/distributor/queries/select"
 )
 
 func (ex *connExecutor) execStmt(
@@ -12,7 +13,7 @@ func (ex *connExecutor) execStmt(
 	pos CmdPos,
 ) error {
 	raw := tree.Statements[0].(query.RawStmt).Stmt
-	switch raw.(type) {
+	switch stmt := raw.(type) {
 	case query.AlterCollationStmt:
 	case query.AlterDatabaseSetStmt:
 	case query.AlterDatabaseStmt:
@@ -114,6 +115,7 @@ func (ex *connExecutor) execStmt(
 	case query.RuleStmt:
 	case query.SecLabelStmt:
 	case query.SelectStmt:
+		_select.CreateSelectStatement(stmt, tree)
 		// return _select.CreateSelectStatement(stmt, tree).HandleSelect(ctx)
 	case query.SetOperationStmt:
 	case query.TransactionStmt:

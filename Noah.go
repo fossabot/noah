@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/Ready-Stock/Noah/Configuration"
 	"github.com/Ready-Stock/Noah/Database"
-	"github.com/Ready-Stock/Noah/Database/cluster"
 	"github.com/Ready-Stock/badger"
 	"github.com/Ready-Stock/Noah/Database/system"
 )
@@ -22,7 +21,14 @@ func main() {
 	}
 	defer badge.Close()
 	Conf.ParseConfiguration()
+	if err := sctx.UpsertNodes(Conf.Configuration.Nodes); err != nil {
+		panic(err)
+	}
+	if err := sctx.StartConnectionPool(); err != nil {
+		panic(err)
+	}
+	conn, _ := sctx.GetConnection(1)
+	fmt.Println(conn.IsAlive())
 	fmt.Println("Starting admin application with port:", Conf.Configuration.AdminPort)
-	cluster.SetupNodes()
 	Database.Start(&sctx)
 }

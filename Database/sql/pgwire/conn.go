@@ -32,7 +32,6 @@ import (
 	"github.com/Ready-Stock/Noah/Database/sql/pgwire/pgwirebase"
 	"github.com/Ready-Stock/Noah/Database/sql/pgwire/pgerror"
 	"github.com/Ready-Stock/Noah/Database/sql"
-	"github.com/Ready-Stock/Noah/Database/cluster"
 	"github.com/Ready-Stock/Noah/Configuration"
 	"github.com/Ready-Stock/pg_query_go"
 	pgnodes "github.com/Ready-Stock/pg_query_go/nodes"
@@ -137,15 +136,15 @@ func serveConn(
 
 	c := newConn(netConn, sArgs)
 
-	sendError := func(err error) error {
-		_ /* err */ = writeErr(err, c.msgBuilder, c.conn)
-		return err
-	}
+	// sendError := func(err error) error {
+	// 	_ /* err */ = writeErr(err, c.msgBuilder, c.conn)
+	// 	return err
+	// }
 
 	if Conf.Configuration.Cluster.DenyConnectionIfNoNodes {
-		if len(cluster.Nodes) == 0 {
-			return sendError(errors.New("no nodes available in cluster"))
-		}
+		// if len(cluster.Nodes) == 0 {
+		// 	return sendError(errors.New("no nodes available in cluster"))
+		// }
 	}
 
 	if err := c.handleAuthentication(insecure); err != nil {
