@@ -32,7 +32,7 @@ import (
 	"github.com/Ready-Stock/Noah/db/sql/pgwire/pgwirebase"
 	"github.com/Ready-Stock/Noah/db/sql/pgwire/pgerror"
 	"github.com/Ready-Stock/Noah/db/sql"
-	"github.com/Ready-Stock/Noah/Configuration"
+	"github.com/Ready-Stock/Noah/conf"
 	"github.com/Ready-Stock/pg_query_go"
 	pgnodes "github.com/Ready-Stock/pg_query_go/nodes"
 	"github.com/Ready-Stock/Noah/db/sql/sessiondata"
@@ -141,7 +141,7 @@ func serveConn(
 	// 	return err
 	// }
 
-	if Conf.Configuration.Cluster.DenyConnectionIfNoNodes {
+	if conf.Configuration.Cluster.DenyConnectionIfNoNodes {
 		// if len(cluster.Nodes) == 0 {
 		// 	return sendError(errors.New("no nodes available in cluster"))
 		// }

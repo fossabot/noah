@@ -10,8 +10,8 @@ import (
 
 func main() {
 	opts := badger.DefaultOptions
-	opts.Dir = ""
-	opts.ValueDir = ""
+	opts.Dir = "badge"
+	opts.ValueDir = "badge"
 	badge, err := badger.Open(opts)
 	if err != nil {
 		panic(err)
