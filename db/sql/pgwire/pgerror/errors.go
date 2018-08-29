@@ -44,18 +44,31 @@ func FullError(err error) string {
 }
 
 func formatMsgHintDetail(prefix, msg, hint, detail string) string {
-	var b strings.Builder
-	b.WriteString(prefix)
-	b.WriteString(msg)
+	b := make([]string, 2)
+	b[0] = prefix
+	b[1] = msg
 	if hint != "" {
-		b.WriteString("\nHINT: ")
-		b.WriteString(hint)
+		b = append(b,"\nHINT: ")
+		b = append(b,hint)
 	}
 	if detail != "" {
-		b.WriteString("\nDETAIL: ")
-		b.WriteString(detail)
+		b = append(b,"\nDETAIL: ")
+		b = append(b,detail)
 	}
-	return b.String()
+	return strings.Join(b, " ")
+
+	// var b strings.Builder
+	// b.WriteString(prefix)
+	// b.WriteString(msg)
+	// if hint != "" {
+	// 	b.WriteString("\nHINT: ")
+	// 	b.WriteString(hint)
+	// }
+	// if detail != "" {
+	// 	b.WriteString("\nDETAIL: ")
+	// 	b.WriteString(detail)
+	// }
+	// return b.String()
 }
 
 // NewErrorWithDepthf creates an Error and extracts the context

@@ -3,7 +3,7 @@ package sql
 import (
 	"io"
 	"fmt"
-	"github.com/Ready-Stock/pg_query_go"
+	nodes "github.com/Ready-Stock/pg_query_go/nodes"
 	"github.com/Ready-Stock/Noah/db/sql/context"
 	"github.com/Ready-Stock/Noah/db/sql/pgwire/pgerror"
 	"github.com/Ready-Stock/Noah/db/util/fsm"
@@ -17,7 +17,7 @@ type connExecutor struct {
 	stmtBuf            *StmtBuf
 	clientComm         ClientComm
 	prepStmtsNamespace prepStmtNamespace
-	curStmt            *pg_query.ParsetreeList
+	curStmt            *nodes.Stmt
 	context            *context.NContext
 }
 
@@ -135,7 +135,7 @@ func (ex *connExecutor) run() error {
 				res = ex.clientComm.CreateErrorResult(pos)
 				break
 			}
-			fmt.Printf("portal resolved to: %s", portal.Stmt.Str)
+			//fmt.Printf("portal resolved to: %s", portal.Stmt.Str)
 			ex.curStmt = portal.Stmt.Statement
 
 			if portal.Stmt.Statement == nil {
@@ -152,7 +152,6 @@ func (ex *connExecutor) run() error {
 			err = ex.execStmt(*ex.curStmt, stmtRes, pos)
 		case PrepareStmt:
 			fmt.Println("TYPE: PrepareStmt")
-			fmt.Println("Len:", tcmd.PGQuery.Query)
 			res = ex.clientComm.CreatePrepareResult(pos)
 			err = ex.execPrepare(tcmd)
 		case DescribeStmt:

@@ -1,135 +1,132 @@
 package sql
 
 import (
-	"github.com/Ready-Stock/pg_query_go"
-	query "github.com/Ready-Stock/pg_query_go/nodes"
+	nodes "github.com/Ready-Stock/pg_query_go/nodes"
 	"errors"
-	"github.com/Ready-Stock/Noah/db/sql/distributor/queries/select"
-)
+	)
 
 func (ex *connExecutor) execStmt(
-	tree pg_query.ParsetreeList,
+	tree nodes.Stmt,
 	res RestrictedCommandResult,
 	pos CmdPos,
 ) error {
-	raw := tree.Statements[0].(query.RawStmt).Stmt
-	switch stmt := raw.(type) {
-	case query.AlterCollationStmt:
-	case query.AlterDatabaseSetStmt:
-	case query.AlterDatabaseStmt:
-	case query.AlterDefaultPrivilegesStmt:
-	case query.AlterDomainStmt:
-	case query.AlterEnumStmt:
-	case query.AlterEventTrigStmt:
-	case query.AlterExtensionContentsStmt:
-	case query.AlterExtensionStmt:
-	case query.AlterFdwStmt:
-	case query.AlterForeignServerStmt:
-	case query.AlterFunctionStmt:
-	case query.AlterObjectDependsStmt:
-	case query.AlterObjectSchemaStmt:
-	case query.AlterOperatorStmt:
-	case query.AlterOpFamilyStmt:
-	case query.AlterOwnerStmt:
-	case query.AlterPolicyStmt:
-	case query.AlterPublicationStmt:
-	case query.AlterRoleSetStmt:
-	case query.AlterRoleStmt:
-	case query.AlterSeqStmt:
-	case query.AlterSubscriptionStmt:
-	case query.AlterSystemStmt:
-	case query.AlterTableMoveAllStmt:
-	case query.AlterTableSpaceOptionsStmt:
-	case query.AlterTableStmt:
-	case query.AlterTSConfigurationStmt:
-	case query.AlterTSDictionaryStmt:
-	case query.AlterUserMappingStmt:
-	case query.CheckPointStmt:
-	case query.ClosePortalStmt:
-	case query.ClusterStmt:
-	case query.CommentStmt:
-		// return nil, _comment.CreateCommentStatment(stmt, tree).HandleComment(ctx)
-	case query.CompositeTypeStmt:
-	case query.ConstraintsSetStmt:
-	case query.CopyStmt:
-	case query.CreateAmStmt:
-	case query.CreateCastStmt:
-	case query.CreateConversionStmt:
-	case query.CreateDomainStmt:
-	case query.CreateEnumStmt:
-	case query.CreateEventTrigStmt:
-	case query.CreateExtensionStmt:
-	case query.CreateFdwStmt:
-	case query.CreateForeignServerStmt:
-	case query.CreateForeignTableStmt:
-	case query.CreateFunctionStmt:
-	case query.CreatePLangStmt:
-	case query.CreatePolicyStmt:
-	case query.CreatePublicationStmt:
-	case query.CreateRangeStmt:
-	case query.CreateRoleStmt:
-	case query.CreateSchemaStmt:
-	case query.CreateSeqStmt:
-	case query.CreateStatsStmt:
-	case query.CreateStmt:
-		// return nil, _create.CreateCreateStatment(stmt, tree).HandleCreate(ctx)
-	case query.CreateSubscriptionStmt:
-	case query.CreateTableAsStmt:
-	case query.CreateTableSpaceStmt:
-	case query.CreateTransformStmt:
-	case query.CreateTrigStmt:
-	case query.CreateUserMappingStmt:
-	case query.CreatedbStmt:
-	case query.DeallocateStmt:
-	case query.DeclareCursorStmt:
-	case query.DefineStmt:
-	case query.DeleteStmt:
-	case query.DiscardStmt:
-	case query.DoStmt:
-	case query.DropOwnedStmt:
-	case query.DropRoleStmt:
-	case query.DropStmt:
-		// return nil, _drop.CreateDropStatment(stmt, tree).HandleComment(ctx)
-	case query.DropSubscriptionStmt:
-	case query.DropTableSpaceStmt:
-	case query.DropUserMappingStmt:
-	case query.DropdbStmt:
-	case query.ExecuteStmt:
-	case query.ExplainStmt:
-	case query.FetchStmt:
-	case query.GrantRoleStmt:
-	case query.ImportForeignSchemaStmt:
-	case query.IndexStmt:
-	case query.InsertStmt:
-		// return nil, _insert.CreateInsertStatment(stmt, tree).HandleInsert(ctx)
-	case query.ListenStmt:
-	case query.LoadStmt:
-	case query.LockStmt:
-	case query.NotifyStmt:
-	case query.PrepareStmt:
-	case query.ReassignOwnedStmt:
-	case query.RefreshMatViewStmt:
-	case query.ReindexStmt:
-	case query.RenameStmt:
-	case query.ReplicaIdentityStmt:
-	case query.RuleStmt:
-	case query.SecLabelStmt:
-	case query.SelectStmt:
-		_select.CreateSelectStatement(stmt, tree)
-		// return _select.CreateSelectStatement(stmt, tree).HandleSelect(ctx)
-	case query.SetOperationStmt:
-	case query.TransactionStmt:
-		// return nil, _transaction.HandleTransaction(ctx, stmt)
-	case query.TruncateStmt:
-	case query.UnlistenStmt:
-	case query.UpdateStmt:
-		// return nil, _update.HandleUpdate(ctx, stmt)
-	case query.VacuumStmt:
-	case query.VariableSetStmt:
-	case query.VariableShowStmt:
-	case query.ViewStmt:
+	switch tree.(type) {
+	// case nodes.AlterCollationStmt:
+	// case nodes.AlterDatabaseSetStmt:
+	// case nodes.AlterDatabaseStmt:
+	// case nodes.AlterDefaultPrivilegesStmt:
+	// case nodes.AlterDomainStmt:
+	// case nodes.AlterEnumStmt:
+	// case nodes.AlterEventTrigStmt:
+	// case nodes.AlterExtensionContentsStmt:
+	// case nodes.AlterExtensionStmt:
+	// case nodes.AlterFdwStmt:
+	// case nodes.AlterForeignServerStmt:
+	// case nodes.AlterFunctionStmt:
+	// case nodes.AlterObjectDependsStmt:
+	// case nodes.AlterObjectSchemaStmt:
+	// case nodes.AlterOperatorStmt:
+	// case nodes.AlterOpFamilyStmt:
+	// case nodes.AlterOwnerStmt:
+	// case nodes.AlterPolicyStmt:
+	// case nodes.AlterPublicationStmt:
+	// case nodes.AlterRoleSetStmt:
+	// case nodes.AlterRoleStmt:
+	// case nodes.AlterSeqStmt:
+	// case nodes.AlterSubscriptionStmt:
+	// case nodes.AlterSystemStmt:
+	// case nodes.AlterTableMoveAllStmt:
+	// case nodes.AlterTableSpaceOptionsStmt:
+	// case nodes.AlterTableStmt:
+	// case nodes.AlterTSConfigurationStmt:
+	// case nodes.AlterTSDictionaryStmt:
+	// case nodes.AlterUserMappingStmt:
+	// case nodes.CheckPointStmt:
+	// case nodes.ClosePortalStmt:
+	// case nodes.ClusterStmt:
+	// case nodes.CommentStmt:
+	// 	// return nil, _comment.CreateCommentStatment(stmt, tree).HandleComment(ctx)
+	// case nodes.CompositeTypeStmt:
+	// case nodes.ConstraintsSetStmt:
+	// case nodes.CopyStmt:
+	// case nodes.CreateAmStmt:
+	// case nodes.CreateCastStmt:
+	// case nodes.CreateConversionStmt:
+	// case nodes.CreateDomainStmt:
+	// case nodes.CreateEnumStmt:
+	// case nodes.CreateEventTrigStmt:
+	// case nodes.CreateExtensionStmt:
+	// case nodes.CreateFdwStmt:
+	// case nodes.CreateForeignServerStmt:
+	// case nodes.CreateForeignTableStmt:
+	// case nodes.CreateFunctionStmt:
+	// case nodes.CreatePLangStmt:
+	// case nodes.CreatePolicyStmt:
+	// case nodes.CreatePublicationStmt:
+	// case nodes.CreateRangeStmt:
+	// case nodes.CreateRoleStmt:
+	// case nodes.CreateSchemaStmt:
+	// case nodes.CreateSeqStmt:
+	// case nodes.CreateStatsStmt:
+	// case nodes.CreateStmt:
+	// 	// return nil, _create.CreateCreateStatment(stmt, tree).HandleCreate(ctx)
+	// case nodes.CreateSubscriptionStmt:
+	// case nodes.CreateTableAsStmt:
+	// case nodes.CreateTableSpaceStmt:
+	// case nodes.CreateTransformStmt:
+	// case nodes.CreateTrigStmt:
+	// case nodes.CreateUserMappingStmt:
+	// case nodes.CreatedbStmt:
+	// case nodes.DeallocateStmt:
+	// case nodes.DeclareCursorStmt:
+	// case nodes.DefineStmt:
+	// case nodes.DeleteStmt:
+	// case nodes.DiscardStmt:
+	// case nodes.DoStmt:
+	// case nodes.DropOwnedStmt:
+	// case nodes.DropRoleStmt:
+	// case nodes.DropStmt:
+	// 	// return nil, _drop.CreateDropStatment(stmt, tree).HandleComment(ctx)
+	// case nodes.DropSubscriptionStmt:
+	// case nodes.DropTableSpaceStmt:
+	// case nodes.DropUserMappingStmt:
+	// case nodes.DropdbStmt:
+	// case nodes.ExecuteStmt:
+	// case nodes.ExplainStmt:
+	// case nodes.FetchStmt:
+	// case nodes.GrantRoleStmt:
+	// case nodes.ImportForeignSchemaStmt:
+	// case nodes.IndexStmt:
+	// case nodes.InsertStmt:
+	// 	// return nil, _insert.CreateInsertStatment(stmt, tree).HandleInsert(ctx)
+	// case nodes.ListenStmt:
+	// case nodes.LoadStmt:
+	// case nodes.LockStmt:
+	// case nodes.NotifyStmt:
+	// case nodes.PrepareStmt:
+	// case nodes.ReassignOwnedStmt:
+	// case nodes.RefreshMatViewStmt:
+	// case nodes.ReindexStmt:
+	// case nodes.RenameStmt:
+	// case nodes.ReplicaIdentityStmt:
+	// case nodes.RuleStmt:
+	// case nodes.SecLabelStmt:
+	// case nodes.SelectStmt:
+	// 	_select.CreateSelectStatement(stmt, tree)
+	// 	// return _select.CreateSelectStatement(stmt, tree).HandleSelect(ctx)
+	// case nodes.SetOperationStmt:
+	// case nodes.TransactionStmt:
+	// 	// return nil, _transaction.HandleTransaction(ctx, stmt)
+	// case nodes.TruncateStmt:
+	// case nodes.UnlistenStmt:
+	// case nodes.UpdateStmt:
+	// 	// return nil, _update.HandleUpdate(ctx, stmt)
+	//case nodes.VacuumStmt:
+	case nodes.VariableSetStmt:
+	// case nodes.VariableShowStmt:
+	// case nodes.ViewStmt:
 	default:
-		return errors.New("invalid or unsupported query type")
+		return errors.New("invalid or unsupported nodes type")
 	}
 	return nil
 }

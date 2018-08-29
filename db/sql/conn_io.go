@@ -27,7 +27,7 @@ import (
 	"github.com/Ready-Stock/Noah/db/sql/pgwire/pgwirebase"
 	"net"
 	"github.com/Ready-Stock/Noah/db/util/syncutil"
-	"github.com/Ready-Stock/pg_query_go"
+	nodes "github.com/Ready-Stock/pg_query_go/nodes"
 	)
 
 // This file contains utils and interfaces used by a connExecutor to communicate
@@ -129,7 +129,7 @@ type SessionArgs struct {
 type Command interface {
 	fmt.Stringer
 	command()
-	PGCommand() *pg_query.ParsetreeList
+	PGCommand() *nodes.Stmt
 }
 
 // ExecStmt is the command for running a query sent through the "simple" pgwire
@@ -161,7 +161,7 @@ func (e ExecStmt) String() string {
 	return fmt.Sprintf("ExecStmt: %s", "test")
 }
 
-func (e ExecStmt) PGCommand() *pg_query.ParsetreeList {
+func (e ExecStmt) PGCommand() *nodes.Stmt {
 	return nil
 }
 
@@ -185,7 +185,7 @@ func (e ExecPortal) String() string {
 	return fmt.Sprintf("ExecPortal name: %q", e.Name)
 }
 
-func (e ExecPortal) PGCommand() *pg_query.ParsetreeList {
+func (e ExecPortal) PGCommand() *nodes.Stmt {
 	return nil
 }
 
@@ -203,7 +203,7 @@ type PrepareStmt struct {
 	RawTypeHints []oid.Oid
 	ParseStart   time.Time
 	ParseEnd     time.Time
-	PGQuery      pg_query.ParsetreeList
+	PGQuery      nodes.Stmt
 }
 
 // command implements the Command interface.
@@ -213,7 +213,7 @@ func (p PrepareStmt) String() string {
 	return fmt.Sprintf("PrepareStmt: %s", "prepare")
 }
 
-func (e PrepareStmt) PGCommand() *pg_query.ParsetreeList {
+func (e PrepareStmt) PGCommand() *nodes.Stmt {
 	return &e.PGQuery
 }
 
@@ -233,7 +233,7 @@ func (d DescribeStmt) String() string {
 	return fmt.Sprintf("Describe: %q", d.Name)
 }
 
-func (e DescribeStmt) PGCommand() *pg_query.ParsetreeList {
+func (e DescribeStmt) PGCommand() *nodes.Stmt {
 	return nil
 }
 
@@ -277,7 +277,7 @@ func (b BindStmt) String() string {
 	return fmt.Sprintf("BindStmt: %q->%q", b.PreparedStatementName, b.PortalName)
 }
 
-func (e BindStmt) PGCommand() *pg_query.ParsetreeList {
+func (e BindStmt) PGCommand() *nodes.Stmt {
 	return nil
 }
 
@@ -296,7 +296,7 @@ func (d DeletePreparedStmt) String() string {
 	return fmt.Sprintf("DeletePreparedStmt: %q", d.Name)
 }
 
-func (e DeletePreparedStmt) PGCommand() *pg_query.ParsetreeList {
+func (e DeletePreparedStmt) PGCommand() *nodes.Stmt {
 	return nil
 }
 
@@ -320,7 +320,7 @@ func (Sync) String() string {
 	return "Sync"
 }
 
-func (e Sync) PGCommand() *pg_query.ParsetreeList {
+func (e Sync) PGCommand() *nodes.Stmt {
 	return nil
 }
 
@@ -337,7 +337,7 @@ func (Flush) String() string {
 	return "Flush"
 }
 
-func (e Flush) PGCommand() *pg_query.ParsetreeList {
+func (e Flush) PGCommand() *nodes.Stmt {
 	return nil
 }
 
@@ -361,7 +361,7 @@ func (CopyIn) String() string {
 	return "CopyIn"
 }
 
-func (e CopyIn) PGCommand() *pg_query.ParsetreeList {
+func (e CopyIn) PGCommand() *nodes.Stmt {
 	return nil
 }
 
@@ -380,7 +380,7 @@ func (DrainRequest) String() string {
 	return "Drain"
 }
 
-func (e DrainRequest) PGCommand() *pg_query.ParsetreeList {
+func (e DrainRequest) PGCommand() *nodes.Stmt {
 	return nil
 }
 
@@ -401,7 +401,7 @@ func (s SendError) String() string {
 	return fmt.Sprintf("SendError: %s", s.Err)
 }
 
-func (e SendError) PGCommand() *pg_query.ParsetreeList {
+func (e SendError) PGCommand() *nodes.Stmt {
 	return nil
 }
 
@@ -620,7 +620,7 @@ type ClientComm interface {
 	// which case every column will be encoded using the text encoding, otherwise
 	// it needs to contain a value for every column.
 	CreateStatementResult(
-		stmt pg_query.ParsetreeList,
+		stmt nodes.Stmt,
 		descOpt RowDescOpt,
 		pos CmdPos,
 	) CommandResult

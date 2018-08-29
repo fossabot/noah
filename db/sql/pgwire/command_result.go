@@ -16,12 +16,11 @@ package pgwire
 
 import (
 	"fmt"
-		"github.com/lib/pq/oid"
+	"github.com/lib/pq/oid"
 	"github.com/Ready-Stock/Noah/db/sql/sessiondata"
 	"github.com/Ready-Stock/Noah/db/sql"
-		"github.com/pkg/errors"
-	"github.com/Ready-Stock/pg_query_go"
-	"github.com/Ready-Stock/Noah/db/sql/sem/tree"
+	"github.com/pkg/errors"
+	nodes "github.com/Ready-Stock/pg_query_go/nodes"
 )
 
 type completionMsgType int
@@ -62,9 +61,9 @@ type commandResult struct {
 	// this limit.
 	limit int
 
-	stmtType     tree.StatementType
+	stmtType nodes.StmtType
 
-	stmt 		 pg_query.ParsetreeList
+	stmt nodes.Stmt
 
 	descOpt      sql.RowDescOpt
 	rowsAffected int
@@ -80,15 +79,16 @@ type commandResult struct {
 func (c *conn) makeCommandResult(
 	descOpt sql.RowDescOpt,
 	pos sql.CmdPos,
-	stmt pg_query.ParsetreeList,
+	stmt nodes.Stmt,
 ) commandResult {
 	return commandResult{
-		conn:    c,
-		pos:     pos,
-		descOpt: descOpt,
-		// stmtType:          stmt.StatementType(),
-		typ:         commandComplete,
-		// cmdCompleteTag:    stmt.StatementTag(),
+		conn:           c,
+		pos:            pos,
+		descOpt:        descOpt,
+		stmtType:       stmt.StatementType(),
+		typ:            commandComplete,
+		stmt:           stmt,
+		cmdCompleteTag: stmt.StatementTag(),
 	}
 }
 
@@ -126,12 +126,12 @@ func (r *commandResult) Close(t sql.TransactionStatusIndicator) {
 	// Send a completion message, specific to the type of result.
 	switch r.typ {
 	case commandComplete:
-		panic("not handling command complete yet.")
+		//panic("not handling command complete yet.")
 
-		// tag := cookTag(
-		//  	r.cmdCompleteTag, r.conn.writerState.tagBuf[:0], r.stmt, r.rowsAffected,
-		// )
-		// r.conn.bufferCommandComplete(tag)
+		tag := cookTag(
+			r.cmdCompleteTag, r.conn.writerState.tagBuf[:0], r.stmt, r.rowsAffected,
+		)
+		r.conn.bufferCommandComplete(tag)
 	case parseComplete:
 		r.conn.bufferParseComplete()
 	case bindComplete:

@@ -33,12 +33,13 @@ import (
 	"github.com/Ready-Stock/Noah/db/sql/pgwire/pgerror"
 	"github.com/Ready-Stock/Noah/db/sql"
 	"github.com/Ready-Stock/Noah/conf"
-	"github.com/Ready-Stock/pg_query_go"
-	pgnodes "github.com/Ready-Stock/pg_query_go/nodes"
+
 	"github.com/Ready-Stock/Noah/db/sql/sessiondata"
 	"github.com/Ready-Stock/Noah/db/sql/sem/tree"
 	"github.com/Ready-Stock/Noah/db/sql/sqlbase"
 	"reflect"
+	"github.com/Ready-Stock/pg_query_go"
+	nodes "github.com/Ready-Stock/pg_query_go/nodes"
 )
 
 const (
@@ -456,15 +457,27 @@ func (c *conn) handleParse(buf *pgwirebase.ReadBuffer) error {
 	}
 
 	p, err := pg_query.Parse(query)
-	p.Query = query
 	endParse := time.Now().UTC()
 	if err != nil {
 		return c.stmtBuf.Push(sql.SendError{Err: err})
 	}
 
 	j, _ := p.MarshalJSON()
-	fmt.Println("Query: ", p.Query)
 	fmt.Println(string(j))
+
+	switch stmt := p.Statements[0].(nodes.RawStmt).Stmt.(type) {
+	case nodes.Stmt:
+		return c.stmtBuf.Push(sql.PrepareStmt{
+			Name:         name,
+			RawTypeHints: inTypeHints,
+			ParseStart:   startParse,
+			ParseEnd:     endParse,
+			PGQuery:      stmt,
+		})
+	default:
+		return c.stmtBuf.Push(sql.SendError{Err: errors.Errorf("error, cannot currently handle statements of type: %s", reflect.TypeOf(stmt).Name())})
+	}
+
 	// Prepare the mapping of SQL placeholder names to types. Pre-populate it with
 	// the type hints received from the client, if any.
 	// sqlTypeHints := make(tree.PlaceholderTypes)
@@ -479,13 +492,7 @@ func (c *conn) handleParse(buf *pgwirebase.ReadBuffer) error {
 	// 	}
 	// 	sqlTypeHints[strconv.Itoa(i+1)] = v
 	// }
-	return c.stmtBuf.Push(sql.PrepareStmt{
-		Name:         name,
-		RawTypeHints: inTypeHints,
-		ParseStart:   startParse,
-		ParseEnd:     endParse,
-		PGQuery:      *p,
-	})
+
 }
 
 // An error is returned iff the statement buffer has been closed. In that case,
@@ -641,13 +648,13 @@ func (c *conn) handleBind(buf *pgwirebase.ReadBuffer) error {
 		}
 	}
 	return c.stmtBuf.Push(
-	sql.BindStmt{
-		PreparedStatementName: statementName,
-		PortalName:            portalName,
-		Args:                  qargs,
-		ArgFormatCodes:        qArgFormatCodes,
-		OutFormats:            columnFormatCodes,
-	})
+		sql.BindStmt{
+			PreparedStatementName: statementName,
+			PortalName:            portalName,
+			Args:                  qargs,
+			ArgFormatCodes:        qArgFormatCodes,
+			OutFormats:            columnFormatCodes,
+		})
 }
 
 // An error is returned iff the statement buffer has been closed. In that case,
@@ -738,18 +745,20 @@ func convertToErrWithPGCode(err error) error {
 	// }
 }
 
-func cookTag(tagStr string, buf []byte, stmt pgnodes.Node, rowsAffected int) []byte {
+func cookTag(tagStr string, buf []byte, stmt nodes.Stmt, rowsAffected int) []byte {
 	if tagStr == "INSERT" {
 		// From the postgres docs (49.5. Message Formats):
 		// `INSERT oid rows`... oid is the object ID of the inserted row if
-		//	rows is 1 and the target table has OIDs; otherwise oid is 0.
+		// 	rows is 1 and the target table has OIDs; otherwise oid is 0.
 		tagStr = "INSERT 0"
 	}
 	tag := append(buf, tagStr...)
 
-	switch t := stmt.(type) {
+	switch stmt.StatementType() {
+	case nodes.Ack:
+
 	default:
-		panic(fmt.Sprintf("unexpected result type %v", reflect.TypeOf(t).Name()))
+		panic(fmt.Sprintf("unexpected result type %d", stmt.StatementType()))
 	}
 	// switch stmtType {
 	// case tree.RowsAffected:
@@ -936,46 +945,46 @@ func (c *conn) bufferNoDataMsg() {
 // case all columns will use FormatText.
 //
 // If an error is returned, it has also been saved on c.err.
- func (c *conn) writeRowDescription(
- 	ctx context.Context,
- 	//columns []sqlbase.ResultColumn,
- 	formatCodes []pgwirebase.FormatCode,
- 	w io.Writer,
- ) error {
- 	 // c.msgBuilder.initMsg(pgwirebase.ServerMsgRowDescription)
- 	 // c.msgBuilder.putInt16(int16(len(columns)))
- 	 // for i, column := range columns {
- 	 // 	fmt.Printf("pgwire: writing column %s of type: %T", column.Name, column.Typ)
-	  //
- 	 // 	c.msgBuilder.writeTerminatedString(column.Name)
-	  //
- 	 // 	typ := pgTypeForParserType(column.Typ)
- 	 // 	c.msgBuilder.putInt32(0) // Table OID (optional).
- 	 // 	c.msgBuilder.putInt16(0) // Column attribute ID (optional).
- 	 // 	c.msgBuilder.putInt32(int32(typ.oid))
- 	 // 	c.msgBuilder.putInt16(int16(typ.size))
- 	 // 	// The type modifier (atttypmod) is used to include various extra information
- 	 // 	// about the type being sent. -1 is used for values which don't make use of
- 	 // 	// atttypmod and is generally an acceptable catch-all for those that do.
- 	 // 	// See https://www.postgresql.org/docs/9.6/static/catalog-pg-attribute.html
- 	 // 	// for information on atttypmod. In theory we differ from Postgres by never
- 	 // 	// giving the scale/precision, and by not including the length of a VARCHAR,
- 	 // 	// but it's not clear if any drivers/ORMs depend on this.
- 	 // 	//
- 	 // 	// TODO(justin): It would be good to include this information when possible.
- 	 // 	c.msgBuilder.putInt32(-1)
- 	 // 	if formatCodes == nil {
- 	 // 		c.msgBuilder.putInt16(int16(pgwirebase.FormatText))
- 	 // 	} else {
- 	 // 		c.msgBuilder.putInt16(int16(formatCodes[i]))
- 	 // 	}
- 	 // }
- 	 // if err := c.msgBuilder.finishMsg(w); err != nil {
- 	 // 	c.setErr(err)
- 	 // 	return err
- 	 // }
- 	return nil
- }
+func (c *conn) writeRowDescription(
+	ctx context.Context,
+// columns []sqlbase.ResultColumn,
+	formatCodes []pgwirebase.FormatCode,
+	w io.Writer,
+) error {
+	// c.msgBuilder.initMsg(pgwirebase.ServerMsgRowDescription)
+	// c.msgBuilder.putInt16(int16(len(columns)))
+	// for i, column := range columns {
+	// 	fmt.Printf("pgwire: writing column %s of type: %T", column.Name, column.Typ)
+	//
+	// 	c.msgBuilder.writeTerminatedString(column.Name)
+	//
+	// 	typ := pgTypeForParserType(column.Typ)
+	// 	c.msgBuilder.putInt32(0) // Table OID (optional).
+	// 	c.msgBuilder.putInt16(0) // Column attribute ID (optional).
+	// 	c.msgBuilder.putInt32(int32(typ.oid))
+	// 	c.msgBuilder.putInt16(int16(typ.size))
+	// 	// The type modifier (atttypmod) is used to include various extra information
+	// 	// about the type being sent. -1 is used for values which don't make use of
+	// 	// atttypmod and is generally an acceptable catch-all for those that do.
+	// 	// See https://www.postgresql.org/docs/9.6/static/catalog-pg-attribute.html
+	// 	// for information on atttypmod. In theory we differ from Postgres by never
+	// 	// giving the scale/precision, and by not including the length of a VARCHAR,
+	// 	// but it's not clear if any drivers/ORMs depend on this.
+	// 	//
+	// 	// TODO(justin): It would be good to include this information when possible.
+	// 	c.msgBuilder.putInt32(-1)
+	// 	if formatCodes == nil {
+	// 		c.msgBuilder.putInt16(int16(pgwirebase.FormatText))
+	// 	} else {
+	// 		c.msgBuilder.putInt16(int16(formatCodes[i]))
+	// 	}
+	// }
+	// if err := c.msgBuilder.finishMsg(w); err != nil {
+	// 	c.setErr(err)
+	// 	return err
+	// }
+	return nil
+}
 
 // Flush is part of the ClientComm interface.
 //
@@ -1059,9 +1068,9 @@ func (cl *clientConnLock) RTrim(ctx context.Context, pos sql.CmdPos) {
 	}
 }
 
-//CreateStatementResult is part of the sql.ClientComm interface.
+// CreateStatementResult is part of the sql.ClientComm interface.
 func (c *conn) CreateStatementResult(
-	stmt pg_query.ParsetreeList,
+	stmt nodes.Stmt,
 	descOpt sql.RowDescOpt,
 	pos sql.CmdPos,
 ) sql.CommandResult {

@@ -2,9 +2,9 @@ package sql
 
 import (
 	"fmt"
-	"github.com/Ready-Stock/pg_query_go"
+	nodes "github.com/Ready-Stock/pg_query_go/nodes"
 	"github.com/Ready-Stock/Noah/db/sql/pgwire/pgerror"
-			)
+)
 
 func (ex *connExecutor) execPrepare(parseCmd PrepareStmt) error {
 	if parseCmd.Name != "" {
@@ -41,7 +41,7 @@ func (ex *connExecutor) execBind(bindCmd BindStmt) error {
 
 	ps, ok := ex.prepStmtsNamespace.prepStmts[bindCmd.PreparedStatementName]
 	if !ok {
-		return pgerror.NewErrorf(pgerror.CodeInvalidSQLStatementNameError,"unknown prepared statement %q", bindCmd.PreparedStatementName)
+		return pgerror.NewErrorf(pgerror.CodeInvalidSQLStatementNameError, "unknown prepared statement %q", bindCmd.PreparedStatementName)
 	}
 
 	// Create the new PreparedPortal.
@@ -64,7 +64,7 @@ func (ex *connExecutor) addPortal(portalName string, psName string, stmt *Prepar
 	return nil
 }
 
-func (ex *connExecutor) addPreparedStmt(name string, stmt pg_query.ParsetreeList) (*PreparedStatement, error) {
+func (ex *connExecutor) addPreparedStmt(name string, stmt nodes.Stmt) (*PreparedStatement, error) {
 	if _, ok := ex.prepStmtsNamespace.prepStmts[name]; ok {
 		panic(fmt.Sprintf("prepared statement already exists: %q", name))
 	}
@@ -80,9 +80,8 @@ func (ex *connExecutor) addPreparedStmt(name string, stmt pg_query.ParsetreeList
 	return prepared, nil
 }
 
-func (ex *connExecutor) prepare(stmt pg_query.ParsetreeList) (*PreparedStatement, error) {
+func (ex *connExecutor) prepare(stmt nodes.Stmt) (*PreparedStatement, error) {
 	prepared := &PreparedStatement{
-		Str:       stmt.Query,
 		Statement: &stmt,
 	}
 	return prepared, nil

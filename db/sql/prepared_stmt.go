@@ -18,7 +18,7 @@ import (
 	"context"
 	"github.com/Ready-Stock/Noah/db/sql/sem/tree"
 	"github.com/Ready-Stock/Noah/db/sql/pgwire/pgwirebase"
-	"github.com/Ready-Stock/pg_query_go"
+	nodes "github.com/Ready-Stock/pg_query_go/nodes"
 )
 
 // PreparedStatement is a SQL statement that has been parsed and the types
@@ -32,7 +32,7 @@ type PreparedStatement struct {
 
 	// Statement is the parse tree from pg_query.
 	// This is used later to modify the query on the fly.
-	Statement *pg_query.ParsetreeList
+	Statement *nodes.Stmt
 
 	// TODO(andrei): The connExecutor doesn't use this. Delete it once the
 	// Executor is gone.
