@@ -1,6 +1,7 @@
 package sql
 
 import (
+	"github.com/Ready-Stock/Noah/db/sql/distributor/queries/select"
 	"github.com/Ready-Stock/Noah/db/sql/distributor/queries/variable_set"
 	nodes "github.com/Ready-Stock/pg_query_go/nodes"
 	"errors"
@@ -113,9 +114,7 @@ func (ex *connExecutor) execStmt(
 	// case nodes.RuleStmt:
 	// case nodes.SecLabelStmt:
 	case nodes.SelectStmt:
-
-	// 	_select.CreateSelectStatement(stmt, tree)
-	// 	// return _select.CreateSelectStatement(stmt, tree).HandleSelect(ctx)
+		return _select.CreateSelectStatement(stmt).Execute(ex.context)
 	// case nodes.SetOperationStmt:
 	// case nodes.TransactionStmt:
 	// 	// return nil, _transaction.HandleTransaction(ctx, stmt)

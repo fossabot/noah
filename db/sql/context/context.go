@@ -29,6 +29,7 @@ type NodeExecutionResult struct {
 }
 
 func (ctx *NContext) GetNodesForAccountID(AccountID *int) ([]int, error) {
+	return nil, nil
 	node_ids := make([]int, 0)
 	search_prefix := make([]byte, 0)
 	if AccountID == nil {
@@ -55,7 +56,6 @@ func (ctx *NContext) GetNodesForAccountID(AccountID *int) ([]int, error) {
 }
 
 func (ctx *NContext) ExecutePlans(plans []NodeExecutionPlan) error {
-
 
 	return nil
 }
