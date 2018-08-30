@@ -1,4 +1,4 @@
-package _select
+package variable_set
 
 import (
 	"github.com/Ready-Stock/Noah/db/sql/context"
@@ -6,18 +6,18 @@ import (
 	"github.com/Ready-Stock/pg_query_go/nodes"
 )
 
-type SelectStatement struct {
-	Statement pg_query.SelectStmt
+type VariableSetStatement struct {
+	Statement pg_query.VariableSetStmt
 	queries.IQueryStatement
 }
 
-func CreateSelectStatement(stmt pg_query.SelectStmt) *SelectStatement {
-	return &SelectStatement{
+func CreateVariableSetStatement(stmt pg_query.VariableSetStmt) *VariableSetStatement {
+	return &VariableSetStatement{
 		Statement: stmt,
 	}
 }
 
-func (stmt *SelectStatement) Execute(ctx *context.NContext) error {
+func (stmt *VariableSetStatement) Execute(ctx *context.NContext) error {
 	target_nodes, err := stmt.getTargetNodes(ctx)
 	if err != nil {
 		return err

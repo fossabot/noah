@@ -167,6 +167,7 @@ func (ex *connExecutor) run() error {
 		case SendError:
 			fmt.Println("TYPE: SendError")
 			res = ex.clientComm.CreateErrorResult(pos)
+			payload = eventNonRetriableErrPayload{err: tcmd.Err}
 		case Sync:
 			fmt.Println("TYPE: Sync")
 			// Note that the Sync result will flush results to the network connection.
@@ -194,7 +195,7 @@ func (ex *connExecutor) run() error {
 		} else {
 			resErr := res.Err()
 			pe, ok := payload.(payloadWithError)
-			if ok {
+			if !ok {
 				// error stuff here
 			}
 			if resErr == nil && ok {

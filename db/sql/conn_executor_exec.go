@@ -1,6 +1,7 @@
 package sql
 
 import (
+	"github.com/Ready-Stock/Noah/db/sql/distributor/queries/variable_set"
 	nodes "github.com/Ready-Stock/pg_query_go/nodes"
 	"errors"
 	)
@@ -10,7 +11,7 @@ func (ex *connExecutor) execStmt(
 	res RestrictedCommandResult,
 	pos CmdPos,
 ) error {
-	switch tree.(type) {
+	switch stmt := tree.(type) {
 	// case nodes.AlterCollationStmt:
 	// case nodes.AlterDatabaseSetStmt:
 	// case nodes.AlterDatabaseStmt:
@@ -111,7 +112,8 @@ func (ex *connExecutor) execStmt(
 	// case nodes.ReplicaIdentityStmt:
 	// case nodes.RuleStmt:
 	// case nodes.SecLabelStmt:
-	// case nodes.SelectStmt:
+	case nodes.SelectStmt:
+
 	// 	_select.CreateSelectStatement(stmt, tree)
 	// 	// return _select.CreateSelectStatement(stmt, tree).HandleSelect(ctx)
 	// case nodes.SetOperationStmt:
@@ -121,8 +123,9 @@ func (ex *connExecutor) execStmt(
 	// case nodes.UnlistenStmt:
 	// case nodes.UpdateStmt:
 	// 	// return nil, _update.HandleUpdate(ctx, stmt)
-	//case nodes.VacuumStmt:
+	// case nodes.VacuumStmt:
 	case nodes.VariableSetStmt:
+		return variable_set.CreateVariableSetStatement(stmt).Execute(ex.context)
 	// case nodes.VariableShowStmt:
 	// case nodes.ViewStmt:
 	default:
