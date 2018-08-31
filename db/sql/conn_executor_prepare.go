@@ -2,8 +2,8 @@ package sql
 
 import (
 	"fmt"
-	nodes "github.com/Ready-Stock/pg_query_go/nodes"
 	"github.com/Ready-Stock/Noah/db/sql/pgwire/pgerror"
+	nodes "github.com/Ready-Stock/pg_query_go/nodes"
 )
 
 func (ex *connExecutor) execPrepare(parseCmd PrepareStmt) error {

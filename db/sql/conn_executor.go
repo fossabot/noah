@@ -1,13 +1,14 @@
 package sql
 
 import (
-	"io"
 	"fmt"
-	nodes "github.com/Ready-Stock/pg_query_go/nodes"
-	"github.com/Ready-Stock/Noah/db/sql/context"
 	"github.com/Ready-Stock/Noah/db/sql/pgwire/pgerror"
+	"github.com/Ready-Stock/Noah/db/system"
 	"github.com/Ready-Stock/Noah/db/util/fsm"
-	)
+	nodes "github.com/Ready-Stock/pg_query_go/nodes"
+	"github.com/Ready-Stock/pgx"
+	"io"
+)
 
 type Server struct {
 }
@@ -18,7 +19,12 @@ type connExecutor struct {
 	clientComm         ClientComm
 	prepStmtsNamespace prepStmtNamespace
 	curStmt            *nodes.Stmt
-	context            *context.NContext
+	SystemContext      *system.SContext
+	Nodes              map[int]*pgx.Tx
+}
+
+func (ex *connExecutor) GetNodesForAccountID(id *int) ([]int, error) {
+	return []int{1, 2}, nil
 }
 
 type prepStmtNamespace struct {
@@ -119,15 +125,11 @@ func (ex *connExecutor) run() error {
 			}
 			return err
 		}
-		fmt.Printf("[pos:%d] executing %s \n", pos, cmd)
 		var res ResultBase
 		var payload fsm.EventPayload
 		switch tcmd := cmd.(type) {
 		case ExecStmt:
-			fmt.Println("TYPE: ExecStmt")
 		case ExecPortal:
-			b := []byte(tcmd.Name)
-			fmt.Println("Command Name: " + string(b))
 			portal, ok := ex.prepStmtsNamespace.portals[tcmd.Name]
 			if !ok {
 				err = pgerror.NewErrorf(pgerror.CodeInvalidCursorNameError, "unknown portal %q", tcmd.Name)
@@ -135,7 +137,7 @@ func (ex *connExecutor) run() error {
 				res = ex.clientComm.CreateErrorResult(pos)
 				break
 			}
-			//fmt.Printf("portal resolved to: %s", portal.Stmt.Str)
+			// fmt.Printf("portal resolved to: %s", portal.Stmt.Str)
 			ex.curStmt = portal.Stmt.Statement
 
 			if portal.Stmt.Statement == nil {
@@ -151,39 +153,30 @@ func (ex *connExecutor) run() error {
 			res = stmtRes
 			err = ex.execStmt(*ex.curStmt, stmtRes, pos)
 		case PrepareStmt:
-			fmt.Println("TYPE: PrepareStmt")
 			res = ex.clientComm.CreatePrepareResult(pos)
 			err = ex.execPrepare(tcmd)
 		case DescribeStmt:
 			descRes := ex.clientComm.CreateDescribeResult(pos)
 			res = descRes
 		case BindStmt:
-			fmt.Println("TYPE: BindStmt")
 			res = ex.clientComm.CreateBindResult(pos)
 			err = ex.execBind(tcmd)
 		case DeletePreparedStmt:
-			fmt.Println("TYPE: DeletePreparedStmt")
 			res = ex.clientComm.CreateDeleteResult(pos)
 		case SendError:
-			fmt.Println("TYPE: SendError")
 			res = ex.clientComm.CreateErrorResult(pos)
 			payload = eventNonRetriableErrPayload{err: tcmd.Err}
 		case Sync:
-			fmt.Println("TYPE: Sync")
 			// Note that the Sync result will flush results to the network connection.
 			res = ex.clientComm.CreateSyncResult(pos)
 		case CopyIn:
-			fmt.Println("TYPE: CopyIn")
 			res = ex.clientComm.CreateCopyInResult(pos)
 		case DrainRequest:
-			fmt.Println("TYPE: DrainRequest")
 			// We received a drain request. We terminate immediately if we're not in a
 			// transaction. If we are in a transaction, we'll finish as soon as a Sync
 			// command (i.e. the end of a batch) is processed outside of a
 			// transaction.
-
 		case Flush:
-			fmt.Println("TYPE: Flush")
 			// Closing the res will flush the connection's buffer.
 			res = ex.clientComm.CreateFlushResult(pos)
 		default:
@@ -192,6 +185,9 @@ func (ex *connExecutor) run() error {
 
 		if err != nil {
 			res.CloseWithErr(err)
+			if err := ex.stmtBuf.seekToNextBatch(); err != nil {
+				return err
+			}
 		} else {
 			resErr := res.Err()
 			pe, ok := payload.(payloadWithError)
@@ -199,15 +195,20 @@ func (ex *connExecutor) run() error {
 				// error stuff here
 			}
 			if resErr == nil && ok {
-				//ex.server.recordError(pe.errorCause())
+				// ex.server.recordError(pe.errorCause())
 				// Depending on whether the result has the error already or not, we have
 				// to call either Close or CloseWithErr.
 				res.CloseWithErr(pe.errorCause())
+				if err := ex.stmtBuf.seekToNextBatch(); err != nil {
+					return err
+				}
 			} else {
-				//ex.server.recordError(resErr)
+				// ex.server.recordError(resErr)
 				res.Close(IdleTxnBlock)
+				ex.stmtBuf.advanceOne()
 			}
 		}
-		ex.stmtBuf.advanceOne()
 	}
 }
+
+

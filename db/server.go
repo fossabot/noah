@@ -70,8 +70,6 @@ func Start(sctx *system.SContext) error  {
 			}
 			pending <- conn
 		}
-
-
 	}
 }
 

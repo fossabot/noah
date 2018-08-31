@@ -23,10 +23,7 @@ import (
 	"unicode/utf8"
 	"unsafe"
 
-
-
 	"github.com/Ready-Stock/Noah/db/sql/pgwire/pgerror"
-	"fmt"
 )
 
 const secondsInDay = 24 * 60 * 60
@@ -127,8 +124,6 @@ func (b *ReadBuffer) GetString() (string, error) {
 	s := b.Msg[:pos]
 	b.Msg = b.Msg[pos+1:]
 	r := *((*string)(unsafe.Pointer(&s)))
-	t := string(s)
-	fmt.Println(t)
 	return r, nil
 }
 

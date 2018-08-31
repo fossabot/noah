@@ -243,7 +243,7 @@ func (s *Server) drainImpl(drainWait time.Duration, cancelWait time.Duration) er
 
 // ServeConn serves a single connection, driving the handshake process and
 // delegating to the appropriate connection type.
-func (s *Server) ServeConn(sctx *system.SContext,conn net.Conn) error { // ctx context.Context,
+func (s *Server) ServeConn(sctx *system.SContext, conn net.Conn) error { // ctx context.Context,
 	// If the Server is draining, we will use the connection only to send an
 	// error, so we don't count it in the stats. This makes sense since
 	// DrainClient() waits for that number to drop to zero,

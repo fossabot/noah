@@ -1,11 +1,9 @@
 package sql
 
 import (
-	"github.com/Ready-Stock/Noah/db/sql/distributor/queries/select"
-	"github.com/Ready-Stock/Noah/db/sql/distributor/queries/variable_set"
-	nodes "github.com/Ready-Stock/pg_query_go/nodes"
 	"errors"
-	)
+	nodes "github.com/Ready-Stock/pg_query_go/nodes"
+)
 
 func (ex *connExecutor) execStmt(
 	tree nodes.Stmt,
@@ -114,7 +112,7 @@ func (ex *connExecutor) execStmt(
 	// case nodes.RuleStmt:
 	// case nodes.SecLabelStmt:
 	case nodes.SelectStmt:
-		return _select.CreateSelectStatement(stmt).Execute(ex.context)
+		return CreateSelectStatement(stmt).Execute(ex, res)
 	// case nodes.SetOperationStmt:
 	// case nodes.TransactionStmt:
 	// 	// return nil, _transaction.HandleTransaction(ctx, stmt)
@@ -124,8 +122,9 @@ func (ex *connExecutor) execStmt(
 	// 	// return nil, _update.HandleUpdate(ctx, stmt)
 	// case nodes.VacuumStmt:
 	case nodes.VariableSetStmt:
-		return variable_set.CreateVariableSetStatement(stmt).Execute(ex.context)
-	// case nodes.VariableShowStmt:
+		return CreateVariableSetStatement(stmt).Execute(ex, res)
+	case nodes.VariableShowStmt:
+		return CreateVariableShowStatement(stmt).Execute(ex, res)
 	// case nodes.ViewStmt:
 	default:
 		return errors.New("invalid or unsupported nodes type")

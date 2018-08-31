@@ -16,8 +16,8 @@ package sql
 
 import (
 	"context"
-	"github.com/Ready-Stock/Noah/db/sql/sem/tree"
 	"github.com/Ready-Stock/Noah/db/sql/pgwire/pgwirebase"
+	"github.com/Ready-Stock/Noah/db/sql/sem/tree"
 	nodes "github.com/Ready-Stock/pg_query_go/nodes"
 )
 
@@ -71,7 +71,7 @@ type PreparedPortal struct {
 // When no longer in use, the PreparedPortal needs to be close()d.
 func (ex *connExecutor) newPreparedPortal(stmt *PreparedStatement) PreparedPortal {
 	portal := PreparedPortal{
-		Stmt:       stmt,
+		Stmt: stmt,
 	}
 	return portal
 }

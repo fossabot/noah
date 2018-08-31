@@ -17,6 +17,7 @@ package sql
 import (
 	"context"
 	"fmt"
+	"github.com/Ready-Stock/pgx/pgtype"
 	"io"
 	"sync"
 	"time"
@@ -25,10 +26,10 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/Ready-Stock/Noah/db/sql/pgwire/pgwirebase"
-	"net"
 	"github.com/Ready-Stock/Noah/db/util/syncutil"
 	nodes "github.com/Ready-Stock/pg_query_go/nodes"
-	)
+	"net"
+)
 
 // This file contains utils and interfaces used by a connExecutor to communicate
 // with a SQL client. There's StmtBuf used for input and ClientComm used for
@@ -753,7 +754,7 @@ type RestrictedCommandResult interface {
 	//
 	// The implementation cannot hold on to the row slice; it needs to make a
 	// shallow copy if it needs to.
-	// AddRow(ctx context.Context, row tree.Datums) error
+	AddRow(row []pgtype.Value) error
 
 	// IncrementRowsAffected increments a counter by n. This is used for all
 	// result types other than tree.Rows.
@@ -891,7 +892,7 @@ const discarded resCloseType = false
 // provided callback when closed.
 type bufferedCommandResult struct {
 	err error
-	// rows         []tree.Datums
+	rows         [][]pgtype.Value
 	rowsAffected int
 	// cols         sqlbase.ResultColumns
 
@@ -920,15 +921,15 @@ var _ RestrictedCommandResult = &bufferedCommandResult{}
 // }
 //
 // // AddRow is part of the RestrictedCommandResult interface.
-// func (r *bufferedCommandResult) AddRow(ctx context.Context, row tree.Datums) error {
-// 	if r.errOnly {
-// 		panic("AddRow() called when errOnly is set")
-// 	}
-// 	rowCopy := make(tree.Datums, len(row))
-// 	copy(rowCopy, row)
-// 	r.rows = append(r.rows, rowCopy)
-// 	return nil
-// }
+func (r *bufferedCommandResult) AddRow(row []pgtype.Value) error {
+	if r.errOnly {
+		panic("AddRow() called when errOnly is set")
+	}
+	rowCopy := make([]pgtype.Value, len(row))
+	copy(rowCopy, row)
+	r.rows = append(r.rows, rowCopy)
+	return nil
+}
 
 // SetError is part of the RestrictedCommandResult interface.
 func (r *bufferedCommandResult) SetError(err error) {

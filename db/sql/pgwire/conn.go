@@ -234,13 +234,19 @@ func (c *conn) serveImpl(sqlServer *sql.Server) error {
 		return nil
 	})
 	c.rd = *bufio.NewReader(c.conn)
-
+	sendErr := func(err error) error {
+		msgBuilder := newWriteBuffer()
+		_ /* err */ = writeErr(err, msgBuilder, c.conn)
+		_ = c.conn.Close()
+		return err
+	}
 	var wg sync.WaitGroup
 	var writerErr error
 	if sqlServer != nil {
 		wg.Add(1)
 		go func() {
 			writerErr = sqlServer.ServeConn(c.stmtBuf, c)
+			sendErr(writerErr)
 			// TODO(andrei): Should we sometimes transmit the writerErr's to the client?
 			wg.Done()
 		}()
@@ -257,8 +263,6 @@ Loop:
 		if err != nil {
 			break Loop
 		}
-		fmt.Println("pgwire: processing %s", typ)
-
 		timeReceived := time.Now().UTC()
 		switch typ {
 		case pgwirebase.ClientMsgSimpleQuery:
@@ -276,31 +280,24 @@ Loop:
 				break
 			}
 			err = c.stmtBuf.Push(sql.Sync{})
-
 		case pgwirebase.ClientMsgExecute:
 			doingExtendedQueryMessage = true
 			err = c.handleExecute(&c.readBuf, timeReceived)
-
 		case pgwirebase.ClientMsgParse:
 			doingExtendedQueryMessage = true
 			err = c.handleParse(&c.readBuf)
-
 		case pgwirebase.ClientMsgDescribe:
 			doingExtendedQueryMessage = true
 			err = c.handleDescribe(&c.readBuf)
-
 		case pgwirebase.ClientMsgBind:
 			doingExtendedQueryMessage = true
 			err = c.handleBind(&c.readBuf)
-
 		case pgwirebase.ClientMsgClose:
 			doingExtendedQueryMessage = true
 			err = c.handleClose(&c.readBuf)
-
 		case pgwirebase.ClientMsgTerminate:
 			terminateSeen = true
 			break Loop
-
 		case pgwirebase.ClientMsgSync:
 			doingExtendedQueryMessage = false
 			// We're starting a batch here. If the client continues using the extended
@@ -311,19 +308,19 @@ Loop:
 		case pgwirebase.ClientMsgFlush:
 			doingExtendedQueryMessage = true
 			err = c.handleFlush()
-
 		case pgwirebase.ClientMsgCopyData, pgwirebase.ClientMsgCopyDone, pgwirebase.ClientMsgCopyFail:
 			// We're supposed to ignore these messages, per the protocol spec. This
 			// state will happen when an error occurs on the server-side during a copy
 			// operation: the server will send an error and a ready message back to
 			// the client, and must then ignore further copy messages. See:
 			// https://github.com/postgres/postgres/blob/6e1dd2773eb60a6ab87b27b8d9391b756e904ac3/src/backend/tcop/postgres.c#L4295
-
 		default:
 			err = c.stmtBuf.Push(
 				sql.SendError{Err: pgwirebase.NewUnrecognizedMsgTypeErr(typ)})
 		}
+
 		if err != nil {
+			fmt.Println(err.Error())
 			break Loop
 		}
 	}
@@ -455,18 +452,21 @@ func (c *conn) handleParse(buf *pgwirebase.ReadBuffer) error {
 		}
 		inTypeHints[i] = oid.Oid(typ)
 	}
-
+	fmt.Printf("[Input] %s\n", query)
 	p, err := pg_query.Parse(query)
 	endParse := time.Now().UTC()
 	if err != nil {
+		fmt.Printf("[Parse Error] %s\n", err.Error())
 		return c.stmtBuf.Push(sql.SendError{Err: err})
 	}
 
 	j, _ := p.MarshalJSON()
-	fmt.Println(string(j))
+	fmt.Printf("[Tree] %s\n", string(j))
 
-	switch stmt := p.Statements[0].(nodes.RawStmt).Stmt.(type) {
-	case nodes.Stmt:
+
+	if stmt, ok := p.Statements[0].(nodes.RawStmt).Stmt.(nodes.Stmt); !ok {
+		return c.stmtBuf.Push(sql.SendError{Err: errors.Errorf("error, cannot currently handle statements of type: %s, json: %s", reflect.TypeOf(p.Statements[0].(nodes.RawStmt).Stmt).Name(), string(j))})
+	} else {
 		return c.stmtBuf.Push(sql.PrepareStmt{
 			Name:         name,
 			RawTypeHints: inTypeHints,
@@ -474,8 +474,6 @@ func (c *conn) handleParse(buf *pgwirebase.ReadBuffer) error {
 			ParseEnd:     endParse,
 			PGQuery:      stmt,
 		})
-	default:
-		return c.stmtBuf.Push(sql.SendError{Err: errors.Errorf("error, cannot currently handle statements of type: %s", reflect.TypeOf(stmt).Name())})
 	}
 
 	// Prepare the mapping of SQL placeholder names to types. Pre-populate it with
@@ -545,7 +543,6 @@ func (c *conn) handleBind(buf *pgwirebase.ReadBuffer) error {
 		return c.stmtBuf.Push(sql.SendError{Err: err})
 	}
 	statementName, err := buf.GetString()
-	fmt.Println(statementName)
 	if err != nil {
 		return c.stmtBuf.Push(sql.SendError{Err: err})
 	}
@@ -731,7 +728,7 @@ func convertToErrWithPGCode(err error) error {
 	if err == nil {
 		return nil
 	}
-	return sqlbase.NewRetryError(err)
+	return sqlbase.NewError(err)
 	// switch tErr := err.(type) {
 	// case *roachpb.HandledRetryableTxnError:
 	//
@@ -755,34 +752,24 @@ func cookTag(tagStr string, buf []byte, stmt nodes.Stmt, rowsAffected int) []byt
 	tag := append(buf, tagStr...)
 
 	switch stmt.StatementType() {
-	case nodes.Ack:
-
+	case nodes.RowsAffected:
+		tag = append(tag, ' ')
+		tag = strconv.AppendInt(tag, int64(rowsAffected), 10)
+	case nodes.Rows:
+		tag = append(tag, ' ')
+		tag = strconv.AppendUint(tag, uint64(rowsAffected), 10)
+	case nodes.Ack, nodes.DDL:
+		if tagStr == "SELECT" {
+			tag = append(tag, ' ')
+			tag = strconv.AppendInt(tag, int64(rowsAffected), 10)
+		}
+	case nodes.CopyIn:
+		// Nothing to do. The CommandComplete message has been sent elsewhere.
+		panic(fmt.Sprintf("CopyIn statements should have been handled elsewhere " +
+			"and not produce results"))
 	default:
 		panic(fmt.Sprintf("unexpected result type %d", stmt.StatementType()))
 	}
-	// switch stmtType {
-	// case tree.RowsAffected:
-	// 	tag = append(tag, ' ')
-	// 	tag = strconv.AppendInt(tag, int64(rowsAffected), 10)
-	//
-	// case tree.Rows:
-	// 	tag = append(tag, ' ')
-	// 	tag = strconv.AppendUint(tag, uint64(rowsAffected), 10)
-	//
-	// case tree.Ack, tree.DDL:
-	// 	if tagStr == "SELECT" {
-	// 		tag = append(tag, ' ')
-	// 		tag = strconv.AppendInt(tag, int64(rowsAffected), 10)
-	// 	}
-	//
-	// case tree.CopyIn:
-	// 	// Nothing to do. The CommandComplete message has been sent elsewhere.
-	// 	panic(fmt.Sprintf("CopyIn statements should have been handled elsewhere " +
-	// 		"and not produce results"))
-	// default:
-	// 	panic(fmt.Sprintf("unexpected result type %v", stmtType))
-	// }
-
 	return tag
 }
 

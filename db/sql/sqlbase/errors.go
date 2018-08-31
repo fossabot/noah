@@ -16,3 +16,8 @@ func NewRetryError(cause error) error {
 	return pgerror.NewErrorf(
 		pgerror.CodeSerializationFailureError, "%s: %s", txnRetryMsgPrefix, cause)
 }
+
+func NewError(cause error) error {
+	return pgerror.NewErrorf(
+		pgerror.CodeSerializationFailureError, "%s", cause)
+}

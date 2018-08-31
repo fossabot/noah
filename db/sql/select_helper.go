@@ -1,24 +1,24 @@
-package _select
+package sql
 
 import (
-	"github.com/Ready-Stock/Noah/db/sql/context"
+	"github.com/Ready-Stock/Noah/db/sql/plan"
+	"github.com/Ready-Stock/pg_query_go"
 	. "github.com/ahmetb/go-linq"
 	"github.com/kataras/go-errors"
-	"github.com/Ready-Stock/pg_query_go"
 )
 
-func (stmt *SelectStatement) getTargetNodes(ctx *context.NContext) ([]int, error) {
+func (stmt *SelectStatement) getTargetNodes(ex *connExecutor) ([]int, error) {
 	accounts, err := stmt.getAccountIDs()
 	if err != nil {
 		return nil, err
 	}
 
 	if len(accounts) == 1 {
-		return ctx.GetNodesForAccountID(&accounts[0])
+		return ex.GetNodesForAccountID(&accounts[0])
 	} else if len(accounts) > 1 {
 		node_ids := make([]int, 0)
 		From(accounts).SelectManyT(func(id int) Query {
-			if ids, err := ctx.GetNodesForAccountID(&id); err == nil {
+			if ids, err := ex.GetNodesForAccountID(&id); err == nil {
 				return From(ids)
 			}
 			return From(make([]int, 0))
@@ -29,7 +29,7 @@ func (stmt *SelectStatement) getTargetNodes(ctx *context.NContext) ([]int, error
 			return node_ids, nil
 		}
 	} else {
-		return ctx.GetNodesForAccountID(nil)
+		return ex.GetNodesForAccountID(nil)
 	}
 }
 
@@ -38,18 +38,17 @@ func (stmt *SelectStatement) getAccountIDs() ([]int, error) {
 	return nil, nil
 }
 
-func (stmt *SelectStatement) compilePlan(ctx *context.NContext, nodes []int) ([]context.NodeExecutionPlan, error) {
-	plans := make([]context.NodeExecutionPlan, len(nodes))
+func (stmt *SelectStatement) compilePlan(ex *connExecutor, nodes []int) ([]plan.NodeExecutionPlan, error) {
+	plans := make([]plan.NodeExecutionPlan, len(nodes))
 	deparsed, err := pg_query.Deparse(stmt.Statement)
 	if err != nil {
 		return nil, err
 	}
 	for i := 0; i < len(plans); i++ {
-		plans[i] = context.NodeExecutionPlan{
+		plans[i] = plan.NodeExecutionPlan{
 			CompiledQuery: *deparsed,
-			NodeID: nodes[i],
+			NodeID:        nodes[i],
 		}
 	}
 	return plans, nil
 }
-
