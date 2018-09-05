@@ -167,8 +167,8 @@ func (b *writeBuffer) writeTextDatum(
 		s += fmt.Sprintf("%02d:%02d:%02d.%06d", hours, minutes, seconds, microseconds)
 		b.writeLengthPrefixedString(s)
 
-	case *tree.DJSON:
-		b.writeLengthPrefixedString(v.JSON.String())
+	case *pgtype.JSON:
+		b.writeLengthPrefixedBytes(v.Bytes)
 
 	case *tree.DTuple:
 		b.variablePutbuf.WriteString("(")

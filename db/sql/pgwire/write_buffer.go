@@ -107,6 +107,13 @@ func (b *writeBuffer) writeLengthPrefixedBuffer(buf *bytes.Buffer) {
 	}
 }
 
+func (b *writeBuffer) writeLengthPrefixedBytes(bytes []byte) {
+	if b.err == nil {
+		b.putInt32(int32(len(bytes)))
+		b.write(bytes)
+	}
+}
+
 // writeLengthPrefixedString writes a length-prefixed string. The
 // length is encoded as an int32.
 func (b *writeBuffer) writeLengthPrefixedString(s string) {
