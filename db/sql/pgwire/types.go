@@ -98,13 +98,13 @@ func (b *writeBuffer) writeTextDatum(
 	case *tree.DDecimal:
 		b.writeLengthPrefixedDatum(v)
 
-	case *tree.DBytes:
-		result := lex.EncodeByteArrayToRawBytes(string(*v), be, false /* skipHexPrefix */)
+	case *pgtype.Bytea:
+		result := lex.EncodeByteArrayToRawBytes(string(v.Bytes), be, false /* skipHexPrefix */)
 		b.putInt32(int32(len(result)))
 		b.write([]byte(result))
 
-	case *tree.DUuid:
-		b.writeLengthPrefixedString(v.UUID.String())
+	case *pgtype.UUID:
+		b.writeLengthPrefixedString(pgtype.EncodeUUID(v.Bytes))
 
 	case *tree.DIPAddr:
 		b.writeLengthPrefixedString(v.IPAddr.String())
