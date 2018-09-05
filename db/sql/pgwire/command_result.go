@@ -16,6 +16,8 @@ package pgwire
 
 import (
 	"fmt"
+	"github.com/Ready-Stock/Noah/db/sql/pgwire/pgwirebase"
+	"github.com/Ready-Stock/pgx/pgtype"
 	"github.com/lib/pq/oid"
 	"github.com/Ready-Stock/Noah/db/sql/sessiondata"
 	"github.com/Ready-Stock/Noah/db/sql"
@@ -74,12 +76,14 @@ type commandResult struct {
 	// meaning that all columns will be encoded in the text format (this is the
 	// case for queries executed through the simple protocol). Otherwise, it needs
 	// to have an entry for every column.
+	formatCodes []pgwirebase.FormatCode
 }
 
 func (c *conn) makeCommandResult(
 	descOpt sql.RowDescOpt,
 	pos sql.CmdPos,
 	stmt nodes.Stmt,
+	formatCodes []pgwirebase.FormatCode,
 ) commandResult {
 	return commandResult{
 		conn:           c,
@@ -89,6 +93,7 @@ func (c *conn) makeCommandResult(
 		typ:            commandComplete,
 		stmt:           stmt,
 		cmdCompleteTag: stmt.StatementTag(),
+		formatCodes:    formatCodes,
 	}
 }
 
@@ -193,24 +198,24 @@ func (r *commandResult) OverwriteError(err error) {
 }
 
 // AddRow is part of the CommandResult interface.
-// func (r *commandResult) AddRow(ctx context.Context, row tree.Datums) error {
-// 	if r.err != nil {
-// 		panic(fmt.Sprintf("can't call AddRow after having set error: %s",
-// 			r.err))
-// 	}
-// 	r.conn.writerState.fi.registerCmd(r.pos)
-// 	if err := r.conn.GetErr(); err != nil {
-// 		return err
-// 	}
-// 	if r.err != nil {
-// 		panic("can't send row after error")
-// 	}
-// 	r.rowsAffected++
-//
-// 	r.conn.bufferRow(ctx, row, r.formatCodes, r.loc, r.bytesEncodeFormat)
-// 	_ /* flushed */, err := r.conn.maybeFlush(r.pos)
-// 	return err
-// }
+func (r *commandResult) AddRow(row []pgtype.Value) error {
+	if r.err != nil {
+		panic(fmt.Sprintf("can't call AddRow after having set error: %s",
+			r.err))
+	}
+	r.conn.writerState.fi.registerCmd(r.pos)
+	if err := r.conn.GetErr(); err != nil {
+		return err
+	}
+	if r.err != nil {
+		panic("can't send row after error")
+	}
+	r.rowsAffected++
+
+	r.conn.bufferRow(row, r.formatCodes, r.loc, r.bytesEncodeFormat)
+	_ /* flushed */, err := r.conn.maybeFlush(r.pos)
+	return err
+}
 
 // SetColumns is part of the CommandResult interface.
 // func (r *commandResult) SetColumns(ctx context.Context, cols sqlbase.ResultColumns) {

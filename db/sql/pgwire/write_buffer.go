@@ -17,11 +17,10 @@ package pgwire
 import (
 	"bytes"
 	"encoding/binary"
-	"io"
-
 	"github.com/Ready-Stock/Noah/db/sql/pgwire/pgwirebase"
 	"github.com/Ready-Stock/Noah/db/sql/sem/tree"
 	"github.com/Ready-Stock/Noah/db/util"
+	"io"
 )
 
 // writeBuffer is a wrapper around bytes.Buffer that provides a convenient interface

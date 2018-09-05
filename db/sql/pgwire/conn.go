@@ -19,6 +19,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"github.com/Ready-Stock/pgx/pgtype"
 	"io"
 	"net"
 	"strconv"
@@ -29,17 +30,16 @@ import (
 	"github.com/lib/pq/oid"
 	"github.com/pkg/errors"
 
-	"github.com/Ready-Stock/Noah/db/sql/pgwire/pgwirebase"
-	"github.com/Ready-Stock/Noah/db/sql/pgwire/pgerror"
-	"github.com/Ready-Stock/Noah/db/sql"
 	"github.com/Ready-Stock/Noah/conf"
+	"github.com/Ready-Stock/Noah/db/sql"
+	"github.com/Ready-Stock/Noah/db/sql/pgwire/pgerror"
+	"github.com/Ready-Stock/Noah/db/sql/pgwire/pgwirebase"
 
 	"github.com/Ready-Stock/Noah/db/sql/sessiondata"
-	"github.com/Ready-Stock/Noah/db/sql/sem/tree"
 	"github.com/Ready-Stock/Noah/db/sql/sqlbase"
-	"reflect"
 	"github.com/Ready-Stock/pg_query_go"
 	nodes "github.com/Ready-Stock/pg_query_go/nodes"
+	"reflect"
 )
 
 const (
@@ -85,6 +85,8 @@ type conn struct {
 
 	readBuf    pgwirebase.ReadBuffer
 	msgBuilder *writeBuffer
+
+	pginfo *pgtype.ConnInfo
 }
 
 // serveConn creates a conn that will serve the netConn. It returns once the
@@ -165,6 +167,7 @@ func newConn(netConn net.Conn, sArgs sql.SessionArgs) *conn {
 		sessionArgs: sArgs,
 		msgBuilder:  newWriteBuffer(),
 		rd:          *bufio.NewReader(netConn),
+		pginfo:		 pgtype.NewConnInfo(),
 	}
 	c.writerState.fi.buf = &c.writerState.buf
 	c.writerState.fi.lastFlushed = -1
@@ -779,8 +782,7 @@ func cookTag(tagStr string, buf []byte, stmt nodes.Stmt, rowsAffected int) []byt
 // which case all columns are encoded using the text encoding. Otherwise, it
 // needs to contain an entry for every column.
 func (c *conn) bufferRow(
-	ctx context.Context,
-	row tree.Datums,
+	row []pgtype.Value,
 	formatCodes []pgwirebase.FormatCode,
 	loc *time.Location,
 	be sessiondata.BytesEncodeFormat,
@@ -1060,8 +1062,9 @@ func (c *conn) CreateStatementResult(
 	stmt nodes.Stmt,
 	descOpt sql.RowDescOpt,
 	pos sql.CmdPos,
+	formatCodes []pgwirebase.FormatCode,
 ) sql.CommandResult {
-	res := c.makeCommandResult(descOpt, pos, stmt)
+	res := c.makeCommandResult(descOpt, pos, stmt, formatCodes)
 	return &res
 }
 

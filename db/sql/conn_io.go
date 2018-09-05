@@ -624,6 +624,7 @@ type ClientComm interface {
 		stmt nodes.Stmt,
 		descOpt RowDescOpt,
 		pos CmdPos,
+		formatCodes []pgwirebase.FormatCode,
 	) CommandResult
 	// CreatePrepareResult creates a result for a PrepareStmt command.
 	CreatePrepareResult(pos CmdPos) ParseResult

@@ -15,6 +15,7 @@
 package pgwire
 
 import (
+	"github.com/Ready-Stock/pgx/pgtype"
 	"github.com/lib/pq/oid"
 	"github.com/pkg/errors"
 	"time"
@@ -63,32 +64,34 @@ func pgTypeForParserType(t types.T) pgType {
 const secondsInDay = 24 * 60 * 60
 
 func (b *writeBuffer) writeTextDatum(
-	d tree.Datum, sessionLoc *time.Location, be sessiondata.BytesEncodeFormat,
+	pginfo *pgtype.ConnInfo, d pgtype.Value, sessionLoc *time.Location, be sessiondata.BytesEncodeFormat,
 ) {
-	if d == tree.DNull {
+	v := d.Get()
+	if v == nil {
 		// NULL is encoded as -1; all other values have a length prefix.
 		b.putInt32(-1)
 		return
 	}
 
-	switch v := tree.UnwrapDatum(nil, d).(type) {
-	case *tree.DBool:
+
+	switch v := d.(type) {
+	case *pgtype.Bool:
 		b.putInt32(1)
-		if *v {
+		if v.Bool {
 			b.writeByte('t')
 		} else {
 			b.writeByte('f')
 		}
 
-	case *tree.DInt:
+	case pgtype.Integer: // Int2, Int4, Int8
 		// Start at offset 4 because `putInt32` clobbers the first 4 bytes.
-		s := strconv.AppendInt(b.putbuf[4:4], int64(*v), 10)
+		s := strconv.AppendInt(b.putbuf[4:4], v.GetInt(), 10)
 		b.putInt32(int32(len(s)))
 		b.write(s)
 
-	case *tree.DFloat:
+	case pgtype.Float: // Float4, Float8
 		// Start at offset 4 because `putInt32` clobbers the first 4 bytes.
-		s := strconv.AppendFloat(b.putbuf[4:4], float64(*v), 'f', -1, 64)
+		s := strconv.AppendFloat(b.putbuf[4:4], v.GetFloat(), 'f', -1, 64)
 		b.putInt32(int32(len(s)))
 		b.write(s)
 
