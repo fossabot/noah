@@ -109,13 +109,13 @@ func (b *writeBuffer) writeTextDatum(
 	case *tree.DIPAddr:
 		b.writeLengthPrefixedString(v.IPAddr.String())
 
-	case *tree.DString:
-		b.writeLengthPrefixedString(string(*v))
+	case *pgtype.Text: // Also serves varchar
+		b.writeLengthPrefixedString(v.String)
 
-	case *tree.DCollatedString:
-		b.writeLengthPrefixedString(v.Contents)
+	// case *tree.DCollatedString:
+	// 	b.writeLengthPrefixedString(v.Contents)
 
-	case *tree.DDate:
+	case *pgtype.Date:
 		t := timeutil.Unix(int64(*v)*secondsInDay, 0)
 		// Start at offset 4 because `putInt32` clobbers the first 4 bytes.
 		s := formatTs(t, nil, b.putbuf[4:4])
