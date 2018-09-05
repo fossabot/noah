@@ -5,3 +5,4 @@ vendor/github.com/Ready-Stock/.DS_Store
 vendor/github.com/.DS_Store
 Mac_OS_X
 badge/LOCK
+.idea/typescript-compiler.xml
