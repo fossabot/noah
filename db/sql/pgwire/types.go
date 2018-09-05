@@ -130,7 +130,7 @@ func (b *writeBuffer) writeTextDatum(
 
 	case *pgtype.Timestamptz:
 		// Start at offset 4 because `putInt32` clobbers the first 4 bytes.
-		s := formatTimeTZ(v, sessionLoc, b.putbuf[4:4])
+		s := formatTimeTZ(v.Time, sessionLoc, b.putbuf[4:4])
 		b.putInt32(int32(len(s)))
 		b.write(s)
 
@@ -418,8 +418,7 @@ func formatTime(t timeofday.TimeOfDay, tmp []byte) []byte {
 // // formatTimeTZ formats ttz into a format lib/pq understands, appending to the
 // // provided tmp buffer and reallocating if needed. The function will then return
 // // the resulting buffer.
-func formatTimeTZ(ttz *tree.DTimeTZ, offset *time.Location, tmp []byte) []byte {
-	t := ttz.ToTime()
+func formatTimeTZ(t time.Time, offset *time.Location, tmp []byte) []byte {
 	if offset != nil {
 		t = t.In(offset)
 	}
