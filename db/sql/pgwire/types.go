@@ -170,6 +170,9 @@ func (b *writeBuffer) writeTextDatum(
 	case *pgtype.JSON:
 		b.writeLengthPrefixedBytes(v.Bytes)
 
+	case *pgtype.JSONB:
+		b.writeLengthPrefixedBytes(v.Bytes)
+
 	case *tree.DTuple:
 		b.variablePutbuf.WriteString("(")
 		for i, d := range v.D {
