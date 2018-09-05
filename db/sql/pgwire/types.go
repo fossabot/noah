@@ -116,19 +116,19 @@ func (b *writeBuffer) writeTextDatum(
 	// 	b.writeLengthPrefixedString(v.Contents)
 
 	case *pgtype.Date:
-		t := timeutil.Unix(int64(*v)*secondsInDay, 0)
+		t := timeutil.Unix(v.Time.Unix(), 0)
 		// Start at offset 4 because `putInt32` clobbers the first 4 bytes.
 		s := formatTs(t, nil, b.putbuf[4:4])
 		b.putInt32(int32(len(s)))
 		b.write(s)
 
-	case *tree.DTime:
+	case *pgtype.Timestamp:
 		// Start at offset 4 because `putInt32` clobbers the first 4 bytes.
-		s := formatTime(timeofday.TimeOfDay(*v), b.putbuf[4:4])
+		s := formatTime(timeofday.FromTime(v.Time), b.putbuf[4:4])
 		b.putInt32(int32(len(s)))
 		b.write(s)
 
-	case *tree.DTimeTZ:
+	case *pgtype.Timestamptz:
 		// Start at offset 4 because `putInt32` clobbers the first 4 bytes.
 		s := formatTimeTZ(v, sessionLoc, b.putbuf[4:4])
 		b.putInt32(int32(len(s)))
