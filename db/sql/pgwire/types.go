@@ -15,6 +15,7 @@
 package pgwire
 
 import (
+	"fmt"
 	"github.com/Ready-Stock/pgx/pgtype"
 	"github.com/lib/pq/oid"
 	"github.com/pkg/errors"
@@ -33,6 +34,12 @@ import (
 	"github.com/Ready-Stock/Noah/db/sql/sessiondata"
 	"github.com/Ready-Stock/Noah/db/sql/lex"
 	"github.com/Ready-Stock/Noah/db/util/timeofday"
+)
+
+const (
+	microsecondsPerSecond = 1000000
+	microsecondsPerMinute = 60 * microsecondsPerSecond
+	microsecondsPerHour   = 60 * microsecondsPerMinute
 )
 
 // pgType contains type metadata used in RowDescription messages.
@@ -134,20 +141,31 @@ func (b *writeBuffer) writeTextDatum(
 		b.putInt32(int32(len(s)))
 		b.write(s)
 
-	case *tree.DTimestamp:
-		// Start at offset 4 because `putInt32` clobbers the first 4 bytes.
-		s := formatTs(v.Time, nil, b.putbuf[4:4])
-		b.putInt32(int32(len(s)))
-		b.write(s)
+	case *pgtype.Interval:
+		s := ""
+		if v.Months != 0 {
+			s += strconv.FormatInt(int64(v.Months), 10)
+			s += " mon "
+		}
 
-	case *tree.DTimestampTZ:
-		// Start at offset 4 because `putInt32` clobbers the first 4 bytes.
-		s := formatTs(v.Time, sessionLoc, b.putbuf[4:4])
-		b.putInt32(int32(len(s)))
-		b.write(s)
+		if v.Days != 0 {
+			s += strconv.FormatInt(int64(v.Days), 10)
+			s += " day "
+		}
 
-	case *tree.DInterval:
-		b.writeLengthPrefixedString(v.ValueAsString())
+		absMicroseconds := v.Microseconds
+		if absMicroseconds < 0 {
+			absMicroseconds = -absMicroseconds
+			s += "-"
+		}
+
+		hours := absMicroseconds / microsecondsPerHour
+		minutes := (absMicroseconds % microsecondsPerHour) / microsecondsPerMinute
+		seconds := (absMicroseconds % microsecondsPerMinute) / microsecondsPerSecond
+		microseconds := absMicroseconds % microsecondsPerSecond
+
+		s += fmt.Sprintf("%02d:%02d:%02d.%06d", hours, minutes, seconds, microseconds)
+		b.writeLengthPrefixedString(s)
 
 	case *tree.DJSON:
 		b.writeLengthPrefixedString(v.JSON.String())
