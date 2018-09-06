@@ -212,7 +212,7 @@ func (r *commandResult) AddRow(row []pgtype.Value) error {
 	}
 	r.rowsAffected++
 
-	r.conn.bufferRow(row, r.formatCodes, r.loc, r.bytesEncodeFormat)
+	r.conn.bufferRow(row, r.formatCodes, nil, r.bytesEncodeFormat)
 	_ /* flushed */, err := r.conn.maybeFlush(r.pos)
 	return err
 }

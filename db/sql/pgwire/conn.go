@@ -796,9 +796,9 @@ func (c *conn) bufferRow(
 		}
 		switch fmtCode {
 		case pgwirebase.FormatText:
-			c.msgBuilder.writeTextDatum(col, loc, be)
+			c.msgBuilder.writeTextDatum(c.pginfo, col, loc, be)
 		case pgwirebase.FormatBinary:
-			c.msgBuilder.writeBinaryDatum(col, loc)
+			c.msgBuilder.writeBinaryDatum(c.pginfo, col, loc)
 		default:
 			c.msgBuilder.setError(errors.Errorf("unsupported format code %s", fmtCode))
 		}
