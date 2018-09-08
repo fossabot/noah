@@ -30,7 +30,6 @@ import (
 	"github.com/lib/pq/oid"
 	"github.com/pkg/errors"
 
-	"github.com/Ready-Stock/Noah/conf"
 	"github.com/Ready-Stock/Noah/db/sql"
 	"github.com/Ready-Stock/Noah/db/sql/pgwire/pgerror"
 	"github.com/Ready-Stock/Noah/db/sql/pgwire/pgwirebase"
@@ -144,11 +143,6 @@ func serveConn(
 	// 	return err
 	// }
 
-	if conf.Configuration.Cluster.DenyConnectionIfNoNodes {
-		// if len(cluster.Nodes) == 0 {
-		// 	return sendError(errors.New("no nodes available in cluster"))
-		// }
-	}
 
 	if err := c.handleAuthentication(insecure); err != nil {
 		_ = c.conn.Close()
