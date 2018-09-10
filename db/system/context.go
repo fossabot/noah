@@ -18,8 +18,15 @@ const (
 
 type SContext struct {
 	Badger        *badger.DB
+	Flags 		  SFlags
 	node_info     map[int]*NNode
 	node_pool     map[int]chan *pgx.Conn
+}
+
+type SFlags struct {
+	HTTPPort int
+	PostgresPort int
+	DataDirectory string
 }
 
 func (ctx *SContext) loadStoredNodes() error {

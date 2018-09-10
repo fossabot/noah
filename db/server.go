@@ -1,14 +1,13 @@
 package Database
 
 import (
-	"net"
-	"github.com/Ready-Stock/Noah/conf"
-	"github.com/pkg/errors"
 	"fmt"
-	"github.com/Ready-Stock/Noah/db/sql/pgwire"
 	"github.com/Ready-Stock/Noah/db/base"
-	"time"
+	"github.com/Ready-Stock/Noah/db/sql/pgwire"
 	"github.com/Ready-Stock/Noah/db/system"
+	"github.com/pkg/errors"
+	"net"
+	"time"
 )
 
 const (
@@ -49,12 +48,13 @@ type Server struct {
 }
 
 func Start(sctx *system.SContext) error  {
-	if addr, err := net.ResolveTCPAddr("tcp", conf.Configuration.Database.AdvertiseAddress); err != nil {
-		return errors.Errorf("unable to resolve RPC address %q: %v", conf.Configuration.Database.AdvertiseAddress, err)
+	addvertise_addr := fmt.Sprintf("127.0.0.1:%d", sctx.Flags.PostgresPort)
+	if addr, err := net.ResolveTCPAddr("tcp", addvertise_addr); err != nil {
+		return errors.Errorf("unable to resolve RPC address %q: %v", addvertise_addr, err)
 	} else {
 		listener, err := net.ListenTCP("tcp", addr)
 		if err != nil {
-			return errors.Errorf("unable to listen on address %q: %v", conf.Configuration.Database.AdvertiseAddress, err)
+			return errors.Errorf("unable to listen on address %q: %v", addvertise_addr, err)
 		}
 
 		pending, complete := make(chan *net.TCPConn), make(chan *net.TCPConn)
