@@ -134,7 +134,7 @@ func serveConn(
 ) error {
 	sArgs.RemoteAddr = netConn.RemoteAddr()
 
-	fmt.Println("new connection with options: %+v", sArgs)
+	//fmt.Println("new connection with options: %+v", sArgs)
 
 	c := newConn(netConn, sArgs)
 

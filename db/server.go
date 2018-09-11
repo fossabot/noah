@@ -40,9 +40,6 @@ var (
 	sslUnsupported = []byte{'N'}
 )
 
-
-
-
 type Server struct {
 
 }
