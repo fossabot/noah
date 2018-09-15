@@ -51,6 +51,23 @@ func (ctx *SContext) GetNodes() (n []NNode, e error) {
 	return n, e
 }
 
+func (ctx *SContext) GetNode(NodeID uint64) (n *NNode, e error) {
+	node := NNode{}
+	e = ctx.Badger.View(func(txn *badger.Txn) error {
+		j, err := txn.Get([]byte(fmt.Sprintf("%s%d", NodesPath, NodeID)))
+		if err != nil {
+			return err
+		}
+		v, err := j.Value()
+		if err != nil {
+			return err
+		}
+		err = json.Unmarshal(v, &node)
+		return err
+	})
+	return &node, e
+}
+
 func (ctx *SContext) AddNode(node NNode) (error) {
 	return ctx.Badger.Update(func(txn *badger.Txn) error {
 		existing_nodes, err := ctx.GetNodes()
