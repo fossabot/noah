@@ -8,6 +8,7 @@ import (
 
 func StartApp(sctx *system.SContext) {
 	app := iris.Default()
+
 	app.Get("/nodes", func(ctx iris.Context) {
 		if nodes, err := sctx.GetNodes(); err != nil {
 			ctx.StatusCode(500)
@@ -45,7 +46,7 @@ func StartApp(sctx *system.SContext) {
 		}
 	})
 
-	 
+
 	// listen and serve on http://0.0.0.0:8080.
 	app.Run(iris.Addr(fmt.Sprintf(":%d", sctx.Flags.HTTPPort)))
 }

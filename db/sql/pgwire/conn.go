@@ -20,6 +20,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/Ready-Stock/pgx/pgtype"
+	"github.com/kataras/golog"
 	"io"
 	"net"
 	"strconv"
@@ -242,7 +243,7 @@ func (c *conn) serveImpl(sqlServer *sql.Server) error {
 	if sqlServer != nil {
 		wg.Add(1)
 		go func() {
-			writerErr = sqlServer.ServeConn(c.stmtBuf, c)
+			writerErr = sqlServer.ServeConn(c.stmtBuf, c, c.conn.RemoteAddr().String())
 			sendErr(writerErr)
 			// TODO(andrei): Should we sometimes transmit the writerErr's to the client?
 			wg.Done()
@@ -449,16 +450,16 @@ func (c *conn) handleParse(buf *pgwirebase.ReadBuffer) error {
 		}
 		inTypeHints[i] = oid.Oid(typ)
 	}
-	fmt.Printf("[Input] %s\n", query)
+	golog.Infof("[%s] Query: `%s`", c.conn.RemoteAddr().String(), query)
 	p, err := pg_query.Parse(query)
 	endParse := time.Now().UTC()
 	if err != nil {
-		fmt.Printf("[Parse Error] %s\n", err.Error())
+		golog.Errorf("[%s] %s", c.conn.RemoteAddr().String(), err.Error())
 		return c.stmtBuf.Push(sql.SendError{Err: err})
 	}
 
 	j, _ := p.MarshalJSON()
-	fmt.Printf("[Tree] %s\n", string(j))
+	golog.Debugf("[%s] Tree: %s", c.conn.RemoteAddr().String(), string(j))
 
 
 	if stmt, ok := p.Statements[0].(nodes.RawStmt).Stmt.(nodes.Stmt); !ok {
@@ -1173,10 +1174,8 @@ func (c *conn) handleAuthentication(insecure bool) error { // ctx context.Contex
 	if !exists {
 		return sendError(errors.Errorf("user %s does not exist", c.sessionArgs.User))
 	} else {
-		if r, err := c.sendAuthPasswordRequest(); err != nil {
+		if _, err := c.sendAuthPasswordRequest(); err != nil {
 			return sendError(err)
-		} else {
-			fmt.Println("Received ", r)
 		}
 	}
 

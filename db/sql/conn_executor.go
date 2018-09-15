@@ -14,6 +14,7 @@ type Server struct {
 }
 
 type connExecutor struct {
+	ClientAddress	   string
 	server             *Server
 	stmtBuf            *StmtBuf
 	Backlog			   []string
@@ -21,7 +22,7 @@ type connExecutor struct {
 	prepStmtsNamespace prepStmtNamespace
 	curStmt            *nodes.Stmt
 	SystemContext      *system.SContext
-	Nodes              map[int]*pgx.Tx
+	Nodes              map[uint64]*pgx.Tx
 }
 
 func (ex *connExecutor) GetNodesForAccountID(id *int) ([]int, error) {
@@ -103,8 +104,9 @@ func NewServer() *Server {
 	}
 }
 
-func (s *Server) ServeConn(stmtBuf *StmtBuf, clientComm ClientComm) error {
+func (s *Server) ServeConn(stmtBuf *StmtBuf, clientComm ClientComm, clientAddress string) error {
 	ex := s.newConnExecutor(stmtBuf, clientComm)
+	ex.ClientAddress = clientAddress
 	return ex.run()
 }
 

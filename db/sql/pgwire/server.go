@@ -17,6 +17,7 @@ package pgwire
 import (
 	"context"
 	"fmt"
+	"github.com/kataras/golog"
 	"io"
 	"net"
 	"time"
@@ -344,7 +345,7 @@ func parseOptions(data []byte) (sql.SessionArgs, error) {
 		case "application_name":
 			args.ApplicationName = value
 		default:
-			fmt.Println("unrecognized configuration parameter %q", key)
+			golog.Warnf("Unrecognized configuration parameter %s", key)
 		}
 	}
 	return args, nil

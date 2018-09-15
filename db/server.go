@@ -5,6 +5,7 @@ import (
 	"github.com/Ready-Stock/Noah/db/base"
 	"github.com/Ready-Stock/Noah/db/sql/pgwire"
 	"github.com/Ready-Stock/Noah/db/system"
+	"github.com/kataras/golog"
 	"github.com/pkg/errors"
 	"net"
 	"time"
@@ -78,7 +79,7 @@ func StartIncomingConnection(sctx *system.SContext, in <-chan *net.TCPConn, out 
 }
 
 func handleConnection(sctx *system.SContext, conn *net.TCPConn) error {
-	fmt.Println("Handling connection from ", conn.RemoteAddr().String())
+	golog.Infof("Handling connection from %s", conn.RemoteAddr().String())
 	serv := pgwire.MakeServer(&base.Config{
 		Insecure:true,
 	})

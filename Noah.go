@@ -4,8 +4,10 @@ import (
 	"flag"
 	"fmt"
 	"github.com/Ready-Stock/Noah/api"
+	"github.com/Ready-Stock/Noah/db"
 	"github.com/Ready-Stock/Noah/db/system"
 	"github.com/Ready-Stock/badger"
+	"github.com/kataras/golog"
 )
 
 var (
@@ -13,6 +15,7 @@ var (
 )
 
 func main() {
+	golog.SetLevel("debug")
 	SystemContext := system.SContext{
 		Flags: system.SFlags{
 			HTTPPort:      *flag.Int("http-port", 8080, "Listen port for Noah's web interface."),
@@ -36,6 +39,6 @@ func main() {
 	SystemContext.NodeIDs = node_seq
 	fmt.Println("Starting admin application with port:", SystemContext.Flags.HTTPPort)
 	fmt.Println("Listening for connections on:", SystemContext.Flags.PostgresPort)
-	//go Database.Start(&SystemContext)
+	go Database.Start(&SystemContext)
 	api.StartApp(&SystemContext)
 }
