@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"github.com/Ready-Stock/badger"
 	"github.com/Ready-Stock/pgx"
+	"github.com/ahmetb/go-linq"
+	"github.com/kataras/go-errors"
 )
 
 const (
@@ -52,6 +54,12 @@ func (ctx *SContext) GetNodes() (n []NNode, e error) {
 
 func (ctx *SContext) AddNode(node NNode) (error) {
 	return ctx.Badger.Update(func(txn *badger.Txn) error {
+		existing_nodes, err := ctx.GetNodes()
+		if linq.From(existing_nodes).AnyWithT(func(existing NNode) bool {
+			return node.Database == existing.Database && node.IPAddress == existing.IPAddress && node.Port == existing.Port
+		}) {
+			return errors.New("a node already exists with the same connection string.")
+		}
 		node_id, err := ctx.NodeIDs.Next()
 		if err != nil {
 			return err
