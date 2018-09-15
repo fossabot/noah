@@ -11,6 +11,7 @@ import (
 
 const (
 	NodesPath    = "/nodes/"
+	SettingsPath = "/settings/"
 	PreloadPoolConnectionCount = 5
 )
 
@@ -87,6 +88,29 @@ func (ctx *SContext) AddNode(node NNode) (error) {
 		}
 		return txn.Set([]byte(fmt.Sprintf("%s%d", NodesPath, node_id)), json);
 	})
+}
+
+func (ctx *SContext) GetSettings() (*map[string]string, error) {
+	m := map[string]string{}
+	e := ctx.Badger.View(func(txn *badger.Txn) error {
+		it := txn.NewIterator(badger.DefaultIteratorOptions)
+		defer it.Close()
+		prefix := []byte(SettingsPath)
+		for it.Seek(prefix); it.ValidForPrefix(prefix); it.Next() {
+			item := it.Item()
+			v, err := item.Value()
+			if err != nil {
+				return err
+			}
+			m[string(item.Key()[len(prefix) - 1:])] = string(v)
+		}
+		return nil
+	})
+	return &m, e
+}
+
+func (ctx *SContext) SetSetting(SettingName string) (error) {
+	return nil
 }
 
 

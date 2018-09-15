@@ -25,8 +25,8 @@ type connExecutor struct {
 	Nodes              map[uint64]*pgx.Tx
 }
 
-func (ex *connExecutor) GetNodesForAccountID(id *int) ([]int, error) {
-	return []int{1, 2}, nil
+func (ex *connExecutor) GetNodesForAccountID(id *uint64) ([]uint64, error) {
+	return []uint64{1, 2}, nil
 }
 
 func (ex *connExecutor) BacklogQuery(query string) {

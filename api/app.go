@@ -46,6 +46,19 @@ func StartApp(sctx *system.SContext) {
 		}
 	})
 
+	app.Get("/settings", func(ctx iris.Context) {
+		if settings, err := sctx.GetSettings(); err != nil {
+			ctx.StatusCode(500)
+			ctx.JSON(struct{
+				Error string
+			}{
+				Error: err.Error(),
+			})
+		} else {
+			ctx.JSON(settings)
+		}
+	})
+
 
 	// listen and serve on http://0.0.0.0:8080.
 	app.Run(iris.Addr(fmt.Sprintf(":%d", sctx.Flags.HTTPPort)))

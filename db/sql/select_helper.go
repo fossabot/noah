@@ -7,7 +7,7 @@ import (
 	"github.com/kataras/go-errors"
 )
 
-func (stmt *SelectStatement) getTargetNodes(ex *connExecutor) ([]int, error) {
+func (stmt *SelectStatement) getTargetNodes(ex *connExecutor) ([]uint64, error) {
 	accounts, err := stmt.getAccountIDs()
 	if err != nil {
 		return nil, err
@@ -16,12 +16,12 @@ func (stmt *SelectStatement) getTargetNodes(ex *connExecutor) ([]int, error) {
 	if len(accounts) == 1 {
 		return ex.GetNodesForAccountID(&accounts[0])
 	} else if len(accounts) > 1 {
-		node_ids := make([]int, 0)
-		From(accounts).SelectManyT(func(id int) Query {
+		node_ids := make([]uint64, 0)
+		From(accounts).SelectManyT(func(id uint64) Query {
 			if ids, err := ex.GetNodesForAccountID(&id); err == nil {
 				return From(ids)
 			}
-			return From(make([]int, 0))
+			return From(make([]uint64, 0))
 		}).Distinct().ToSlice(&node_ids)
 		if len(node_ids) == 0 {
 			return nil, errors.New("could not find nodes for account IDs")
@@ -33,12 +33,12 @@ func (stmt *SelectStatement) getTargetNodes(ex *connExecutor) ([]int, error) {
 	}
 }
 
-func (stmt *SelectStatement) getAccountIDs() ([]int, error) {
+func (stmt *SelectStatement) getAccountIDs() ([]uint64, error) {
 
 	return nil, nil
 }
 
-func (stmt *SelectStatement) compilePlan(ex *connExecutor, nodes []int) ([]plan.NodeExecutionPlan, error) {
+func (stmt *SelectStatement) compilePlan(ex *connExecutor, nodes []uint64) ([]plan.NodeExecutionPlan, error) {
 	plans := make([]plan.NodeExecutionPlan, len(nodes))
 	deparsed, err := pg_query.Deparse(stmt.Statement)
 	if err != nil {

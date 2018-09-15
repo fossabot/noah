@@ -5,11 +5,11 @@ import (
 	"github.com/Ready-Stock/pg_query_go"
 )
 
-func (stmt *VariableShowStatement) getTargetNodes(ex *connExecutor) ([]int, error) {
+func (stmt *VariableShowStatement) getTargetNodes(ex *connExecutor) ([]uint64, error) {
 	return ex.GetNodesForAccountID(nil)
 }
 
-func (stmt *VariableShowStatement) compilePlan(ex *connExecutor, nodes []int) ([]plan.NodeExecutionPlan, error) {
+func (stmt *VariableShowStatement) compilePlan(ex *connExecutor, nodes []uint64) ([]plan.NodeExecutionPlan, error) {
 	plans := make([]plan.NodeExecutionPlan, len(nodes))
 	deparsed, err := pg_query.Deparse(stmt.Statement)
 	if err != nil {
