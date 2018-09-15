@@ -24,7 +24,10 @@ func (ex *connExecutor) ExecutePlans(plans []plan.NodeExecutionPlan) error {
 		},
 	}
 	for i, node_conf := range nodes {
-		fmt.Printf("\t[Execute] Executing query: %s on node %d database %s\n", plans[i].CompiledQuery, plans[i].NodeID, node_conf.Database)
+		go func(index int, node pgx.ConnConfig) {
+			fmt.Printf("\t[Execute] Executing query: `%s` on node %d database %s\n", plans[index].CompiledQuery, plans[index].NodeID, node.Database)
+
+		}(i, node_conf)
 	}
 	return nil
 }

@@ -18,6 +18,7 @@ const (
 
 type SContext struct {
 	Badger        *badger.DB
+	NodeIDs		  *badger.Sequence
 	Flags 		  SFlags
 	node_info     map[int]*NNode
 	node_pool     map[int]chan *pgx.Conn
@@ -28,6 +29,52 @@ type SFlags struct {
 	PostgresPort int
 	DataDirectory string
 }
+
+func (ctx *SContext) GetNodes() (n []NNode, e error) {
+	n = make([]NNode, 0)
+	e = ctx.Badger.View(func(txn *badger.Txn) error {
+		it := txn.NewIterator(badger.DefaultIteratorOptions)
+		defer it.Close()
+		prefix := []byte(NodesPath)
+		ctx.node_info = map[int]*NNode{}
+		for it.Seek(prefix); it.ValidForPrefix(prefix); it.Next() {
+			item := it.Item()
+			v, err := item.Value()
+			if err != nil {
+				return err
+			}
+			node := NNode{}
+			if err := json.Unmarshal(v, &node); err != nil {
+				return err
+			}
+			n = append(n, node)
+		}
+		return nil
+	})
+	return n, e
+}
+
+func (ctx *SContext) AddNode(node NNode) (error) {
+	return ctx.Badger.Update(func(txn *badger.Txn) error {
+		node_id, err := ctx.NodeIDs.Next()
+		if err != nil {
+			return err
+		}
+		json, err := json.Marshal(node)
+		if err != nil {
+			return err
+		}
+		if err := txn.Set([]byte(fmt.Sprintf("%s%d", NodesPath, node_id)), json); err != nil {
+			txn.Discard()
+			return err
+		} else {
+			return txn.Commit(nil)
+		}
+	})
+}
+
+
+
 
 func (ctx *SContext) loadStoredNodes() error {
 	return ctx.Badger.View(func(txn *badger.Txn) error {

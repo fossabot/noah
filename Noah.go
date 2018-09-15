@@ -3,9 +3,14 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/Ready-Stock/Noah/api"
 	"github.com/Ready-Stock/Noah/db"
 	"github.com/Ready-Stock/Noah/db/system"
 	"github.com/Ready-Stock/badger"
+)
+
+var (
+	NodeIDSequencePath = []byte("/node_id_sequence")
 )
 
 func main() {
@@ -13,7 +18,7 @@ func main() {
 		Flags: system.SFlags{
 			HTTPPort:      *flag.Int("http-port", 8080, "Listen port for Noah's web interface."),
 			PostgresPort:  *flag.Int("psql-port", 5433, "Listen port for Noah's PostgreSQL client connectivity."),
-			DataDirectory: * flag.String("data-dir", "badge", "Directory for Noah's embedded database."),
+			DataDirectory: *flag.String("data-dir", "badge", "Directory for Noah's embedded database."),
 		},
 	}
 	opts := badger.DefaultOptions
@@ -23,9 +28,17 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	node_seq, err := db.GetSequence(NodeIDSequencePath, 10)
+	if err != nil {
+		panic(err)
+	}
 	defer db.Close()
 	SystemContext.Badger = db
+	SystemContext.NodeIDs = node_seq
 	fmt.Println("Starting admin application with port:", SystemContext.Flags.HTTPPort)
 	fmt.Println("Listening for connections on:", SystemContext.Flags.PostgresPort)
+	go func(sctx *system.SContext){
+		api.StartApp(sctx)
+	}(&SystemContext)
 	Database.Start(&SystemContext)
 }

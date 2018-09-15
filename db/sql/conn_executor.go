@@ -16,6 +16,7 @@ type Server struct {
 type connExecutor struct {
 	server             *Server
 	stmtBuf            *StmtBuf
+	Backlog			   []string
 	clientComm         ClientComm
 	prepStmtsNamespace prepStmtNamespace
 	curStmt            *nodes.Stmt
@@ -25,6 +26,10 @@ type connExecutor struct {
 
 func (ex *connExecutor) GetNodesForAccountID(id *int) ([]int, error) {
 	return []int{1, 2}, nil
+}
+
+func (ex *connExecutor) BacklogQuery(query string) {
+	ex.Backlog = append(ex.Backlog, query)
 }
 
 type prepStmtNamespace struct {

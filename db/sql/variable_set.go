@@ -16,6 +16,7 @@ func CreateVariableSetStatement(stmt pg_query.VariableSetStmt) *VariableSetState
 }
 
 func (stmt *VariableSetStatement) Execute(ex *connExecutor, res RestrictedCommandResult) error {
+	return nil
 	target_nodes, err := stmt.getTargetNodes(ex)
 	if err != nil {
 		return err
