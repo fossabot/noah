@@ -11,7 +11,6 @@ import (
 
 const (
 	NodesPath    = "/nodes/"
-	NodesIDsPath = "/sequences/nodes/ids"
 	PreloadPoolConnectionCount = 5
 )
 
