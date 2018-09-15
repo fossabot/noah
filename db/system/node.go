@@ -1,7 +1,7 @@
 package system
 
 type NNode struct {
-	NodeID    int
+	NodeID    uint64
 	Region    string
 	IPAddress string
 	Port      uint16
