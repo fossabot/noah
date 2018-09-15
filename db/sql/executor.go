@@ -10,9 +10,17 @@ func (ex *connExecutor) ExecutePlans(plans []plan.NodeExecutionPlan) error {
 	nodes := []pgx.ConnConfig{
 		{
 			Database: "ready_one",
+			Host: "127.0.0.1",
+			Port: 5432,
+			User: "postgres",
+			Password: "Spring!2016",
 		},
 		{
 			Database: "ready_two",
+			Host: "127.0.0.1",
+			Port: 5432,
+			User: "postgres",
+			Password: "Spring!2016",
 		},
 	}
 	for i, node_conf := range nodes {
