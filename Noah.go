@@ -3,7 +3,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/Ready-Stock/Noah/api"
 	"github.com/Ready-Stock/Noah/db"
 	"github.com/Ready-Stock/Noah/db/system"
 	"github.com/Ready-Stock/badger"
@@ -39,6 +38,6 @@ func main() {
 	SystemContext.NodeIDs = node_seq
 	fmt.Println("Starting admin application with port:", SystemContext.Flags.HTTPPort)
 	fmt.Println("Listening for connections on:", SystemContext.Flags.PostgresPort)
-	go Database.Start(&SystemContext)
-	api.StartApp(&SystemContext)
+	Database.Start(&SystemContext)
+	//api.StartApp(&SystemContext)
 }

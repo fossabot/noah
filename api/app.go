@@ -60,6 +60,8 @@ func StartApp(sctx *system.SContext) {
 	})
 
 
+
+
 	// listen and serve on http://0.0.0.0:8080.
 	app.Run(iris.Addr(fmt.Sprintf(":%d", sctx.Flags.HTTPPort)))
 }

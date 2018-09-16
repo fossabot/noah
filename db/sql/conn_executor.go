@@ -104,9 +104,10 @@ func NewServer() *Server {
 	}
 }
 
-func (s *Server) ServeConn(stmtBuf *StmtBuf, clientComm ClientComm, clientAddress string) error {
+func (s *Server) ServeConn(stmtBuf *StmtBuf, clientComm ClientComm, clientAddress string, sctx *system.SContext) error {
 	ex := s.newConnExecutor(stmtBuf, clientComm)
 	ex.ClientAddress = clientAddress
+	ex.SystemContext = sctx
 	return ex.run()
 }
 

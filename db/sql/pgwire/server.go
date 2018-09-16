@@ -319,7 +319,7 @@ func (s *Server) ServeConn(sctx *system.SContext, conn net.Conn) error { // ctx 
 	// reduces pressure on the shared pool because the server monitor allocates in
 	// chunks from the shared pool and these chunks should be larger than
 	// baseSQLMemoryBudget.
-	return serveConn(conn, sArgs, s.SQLServer, s.cfg.Insecure)
+	return serveConn(conn, sArgs, s.SQLServer, s.cfg.Insecure, sctx)
 }
 
 func parseOptions(data []byte) (sql.SessionArgs, error) {

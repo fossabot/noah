@@ -1,7 +1,9 @@
 package sql
 
 import (
+	pg_query2 "github.com/Ready-Stock/pg_query_go"
 	"github.com/Ready-Stock/pg_query_go/nodes"
+	"strings"
 )
 
 type VariableSetStatement struct {
@@ -16,6 +18,15 @@ func CreateVariableSetStatement(stmt pg_query.VariableSetStmt) *VariableSetState
 }
 
 func (stmt *VariableSetStatement) Execute(ex *connExecutor, res RestrictedCommandResult) error {
+	if strings.HasPrefix(strings.ToLower(*stmt.Statement.Name), "noah") {
+		setting_name := strings.Replace(strings.ToLower(*stmt.Statement.Name), "noah.", "", 1)
+		setting_value, err := pg_query2.Deparse(stmt.Statement.Args.Items[0])
+		if err != nil {
+			return err
+		}
+		return ex.SystemContext.SetSetting(setting_name, setting_value)
+	}
+
 	return nil
 	target_nodes, err := stmt.getTargetNodes(ex)
 	if err != nil {

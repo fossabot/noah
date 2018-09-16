@@ -109,9 +109,7 @@ func (ctx *SContext) GetSettings() (*map[string]string, error) {
 	return &m, e
 }
 
-func (ctx *SContext) SetSetting(SettingName string) (error) {
-	return nil
-}
+
 
 
 

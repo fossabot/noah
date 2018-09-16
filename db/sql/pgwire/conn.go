@@ -19,6 +19,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"github.com/Ready-Stock/Noah/db/system"
 	"github.com/Ready-Stock/pgx/pgtype"
 	"github.com/kataras/golog"
 	"io"
@@ -132,6 +133,7 @@ func serveConn(
 	sArgs sql.SessionArgs,
 	sqlServer *sql.Server,
 	insecure bool,
+	sctx *system.SContext,
 ) error {
 	sArgs.RemoteAddr = netConn.RemoteAddr()
 
@@ -151,7 +153,7 @@ func serveConn(
 	}
 
 	// Do the reading of commands from the network.
-	readingErr := c.serveImpl(sqlServer)
+	readingErr := c.serveImpl(sqlServer, sctx)
 	return readingErr
 }
 
@@ -194,7 +196,7 @@ func (c *conn) GetErr() error {
 // sqlServer is used to create the command processor. As a special facility for
 // tests, sqlServer can be nil, in which case the command processor and the
 // write-side of the connection will not be created.
-func (c *conn) serveImpl(sqlServer *sql.Server) error {
+func (c *conn) serveImpl(sqlServer *sql.Server, sctx *system.SContext) error {
 	defer func() { _ = c.conn.Close() }()
 
 	// NOTE: We're going to write a few messages to the connection in this method,
@@ -243,7 +245,7 @@ func (c *conn) serveImpl(sqlServer *sql.Server) error {
 	if sqlServer != nil {
 		wg.Add(1)
 		go func() {
-			writerErr = sqlServer.ServeConn(c.stmtBuf, c, c.conn.RemoteAddr().String())
+			writerErr = sqlServer.ServeConn(c.stmtBuf, c, c.conn.RemoteAddr().String(), sctx)
 			sendErr(writerErr)
 			// TODO(andrei): Should we sometimes transmit the writerErr's to the client?
 			wg.Done()
