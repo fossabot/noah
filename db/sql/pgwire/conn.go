@@ -246,7 +246,9 @@ func (c *conn) serveImpl(sqlServer *sql.Server, sctx *system.SContext) error {
 		wg.Add(1)
 		go func() {
 			writerErr = sqlServer.ServeConn(c.stmtBuf, c, c.conn.RemoteAddr().String(), sctx)
-			sendErr(writerErr)
+			if writerErr != nil {
+				sendErr(writerErr)
+			}
 			// TODO(andrei): Should we sometimes transmit the writerErr's to the client?
 			wg.Done()
 		}()

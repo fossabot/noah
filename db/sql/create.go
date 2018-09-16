@@ -6,18 +6,18 @@ import (
 	"github.com/Ready-Stock/pg_query_go/nodes"
 )
 
-type VariableShowStatement struct {
-	Statement pg_query.VariableShowStmt
+type CreateStatement struct {
+	Statement pg_query.CreateStmt
 	IQueryStatement
 }
 
-func CreateVariableShowStatement(stmt pg_query.VariableShowStmt) *VariableShowStatement {
-	return &VariableShowStatement{
+func CreateCreateStatement(stmt pg_query.CreateStmt) *CreateStatement {
+	return &CreateStatement{
 		Statement: stmt,
 	}
 }
 
-func (stmt *VariableShowStatement) Execute(ex *connExecutor, res RestrictedCommandResult) error {
+func (stmt *CreateStatement) Execute(ex *connExecutor, res RestrictedCommandResult) error {
 	target_nodes, err := stmt.getTargetNodes(ex)
 	if err != nil {
 		return err
@@ -31,14 +31,20 @@ func (stmt *VariableShowStatement) Execute(ex *connExecutor, res RestrictedComma
 	return ex.ExecutePlans(plans)
 }
 
-func (stmt *VariableShowStatement) getTargetNodes(ex *connExecutor) ([]uint64, error) {
-	return ex.GetNodesForAccountID(nil)
+func (stmt *CreateStatement) getTargetNodes(ex *connExecutor) ([]uint64, error) {
+	return []uint64{0, 1, 2, 3}, nil
 }
 
-func (stmt *VariableShowStatement) compilePlan(ex *connExecutor, nodes []uint64) ([]plan.NodeExecutionPlan, error) {
+func (stmt *CreateStatement) getAccountIDs() ([]uint64, error) {
+
+	return nil, nil
+}
+
+func (stmt *CreateStatement) compilePlan(ex *connExecutor, nodes []uint64) ([]plan.NodeExecutionPlan, error) {
 	plans := make([]plan.NodeExecutionPlan, len(nodes))
 	deparsed, err := pg_query2.Deparse(stmt.Statement)
 	if err != nil {
+		ex.Error(err.Error())
 		return nil, err
 	}
 	for i := 0; i < len(plans); i++ {

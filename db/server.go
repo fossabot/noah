@@ -57,14 +57,14 @@ func Start(sctx *system.SContext) error  {
 
 		pending, complete := make(chan *net.TCPConn), make(chan *net.TCPConn)
 
-		for i := 0; i < 100; i++ {
+		for i := 0; i < 5; i++ {
 			go StartIncomingConnection(sctx, pending, complete)
 		}
 
 		for {
 			conn, err := listener.AcceptTCP()
 			if err != nil {
-				panic(err)
+				golog.Error(err.Error())
 			}
 			pending <- conn
 		}
@@ -83,8 +83,7 @@ func handleConnection(sctx *system.SContext, conn *net.TCPConn) error {
 	serv := pgwire.MakeServer(&base.Config{
 		Insecure:true,
 	})
-	serv.ServeConn(sctx, conn)
-	return nil
+	return serv.ServeConn(sctx, conn)
 }
 
 

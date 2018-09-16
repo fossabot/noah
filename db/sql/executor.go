@@ -11,7 +11,7 @@ func (ex *connExecutor) ExecutePlans(plans []plan.NodeExecutionPlan) error {
 			ex.Info("Executing query: `%s` on node %d", pln.CompiledQuery, pln.NodeID)
 			_, ok := ex.Nodes[pln.NodeID]
 			if !ok {
-				ex.Warn("Allocating connection to node %d for session.")
+				ex.Warn("Allocating connection to node %d for session.", pln.NodeID)
 			} else {
 
 			}

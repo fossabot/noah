@@ -68,7 +68,8 @@ func (ex *connExecutor) execStmt(
 	// case nodes.CreateSchemaStmt:
 	// case nodes.CreateSeqStmt:
 	// case nodes.CreateStatsStmt:
-	// case nodes.CreateStmt:
+	case nodes.CreateStmt:
+		return CreateCreateStatement(stmt).Execute(ex, res)
 	// 	// return nil, _create.CreateCreateStatment(stmt, tree).HandleCreate(ctx)
 	// case nodes.CreateSubscriptionStmt:
 	// case nodes.CreateTableAsStmt:
