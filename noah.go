@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/Ready-Stock/Noah/api"
 	"github.com/Ready-Stock/Noah/db"
 	"github.com/Ready-Stock/Noah/db/system"
 	"github.com/Ready-Stock/badger"
@@ -38,26 +39,39 @@ func main() {
 			HTTPPort:      HttpPort,
 			PostgresPort:  PostgresPort,
 			DataDirectory: DataDirectory,
+			WalDirectory:  WalDirectory,
 		},
 	}
 
-
 	opts := badger.DefaultOptions
+
 	opts.Dir = SystemContext.Flags.DataDirectory
 	opts.ValueDir = SystemContext.Flags.DataDirectory
-	db, err := badger.Open(opts)
+	badger_data, err := badger.Open(opts)
 	if err != nil {
 		panic(err)
 	}
-	node_seq, err := db.GetSequence(NodeIDSequencePath, 10)
+	node_seq, err := badger_data.GetSequence(NodeIDSequencePath, 10)
 	if err != nil {
 		panic(err)
 	}
-	defer db.Close()
-	SystemContext.Badger = db
+
+	opts.Dir = SystemContext.Flags.WalDirectory
+	opts.ValueDir = SystemContext.Flags.WalDirectory
+	badger_wal, err := badger.Open(opts)
+	if err != nil {
+		panic(err)
+	}
+
+	SystemContext.Badger = badger_data
+	SystemContext.WalBadger = badger_wal
+
+	defer badger_data.Close()
+	defer badger_wal.Close()
+
 	SystemContext.NodeIDs = node_seq
 	fmt.Println("Starting admin application with port:", SystemContext.Flags.HTTPPort)
 	fmt.Println("Listening for connections on:", SystemContext.Flags.PostgresPort)
-	Database.Start(&SystemContext)
-	// api.StartApp(&SystemContext)
+	go db.Start(&SystemContext)
+	api.StartApp(&SystemContext)
 }

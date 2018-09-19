@@ -16,6 +16,7 @@ const (
 
 type SContext struct {
 	Badger    *badger.DB
+	WalBadger *badger.DB
 	NodeIDs   *badger.Sequence
 	Flags     SFlags
 	node_info map[uint64]*NNode
