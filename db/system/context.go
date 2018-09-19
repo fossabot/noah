@@ -4,29 +4,29 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/Ready-Stock/badger"
-	"github.com/Ready-Stock/pgx"
 	"github.com/ahmetb/go-linq"
 	"github.com/kataras/go-errors"
 )
 
 const (
-	NodesPath    = "/nodes/"
-	SettingsPath = "/settings/"
+	NodesPath                  = "/nodes/"
+	SettingsPath               = "/settings/"
 	PreloadPoolConnectionCount = 5
 )
 
 type SContext struct {
-	Badger        *badger.DB
-	NodeIDs		  *badger.Sequence
-	Flags 		  SFlags
-	node_info     map[uint64]*NNode
-	node_pool     map[uint64]chan *pgx.Conn
+	Badger    *badger.DB
+	NodeIDs   *badger.Sequence
+	Flags     SFlags
+	node_info map[uint64]*NNode
+	// node_pool     map[uint64]chan *pgx.Conn
 }
 
 type SFlags struct {
-	HTTPPort int
-	PostgresPort int
+	HTTPPort      int
+	PostgresPort  int
 	DataDirectory string
+	WalDirectory  string
 }
 
 func (ctx *SContext) GetNodes() (n []NNode, e error) {
@@ -102,17 +102,12 @@ func (ctx *SContext) GetSettings() (*map[string]string, error) {
 			if err != nil {
 				return err
 			}
-			m[string(item.Key()[len(prefix) - 1:])] = string(v)
+			m[string(item.Key()[len(prefix)-1:])] = string(v)
 		}
 		return nil
 	})
 	return &m, e
 }
-
-
-
-
-
 
 func (ctx *SContext) loadStoredNodes() error {
 	return ctx.Badger.View(func(txn *badger.Txn) error {

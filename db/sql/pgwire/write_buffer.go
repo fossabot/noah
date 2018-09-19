@@ -19,8 +19,8 @@ import (
 	"encoding/binary"
 	"github.com/Ready-Stock/Noah/db/sql/pgwire/pgwirebase"
 	"github.com/Ready-Stock/Noah/db/sql/sem/tree"
+	"github.com/Ready-Stock/Noah/db/sql/types"
 	"github.com/Ready-Stock/Noah/db/util"
-	"github.com/Ready-Stock/pgx/pgtype"
 	"io"
 )
 
@@ -131,7 +131,7 @@ func (b *writeBuffer) writeLengthPrefixedDatum(d tree.Datum) {
 
 // writeLengthPrefixedPGValue writes a length-prefixed Value in its
 // string representation. The length is encoded as an int32.
-func (b *writeBuffer) writeLengthPrefixedPGValue(d pgtype.Value) {
+func (b *writeBuffer) writeLengthPrefixedPGValue(d types.Value) {
 	// fmtCtx := tree.MakeFmtCtx(&b.variablePutbuf, tree.FmtSimple)
 	// fmtCtx.FormatNode(d)
 	b.writeLengthPrefixedVariablePutbuf()

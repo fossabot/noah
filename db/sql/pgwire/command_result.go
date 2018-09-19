@@ -17,7 +17,7 @@ package pgwire
 import (
 	"fmt"
 	"github.com/Ready-Stock/Noah/db/sql/pgwire/pgwirebase"
-	"github.com/Ready-Stock/pgx/pgtype"
+	"github.com/Ready-Stock/Noah/db/sql/types"
 	"github.com/lib/pq/oid"
 	"github.com/Ready-Stock/Noah/db/sql/sessiondata"
 	"github.com/Ready-Stock/Noah/db/sql"
@@ -198,7 +198,7 @@ func (r *commandResult) OverwriteError(err error) {
 }
 
 // AddRow is part of the CommandResult interface.
-func (r *commandResult) AddRow(row []pgtype.Value) error {
+func (r *commandResult) AddRow(row []types.Value) error {
 	if r.err != nil {
 		panic(fmt.Sprintf("can't call AddRow after having set error: %s",
 			r.err))

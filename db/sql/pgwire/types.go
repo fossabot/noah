@@ -19,12 +19,11 @@ import (
 	"github.com/Ready-Stock/Noah/db/sql/lex"
 	"github.com/Ready-Stock/Noah/db/sql/pgwire/pgwirebase"
 	"github.com/Ready-Stock/Noah/db/sql/sem/tree"
-	"github.com/Ready-Stock/Noah/db/sql/sem/types"
 	"github.com/Ready-Stock/Noah/db/sql/sessiondata"
+	"github.com/Ready-Stock/Noah/db/sql/types"
 	"github.com/Ready-Stock/Noah/db/util/duration"
 	"github.com/Ready-Stock/Noah/db/util/timeofday"
 	"github.com/Ready-Stock/Noah/db/util/timeutil"
-	"github.com/Ready-Stock/pgx/pgtype"
 	"github.com/lib/pq/oid"
 	"github.com/pkg/errors"
 	"strconv"
@@ -52,21 +51,21 @@ type pgType struct {
 	size int
 }
 
-func pgTypeForParserType(t types.T) pgType {
-	size := -1
-	if s, variable := tree.DatumTypeSize(t); !variable {
-		size = int(s)
-	}
-	return pgType{
-		oid:  t.Oid(),
-		size: size,
-	}
-}
+// func pgTypeForParserType(t types.T) pgType {
+// 	size := -1
+// 	if s, variable := tree.DatumTypeSize(t); !variable {
+// 		size = int(s)
+// 	}
+// 	return pgType{
+// 		oid:  t.Oid(),
+// 		size: size,
+// 	}
+// }
 
 const secondsInDay = 24 * 60 * 60
 
 func (b *writeBuffer) writeTextDatum(
-	pginfo *pgtype.ConnInfo, d pgtype.Value, sessionLoc *time.Location, be sessiondata.BytesEncodeFormat,
+	pginfo *types.ConnInfo, d types.Value, sessionLoc *time.Location, be sessiondata.BytesEncodeFormat,
 ) {
 	v := d.Get()
 	if v == nil {
@@ -77,7 +76,7 @@ func (b *writeBuffer) writeTextDatum(
 
 
 	switch v := d.(type) {
-	case *pgtype.Bool:
+	case *types.Bool:
 		b.putInt32(1)
 		if v.Bool {
 			b.writeByte('t')
@@ -85,16 +84,16 @@ func (b *writeBuffer) writeTextDatum(
 			b.writeByte('f')
 		}
 
-	case *pgtype.BoolArray:
+	case *types.BoolArray:
 
 
-	case pgtype.Integer: // Int2, Int4, Int8
+	case types.Integer: // Int2, Int4, Int8
 		// Start at offset 4 because `putInt32` clobbers the first 4 bytes.
 		s := strconv.AppendInt(b.putbuf[4:4], v.GetInt(), 10)
 		b.putInt32(int32(len(s)))
 		b.write(s)
 
-	case pgtype.Float: // Float4, Float8
+	case types.Float: // Float4, Float8
 		// Start at offset 4 because `putInt32` clobbers the first 4 bytes.
 		s := strconv.AppendFloat(b.putbuf[4:4], v.GetFloat(), 'f', -1, 64)
 		b.putInt32(int32(len(s)))
@@ -103,43 +102,43 @@ func (b *writeBuffer) writeTextDatum(
 	//case *tree.DDecimal:
 	//	b.writeLengthPrefixedDatum(v)
 
-	case *pgtype.Bytea:
+	case *types.Bytea:
 		result := lex.EncodeByteArrayToRawBytes(string(v.Bytes), be, false /* skipHexPrefix */)
 		b.putInt32(int32(len(result)))
 		b.write([]byte(result))
 
-	case *pgtype.UUID:
-		b.writeLengthPrefixedString(pgtype.EncodeUUID(v.Bytes))
+	case *types.UUID:
+		b.writeLengthPrefixedString(types.EncodeUUID(v.Bytes))
 
 	//case *tree.DIPAddr:
 	//	b.writeLengthPrefixedString(v.IPAddr.String())
 
-	case *pgtype.Text: // Also serves varchar
+	case *types.Text: // Also serves varchar
 		b.writeLengthPrefixedString(v.String)
 
 	// case *tree.DCollatedString:
 	// 	b.writeLengthPrefixedString(v.Contents)
 
-	case *pgtype.Date:
+	case *types.Date:
 		t := timeutil.Unix(v.Time.Unix(), 0)
 		// Start at offset 4 because `putInt32` clobbers the first 4 bytes.
 		s := formatTs(t, nil, b.putbuf[4:4])
 		b.putInt32(int32(len(s)))
 		b.write(s)
 
-	case *pgtype.Timestamp:
+	case *types.Timestamp:
 		// Start at offset 4 because `putInt32` clobbers the first 4 bytes.
 		s := formatTime(timeofday.FromTime(v.Time), b.putbuf[4:4])
 		b.putInt32(int32(len(s)))
 		b.write(s)
 
-	case *pgtype.Timestamptz:
+	case *types.Timestamptz:
 		// Start at offset 4 because `putInt32` clobbers the first 4 bytes.
 		s := formatTimeTZ(v.Time, sessionLoc, b.putbuf[4:4])
 		b.putInt32(int32(len(s)))
 		b.write(s)
 
-	case *pgtype.Interval:
+	case *types.Interval:
 		s := ""
 		if v.Months != 0 {
 			s += strconv.FormatInt(int64(v.Months), 10)
@@ -165,10 +164,10 @@ func (b *writeBuffer) writeTextDatum(
 		s += fmt.Sprintf("%02d:%02d:%02d.%06d", hours, minutes, seconds, microseconds)
 		b.writeLengthPrefixedString(s)
 
-	case *pgtype.JSON:
+	case *types.JSON:
 		b.writeLengthPrefixedBytes(v.Bytes)
 
-	case *pgtype.JSONB:
+	case *types.JSONB:
 		b.writeLengthPrefixedBytes(v.Bytes)
 
 	// case *tree.DArray:
@@ -203,7 +202,7 @@ func (b *writeBuffer) writeTextDatum(
 
 //
 func (b *writeBuffer) writeBinaryDatum(
-	pginfo *pgtype.ConnInfo, d pgtype.Value, sessionLoc *time.Location,
+	pginfo *types.ConnInfo, d types.Value, sessionLoc *time.Location,
 ) {
 	v := d.Get()
 	if v == nil {

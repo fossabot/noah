@@ -19,8 +19,8 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"github.com/Ready-Stock/Noah/db/sql/types"
 	"github.com/Ready-Stock/Noah/db/system"
-	"github.com/Ready-Stock/pgx/pgtype"
 	"github.com/kataras/golog"
 	"io"
 	"net"
@@ -87,7 +87,7 @@ type conn struct {
 	readBuf    pgwirebase.ReadBuffer
 	msgBuilder *writeBuffer
 
-	pginfo *pgtype.ConnInfo
+	pginfo *types.ConnInfo
 }
 
 // serveConn creates a conn that will serve the netConn. It returns once the
@@ -164,7 +164,7 @@ func newConn(netConn net.Conn, sArgs sql.SessionArgs) *conn {
 		sessionArgs: sArgs,
 		msgBuilder:  newWriteBuffer(),
 		rd:          *bufio.NewReader(netConn),
-		pginfo:		 pgtype.NewConnInfo(),
+		pginfo:		 types.NewConnInfo(),
 	}
 	c.writerState.fi.buf = &c.writerState.buf
 	c.writerState.fi.lastFlushed = -1
@@ -781,7 +781,7 @@ func cookTag(tagStr string, buf []byte, stmt nodes.Stmt, rowsAffected int) []byt
 // which case all columns are encoded using the text encoding. Otherwise, it
 // needs to contain an entry for every column.
 func (c *conn) bufferRow(
-	row []pgtype.Value,
+	row []types.Value,
 	formatCodes []pgwirebase.FormatCode,
 	loc *time.Location,
 	be sessiondata.BytesEncodeFormat,

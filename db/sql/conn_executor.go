@@ -6,7 +6,7 @@ import (
 	"github.com/Ready-Stock/Noah/db/system"
 	"github.com/Ready-Stock/Noah/db/util/fsm"
 	nodes "github.com/Ready-Stock/pg_query_go/nodes"
-	"github.com/Ready-Stock/pgx"
+	//"github.com/Ready-Stock/pgx"
 	"io"
 )
 
@@ -22,7 +22,7 @@ type connExecutor struct {
 	prepStmtsNamespace prepStmtNamespace
 	curStmt            *nodes.Stmt
 	SystemContext      *system.SContext
-	Nodes              map[uint64]*pgx.Tx
+	//Nodes              map[uint64]*pgx.Tx
 }
 
 func (ex *connExecutor) GetNodesForAccountID(id *uint64) ([]uint64, error) {

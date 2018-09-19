@@ -9,19 +9,39 @@ import (
 	"github.com/kataras/golog"
 )
 
+type WorkerType string
+
+const (
+	Coordinator WorkerType = "coordinator"
+	Worker      WorkerType = "worker"
+)
+
 var (
 	NodeIDSequencePath = []byte("/node_id_sequence")
 )
 
+var (
+	RunType       = *flag.String("type", "coordinator", "Type of handler to run, defaults to `coordinator`. Valid values are: `worker` and `coordinator`.")
+	HttpPort      = *flag.Int("http-port", 8080, "Listen port for Noah's HTTP REST interface.")
+	PostgresPort  = *flag.Int("psql-port", 5433, "Listen port for Noah's PostgreSQL client connectivity.")
+	DataDirectory = *flag.String("data-dir", "data", "Directory for Noah's embedded database.")
+	WalDirectory  = *flag.String("wal-dir", "wal", "Directory for Noah's write ahead log.")
+	LogLevel = *flag.String("log-level", "debug", "Log verbosity for message written to the console window.")
+)
+
 func main() {
-	golog.SetLevel("debug")
+	flag.Parse()
+	golog.SetLevel(LogLevel)
+
 	SystemContext := system.SContext{
 		Flags: system.SFlags{
-			HTTPPort:      *flag.Int("http-port", 8080, "Listen port for Noah's web interface."),
-			PostgresPort:  *flag.Int("psql-port", 5433, "Listen port for Noah's PostgreSQL client connectivity."),
-			DataDirectory: *flag.String("data-dir", "badge", "Directory for Noah's embedded database."),
+			HTTPPort:      HttpPort,
+			PostgresPort:  PostgresPort,
+			DataDirectory: DataDirectory,
 		},
 	}
+
+
 	opts := badger.DefaultOptions
 	opts.Dir = SystemContext.Flags.DataDirectory
 	opts.ValueDir = SystemContext.Flags.DataDirectory
@@ -39,5 +59,5 @@ func main() {
 	fmt.Println("Starting admin application with port:", SystemContext.Flags.HTTPPort)
 	fmt.Println("Listening for connections on:", SystemContext.Flags.PostgresPort)
 	Database.Start(&SystemContext)
-	//api.StartApp(&SystemContext)
+	// api.StartApp(&SystemContext)
 }

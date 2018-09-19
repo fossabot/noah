@@ -17,7 +17,7 @@ package sql
 import (
 	"context"
 	"fmt"
-	"github.com/Ready-Stock/pgx/pgtype"
+	"github.com/Ready-Stock/Noah/db/sql/types"
 	"io"
 	"sync"
 	"time"
@@ -755,7 +755,7 @@ type RestrictedCommandResult interface {
 	//
 	// The implementation cannot hold on to the row slice; it needs to make a
 	// shallow copy if it needs to.
-	AddRow(row []pgtype.Value) error
+	AddRow(row []types.Value) error
 
 	// IncrementRowsAffected increments a counter by n. This is used for all
 	// result types other than tree.Rows.
@@ -892,8 +892,8 @@ const discarded resCloseType = false
 // bufferedCommandResult is a CommandResult that buffers rows and can call a
 // provided callback when closed.
 type bufferedCommandResult struct {
-	err error
-	rows         [][]pgtype.Value
+	err          error
+	rows         [][]types.Value
 	rowsAffected int
 	// cols         sqlbase.ResultColumns
 
@@ -922,11 +922,11 @@ var _ RestrictedCommandResult = &bufferedCommandResult{}
 // }
 //
 // // AddRow is part of the RestrictedCommandResult interface.
-func (r *bufferedCommandResult) AddRow(row []pgtype.Value) error {
+func (r *bufferedCommandResult) AddRow(row []types.Value) error {
 	if r.errOnly {
 		panic("AddRow() called when errOnly is set")
 	}
-	rowCopy := make([]pgtype.Value, len(row))
+	rowCopy := make([]types.Value, len(row))
 	copy(rowCopy, row)
 	r.rows = append(r.rows, rowCopy)
 	return nil
