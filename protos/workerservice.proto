@@ -1,0 +1,9 @@
+syntax = "proto3";
+
+package workerservice;
+
+import "worker.proto";
+
+service Noah {
+    
+}
