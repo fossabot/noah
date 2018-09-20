@@ -137,6 +137,7 @@ func (ex *connExecutor) run() error {
 		var payload fsm.EventPayload
 		switch tcmd := cmd.(type) {
 		case ExecStmt:
+			// TODO (@elliotcourant) add ExecStmt handling. Currently only ExecPortal is supported. I've not found a query yet that needs to be performed via exec stmt though.
 		case ExecPortal:
 			portal, ok := ex.prepStmtsNamespace.portals[tcmd.Name]
 			if !ok {
@@ -184,6 +185,7 @@ func (ex *connExecutor) run() error {
 			// transaction. If we are in a transaction, we'll finish as soon as a Sync
 			// command (i.e. the end of a batch) is processed outside of a
 			// transaction.
+			// TODO (@elliotcourant) Add proper draining handling in the connection executor.
 		case Flush:
 			// Closing the res will flush the connection's buffer.
 			res = ex.clientComm.CreateFlushResult(pos)

@@ -1000,7 +1000,7 @@ func (c *conn) Flush(pos sql.CmdPos) error {
 // maybeFlush flushes the buffer to the network connection if it exceeded
 // connResultsBufferSizeBytes.
 func (c *conn) maybeFlush(pos sql.CmdPos) (bool, error) {
-	if c.writerState.buf.Len() <= 1024 { // TODO:CHECK THIS OUT I HAVE NO IDEA WHAT IT DOES
+	if c.writerState.buf.Len() <= 1024 { // TODO (elliotcourant) CHECK THIS OUT I HAVE NO IDEA WHAT IT DOES
 		return false, nil
 	}
 	return true, c.Flush(pos)

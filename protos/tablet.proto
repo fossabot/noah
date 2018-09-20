@@ -2,7 +2,7 @@
 
 syntax = "proto3";
 
-package worker;
+package tablet;
 
 message Session {
     bool in_transaction = 1;
@@ -14,3 +14,4 @@ message Session {
 
     repeated NodeSession node_sessions = 2;
 }
+
