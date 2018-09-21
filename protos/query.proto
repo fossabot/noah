@@ -1,0 +1,7 @@
+// This file contains all the type necessary
+// to make calls to the tablet.
+
+syntax = "proto3";
+
+package query;
+

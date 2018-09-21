@@ -3,7 +3,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/Ready-Stock/Noah/api"
 	"github.com/Ready-Stock/Noah/db/coordinator"
 	"github.com/Ready-Stock/Noah/db/system"
 	"github.com/Ready-Stock/badger"
@@ -22,7 +21,7 @@ var (
 )
 
 var (
-	RunType       = *flag.String("type", "tablet", "Type of handler to run, defaults to `coordinator`. Valid values are: `worker` and `coordinator`.")
+	RunType       = *flag.String("type", "coordinator", "Type of handler to run, defaults to `coordinator`. Valid values are: `worker` and `coordinator`.")
 	HttpPort      = *flag.Int("http-port", 8080, "Listen port for Noah's HTTP REST interface.")
 	PostgresPort  = *flag.Int("psql-port", 5433, "Listen port for Noah's PostgreSQL client connectivity.")
 	DataDirectory = *flag.String("data-dir", "data", "Directory for Noah's embedded database.")
@@ -74,10 +73,9 @@ func main() {
 		SystemContext.NodeIDs = node_seq
 		fmt.Println("Starting admin application with port:", SystemContext.Flags.HTTPPort)
 		fmt.Println("Listening for connections on:", SystemContext.Flags.PostgresPort)
-		go coordinator.Start(&SystemContext)
-		api.StartApp(&SystemContext)
+		coordinator.Start(&SystemContext)
+		//api.StartApp(&SystemContext)
 	case Tablet:
 		golog.Info("Starting tablet...")
-
 	}
 }

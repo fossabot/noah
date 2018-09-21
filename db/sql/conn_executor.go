@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/Ready-Stock/Noah/db/sql/pgwire/pgerror"
 	"github.com/Ready-Stock/Noah/db/system"
+	"github.com/Ready-Stock/Noah/db/util"
 	"github.com/Ready-Stock/Noah/db/util/fsm"
 	nodes "github.com/Ready-Stock/pg_query_go/nodes"
 	//"github.com/Ready-Stock/pgx"
@@ -124,7 +125,8 @@ func (s *Server) newConnExecutor(stmtBuf *StmtBuf, clientComm ClientComm) *connE
 	return ex
 }
 
-func (ex *connExecutor) run() error {
+func (ex *connExecutor) run() (err error) {
+	defer util.CatchPanic(&err)
 	for {
 		cmd, pos, err := ex.stmtBuf.curCmd()
 		if err != nil {
@@ -137,7 +139,7 @@ func (ex *connExecutor) run() error {
 		var payload fsm.EventPayload
 		switch tcmd := cmd.(type) {
 		case ExecStmt:
-			// TODO (@elliotcourant) add ExecStmt handling. Currently only ExecPortal is supported. I've not found a query yet that needs to be performed via exec stmt though.
+			// TODO (elliotcourant) add ExecStmt handling. Currently only ExecPortal is supported. I've not found a query yet that needs to be performed via exec stmt though.
 		case ExecPortal:
 			portal, ok := ex.prepStmtsNamespace.portals[tcmd.Name]
 			if !ok {
@@ -185,7 +187,7 @@ func (ex *connExecutor) run() error {
 			// transaction. If we are in a transaction, we'll finish as soon as a Sync
 			// command (i.e. the end of a batch) is processed outside of a
 			// transaction.
-			// TODO (@elliotcourant) Add proper draining handling in the connection executor.
+			// TODO (elliotcourant) Add proper draining handling in the connection executor.
 		case Flush:
 			// Closing the res will flush the connection's buffer.
 			res = ex.clientComm.CreateFlushResult(pos)

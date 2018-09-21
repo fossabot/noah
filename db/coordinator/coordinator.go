@@ -5,6 +5,7 @@ import (
 	"github.com/Ready-Stock/Noah/db/base"
 	"github.com/Ready-Stock/Noah/db/sql/pgwire"
 	"github.com/Ready-Stock/Noah/db/system"
+	"github.com/Ready-Stock/Noah/db/util"
 	"github.com/kataras/golog"
 	"github.com/pkg/errors"
 	"net"
@@ -45,7 +46,8 @@ type Server struct {
 
 }
 
-func Start(sctx *system.SContext) error  {
+func Start(sctx *system.SContext) (err error)  {
+	defer util.CatchPanic(&err)
 	addvertise_addr := fmt.Sprintf("127.0.0.1:%d", sctx.Flags.PostgresPort)
 	if addr, err := net.ResolveTCPAddr("tcp", addvertise_addr); err != nil {
 		return errors.Errorf("unable to resolve RPC address %q: %v", addvertise_addr, err)
