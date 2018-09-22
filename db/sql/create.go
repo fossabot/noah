@@ -32,6 +32,8 @@ func (stmt *CreateStatement) Execute(ex *connExecutor, res RestrictedCommandResu
 }
 
 func (stmt *CreateStatement) getTargetNodes(ex *connExecutor) ([]uint64, error) {
+	// A create statement would want to target all live nodes.
+
 	return []uint64{0, 1, 2, 3}, nil
 }
 

@@ -1,9 +1,9 @@
 package api
 
 import (
-	"fmt"
 	"github.com/Ready-Stock/Noah/db/system"
 	"github.com/kataras/iris"
+	"net/http"
 )
 
 func StartApp(sctx *system.SContext) {
@@ -59,9 +59,14 @@ func StartApp(sctx *system.SContext) {
 		}
 	})
 
-
+	app.Build()
+	srv := &http.Server{Handler: app, Addr: ":8080"} // you have to set Handler:app and Addr, see "iris-way" which does this automatically.
+	// http://localhost:8080/
+	// http://localhost:8080/mypath
+	println("Start a server listening on http://localhost:8080")
+	srv.ListenAndServe() // same as app.Run(iris.Addr(":8080"))
 
 
 	// listen and serve on http://0.0.0.0:8080.
-	app.Run(iris.Addr(fmt.Sprintf(":%d", sctx.Flags.HTTPPort)))
+	//app.Run(iris.Addr(fmt.Sprintf(":%d", sctx.Flags.HTTPPort)))
 }

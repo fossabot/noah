@@ -73,8 +73,10 @@ func main() {
 		SystemContext.NodeIDs = node_seq
 		fmt.Println("Starting admin application with port:", SystemContext.Flags.HTTPPort)
 		fmt.Println("Listening for connections on:", SystemContext.Flags.PostgresPort)
+
+		//go api.StartApp(&SystemContext)
 		coordinator.Start(&SystemContext)
-		//api.StartApp(&SystemContext)
+
 	case Tablet:
 		golog.Info("Starting tablet...")
 	}
