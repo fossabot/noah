@@ -32,6 +32,7 @@ package npgx
 import (
 	"crypto/md5"
 	"encoding/hex"
+	"github.com/Ready-Stock/Noah/db/sql"
 	"github.com/Ready-Stock/Noah/db/sql/driver"
 	"github.com/Ready-Stock/Noah/db/sql/pgio"
 	"github.com/Ready-Stock/Noah/db/sql/pgwire/pgproto"
@@ -96,6 +97,15 @@ type Conn struct {
 	// Public Vars
 	ConnInfo *types.ConnInfo
 }
+
+// PreparedStatement is a description of a prepared statement
+type PreparedStatement struct {
+	Name              string
+	SQL               string
+	FieldDescriptions []FieldDescription
+	ParameterOIDs     []pgtype.OID
+}
+
 
 func Connect(config driver.ConnConfig) (c *Conn, err error) {
 	return connect(config, minimalConnInfo)
@@ -373,4 +383,23 @@ func connInfoFromRows(rows *Rows, err error) (map[string]types.OID, error) {
 
 func (c *Conn) Query(sql string, args ...interface{}) ([][]byte, error) {
 
+}
+
+func (c *Conn) sendPreparedQuery(ps *PreparedStatement, arguments ...interface{}) (err error) {
+	if len(ps.ParameterOIDs) != len(arguments) {
+		return errors.New("Prepared statement \"%v\" requires %d parameters, but %d were provided").Format(ps.Name, len(ps.ParameterOIDs), len(arguments))
+	}
+
+	resultFormatCodes := make([]int16, len(ps.FieldDescriptions))
+	for i, fd := range ps.FieldDescriptions {
+		resultFormatCodes[i] = fd.FormatCode
+	}
+
+	buf, err := appendBind(c.wbuf, "", ps.Name, c.ConnInfo, ps.ParameterOIDs, arguments, resultFormatCodes)
+	if err != nil {
+		return err
+	}
+
+	buf = appendExecute(buf, "", 0)
+	buf = appendSync(buf)
 }
