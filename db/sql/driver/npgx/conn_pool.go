@@ -187,3 +187,15 @@ func (p *ConnPool) Release(conn *Conn) {
 	p.cond.L.Unlock()
 	p.cond.Signal()
 }
+
+// removeFromAllConnections Removes the given connection from the list.
+// It returns true if the connection was found and removed or false otherwise.
+func (p *ConnPool) removeFromAllConnections(conn *Conn) bool {
+	for i, c := range p.allConnections {
+		if conn == c {
+			p.allConnections = append(p.allConnections[:i], p.allConnections[i+1:]...)
+			return true
+		}
+	}
+	return false
+}

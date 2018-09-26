@@ -46,6 +46,7 @@
 package npgx
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"github.com/Ready-Stock/Noah/db/sql/pgwire/pgproto"
@@ -288,4 +289,55 @@ func (rows *Rows) Scan(dest ...interface{}) (err error) {
 	}
 
 	return nil
+}
+
+func (c *Conn) QueryEx(ctx context.Context, sql string, options *QueryExOptions) (rows *Rows, err error) {
+	c.lastActivityTime = time.Now()
+	rows = c.getRows(sql)
+
+	err = c.waitForPreviousCancelQuery(ctx)
+	if err != nil {
+		rows.fatal(err)
+		return rows, err
+	}
+
+	if err := c.ensureConnectionReadyForQuery(); err != nil {
+		rows.fatal(err)
+		return rows, err
+	}
+
+	if err := c.lock(); err != nil {
+		rows.fatal(err)
+		return rows, err
+	}
+	rows.unlockConn = true
+
+	err = c.initContext(ctx)
+	if err != nil {
+		rows.fatal(err)
+		return rows, rows.err
+	}
+
+	err = c.sendSimpleQuery(sql)
+	if err != nil {
+		rows.fatal(err)
+		return rows, err
+	}
+	return rows, nil
+}
+
+func (c *Conn) getRows(sql string) *Rows {
+	if len(c.preallocatedRows) == 0 {
+		c.preallocatedRows = make([]Rows, 64)
+	}
+
+	r := &c.preallocatedRows[len(c.preallocatedRows)-1]
+	c.preallocatedRows = c.preallocatedRows[0 : len(c.preallocatedRows)-1]
+
+	r.conn = c
+	r.startTime = c.lastActivityTime
+	r.sql = sql
+	r.args = make([]interface{}, 0)
+
+	return r
 }

@@ -154,7 +154,7 @@ type QueryExOptions struct {
 }
 
 func (c *Conn) Query(sql string) (*Rows, error) {
-	return nil, nil
+	return c.QueryEx(context.Background(), sql, nil)
 }
 
 // Exec executes sql. sql can be either a prepared statement name or an SQL string.
@@ -387,19 +387,19 @@ func (c *Conn) Close() (err error) {
 
 	err = c.conn.SetDeadline(time.Time{})
 	if err != nil {
-		golog.Warn("failed to clear deadlines to send close message. %s", err.Error())
+		golog.Warnf("failed to clear deadlines to send close message. %s", err.Error())
 		return err
 	}
 
 	_, err = c.conn.Write([]byte{'X', 0, 0, 0, 4})
 	if err != nil {
-		golog.Warn("failed to send terminate message. %s", err.Error())
+		golog.Warnf("failed to send terminate message. %s", err.Error())
 		return err
 	}
 
 	err = c.conn.SetReadDeadline(time.Now().Add(5 * time.Second))
 	if err != nil {
-		golog.Warn("failed to set read deadline to finish closing. %s", err.Error())
+		golog.Warnf("failed to set read deadline to finish closing. %s", err.Error())
 		return err
 	}
 
