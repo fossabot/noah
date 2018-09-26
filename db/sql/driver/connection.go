@@ -9,7 +9,7 @@ import (
 )
 
 type Connection interface {
-
+	QueryBytes(sql string, args ...interface{}) ([][]byte, error)
 }
 
 type ConnConfig struct {

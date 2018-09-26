@@ -46,73 +46,28 @@
 package npgx
 
 import (
-	"github.com/Ready-Stock/Noah/db/sql/types"
-	"math"
+	"database/sql/driver"
 	"reflect"
-	"time"
 )
 
-const (
-	copyData      = 'd'
-	copyFail      = 'f'
-	copyDone      = 'c'
-	varHeaderSize = 4
-)
+var valuerReflectType = reflect.TypeOf((*driver.Valuer)(nil)).Elem()
 
-type FieldDescription struct {
-	Name            string
-	Table           types.OID
-	AttributeNumber uint16
-	DataType        types.OID
-	DataTypeSize    int16
-	DataTypeName    string
-	Modifier        uint32
-	FormatCode      int16
-}
-
-
-func (fd FieldDescription) Length() (int64, bool) {
-	switch fd.DataType {
-	case types.TextOID, types.ByteaOID:
-		return math.MaxInt64, true
-	case types.VarcharOID, types.BPCharArrayOID:
-		return int64(fd.Modifier - varHeaderSize), true
-	default:
-		return 0, false
+// callValuerValue returns vr.Value(), with one exception:
+// If vr.Value is an auto-generated method on a pointer type and the
+// pointer is nil, it would panic at runtime in the panicwrap
+// method. Treat it like nil instead.
+// Issue 8415.
+//
+// This is so people can implement driver.Value on value types and
+// still use nil pointers to those types to mean nil/NULL, just like
+// string/*string.
+//
+// This function is mirrored in the database/sql/driver package.
+func callValuerValue(vr driver.Valuer) (v driver.Value, err error) {
+	if rv := reflect.ValueOf(vr); rv.Kind() == reflect.Ptr &&
+		rv.IsNil() &&
+		rv.Type().Elem().Implements(valuerReflectType) {
+		return nil, nil
 	}
-}
-
-func (fd FieldDescription) PrecisionScale() (precision, scale int64, ok bool) {
-	switch fd.DataType {
-	case types.NumericOID:
-		mod := fd.Modifier - varHeaderSize
-		precision = int64((mod >> 16) & 0xffff)
-		scale = int64(mod & 0xffff)
-		return precision, scale, true
-	default:
-		return 0, 0, false
-	}
-}
-
-func (fd FieldDescription) Type() reflect.Type {
-	switch fd.DataType {
-	case types.Int8OID:
-		return reflect.TypeOf(int64(0))
-	case types.Int4OID:
-		return reflect.TypeOf(int32(0))
-	case types.Int2OID:
-		return reflect.TypeOf(int16(0))
-	case types.VarcharOID, types.BPCharArrayOID, types.TextOID:
-		return reflect.TypeOf("")
-	case types.BoolOID:
-		return reflect.TypeOf(false)
-	case types.NumericOID:
-		return reflect.TypeOf(float64(0))
-	case types.DateOID, types.TimestampOID, types.TimestamptzOID:
-		return reflect.TypeOf(time.Time{})
-	case types.ByteaOID:
-		return reflect.TypeOf([]byte(nil))
-	default:
-		return reflect.TypeOf(new(interface{})).Elem()
-	}
+	return vr.Value()
 }

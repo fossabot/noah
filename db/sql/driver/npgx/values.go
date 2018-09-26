@@ -20,11 +20,27 @@
  *
  * Project: CockroachDB https://github.com/cockroachdb/cockroach
  * Copyright 2018 The Cockroach Authors.
- * License (Apache Public License 2.0) https://github.com/cockroachdb/cockroach/blob/master/LICENSE
+ * License (Apache License 2.0) https://github.com/cockroachdb/cockroach/blob/master/LICENSE
  *
+ * Project: Vitess https://github.com/vitessio/vitess
+ * Copyright 2018 Google Inc.
+ * License (Apache License 2.0) https://github.com/vitessio/vitess/blob/master/LICENSE
  *
+ * Project: Citus https://github.com/citusdata/citus
+ * Copyright 2018 Citus Data, Inc.
+ * License (GNU Affero General Public License v3.0) https://github.com/citusdata/citus/blob/master/LICENSE
  *
+ * Project: pg_query_go https://github.com/lfittl/pg_query_go
+ * Copyright 2018 Lukas Fittl
+ * License (3-Clause BSD) https://github.com/lfittl/pg_query_go/blob/master/LICENSE
  *
+ * Project: pgx https://github.com/jackc/pgx
+ * Copyright 2018 Jack Christensen
+ * License (MIT) https://github.com/jackc/pgx/blob/master/LICENSE
+ *
+ * Project: BadgerDB https://github.com/dgraph-io/badger
+ * Copyright 2018 Dgraph Labs, Inc. and Contributors
+ * License (MIT) https://github.com/dgraph-io/badger/blob/master/LICENSE
  */
 
 package npgx
