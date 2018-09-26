@@ -153,22 +153,18 @@ type QueryExOptions struct {
 	SimpleProtocol bool
 }
 
-func (c *Conn) Query(sql string, args ...interface{}) (*Rows, error) {
-	return nil, nil
-}
-
-func (c *Conn) QueryBytes(sql string, args ...interface{}) ([][]byte, error) {
+func (c *Conn) Query(sql string) (*Rows, error) {
 	return nil, nil
 }
 
 // Exec executes sql. sql can be either a prepared statement name or an SQL string.
 // arguments should be referenced positionally from the sql string as $1, $2, etc.
-func (c *Conn) Exec(sql string, arguments ...interface{}) (commandTag CommandTag, err error) {
-	return c.ExecEx(context.Background(), sql, nil, arguments...)
+func (c *Conn) Exec(sql string) (commandTag CommandTag, err error) {
+	return c.ExecEx(context.Background(), sql, nil)
 }
 
 
-func (c *Conn) ExecEx(ctx context.Context, sql string, options *QueryExOptions, arguments ...interface{}) (CommandTag, error) {
+func (c *Conn) ExecEx(ctx context.Context, sql string, options *QueryExOptions) (CommandTag, error) {
 	err := c.waitForPreviousCancelQuery(ctx)
 	if err != nil {
 		return "", err
@@ -182,11 +178,11 @@ func (c *Conn) ExecEx(ctx context.Context, sql string, options *QueryExOptions, 
 	startTime := time.Now()
 	c.lastActivityTime = startTime
 
-	commandTag, err := c.execEx(ctx, sql, options, arguments...)
+	commandTag, err := c.execEx(ctx, sql, options)
 	return commandTag, err
 }
 
-func (c *Conn) execEx(ctx context.Context, sql string, options *QueryExOptions, arguments ...interface{}) (commandTag CommandTag, err error) {
+func (c *Conn) execEx(ctx context.Context, sql string, options *QueryExOptions) (commandTag CommandTag, err error) {
 	err = c.initContext(ctx)
 	if err != nil {
 		return "", err
@@ -195,7 +191,7 @@ func (c *Conn) execEx(ctx context.Context, sql string, options *QueryExOptions, 
 		err = c.termContext(err)
 	}()
 
-	err = c.sanitizeAndSendSimpleQuery(sql, arguments...)
+	err = c.sendSimpleQuery(sql)
 	if err != nil {
 		return "", err
 	}
@@ -883,17 +879,6 @@ func (c *Conn) termContext(opErr error) error {
 
 	c.ctxInProgress = false
 	return err
-}
-
-func (c *Conn) sanitizeAndSendSimpleQuery(sql string) (err error) {
-	if c.RuntimeParams["standard_conforming_strings"] != "on" {
-		return errors.New("simple protocol queries must be run with standard_conforming_strings=on")
-	}
-
-	if c.RuntimeParams["client_encoding"] != "UTF8" {
-		return errors.New("simple protocol queries must be run with client_encoding=UTF8")
-	}
-	return c.sendSimpleQuery(sql)
 }
 
 func (c *Conn) sendPreparedQuery(ps *PreparedStatement, arguments ...interface{}) (err error) {
