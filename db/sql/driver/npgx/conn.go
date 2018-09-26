@@ -54,10 +54,14 @@ import (
 	"github.com/Ready-Stock/Noah/db/sql/pgio"
 	"github.com/Ready-Stock/Noah/db/sql/pgwire/pgproto"
 	"github.com/Ready-Stock/Noah/db/sql/types"
+	"github.com/Ready-Stock/pgx/pgtype"
 	"github.com/kataras/go-errors"
 	"github.com/kataras/golog"
 	"io"
 	"net"
+	"reflect"
+	"strconv"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -108,18 +112,24 @@ func init() {
 type DialFunc func(network, addr string) (net.Conn, error)
 
 type Conn struct {
-	conn                      net.Conn
-	wbuf                      []byte
-	lastActivityTime          time.Time // the last time the connection was used
-	config                    driver.ConnConfig
-	txStatus                  byte
-	status                    byte
-	mux                       sync.Mutex
-	frontend                  *pgproto.Frontend
-	causeOfDeath              error
-	pid                       uint32 // backend pid
-	secretKey                 uint32 // key to use to send a cancel query message to the server
-	pendingReadyForQueryCount int    // numer of ReadyForQuery messages expected
+	conn               net.Conn  // the underlying TCP or unix domain socket connection
+	lastActivityTime   time.Time // the last time the connection was used
+	wbuf               []byte
+	pid                uint32            // backend pid
+	secretKey          uint32            // key to use to send a cancel query message to the server
+	RuntimeParams      map[string]string // parameters that have been reported by the server
+	config             driver.ConnConfig        // config used when establishing this connection
+	txStatus           byte
+	preparedStatements map[string]*PreparedStatement
+	channels           map[string]struct{}
+	poolResetCount     int
+	preallocatedRows   []Rows
+
+	mux          sync.Mutex
+	status       byte // One of connStatus* constants
+	causeOfDeath error
+
+	pendingReadyForQueryCount int // numer of ReadyForQuery messages expected
 	cancelQueryInProgress     int32
 	cancelQueryCompleted      chan struct{}
 
@@ -128,8 +138,19 @@ type Conn struct {
 	doneChan      chan struct{}
 	closedChan    chan error
 
-	// Public Vars
 	ConnInfo *types.ConnInfo
+
+	frontend *pgproto.Frontend
+}
+
+type QueryExOptions struct {
+	// When ParameterOIDs are present and the query is not a prepared statement,
+	// then ParameterOIDs and ResultFormatCodes will be used to avoid an extra
+	// network round-trip.
+	ParameterOIDs     []types.OID
+	ResultFormatCodes []int16
+
+	SimpleProtocol bool
 }
 
 func (c *Conn) Query(sql string, args ...interface{}) (*Rows, error) {
@@ -139,6 +160,68 @@ func (c *Conn) Query(sql string, args ...interface{}) (*Rows, error) {
 func (c *Conn) QueryBytes(sql string, args ...interface{}) ([][]byte, error) {
 	return nil, nil
 }
+
+// Exec executes sql. sql can be either a prepared statement name or an SQL string.
+// arguments should be referenced positionally from the sql string as $1, $2, etc.
+func (c *Conn) Exec(sql string, arguments ...interface{}) (commandTag CommandTag, err error) {
+	return c.ExecEx(context.Background(), sql, nil, arguments...)
+}
+
+
+func (c *Conn) ExecEx(ctx context.Context, sql string, options *QueryExOptions, arguments ...interface{}) (CommandTag, error) {
+	err := c.waitForPreviousCancelQuery(ctx)
+	if err != nil {
+		return "", err
+	}
+
+	if err := c.lock(); err != nil {
+		return "", err
+	}
+	defer c.unlock()
+
+	startTime := time.Now()
+	c.lastActivityTime = startTime
+
+	commandTag, err := c.execEx(ctx, sql, options, arguments...)
+	return commandTag, err
+}
+
+func (c *Conn) execEx(ctx context.Context, sql string, options *QueryExOptions, arguments ...interface{}) (commandTag CommandTag, err error) {
+	err = c.initContext(ctx)
+	if err != nil {
+		return "", err
+	}
+	defer func() {
+		err = c.termContext(err)
+	}()
+
+	err = c.sanitizeAndSendSimpleQuery(sql, arguments...)
+	if err != nil {
+		return "", err
+	}
+
+	var softErr error
+
+	for {
+		msg, err := c.rxMsg()
+		if err != nil {
+			return commandTag, err
+		}
+
+		switch msg := msg.(type) {
+		case *pgproto.ReadyForQuery:
+			c.rxReadyForQuery(msg)
+			return commandTag, softErr
+		case *pgproto.CommandComplete:
+			commandTag = CommandTag(msg.CommandTag)
+		default:
+			if e := c.processContextFreeMsg(msg); e != nil && softErr == nil {
+				softErr = e
+			}
+		}
+	}
+}
+
 
 // Prepare creates a prepared statement with name and sql. sql can contain placeholders
 // for bound parameters. These placeholders are referenced positional as $1, $2, etc.
@@ -173,6 +256,91 @@ func (c *Conn) PrepareEx(ctx context.Context, name, sql string, opts *PrepareExO
 	return ps, err
 }
 
+func (c *Conn) prepareEx(name, sql string, opts *PrepareExOptions) (ps *PreparedStatement, err error) {
+	if name != "" {
+		if ps, ok := c.preparedStatements[name]; ok && ps.SQL == sql {
+			return ps, nil
+		}
+	}
+
+	if err := c.ensureConnectionReadyForQuery(); err != nil {
+		return nil, err
+	}
+
+	defer func() {
+		if err != nil {
+			golog.Errorf("prepareEx failed. err: %s name: %s sql: %s", err.Error(), name, sql)
+		}
+	}()
+
+	if opts == nil {
+		opts = &PrepareExOptions{}
+	}
+
+	if len(opts.ParameterOIDs) > 65535 {
+		return nil, errors.New("Number of PrepareExOptions ParameterOIDs must be between 0 and 65535, received %d").Format(len(opts.ParameterOIDs))
+	}
+
+	buf := appendParse(c.wbuf, name, sql, opts.ParameterOIDs)
+	buf = appendDescribe(buf, 'S', name)
+	buf = appendSync(buf)
+
+	n, err := c.conn.Write(buf)
+	if err != nil {
+		if fatalWriteErr(n, err) {
+			c.die(err)
+		}
+		return nil, err
+	}
+	c.pendingReadyForQueryCount++
+
+	ps = &PreparedStatement{Name: name, SQL: sql}
+
+	var softErr error
+
+	for {
+		msg, err := c.rxMsg()
+		if err != nil {
+			return nil, err
+		}
+
+		switch msg := msg.(type) {
+		case *pgproto.ParameterDescription:
+			ps.ParameterOIDs = c.rxParameterDescription(msg)
+
+			if len(ps.ParameterOIDs) > 65535 && softErr == nil {
+				softErr = errors.New("PostgreSQL supports maximum of 65535 parameters, received %d").Format(len(ps.ParameterOIDs))
+			}
+		case *pgproto.RowDescription:
+			ps.FieldDescriptions = c.rxRowDescription(msg)
+			for i := range ps.FieldDescriptions {
+				if dt, ok := c.ConnInfo.DataTypeForOID(ps.FieldDescriptions[i].DataType); ok {
+					ps.FieldDescriptions[i].DataTypeName = dt.Name
+					if _, ok := dt.Value.(pgtype.BinaryDecoder); ok {
+						ps.FieldDescriptions[i].FormatCode = BinaryFormatCode
+					} else {
+						ps.FieldDescriptions[i].FormatCode = TextFormatCode
+					}
+				} else {
+					return nil, errors.New("unknown oid: %d").Format(ps.FieldDescriptions[i].DataType)
+				}
+			}
+		case *pgproto.ReadyForQuery:
+			c.rxReadyForQuery(msg)
+
+			if softErr == nil {
+				c.preparedStatements[name] = ps
+			}
+
+			return ps, softErr
+		default:
+			if e := c.processContextFreeMsg(msg); e != nil && softErr == nil {
+				softErr = e
+			}
+		}
+	}
+}
+
 // PreparedStatement is a description of a prepared statement
 type PreparedStatement struct {
 	Name              string
@@ -184,6 +352,21 @@ type PreparedStatement struct {
 // PrepareExOptions is an option struct that can be passed to PrepareEx
 type PrepareExOptions struct {
 	ParameterOIDs []types.OID
+}
+
+// CommandTag is the result of an Exec function
+type CommandTag string
+
+// RowsAffected returns the number of rows affected. If the CommandTag was not
+// for a row affecting command (such as "CREATE TABLE") then it returns 0
+func (ct CommandTag) RowsAffected() int64 {
+	s := string(ct)
+	index := strings.LastIndex(s, " ")
+	if index == -1 {
+		return 0
+	}
+	n, _ := strconv.ParseInt(s[index+1:], 10, 64)
+	return n
 }
 
 func Connect(config driver.ConnConfig) (c *Conn, err error) {
@@ -257,6 +440,30 @@ func connect(config driver.ConnConfig, connInfo *types.ConnInfo) (c *Conn, err e
 	} else {
 		return c, nil
 	}
+}
+
+func (c *Conn) lock() error {
+	c.mux.Lock()
+	defer c.mux.Unlock()
+
+	if c.status != connStatusIdle {
+		return ErrConnBusy
+	}
+
+	c.status = connStatusBusy
+	return nil
+}
+
+func (c *Conn) unlock() error {
+	c.mux.Lock()
+	defer c.mux.Unlock()
+
+	if c.status != connStatusBusy {
+		return errors.New("unlock conn that is not busy")
+	}
+
+	c.status = connStatusIdle
+	return nil
 }
 
 func (c *Conn) connect(config driver.ConnConfig, network, address string, dial DialFunc) (err error) {
@@ -350,11 +557,6 @@ func (c *Conn) initConnInfo() (err error) {
 		return err
 	}
 
-	// Check if CrateDB specific approach might still allow us to connect.
-	if connInfo, err = c.crateDBTypesQuery(err); err == nil {
-		c.ConnInfo = connInfo
-	}
-
 	return err
 }
 
@@ -392,6 +594,89 @@ where (
 	return cinfo, nil
 }
 
+// initConnInfoEnumArray introspects for arrays of enums and registers a data type for them.
+func (c *Conn) initConnInfoEnumArray(cinfo *types.ConnInfo) error {
+	nameOIDs := make(map[string]types.OID, 16)
+	rows, err := c.Query(`select t.oid, t.typname
+from pg_type t
+  join pg_type base_type on t.typelem=base_type.oid
+where t.typtype = 'b'
+  and base_type.typtype = 'e'`)
+	if err != nil {
+		return err
+	}
+
+	for rows.Next() {
+		var oid types.OID
+		var name types.Text
+		if err := rows.Scan(&oid, &name); err != nil {
+			return err
+		}
+
+		nameOIDs[name.String] = oid
+	}
+
+	if rows.Err() != nil {
+		return rows.Err()
+	}
+
+	for name, oid := range nameOIDs {
+		cinfo.RegisterDataType(types.DataType{
+			Value: &types.EnumArray{},
+			Name:  name,
+			OID:   oid,
+		})
+	}
+
+	return nil
+}
+
+// initConnInfoDomains introspects for domains and registers a data type for them.
+func (c *Conn) initConnInfoDomains(cinfo *types.ConnInfo) error {
+	type domain struct {
+		oid     types.OID
+		name    types.Text
+		baseOID types.OID
+	}
+
+	domains := make([]*domain, 0, 16)
+
+	rows, err := c.Query(`select t.oid, t.typname, t.typbasetype
+from pg_type t
+  join pg_type base_type on t.typbasetype=base_type.oid
+where t.typtype = 'd'
+  and base_type.typtype = 'b'`)
+	if err != nil {
+		return err
+	}
+
+	for rows.Next() {
+		var d domain
+		if err := rows.Scan(&d.oid, &d.name, &d.baseOID); err != nil {
+			return err
+		}
+
+		domains = append(domains, &d)
+	}
+
+	if rows.Err() != nil {
+		return rows.Err()
+	}
+
+	for _, d := range domains {
+		baseDataType, ok := cinfo.DataTypeForOID(d.baseOID)
+		if ok {
+			cinfo.RegisterDataType(types.DataType{
+				Value: reflect.New(reflect.ValueOf(baseDataType.Value).Elem().Type()).Interface().(types.Value),
+				Name:  d.name.String,
+				OID:   d.oid,
+			})
+		}
+	}
+
+	return nil
+}
+
 func (c *Conn) rxMsg() (pgproto.BackendMessage, error) {
 	if !c.IsAlive() {
 		return nil, ErrDeadConn
@@ -423,8 +708,15 @@ func (c *Conn) rxAuthenticationX(msg *pgproto.Authentication) (err error) {
 	default:
 		err = errors.New("Received unknown authentication message")
 	}
-
 	return
+}
+
+func (c *Conn) rxParameterDescription(msg *pgproto.ParameterDescription) []types.OID {
+	parameters := make([]types.OID, len(msg.ParameterOIDs))
+	for i := 0; i < len(parameters); i++ {
+		parameters[i] = types.OID(msg.ParameterOIDs[i])
+	}
+	return parameters
 }
 
 func hexMD5(s string) string {
@@ -591,6 +883,17 @@ func (c *Conn) termContext(opErr error) error {
 
 	c.ctxInProgress = false
 	return err
+}
+
+func (c *Conn) sanitizeAndSendSimpleQuery(sql string) (err error) {
+	if c.RuntimeParams["standard_conforming_strings"] != "on" {
+		return errors.New("simple protocol queries must be run with standard_conforming_strings=on")
+	}
+
+	if c.RuntimeParams["client_encoding"] != "UTF8" {
+		return errors.New("simple protocol queries must be run with client_encoding=UTF8")
+	}
+	return c.sendSimpleQuery(sql)
 }
 
 func (c *Conn) sendPreparedQuery(ps *PreparedStatement, arguments ...interface{}) (err error) {

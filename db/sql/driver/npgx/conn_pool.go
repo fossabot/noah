@@ -157,3 +157,33 @@ func (p *ConnPool) afterConnectionCreated(c *Conn) (*Conn, error) {
 
 	return c, nil
 }
+
+
+// Release gives up use of a connection.
+func (p *ConnPool) Release(conn *Conn) {
+	if conn.ctxInProgress {
+		panic("should never release when context is in progress")
+	}
+
+	if conn.txStatus != 'I' {
+		conn.Exec("rollback")
+	}
+
+
+	p.cond.L.Lock()
+
+	if conn.poolResetCount != p.resetCount {
+		conn.Close()
+		p.cond.L.Unlock()
+		p.cond.Signal()
+		return
+	}
+
+	if conn.IsAlive() {
+		p.availableConnections = append(p.availableConnections, conn)
+	} else {
+		p.removeFromAllConnections(conn)
+	}
+	p.cond.L.Unlock()
+	p.cond.Signal()
+}

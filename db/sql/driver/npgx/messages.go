@@ -49,7 +49,6 @@ import (
 	"github.com/Ready-Stock/Noah/db/sql/pgio"
 	"github.com/Ready-Stock/Noah/db/sql/pgwire/pgproto"
 	"github.com/Ready-Stock/Noah/db/sql/types"
-	"github.com/Ready-Stock/pgx/pgtype"
 )
 
 
