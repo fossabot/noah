@@ -52,6 +52,7 @@ import (
 	"github.com/Ready-Stock/Noah/db/sql/pgwire/pgproto"
 	"github.com/Ready-Stock/Noah/db/sql/types"
 	"github.com/pkg/errors"
+	"reflect"
 	"time"
 )
 
@@ -324,6 +325,61 @@ func (c *Conn) QueryEx(ctx context.Context, sql string, options *QueryExOptions)
 		return rows, err
 	}
 	return rows, nil
+}
+
+// Values returns an array of the row values
+func (rows *Rows) Values() ([]interface{}, error) {
+	if rows.closed {
+		return nil, errors.New("rows is closed")
+	}
+
+	values := make([]interface{}, 0, len(rows.fields))
+
+	for range rows.fields {
+		buf, fd, _ := rows.nextColumn()
+
+		if buf == nil {
+			values = append(values, nil)
+			continue
+		}
+
+		if dt, ok := rows.conn.ConnInfo.DataTypeForOID(fd.DataType); ok {
+			value := reflect.New(reflect.ValueOf(dt.Value).Elem().Type()).Interface().(types.Value)
+
+			switch fd.FormatCode {
+			case TextFormatCode:
+				decoder := value.(types.TextDecoder)
+				if decoder == nil {
+					decoder = &types.GenericText{}
+				}
+				err := decoder.DecodeText(rows.conn.ConnInfo, buf)
+				if err != nil {
+					rows.fatal(err)
+				}
+				values = append(values, decoder.(types.Value).Get())
+			case BinaryFormatCode:
+				decoder := value.(types.BinaryDecoder)
+				if decoder == nil {
+					decoder = &types.GenericBinary{}
+				}
+				err := decoder.DecodeBinary(rows.conn.ConnInfo, buf)
+				if err != nil {
+					rows.fatal(err)
+				}
+				values = append(values, value.Get())
+			default:
+				rows.fatal(errors.New("Unknown format code"))
+			}
+		} else {
+			rows.fatal(errors.New("Unknown type"))
+		}
+
+		if rows.Err() != nil {
+			return nil, rows.Err()
+		}
+	}
+
+	return values, rows.Err()
 }
 
 func (c *Conn) getRows(sql string) *Rows {

@@ -53,11 +53,19 @@ import (
 
 var (
 	ConnectionConfig = driver.ConnConfig{
-		Host:"localhost",
-		Port:5432,
-		User:"postgres",
-		Password:"Spring!2016",
-		Database:"postgres",
+		Host:     "localhost",
+		Port:     5432,
+		User:     "postgres",
+		Password: "Spring!2016",
+		Database: "postgres",
+	}
+
+	BadConnectionConfig = driver.ConnConfig{
+		Host:     "localhost",
+		Port:     123,
+		User:     "postgres",
+		Password: "Spring!2016",
+		Database: "postgres",
 	}
 )
 
@@ -67,10 +75,34 @@ func Test_Connect(t *testing.T) {
 		t.Error(err)
 		t.Fail()
 	}
-	d.Query("SELECT 1;")
+	r, err := d.Query("SELECT 1;")
+	if err != nil {
+		t.Error(err)
+		t.Fail()
+	}
+	for r.Next() {
+		fields, err := r.Values()
+		if err != nil {
+			t.Error(err)
+			t.Fail()
+		}
+		if len(fields) == 1 {
+			if fields[0].(int32) != 1 {
+				t.Error("Unexpected result!")
+				t.Fail()
+			}
+		}
+	}
 	err = d.Close()
 	if err != nil {
 		t.Error(err)
+		t.Fail()
+	}
+}
+
+func Test_BadConnection(t *testing.T) {
+	_, err := npgx.Connect(BadConnectionConfig)
+	if err == nil {
 		t.Fail()
 	}
 }
