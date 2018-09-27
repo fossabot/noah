@@ -118,7 +118,7 @@ type Conn struct {
 	pid                uint32            // backend pid
 	secretKey          uint32            // key to use to send a cancel query message to the server
 	RuntimeParams      map[string]string // parameters that have been reported by the server
-	config             driver.ConnConfig        // config used when establishing this connection
+	config             driver.ConnConfig // config used when establishing this connection
 	txStatus           byte
 	preparedStatements map[string]*PreparedStatement
 	channels           map[string]struct{}
@@ -162,7 +162,6 @@ func (c *Conn) Query(sql string) (*Rows, error) {
 func (c *Conn) Exec(sql string) (commandTag CommandTag, err error) {
 	return c.ExecEx(context.Background(), sql, nil)
 }
-
 
 func (c *Conn) ExecEx(ctx context.Context, sql string, options *QueryExOptions) (CommandTag, error) {
 	err := c.waitForPreviousCancelQuery(ctx)
@@ -217,7 +216,6 @@ func (c *Conn) execEx(ctx context.Context, sql string, options *QueryExOptions) 
 		}
 	}
 }
-
 
 // Prepare creates a prepared statement with name and sql. sql can contain placeholders
 // for bound parameters. These placeholders are referenced positional as $1, $2, etc.
@@ -557,33 +555,34 @@ func (c *Conn) initConnInfo() (err error) {
 }
 
 func initPostgresql(c *Conn) (*types.ConnInfo, error) {
-	const (
-		namedOIDQuery = `select t.oid,
-	case when nsp.nspname in ('pg_catalog', 'public') then t.typname
-		else nsp.nspname||'.'||t.typname
-	end
-from pg_type t
-left join pg_type base_type on t.typelem=base_type.oid
-left join pg_namespace nsp on t.typnamespace=nsp.oid
-where (
-	  t.typtype in('b', 'p', 'r', 'e')
-	  and (base_type.oid is null or base_type.typtype in('b', 'p', 'r'))
-	)`
-	)
-
-	nameOIDs, err := connInfoFromRows(c.Query(namedOIDQuery))
-	if err != nil {
-		return nil, err
-	}
+	// 	const (
+	// 		namedOIDQuery = `select t.oid,
+	// 	case when nsp.nspname in ('pg_catalog', 'public') then t.typname
+	// 		else nsp.nspname||'.'||t.typname
+	// 	end
+	// from pg_type t
+	// left join pg_type base_type on t.typelem=base_type.oid
+	// left join pg_namespace nsp on t.typnamespace=nsp.oid
+	// where (
+	// 	  t.typtype in('b', 'p', 'r', 'e')
+	// 	  and (base_type.oid is null or base_type.typtype in('b', 'p', 'r'))
+	// 	)`
+	// 	)
+	//
+	// 	nameOIDs, err := connInfoFromRows(c.Query(namedOIDQuery))
+	// 	if err != nil {
+	// 		return nil, err
+	// 	}
+	nameOIDs := NameOIDs
 
 	cinfo := types.NewConnInfo()
 	cinfo.InitializeDataTypes(nameOIDs)
 
-	if err = c.initConnInfoEnumArray(cinfo); err != nil {
+	if err := c.initConnInfoEnumArray(cinfo); err != nil {
 		return nil, err
 	}
 
-	if err = c.initConnInfoDomains(cinfo); err != nil {
+	if err := c.initConnInfoDomains(cinfo); err != nil {
 		return nil, err
 	}
 
@@ -770,7 +769,6 @@ func connInfoFromRows(rows *Rows, err error) (map[string]types.OID, error) {
 		return nil, err
 	}
 	defer rows.Close()
-
 	nameOIDs := make(map[string]types.OID, 256)
 	for rows.Next() {
 		var oid types.OID
@@ -781,7 +779,6 @@ func connInfoFromRows(rows *Rows, err error) (map[string]types.OID, error) {
 
 		nameOIDs[name.String] = oid
 	}
-
 	if err = rows.Err(); err != nil {
 		return nil, err
 	}
