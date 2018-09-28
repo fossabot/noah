@@ -100,6 +100,38 @@ func Test_Connect(t *testing.T) {
 	}
 }
 
+func Test_CITEXT(t *testing.T) {
+	d, err := npgx.Connect(ConnectionConfig)
+	if err != nil {
+		t.Error(err)
+		t.Fail()
+	}
+	r, err := d.Query("SELECT 123::CITEXT;")
+	if err != nil {
+		t.Error(err)
+		t.Fail()
+	}
+	for r.Next() {
+		fields, err := r.Values()
+		if err != nil {
+			t.Error(err)
+			t.Fail()
+		}
+		if len(fields) == 1 {
+			if fields[0].(string) != "123" {
+				t.Error("Unexpected result!")
+				t.Fail()
+			}
+		}
+	}
+	err = d.Close()
+	if err != nil {
+		t.Error(err)
+		t.Fail()
+	}
+}
+
+
 func Test_BadConnection(t *testing.T) {
 	_, err := npgx.Connect(BadConnectionConfig)
 	if err == nil {

@@ -569,19 +569,19 @@ where (
 	)`
 	)
 
-	nameOIDs, err := connInfoFromRows(c.Query(namedOIDQuery))
-	if err != nil {
-		return nil, err
-	}
+	// nameOIDs, err := connInfoFromRows(c.Query(namedOIDQuery))
+	// if err != nil {
+	// 	return nil, err
+	// }
 
 	cinfo := types.NewConnInfo()
-	cinfo.InitializeDataTypes(nameOIDs)
+	cinfo.InitializeDataTypes(NameOIDs)
 
-	if err = c.initConnInfoEnumArray(cinfo); err != nil {
+	if err := c.initConnInfoEnumArray(cinfo); err != nil {
 		return nil, err
 	}
 
-	if err = c.initConnInfoDomains(cinfo); err != nil {
+	if err := c.initConnInfoDomains(cinfo); err != nil {
 		return nil, err
 	}
 

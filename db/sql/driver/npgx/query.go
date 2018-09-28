@@ -139,8 +139,10 @@ func (rows *Rows) Next() bool {
 					rows.fields[i].DataTypeName = dt.Name
 					rows.fields[i].FormatCode = TextFormatCode
 				} else {
-					rows.fatal(errors.Errorf("unknown oid: %d", rows.fields[i].DataType))
-					return false
+					rows.fields[i].DataTypeName = "text"
+					rows.fields[i].FormatCode = TextFormatCode
+					//rows.fatal(errors.Errorf("unknown oid: %d", rows.fields[i].DataType))
+					//return false
 				}
 			}
 		case *pgproto.DataRow:
@@ -345,7 +347,6 @@ func (rows *Rows) Values() ([]interface{}, error) {
 
 		if dt, ok := rows.conn.ConnInfo.DataTypeForOID(fd.DataType); ok {
 			value := reflect.New(reflect.ValueOf(dt.Value).Elem().Type()).Interface().(types.Value)
-
 			switch fd.FormatCode {
 			case TextFormatCode:
 				decoder := value.(types.TextDecoder)
@@ -371,7 +372,24 @@ func (rows *Rows) Values() ([]interface{}, error) {
 				rows.fatal(errors.New("Unknown format code"))
 			}
 		} else {
-			rows.fatal(errors.New("Unknown type"))
+			value := types.Text{}
+			switch fd.FormatCode {
+			case TextFormatCode:
+				err := value.DecodeText(rows.conn.ConnInfo, buf)
+				if err != nil {
+					rows.fatal(err)
+				}
+				values = append(values, value.Get())
+			case BinaryFormatCode:
+				err := value.DecodeBinary(rows.conn.ConnInfo, buf)
+				if err != nil {
+					rows.fatal(err)
+				}
+				values = append(values, value.Get())
+			default:
+				rows.fatal(errors.New("Unknown format code"))
+			}
+			//rows.fatal(errors.New("Unknown type"))
 		}
 
 		if rows.Err() != nil {
