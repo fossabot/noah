@@ -411,7 +411,7 @@ func (c *Conn) Close() (err error) {
 
 func connect(config driver.ConnConfig, connInfo *types.ConnInfo) (c *Conn, err error) {
 	c = new(Conn)
-
+	c.status = connStatusUnitialized
 	c.config = config
 	c.ConnInfo = connInfo
 
@@ -573,10 +573,9 @@ func initPostgresql(c *Conn) (*types.ConnInfo, error) {
 	// 	if err != nil {
 	// 		return nil, err
 	// 	}
-	nameOIDs := NameOIDs
 
 	cinfo := types.NewConnInfo()
-	cinfo.InitializeDataTypes(nameOIDs)
+	cinfo.InitializeDataTypes(NameOIDs)
 
 	if err := c.initConnInfoEnumArray(cinfo); err != nil {
 		return nil, err
@@ -762,28 +761,6 @@ func (c *Conn) processContextFreeMsg(msg pgproto.BackendMessage) (err error) {
 	}
 
 	return nil
-}
-
-func connInfoFromRows(rows *Rows, err error) (map[string]types.OID, error) {
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	nameOIDs := make(map[string]types.OID, 256)
-	for rows.Next() {
-		var oid types.OID
-		var name types.Text
-		if err = rows.Scan(&oid, &name); err != nil {
-			return nil, err
-		}
-
-		nameOIDs[name.String] = oid
-	}
-	if err = rows.Err(); err != nil {
-		return nil, err
-	}
-
-	return nameOIDs, err
 }
 
 func (c *Conn) ensureConnectionReadyForQuery() error {
