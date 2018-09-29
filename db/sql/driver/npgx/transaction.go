@@ -50,7 +50,15 @@ import (
 	"context"
 	"fmt"
 	"github.com/kataras/go-errors"
+	"time"
 )
+
+// ErrTxCommitRollback occurs when an error has occurred in a transaction and
+// Commit() is called. PostgreSQL accepts COMMIT on aborted transactions, but
+// it is treated as ROLLBACK.
+var ErrTxCommitRollback = errors.New("commit unexpectedly resulted in rollback")
+var ErrTxClosed = errors.New("tx is closed")
+var ErrTxInFailure = errors.New("tx failed")
 
 type TransactionIsoLevel string
 
@@ -143,4 +151,66 @@ func (txOptions *TransactionOptions) beginSQL() string {
 	}
 
 	return buf.String()
+}
+
+// Commit commits the transaction
+func (tx *Transaction) Commit() error {
+	return tx.CommitEx(context.Background())
+}
+
+// CommitEx commits the transaction with a context.
+func (tx *Transaction) CommitEx(ctx context.Context) error {
+	if tx.status != TransactionStatusInProgress {
+		return ErrTxClosed
+	}
+
+	commandTag, err := tx.conn.ExecEx(ctx, "commit", nil)
+	if err == nil && commandTag == "COMMIT" {
+		tx.status = TransactionStatusCommitSuccess
+	} else if err == nil && commandTag == "ROLLBACK" {
+		tx.status = TransactionStatusCommitFailure
+		tx.err = ErrTxCommitRollback
+	} else {
+		tx.status = TransactionStatusCommitFailure
+		tx.err = err
+		// A commit failure leaves the connection in an undefined state
+		tx.conn.die(errors.New("commit failed"))
+	}
+
+	if tx.connPool != nil {
+		tx.connPool.Release(tx.conn)
+	}
+
+	return tx.err
+}
+
+// Rollback rolls back the transaction. Rollback will return ErrTxClosed if the
+// Tx is already closed, but is otherwise safe to call multiple times. Hence, a
+// defer tx.Rollback() is safe even if tx.Commit() will be called first in a
+// non-error condition.
+func (tx *Transaction) Rollback() error {
+	ctx, _ := context.WithTimeout(context.Background(), 15*time.Second)
+	return tx.RollbackEx(ctx)
+}
+
+// RollbackEx is the context version of Rollback
+func (tx *Transaction) RollbackEx(ctx context.Context) error {
+	if tx.status != TransactionStatusInProgress {
+		return ErrTxClosed
+	}
+
+	_, tx.err = tx.conn.ExecEx(ctx, "rollback", nil)
+	if tx.err == nil {
+		tx.status = TransactionStatusRollbackSuccess
+	} else {
+		tx.status = TransactionStatusRollbackFailure
+		// A rollback failure leaves the connection in an undefined state
+		tx.conn.die(errors.New("rollback failed"))
+	}
+
+	if tx.connPool != nil {
+		tx.connPool.Release(tx.conn)
+	}
+
+	return tx.err
 }
