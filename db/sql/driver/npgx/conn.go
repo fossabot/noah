@@ -545,8 +545,7 @@ func (c *Conn) initConnInfo() (err error) {
 	var (
 		connInfo *types.ConnInfo
 	)
-
-	if connInfo, err = initPostgresql(c); err == nil {
+	if connInfo, err = initPostgresql(); err == nil {
 		c.ConnInfo = connInfo
 		return err
 	}
@@ -554,37 +553,9 @@ func (c *Conn) initConnInfo() (err error) {
 	return err
 }
 
-func initPostgresql(c *Conn) (*types.ConnInfo, error) {
-	const (
-		namedOIDQuery = `select t.oid,
-	case when nsp.nspname in ('pg_catalog', 'public') then t.typname
-		else nsp.nspname||'.'||t.typname
-	end
-from pg_type t
-left join pg_type base_type on t.typelem=base_type.oid
-left join pg_namespace nsp on t.typnamespace=nsp.oid
-where (
-	  t.typtype in('b', 'p', 'r', 'e')
-	  and (base_type.oid is null or base_type.typtype in('b', 'p', 'r'))
-	)`
-	)
-
-	// nameOIDs, err := connInfoFromRows(c.Query(namedOIDQuery))
-	// if err != nil {
-	// 	return nil, err
-	// }
-
+func initPostgresql() (*types.ConnInfo, error) {
 	cinfo := types.NewConnInfo()
 	cinfo.InitializeDataTypes(NameOIDs)
-
-	if err := c.initConnInfoEnumArray(cinfo); err != nil {
-		return nil, err
-	}
-
-	if err := c.initConnInfoDomains(cinfo); err != nil {
-		return nil, err
-	}
-
 	return cinfo, nil
 }
 
@@ -975,28 +946,4 @@ func (c *Conn) waitForPreviousCancelQuery(ctx context.Context) error {
 	case <-ctx.Done():
 		return ctx.Err()
 	}
-}
-
-func connInfoFromRows(rows *Rows, err error) (map[string]types.OID, error) {
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	nameOIDs := make(map[string]types.OID, 256)
-	for rows.Next() {
-		var oid types.OID
-		var name types.Text
-		if err = rows.Scan(&oid, &name); err != nil {
-			return nil, err
-		}
-
-		nameOIDs[name.String] = oid
-	}
-
-	if err = rows.Err(); err != nil {
-		return nil, err
-	}
-
-	return nameOIDs, err
 }

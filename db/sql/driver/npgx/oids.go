@@ -213,8 +213,5 @@ var (
 		"index_am_handler": 325,
 		"tsm_handler":      3310,
 		"anyrange":         3831,
-		//"citext":           19995,
-		//"_citext":          20000,
-		"user_role":        63362,
 	}
 )
