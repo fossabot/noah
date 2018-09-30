@@ -110,7 +110,7 @@ type Transaction struct {
 	connPool              *ConnPool
 	err                   error
 	status                int8
-	twoPhaseTransactionId uint64
+	twoPhaseTransactionId *uint64
 }
 
 type TransactionOptions struct {
@@ -160,12 +160,58 @@ func (txOptions *TransactionOptions) beginSQL() string {
 	return buf.String()
 }
 
-func (tx *Transaction) PrepareTwoPhase(ctx context.Context, transactionId uint64) error {
+func (tx *Transaction) PrepareTwoPhase(transactionId uint64) error {
+	return tx.PrepareTwoPhaseEx(context.Background(), transactionId)
+}
+
+func (tx *Transaction) PrepareTwoPhaseEx(ctx context.Context, transactionId uint64) error {
 	if tx.status != TransactionStatusInProgress {
 		return ErrTxClosed
 	}
 	commandTag, err := tx.conn.ExecEx(ctx, fmt.Sprintf("prepare transaction '%d';", transactionId), nil)
+	if err == nil && commandTag == "" { // I don't know yet what the command tag will be for this query.
+		tx.status = TransactionStatusTwoPhasePrepared
+		tx.twoPhaseTransactionId = &transactionId
+	} else {
+		tx.status = TransactionStatusTwoPhasePreparedFailure
+		tx.err = err
+		tx.conn.die(errors.New("prepare two-phase commit failed"))
+	}
 
+	if tx.connPool != nil {
+		tx.connPool.Release(tx.conn)
+	}
+
+	return tx.err
+}
+
+// If there is a two-phase transaction ID associated with this transaction, commit that.
+// If there is not, throw an error.
+func (tx *Transaction) CommitTwoPhase() error {
+	if tx.twoPhaseTransactionId == nil {
+		return errors.New("not in two-phase transaction")
+	}
+	return tx.CommitTwoPhaseEx(context.Background(), *tx.twoPhaseTransactionId)
+}
+
+// If there is not a two-phase transaction ID associated with this transaction ->
+// you can specify a transaction ID and if it exists on the target server, it will be committed.
+func (tx *Transaction) CommitTwoPhaseEx(ctx context.Context, transactionId uint64) error {
+	commandTag, err := tx.conn.ExecEx(ctx, fmt.Sprintf("commit prepared '%d';", transactionId), nil)
+	if err == nil && commandTag == "" { // I don't know yet what the command tag will be for this query.
+		tx.status = TransactionStatusTwoPhasePrepared
+		tx.twoPhaseTransactionId = &transactionId
+	} else {
+		tx.status = TransactionStatusTwoPhasePreparedFailure
+		tx.err = err
+		tx.conn.die(errors.New("prepare two-phase commit failed"))
+	}
+
+	if tx.connPool != nil {
+		tx.connPool.Release(tx.conn)
+	}
+
+	return tx.err
 }
 
 // Commit commits the transaction
