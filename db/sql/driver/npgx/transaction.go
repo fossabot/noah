@@ -153,6 +153,15 @@ func (txOptions *TransactionOptions) beginSQL() string {
 	return buf.String()
 }
 
+func (tx *Transaction) PrepareTwoPhase() error {
+	return tx.PrepareTwoPhaseEx(context.Background(), fmt.Sprintf("npgx-%d", time.Now().Unix()))
+}
+
+func (tx *Transaction) PrepareTwoPhaseEx(ctx context.Context, transactionName string) error {
+
+}
+
+
 // Commit commits the transaction
 func (tx *Transaction) Commit() error {
 	return tx.CommitEx(context.Background())
