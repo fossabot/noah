@@ -54,6 +54,7 @@ import (
 	"fmt"
 	"github.com/Ready-Stock/Noah/db/coordinator"
 	"github.com/Ready-Stock/Noah/db/system"
+	"github.com/Ready-Stock/Noah/db/util/snowflake"
 	"github.com/Ready-Stock/badger"
 	"github.com/kataras/golog"
 )
@@ -91,6 +92,7 @@ func main() {
 				DataDirectory: DataDirectory,
 				WalDirectory:  WalDirectory,
 			},
+			Snowflake: snowflake.NewSnowflake(1),
 		}
 
 		opts := badger.DefaultOptions

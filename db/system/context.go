@@ -52,6 +52,7 @@ package system
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/Ready-Stock/Noah/db/util/snowflake"
 	"github.com/Ready-Stock/badger"
 	"github.com/ahmetb/go-linq"
 	"github.com/kataras/go-errors"
@@ -67,6 +68,7 @@ type SContext struct {
 	Badger    *badger.DB
 	WalBadger *badger.DB
 	NodeIDs   *badger.Sequence
+	Snowflake *snowflake.Snowflake
 	Flags     SFlags
 	node_info map[uint64]*NNode
 	// node_pool     map[uint64]chan *pgx.Conn
