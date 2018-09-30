@@ -87,12 +87,14 @@ const (
 )
 
 const (
-	TransactionStatusInProgress      = 0
-	TransactionStatusCommitFailure   = -1
-	TransactionStatusRollbackFailure = -2
-	TransactionStatusInFailure       = -3
-	TransactionStatusCommitSuccess   = 1
-	TransactionStatusRollbackSuccess = 2
+	TransactionStatusInProgress              = 0
+	TransactionStatusCommitFailure           = -1
+	TransactionStatusRollbackFailure         = -2
+	TransactionStatusInFailure               = -3
+	TransactionStatusCommitSuccess           = 1
+	TransactionStatusRollbackSuccess         = 2
+	TransactionStatusTwoPhasePrepared        = 3
+	TransactionStatusTwoPhasePreparedFailure = 4
 )
 
 // Tx represents a database transaction.
@@ -100,10 +102,11 @@ const (
 // All Tx methods return ErrTxClosed if Commit or Rollback has already been
 // called on the Tx.
 type Transaction struct {
-	conn     *Conn
-	connPool *ConnPool
-	err      error
-	status   int8
+	conn                  *Conn
+	connPool              *ConnPool
+	err                   error
+	status                int8
+	twoPhaseTransactionId uint64
 }
 
 type TransactionOptions struct {
@@ -153,14 +156,13 @@ func (txOptions *TransactionOptions) beginSQL() string {
 	return buf.String()
 }
 
-func (tx *Transaction) PrepareTwoPhase() error {
-	return tx.PrepareTwoPhaseEx(context.Background(), fmt.Sprintf("npgx-%d", time.Now().Unix()))
+func (tx *Transaction) PrepareTwoPhase(ctx context.Context, transactionId uint64) error {
+	if tx.status != TransactionStatusInProgress {
+		return ErrTxClosed
+	}
+	commandTag, err := tx.conn.ExecEx(ctx, fmt.Sprintf("prepare transaction '%d';", transactionId), nil)
+
 }
-
-func (tx *Transaction) PrepareTwoPhaseEx(ctx context.Context, transactionName string) error {
-
-}
-
 
 // Commit commits the transaction
 func (tx *Transaction) Commit() error {
