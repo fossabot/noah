@@ -56,7 +56,7 @@ import (
 )
 
 type NodePool struct {
-	sctx      SContext
+	base      *BaseContext
 	sync      sync.Mutex
 	nodePools map[uint64]*npgx.ConnPool
 }
@@ -70,13 +70,13 @@ func (pool *NodePool) AcquireTransaction(nodeId uint64) (*npgx.Transaction, erro
 }
 
 func (pool *NodePool) ReleaseTransaction(nodeId uint64, tx *npgx.Transaction) {
-	
+
 }
 
 func (pool *NodePool) AcquireConnection(nodeId uint64) (*npgx.Conn, error) {
 	if nodePool, ok := pool.nodePools[nodeId]; !ok {
 		// Init a new connection
-		if node, err := pool.sctx.GetNode(nodeId); err != nil {
+		if node, err := pool.base.GetNode(nodeId); err != nil {
 			return nil, err
 		} else {
 			return npgx.Connect(driver.ConnConfig{

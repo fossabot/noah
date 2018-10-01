@@ -110,15 +110,7 @@ func main() {
 			panic(err)
 		}
 
-		opts.Dir = SystemContext.Flags.WalDirectory
-		opts.ValueDir = SystemContext.Flags.WalDirectory
-		badger_wal, err := badger.Open(opts)
-		if err != nil {
-			panic(err)
-		}
-
 		SystemContext.Badger = badger_data
-		SystemContext.WalBadger = badger_wal
 
 		defer badger_data.Close()
 		defer badger_wal.Close()

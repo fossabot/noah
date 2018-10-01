@@ -62,7 +62,7 @@ func TestSelect1(t *testing.T) {
 
 func TestSelectSimpleAll1(t *testing.T) {
 	context := Start()
-	if _, err := InjestQuery(&context, "SELECT product_id,sku,title FROM products LIMIT 1;"); err != nil {
+	if _, err := InjestQuery(&context, "SELECT 'test';"); err != nil {
 		t.Error(err)
 	}
 }

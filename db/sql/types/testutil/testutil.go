@@ -53,13 +53,13 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"github.com/Ready-Stock/Noah/db/sql/driver/npgx"
+	"github.com/Ready-Stock/pgx"
 	"os"
 	"reflect"
 	"testing"
 
-	"github.com/Ready-Stock/pgx"
 	"github.com/Ready-Stock/Noah/db/sql/types"
-	_ "github.com/Ready-Stock/pgx/stdlib"
 	_ "github.com/lib/pq"
 )
 
@@ -82,13 +82,13 @@ func MustConnectDatabaseSQL(t testing.TB, driverName string) *sql.DB {
 	return db
 }
 
-func MustConnectPgx(t testing.TB) *pgx.Conn {
-	config, err := pgx.ParseConnectionString(os.Getenv("PGX_TEST_DATABASE"))
+func MustConnectPgx(t testing.TB) *npgx.Conn {
+	config, err := npgx.ParseConnectionString(os.Getenv("PGX_TEST_DATABASE"))
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	conn, err := pgx.Connect(config)
+	conn, err := npgx.Connect(config)
 	if err != nil {
 		t.Fatal(err)
 	}

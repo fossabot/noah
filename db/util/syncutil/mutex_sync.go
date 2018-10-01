@@ -1,3 +1,5 @@
+// +build !deadlock
+
 /*
  * Copyright (c) 2018 Ready Stock
  *
@@ -47,7 +49,6 @@
  * License (MIT) https://github.com/sony/sonyflake/blob/master/LICENSE
  */
 
-// +build !deadlock
 
 package syncutil
 

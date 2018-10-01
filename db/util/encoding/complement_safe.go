@@ -1,3 +1,5 @@
+// +build !386,!amd64
+
 /*
  * Copyright (c) 2018 Ready Stock
  *
@@ -47,7 +49,7 @@
  * License (MIT) https://github.com/sony/sonyflake/blob/master/LICENSE
  */
 
-// +build !386,!amd64
+
 
 package encoding
 

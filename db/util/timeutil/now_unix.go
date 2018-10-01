@@ -1,3 +1,5 @@
+// +build !windows
+
 /*
  * Copyright (c) 2018 Ready Stock
  *
@@ -46,8 +48,6 @@
  * Copyright 2018 Sony Corporation
  * License (MIT) https://github.com/sony/sonyflake/blob/master/LICENSE
  */
-
-// +build !windows
 
 package timeutil
 

@@ -64,7 +64,7 @@ type NAccount struct {
 	AccountID uint64
 }
 
-func (ctx *SContext) GetAccounts() (a []NAccount, e error) {
+func (ctx *BaseContext) GetAccounts() (a []NAccount, e error) {
 	a = make([]NAccount, 0)
 	e = ctx.Badger.View(func(txn *badger.Txn) error {
 		accountsIterator := txn.NewIterator(badger.DefaultIteratorOptions)
@@ -87,7 +87,7 @@ func (ctx *SContext) GetAccounts() (a []NAccount, e error) {
 	return a, e
 }
 
-func (ctx *SContext) GetNodesForAccount(accountId uint64) (n []NNode, e error) {
+func (ctx *BaseContext) GetNodesForAccount(accountId uint64) (n []NNode, e error) {
 	e = ctx.Badger.View(func(txn *badger.Txn) error {
 		n, e = ctx.getNodesForAccountEx(txn, accountId)
 		return e
@@ -95,7 +95,7 @@ func (ctx *SContext) GetNodesForAccount(accountId uint64) (n []NNode, e error) {
 	return n, e
 }
 
-func (ctx *SContext) getNodesForAccountEx(txn *badger.Txn, accountId uint64) (n []NNode, e error) {
+func (ctx *BaseContext) getNodesForAccountEx(txn *badger.Txn, accountId uint64) (n []NNode, e error) {
 	nodesIterator := txn.NewIterator(badger.DefaultIteratorOptions)
 	defer nodesIterator.Close()
 	n = make([]NNode, 0)

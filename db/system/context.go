@@ -62,8 +62,12 @@ const (
 	PreloadPoolConnectionCount = 5
 )
 
-type SContext struct {
+type BaseContext struct {
 	Badger    *badger.DB
+}
+
+type SContext struct {
+	BaseContext
 	NodeIDs   *badger.Sequence
 	Snowflake *snowflake.Snowflake
 	Flags     SFlags
@@ -85,7 +89,7 @@ func NewSystemContext(flags SFlags) (*SContext, error) {
 	return &sCtx, nil
 }
 
-func (ctx *SContext) GetSettings() (*map[string]string, error) {
+func (ctx *BaseContext) GetSettings() (*map[string]string, error) {
 	m := map[string]string{}
 	e := ctx.Badger.View(func(txn *badger.Txn) error {
 		it := txn.NewIterator(badger.DefaultIteratorOptions)
