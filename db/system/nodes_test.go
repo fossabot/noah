@@ -50,95 +50,26 @@
 package system
 
 import (
-	"flag"
-	"github.com/Ready-Stock/Noah/db/util/snowflake"
-	"github.com/Ready-Stock/badger"
+	"testing"
 )
 
-const (
-	CoordinatorsPath           = "/coordinators/"
-	NodesPath                  = "/nodes/"
-	SettingsPath               = "/settings/"
-	TablesPath                 = "/tables/"
-	NodeIDSequencePath         = "/sequences/internal/nodes"
-	AccountIDSequencePath	   = "/sequences/internal/accounts"
-	CoordinatorIDSequencePath  = "/sequences/internal/coordinators"
-	PreloadPoolConnectionCount = 5
-)
-
-type BaseContext struct {
-	Badger *badger.DB
-}
-
-type SContext struct {
-	BaseContext
-	NodeIDSequence  *badger.Sequence
-	Snowflake *snowflake.Snowflake
-	Flags     SFlags
-	Pool      NodePool
-	Wal       NWal
-}
-
-type SFlags struct {
-	HTTPPort      int
-	PostgresPort  int
-	DataDirectory string
-	WalDirectory  string
-	LogLevel      string
-}
-
-func NewSystemContext() (*SContext, error) {
-	flag.Parse()
-	sctx := SContext{
-		Flags: SFlags{
-			HTTPPort:      HttpPort,
-			PostgresPort:  PostgresPort,
-			DataDirectory: DataDirectory,
-			WalDirectory:  WalDirectory,
-			LogLevel:      LogLevel,
-		},
-		Snowflake: snowflake.NewSnowflake(1),
-	}
-	opts := badger.DefaultOptions
-
-	opts.Dir = sctx.Flags.DataDirectory
-	opts.ValueDir = sctx.Flags.DataDirectory
-	badgerData, err := badger.Open(opts)
+func TestBaseContext_GetNodes(t *testing.T) {
+	sctx, err := NewSystemContext()
 	if err != nil {
-		panic(err)
-	}
-	sctx.Badger = badgerData
-	sctx.Pool = NodePool{
-		base: &sctx.BaseContext,
+		t.Error(err)
+		t.Fail()
+		return
 	}
 
-	nodeIdSequence, err := sctx.Badger.GetSequence([]byte(NodeIDSequencePath), 1)
+	n, err := sctx.GetNode(1)
 	if err != nil {
-		panic(err)
+		t.Error(err)
+		t.Fail()
+		return
 	}
-	sctx.NodeIDSequence = nodeIdSequence
-	return &sctx, nil
-}
 
-func (ctx *SContext) Close() {
-	ctx.Badger.Close()
-}
-
-func (ctx *BaseContext) GetSettings() (*map[string]string, error) {
-	m := map[string]string{}
-	e := ctx.Badger.View(func(txn *badger.Txn) error {
-		it := txn.NewIterator(badger.DefaultIteratorOptions)
-		defer it.Close()
-		prefix := []byte(SettingsPath)
-		for it.Seek(prefix); it.ValidForPrefix(prefix); it.Next() {
-			item := it.Item()
-			v, err := item.Value()
-			if err != nil {
-				return err
-			}
-			m[string(item.Key()[len(prefix)-1:])] = string(v)
-		}
-		return nil
-	})
-	return &m, e
+	if n == nil {
+		t.Error("could not retrieve node 1")
+		t.Fail()
+	}
 }

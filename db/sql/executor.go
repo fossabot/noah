@@ -54,6 +54,7 @@ import (
 	"github.com/Ready-Stock/Noah/db/sql/plan"
 	"github.com/Ready-Stock/Noah/db/sql/types"
 	"github.com/kataras/go-errors"
+	"reflect"
 )
 
 type executeResponse struct {
@@ -62,7 +63,8 @@ type executeResponse struct {
 	NodeID  uint64
 }
 
-func (ex *connExecutor) ExecutePlans(plans []plan.NodeExecutionPlan) error {
+func (ex *connExecutor) ExecutePlans(plans []plan.NodeExecutionPlan) (err error) {
+	//defer util.CatchPanic(&err)
 	if len(plans) == 0 {
 		ex.Error("no plans were provided, nothing will be executed")
 		return errors.New("no plans were provided")
@@ -70,19 +72,25 @@ func (ex *connExecutor) ExecutePlans(plans []plan.NodeExecutionPlan) error {
 	responses := make(chan *executeResponse, len(plans))
 	for _, p := range plans {
 		go func(ex *connExecutor, pln plan.NodeExecutionPlan) {
+			//defer util.CatchPanic(&err)
 			exResponse := executeResponse{
 				NodeID: pln.Node.NodeID,
 			}
-			defer func() { responses <- &exResponse }()
 
-			if !pln.Node.Alive {
-				ex.Warn("Deferring query: `%s` for node [%d]", pln.CompiledQuery, pln.Node.NodeID)
-				return
-			}
+			defer func() {
+				exResponse.Error = err
+				responses <- &exResponse
+			}()
+
+			// if !pln.Node.Alive {
+			// 	ex.Warn("Deferring query: `%s` for node [%d]", pln.CompiledQuery, pln.Node.NodeID)
+			// 	return
+			// }
 
 			ex.Info("Executing query: `%s` on node [%d]", pln.CompiledQuery, pln.Node.NodeID)
 			tx, ok := ex.GetNodeTransaction(pln.Node.NodeID)
 			if !ok {
+				ex.Debug("node [%d] is not in the session, acquiring connection", pln.Node.NodeID)
 				// A connection has not yet been made to this node. Allocate one.
 				if t, err := ex.SystemContext.Pool.AcquireTransaction(pln.Node.NodeID); err != nil {
 					ex.Error(err.Error())
@@ -97,15 +105,14 @@ func (ex *connExecutor) ExecutePlans(plans []plan.NodeExecutionPlan) error {
 			if ex.TransactionStatus == NTXNoTransaction {
 				ex.TransactionStatus = NTXInProgress
 			}
-
 			rows, err := tx.Query(pln.CompiledQuery)
 			if err != nil {
 				ex.Error(err.Error())
 				exResponse.Error = err
 				return
 			}
+			ex.Debug("received rows response from node [%d]", pln.Node.NodeID)
 			exResponse.Rows = rows
-			ex.Debug("received repsonse from node [%d]", pln.Node.NodeID)
 		}(ex, p)
 	}
 	columns := make([]npgx.FieldDescription, 0)
@@ -127,6 +134,7 @@ func (ex *connExecutor) ExecutePlans(plans []plan.NodeExecutionPlan) error {
 					return err
 				} else {
 					for c, v := range values {
+						ex.Debug("received value of type %s", reflect.TypeOf(v).Name())
 						if tValue, ok := v.(types.Value); ok {
 							row[c] = tValue
 						} else {

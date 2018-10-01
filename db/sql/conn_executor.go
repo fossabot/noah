@@ -100,6 +100,9 @@ func (ex *connExecutor) GetNodeTransaction(nodeId uint64) (*npgx.Transaction, bo
 func (ex *connExecutor) SetNodeTransaction(nodeId uint64, tx *npgx.Transaction) {
 	ex.nSync.Lock()
 	defer ex.nSync.Unlock()
+	if ex.nodes == nil {
+		ex.nodes = map[uint64]*npgx.Transaction{}
+	}
 	ex.nodes[nodeId] = tx
 }
 

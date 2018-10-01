@@ -303,5 +303,16 @@ func (tx *Transaction) RollbackEx(ctx context.Context) error {
 
 
 func (tx *Transaction) Query(sql string) (*Rows, error) {
-	return nil, nil
+	return tx.QueryEx(context.Background(), sql, nil)
+}
+
+// QueryEx delegates to the underlying *Conn
+func (tx *Transaction) QueryEx(ctx context.Context, sql string, options *QueryExOptions) (*Rows, error) {
+	if tx.status != TransactionStatusInProgress {
+		// Because checking for errors can be deferred to the *Rows, build one with the error
+		err := ErrTxClosed
+		return &Rows{closed: true, err: err}, err
+	}
+
+	return tx.conn.QueryEx(ctx, sql, options)
 }
