@@ -53,6 +53,7 @@ import (
 	"github.com/Ready-Stock/Noah/db/sql/driver"
 	"github.com/Ready-Stock/Noah/db/sql/types"
 	"github.com/kataras/go-errors"
+	"github.com/kataras/golog"
 	"sync"
 	"time"
 )
@@ -202,4 +203,110 @@ func (p *ConnPool) removeFromAllConnections(conn *Conn) bool {
 		}
 	}
 	return false
+}
+
+// Acquire takes exclusive use of a connection until it is released.
+func (p *ConnPool) Acquire() (*Conn, error) {
+	p.cond.L.Lock()
+	c, err := p.acquire(nil)
+	p.cond.L.Unlock()
+	return c, err
+}
+
+// acquire performs acquision assuming pool is already locked
+func (p *ConnPool) acquire(deadline *time.Time) (*Conn, error) {
+	if p.closed {
+		return nil, ErrClosedPool
+	}
+
+	// A connection is available
+	if len(p.availableConnections) > 0 {
+		c := p.availableConnections[len(p.availableConnections)-1]
+		c.poolResetCount = p.resetCount
+		p.availableConnections = p.availableConnections[:len(p.availableConnections)-1]
+		return c, nil
+	}
+
+	// Set initial timeout/deadline value. If the method (acquire) happens to
+	// recursively call itself the deadline should retain its value.
+	if deadline == nil && p.acquireTimeout > 0 {
+		tmp := time.Now().Add(p.acquireTimeout)
+		deadline = &tmp
+	}
+
+	// Make sure the deadline (if it is) has not passed yet
+	if p.deadlinePassed(deadline) {
+		return nil, ErrAcquireTimeout
+	}
+
+	// If there is a deadline then start a timeout timer
+	var timer *time.Timer
+	if deadline != nil {
+		timer = time.AfterFunc(deadline.Sub(time.Now()), func() {
+			p.cond.Broadcast()
+		})
+		defer timer.Stop()
+	}
+
+	// No connections are available, but we can create more
+	if len(p.allConnections)+p.inProgressConnects < p.maxConnections {
+		// Create a new connection.
+		// Careful here: createConnectionUnlocked() removes the current lock,
+		// creates a connection and then locks it back.
+		c, err := p.createConnectionUnlocked()
+		if err != nil {
+			return nil, err
+		}
+		c.poolResetCount = p.resetCount
+		p.allConnections = append(p.allConnections, c)
+		return c, nil
+	}
+
+	// All connections are in use and we cannot create more
+	golog.Warn("waiting for available connection")
+
+
+	// Wait until there is an available connection OR room to create a new connection
+	for len(p.availableConnections) == 0 && len(p.allConnections)+p.inProgressConnects == p.maxConnections {
+		if p.deadlinePassed(deadline) {
+			return nil, ErrAcquireTimeout
+		}
+		p.cond.Wait()
+	}
+
+	// Stop the timer so that we do not spawn it on every acquire call.
+	if timer != nil {
+		timer.Stop()
+	}
+	return p.acquire(deadline)
+}
+
+// deadlinePassed returns true if the given deadline has passed.
+func (p *ConnPool) deadlinePassed(deadline *time.Time) bool {
+	return deadline != nil && time.Now().After(*deadline)
+}
+
+// createConnectionUnlocked Removes the current lock, creates a new connection, and
+// then locks it back.
+// Here is the point: lets say our pool dialer's OpenTimeout is set to 3 seconds.
+// And we have a pool with 20 connections in it, and we try to acquire them all at
+// startup.
+// If it happens that the remote server is not accessible, then the first connection
+// in the pool blocks all the others for 3 secs, before it gets the timeout. Then
+// connection #2 holds the lock and locks everything for the next 3 secs until it
+// gets OpenTimeout err, etc. And the very last 20th connection will fail only after
+// 3 * 20 = 60 secs.
+// To avoid this we put Connect(p.config) outside of the lock (it is thread safe)
+// what would allow us to make all the 20 connection in parallel (more or less).
+func (p *ConnPool) createConnectionUnlocked() (*Conn, error) {
+	p.inProgressConnects++
+	p.cond.L.Unlock()
+	c, err := Connect(p.config)
+	p.cond.L.Lock()
+	p.inProgressConnects--
+
+	if err != nil {
+		return nil, err
+	}
+	return p.afterConnectionCreated(c)
 }

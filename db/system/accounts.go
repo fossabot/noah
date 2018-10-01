@@ -47,66 +47,71 @@
  * License (MIT) https://github.com/sony/sonyflake/blob/master/LICENSE
  */
 
-package sql
+package system
 
 import (
-	"github.com/Ready-Stock/Noah/db/sql/plan"
-	"github.com/Ready-Stock/Noah/db/system"
-	pg_query2 "github.com/Ready-Stock/pg_query_go"
-	"github.com/Ready-Stock/pg_query_go/nodes"
-	"strings"
+	"encoding/json"
+	"fmt"
+	"github.com/Ready-Stock/badger"
 )
 
-type VariableSetStatement struct {
-	Statement pg_query.VariableSetStmt
-	IQueryStatement
+const (
+	AccountsPath			   = "/accounts/"
+	AccountNodesPath		   = "/account_nodes/%d/" // `/account_nodes/0000/0000`
+)
+
+type NAccount struct {
+	AccountID uint64
 }
 
-func CreateVariableSetStatement(stmt pg_query.VariableSetStmt) *VariableSetStatement {
-	return &VariableSetStatement{
-		Statement: stmt,
-	}
+func (ctx *SContext) GetAccounts() (a []NAccount, e error) {
+	a = make([]NAccount, 0)
+	e = ctx.Badger.View(func(txn *badger.Txn) error {
+		accountsIterator := txn.NewIterator(badger.DefaultIteratorOptions)
+		defer accountsIterator.Close()
+		accountsPrefix := []byte(AccountsPath)
+		for accountsIterator.Seek(accountsPrefix); accountsIterator.ValidForPrefix(accountsPrefix); accountsIterator.Next() {
+			item := accountsIterator.Item()
+			account := NAccount{}
+			v, err := item.Value()
+			if err != nil {
+				return err
+			}
+			if err := json.Unmarshal(v, &account); err != nil {
+				return err
+			}
+			a = append(a, account)
+		}
+		return nil
+	})
+	return a, e
 }
 
-func (stmt *VariableSetStatement) Execute(ex *connExecutor, res RestrictedCommandResult) error {
-	if strings.HasPrefix(strings.ToLower(*stmt.Statement.Name), "noah") {
-		setting_name := strings.Replace(strings.ToLower(*stmt.Statement.Name), "noah.", "", 1)
-		setting_value, err := pg_query2.DeparseValue(stmt.Statement.Args.Items[0].(pg_query.A_Const))
+func (ctx *SContext) GetNodesForAccount(accountId uint64) (n []NNode, e error) {
+	e = ctx.Badger.View(func(txn *badger.Txn) error {
+		n, e = ctx.getNodesForAccountEx(txn, accountId)
+		return e
+	})
+	return n, e
+}
+
+func (ctx *SContext) getNodesForAccountEx(txn *badger.Txn, accountId uint64) (n []NNode, e error) {
+	nodesIterator := txn.NewIterator(badger.DefaultIteratorOptions)
+	defer nodesIterator.Close()
+	n = make([]NNode, 0)
+	accountNodesPrefix := []byte(fmt.Sprintf(AccountNodesPath, accountId))
+	for nodesIterator.Seek(accountNodesPrefix); nodesIterator.ValidForPrefix(accountNodesPrefix); nodesIterator.Next() {
+		nodeItem := nodesIterator.Item()
+		nodeValue, err := nodeItem.Value()
 		if err != nil {
-			return err
+			return nil, err
 		}
-		return ex.SystemContext.SetSetting(setting_name, setting_value)
-	}
-
-	return nil
-	target_nodes, err := stmt.getTargetNodes(ex)
-	if err != nil {
-		return err
-	}
-
-	plans, err := stmt.compilePlan(ex, target_nodes)
-	if err != nil {
-		return err
-	}
-
-	return ex.ExecutePlans(plans)
-}
-
-func (stmt *VariableSetStatement) getTargetNodes(ex *connExecutor) ([]system.NNode, error) {
-	return ex.GetNodesForAccountID(nil)
-}
-
-func (stmt *VariableSetStatement) compilePlan(ex *connExecutor, nodes []system.NNode) ([]plan.NodeExecutionPlan, error) {
-	plans := make([]plan.NodeExecutionPlan, len(nodes))
-	deparsed, err := pg_query2.Deparse(stmt.Statement)
-	if err != nil {
-		return nil, err
-	}
-	for i := 0; i < len(plans); i++ {
-		plans[i] = plan.NodeExecutionPlan{
-			CompiledQuery: *deparsed,
-			NodeID:        nodes[i],
+		node := NNode{}
+		if err := json.Unmarshal(nodeValue, &node); err != nil {
+			return nil, err
 		}
+		n = append(n, node)
 	}
-	return plans, nil
+	return n, nil
 }
+

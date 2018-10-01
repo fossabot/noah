@@ -52,61 +52,62 @@ package sql
 import (
 	"github.com/Ready-Stock/Noah/db/sql/plan"
 	"github.com/Ready-Stock/Noah/db/system"
-	pg_query2 "github.com/Ready-Stock/pg_query_go"
-	"github.com/Ready-Stock/pg_query_go/nodes"
-	"strings"
+	pq "github.com/Ready-Stock/pg_query_go/nodes"
+	"github.com/kataras/go-errors"
 )
 
-type VariableSetStatement struct {
-	Statement pg_query.VariableSetStmt
+type TransactionStatement struct {
+	Statement pq.TransactionStmt
 	IQueryStatement
 }
 
-func CreateVariableSetStatement(stmt pg_query.VariableSetStmt) *VariableSetStatement {
-	return &VariableSetStatement{
+func CreateTransactionStatement(stmt pq.TransactionStmt) *TransactionStatement {
+	return &TransactionStatement{
 		Statement: stmt,
 	}
 }
 
-func (stmt *VariableSetStatement) Execute(ex *connExecutor, res RestrictedCommandResult) error {
-	if strings.HasPrefix(strings.ToLower(*stmt.Statement.Name), "noah") {
-		setting_name := strings.Replace(strings.ToLower(*stmt.Statement.Name), "noah.", "", 1)
-		setting_value, err := pg_query2.DeparseValue(stmt.Statement.Args.Items[0].(pg_query.A_Const))
-		if err != nil {
-			return err
-		}
-		return ex.SystemContext.SetSetting(setting_name, setting_value)
+func (stmt *TransactionStatement) Execute(ex *connExecutor, res RestrictedCommandResult) error {
+	if stmt.Statement.Kind == pq.TRANS_STMT_BEGIN || stmt.Statement.Kind == pq.TRANS_STMT_START {
+		return ex.BeginTransaction()
+	}
+	nodes, err := stmt.getTargetNodes(ex)
+	if err != nil {
+		return err
 	}
 
+	for i, node := range nodes {
+
+	}
 	return nil
-	target_nodes, err := stmt.getTargetNodes(ex)
-	if err != nil {
-		return err
-	}
-
-	plans, err := stmt.compilePlan(ex, target_nodes)
-	if err != nil {
-		return err
-	}
-
-	return ex.ExecutePlans(plans)
 }
 
-func (stmt *VariableSetStatement) getTargetNodes(ex *connExecutor) ([]system.NNode, error) {
-	return ex.GetNodesForAccountID(nil)
-}
-
-func (stmt *VariableSetStatement) compilePlan(ex *connExecutor, nodes []system.NNode) ([]plan.NodeExecutionPlan, error) {
-	plans := make([]plan.NodeExecutionPlan, len(nodes))
-	deparsed, err := pg_query2.Deparse(stmt.Statement)
-	if err != nil {
-		return nil, err
-	}
-	for i := 0; i < len(plans); i++ {
-		plans[i] = plan.NodeExecutionPlan{
-			CompiledQuery: *deparsed,
-			NodeID:        nodes[i],
+func (stmt *TransactionStatement) getTargetNodes(ex *connExecutor) ([]system.NNode, error) {
+	nodes := make([]system.NNode, 0)
+	for nodeId := range ex.nodes {
+		if node, err := ex.SystemContext.GetNode(nodeId); err != nil {
+			return nil, err
+		} else {
+			nodes = append(nodes, *node)
 		}
 	}
-	return plans, nil
+	return nodes, nil
+}
+
+func (stmt *TransactionStatement) compilePlan(ex *connExecutor, nodes []system.NNode) ([]plan.NodeExecutionPlan, error) {
+	return nil, nil
+}
+
+
+func (ex *connExecutor) BeginTransaction() error {
+	if ex.TransactionStatus != NTXNoTransaction {
+		return errors.New("error cannot begin transaction at this time")
+	}
+	if id, err := ex.SystemContext.Snowflake.NextID(); err != nil {
+		return err
+	} else {
+		ex.TransactionID = id
+		ex.TransactionStatus = NTXNotStarted
+		return nil
+	}
 }

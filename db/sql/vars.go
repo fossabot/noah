@@ -55,3 +55,29 @@ const (
 	// PgServerVersionNum is the latest version of postgres that we claim to support in the numeric format of "server_version_num".
 	PgServerVersionNum = "90500"
 )
+
+type NTXIsoLevel string
+
+// Transaction isolation levels
+const (
+	NTXSerializable    = NTXIsoLevel("serializable")
+	NTXRepeatableRead  = NTXIsoLevel("repeatable read")
+	NTXReadCommitted   = NTXIsoLevel("read committed")
+	NTXReadUncommitted = NTXIsoLevel("read uncommitted")
+)
+
+type NTXAccessMode string
+
+// Transaction access modes
+const (
+	ReadWrite = NTXAccessMode("read write")
+	ReadOnly  = NTXAccessMode("read only")
+)
+
+type NTXStatus int
+
+const (
+	NTXNoTransaction = NTXStatus(0)
+	NTXNotStarted    = NTXStatus(1)
+	NTXInProgress    = NTXStatus(2)
+)

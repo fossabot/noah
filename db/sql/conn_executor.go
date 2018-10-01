@@ -51,12 +51,15 @@ package sql
 
 import (
 	"fmt"
+	"github.com/Ready-Stock/Noah/db/sql/driver/npgx"
 	"github.com/Ready-Stock/Noah/db/sql/pgwire/pgerror"
 	"github.com/Ready-Stock/Noah/db/system"
 	"github.com/Ready-Stock/Noah/db/util"
 	"github.com/Ready-Stock/Noah/db/util/fsm"
 	nodes "github.com/Ready-Stock/pg_query_go/nodes"
-	//"github.com/Ready-Stock/pgx"
+	"sync"
+
+	// "github.com/Ready-Stock/pgx"
 	"io"
 )
 
@@ -64,15 +67,19 @@ type Server struct {
 }
 
 type connExecutor struct {
-	ClientAddress	   string
+	ClientAddress      string
 	server             *Server
 	stmtBuf            *StmtBuf
-	Backlog			   []string
+	Backlog            []string
 	clientComm         ClientComm
 	prepStmtsNamespace prepStmtNamespace
 	curStmt            *nodes.Stmt
 	SystemContext      *system.SContext
-	//Nodes              map[uint64]*pgx.Tx
+
+	nSync             sync.Mutex
+	nodes             map[uint64]*npgx.Transaction
+	TransactionStatus NTXStatus
+	TransactionID     uint64
 }
 
 func (ex *connExecutor) GetNodesForAccountID(id *uint64) ([]uint64, error) {
@@ -81,6 +88,19 @@ func (ex *connExecutor) GetNodesForAccountID(id *uint64) ([]uint64, error) {
 
 func (ex *connExecutor) BacklogQuery(query string) {
 	ex.Backlog = append(ex.Backlog, query)
+}
+
+func (ex *connExecutor) GetNodeTransaction(nodeId uint64) (*npgx.Transaction, bool) {
+	ex.nSync.Lock()
+	defer ex.nSync.Unlock()
+	tx, ok := ex.nodes[nodeId]
+	return tx, ok
+}
+
+func (ex *connExecutor) SetNodeTransaction(nodeId uint64, tx *npgx.Transaction) {
+	ex.nSync.Lock()
+	defer ex.nSync.Unlock()
+	ex.nodes[nodeId] = tx
 }
 
 type prepStmtNamespace struct {
@@ -170,6 +190,7 @@ func (s *Server) newConnExecutor(stmtBuf *StmtBuf, clientComm ClientComm) *connE
 			prepStmts: make(map[string]prepStmtEntry),
 			portals:   make(map[string]portalEntry),
 		},
+		TransactionStatus: NTXNoTransaction,
 	}
 	return ex
 }
@@ -271,5 +292,3 @@ func (ex *connExecutor) run() (err error) {
 		}
 	}
 }
-
-

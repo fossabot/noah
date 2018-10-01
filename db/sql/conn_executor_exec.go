@@ -164,8 +164,8 @@ func (ex *connExecutor) execStmt(
 	case nodes.SelectStmt:
 		return CreateSelectStatement(stmt).Execute(ex, res)
 	// case nodes.SetOperationStmt:
-	// case nodes.TransactionStmt:
-	// 	// return nil, _transaction.HandleTransaction(ctx, stmt)
+	case nodes.TransactionStmt:
+		return CreateTransactionStatement(stmt).Execute(ex, res)
 	// case nodes.TruncateStmt:
 	// case nodes.UnlistenStmt:
 	// case nodes.UpdateStmt:

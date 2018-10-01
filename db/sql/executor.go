@@ -50,20 +50,114 @@
 package sql
 
 import (
+	"github.com/Ready-Stock/Noah/db/sql/driver/npgx"
 	"github.com/Ready-Stock/Noah/db/sql/plan"
+	"github.com/Ready-Stock/Noah/db/sql/types"
 )
 
+type executeResponse struct {
+	Error   error
+	Rows    *npgx.Rows
+	NodeID  uint64
+}
+
 func (ex *connExecutor) ExecutePlans(plans []plan.NodeExecutionPlan) error {
-	for i, p := range plans {
-		go func(ex *connExecutor, index int, pln plan.NodeExecutionPlan) {
-			ex.Info("Executing query: `%s` on node %d", pln.CompiledQuery, pln.NodeID)
-			// _, ok := ex.Nodes[pln.NodeID]
-			// if !ok {
-			// 	ex.Warn("Allocating connection to node %d for session.", pln.NodeID)
-			// } else {
-			//
-			// }
-		}(ex, i, p)
+	responses := make(chan *executeResponse, len(plans))
+	for _, p := range plans {
+		go func(ex *connExecutor, pln plan.NodeExecutionPlan) {
+			exResponse := executeResponse{
+				NodeID: pln.Node.NodeID,
+			}
+			defer func() { responses <- &exResponse }()
+
+			if !pln.Node.Alive {
+				ex.Warn("Deferring query: `%s` for node [%d]", pln.CompiledQuery, pln.Node.NodeID)
+				return
+			}
+
+			ex.Info("Executing query: `%s` on node [%d]", pln.CompiledQuery, pln.Node.NodeID)
+			tx, ok := ex.GetNodeTransaction(pln.Node.NodeID)
+			if !ok {
+				// A connection has not yet been made to this node. Allocate one.
+				if t, err := ex.SystemContext.Pool.AcquireTransaction(pln.Node.NodeID); err != nil {
+					ex.Error(err.Error())
+					exResponse.Error = err
+					return
+				} else {
+					ex.SetNodeTransaction(pln.Node.NodeID, t)
+					tx = t
+				}
+			}
+
+			if ex.TransactionStatus == NTXNoTransaction {
+				ex.TransactionStatus = NTXInProgress
+			}
+
+			if pln.ReadOnly {
+				rows, err := tx.Query(pln.CompiledQuery)
+				if err != nil {
+					ex.Error(err.Error())
+					exResponse.Error = err
+					return
+				}
+				exResponse.Rows = rows
+			} else {
+
+			}
+		}(ex, p)
+	}
+	columns := make([]npgx.FieldDescription, 0)
+	result := make([][]types.Value, 0)
+	for i := 0; i < len(plans); i++ {
+		response := <-responses
+		if response.Error != nil {
+			return response.Error
+		}
+		if response.Rows != nil {
+			for response.Rows.Next() {
+				if len(columns) == 0 {
+					columns = response.Rows.FieldDescriptions()
+				}
+				row := make([]types.Value, len(columns))
+				if values, err := response.Rows.Values(); err != nil {
+
+				} else {
+					for c, v := range values {
+						if tValue, ok := v.(types.Value); ok {
+							row[c] = tValue
+						}
+					}
+				}
+				result = append(result, row)
+			}
+		}
+	}
+	return nil
+}
+
+func (ex *connExecutor) PrepareCommit() error {
+	responses := make(chan *executeResponse, len(ex.nodes))
+	for nodeId, tx := range ex.nodes {
+		go func(tx *npgx.Transaction) {
+			exResponse := executeResponse{
+				NodeID: nodeId,
+			}
+			defer func() { responses <- &exResponse }()
+			node, err := ex.SystemContext.GetNode(nodeId)
+			if err != nil {
+				ex.Error(err.Error())
+				exResponse.Error = err
+				return
+			}
+
+
+		}(tx)
+	}
+	for i := 0; i < len(ex.nodes); i++ {
+		response := <- responses
+		if response.Error != nil {
+			return response.Error
+		}
 	}
 	return nil
 }

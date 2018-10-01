@@ -71,7 +71,9 @@ var (
 )
 
 var (
-	RunType       = *flag.String("type", "coordinator", "Type of handler to run, defaults to `coordinator`. Valid values are: `worker` and `coordinator`.")
+	RunType       = *flag.String("type", "coordinator", "Type of handler to run, defaults to `coordinator`. Valid values are: `tablet` and `coordinator`.")
+	Role          = *flag.String("role", "master", "Type of role for the coordinator, not valid for tablets. Value values are `master` and `follower`. Defaults to `master`")
+	Join          = *flag.String("join", "", "The IP of another coordinator in the cluster.")
 	HttpPort      = *flag.Int("http-port", 8080, "Listen port for Noah's HTTP REST interface.")
 	PostgresPort  = *flag.Int("psql-port", 5433, "Listen port for Noah's PostgreSQL client connectivity.")
 	DataDirectory = *flag.String("data-dir", "data", "Directory for Noah's embedded database.")
@@ -125,7 +127,7 @@ func main() {
 		fmt.Println("Starting admin application with port:", SystemContext.Flags.HTTPPort)
 		fmt.Println("Listening for connections on:", SystemContext.Flags.PostgresPort)
 
-		//go api.StartApp(&SystemContext)
+		// go api.StartApp(&SystemContext)
 		coordinator.Start(&SystemContext)
 
 	case Tablet:

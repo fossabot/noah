@@ -51,6 +51,7 @@ package sql
 
 import (
 	"github.com/Ready-Stock/Noah/db/sql/plan"
+	"github.com/Ready-Stock/Noah/db/system"
 	pg_query2 "github.com/Ready-Stock/pg_query_go"
 	"github.com/Ready-Stock/pg_query_go/nodes"
 )
@@ -80,19 +81,15 @@ func (stmt *CreateStatement) Execute(ex *connExecutor, res RestrictedCommandResu
 	return ex.ExecutePlans(plans)
 }
 
-func (stmt *CreateStatement) getTargetNodes(ex *connExecutor) ([]uint64, error) {
-	// A create statement would want to target all live nodes.
-
-	return []uint64{0, 1, 2, 3}, nil
+func (stmt *CreateStatement) getTargetNodes(ex *connExecutor) ([]system.NNode, error) {
+	return ex.SystemContext.GetNodes()
 }
 
-func (stmt *CreateStatement) getAccountIDs() ([]uint64, error) {
-
-	return nil, nil
-}
-
-func (stmt *CreateStatement) compilePlan(ex *connExecutor, nodes []uint64) ([]plan.NodeExecutionPlan, error) {
+func (stmt *CreateStatement) compilePlan(ex *connExecutor, nodes []system.NNode) ([]plan.NodeExecutionPlan, error) {
 	plans := make([]plan.NodeExecutionPlan, len(nodes))
+
+	// Add handling here for custom column types.
+
 	deparsed, err := pg_query2.Deparse(stmt.Statement)
 	if err != nil {
 		ex.Error(err.Error())
@@ -101,7 +98,8 @@ func (stmt *CreateStatement) compilePlan(ex *connExecutor, nodes []uint64) ([]pl
 	for i := 0; i < len(plans); i++ {
 		plans[i] = plan.NodeExecutionPlan{
 			CompiledQuery: *deparsed,
-			NodeID:        nodes[i],
+			Node:          nodes[i],
+			ReadOnly:      false,
 		}
 	}
 	return plans, nil

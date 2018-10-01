@@ -58,13 +58,19 @@ import (
 )
 
 var (
-	settingsKeys = map[string]interface{}{
-		"connection_pool_init_connections": int64(5),
+	settingsKeys = map[NoahSetting]interface{}{
+		ConnectionPoolInitConnections: int64(5),
 	}
 )
 
+type NoahSetting string
+
+const (
+	ConnectionPoolInitConnections NoahSetting = "connection_pool_init_connections"
+)
+
 func (ctx *SContext) SetSetting(SettingName string, SettingValue interface{}) (error) {
-	if _, ok := settingsKeys[SettingName]; !ok {
+	if _, ok := settingsKeys[NoahSetting(SettingName)]; !ok {
 		return errors.New("setting key `%s` is not valid and has not been set.").Format(SettingName)
 	}
 	return ctx.Badger.Update(func(txn *badger.Txn) error {
@@ -77,7 +83,7 @@ func (ctx *SContext) SetSetting(SettingName string, SettingValue interface{}) (e
 }
 
 func (ctx *SContext) GetSettingInt64(SettingName string) (*int64, error) {
-	if _, ok := settingsKeys[SettingName]; !ok {
+	if _, ok := settingsKeys[NoahSetting(SettingName)]; !ok {
 		return nil, errors.New("setting key `%s` is not valid and cannot be returned.").Format(SettingName)
 	}
 	var i *int64 = nil

@@ -49,13 +49,53 @@
 
 package system
 
-type NNode struct {
-	NodeID    uint64
-	Region    string
-	IPAddress string
-	Port      uint16
-	Database  string
-	User      string
-	Password  string
-	ReplicaOf *int
+import (
+	"github.com/Ready-Stock/Noah/db/sql/driver"
+	"github.com/Ready-Stock/Noah/db/sql/driver/npgx"
+	"sync"
+)
+
+type NodePool struct {
+	sctx      SContext
+	sync      sync.Mutex
+	nodePools map[uint64]*npgx.ConnPool
+}
+
+func (pool *NodePool) AcquireTransaction(nodeId uint64) (*npgx.Transaction, error) {
+	if conn, err := pool.AcquireConnection(nodeId); err != nil {
+		return nil, err
+	} else {
+		return conn.Begin()
+	}
+}
+
+func (pool *NodePool) ReleaseTransaction(nodeId uint64, tx *npgx.Transaction) {
+	
+}
+
+func (pool *NodePool) AcquireConnection(nodeId uint64) (*npgx.Conn, error) {
+	if nodePool, ok := pool.nodePools[nodeId]; !ok {
+		// Init a new connection
+		if node, err := pool.sctx.GetNode(nodeId); err != nil {
+			return nil, err
+		} else {
+			return npgx.Connect(driver.ConnConfig{
+				Host:     node.IPAddress,
+				Port:     node.Port,
+				Database: node.Database,
+				User:     node.User,
+				Password: node.Password,
+			})
+		}
+	} else {
+		return nodePool.Acquire()
+	}
+}
+
+func (pool *NodePool) ReleaseConnection(nodeId uint64, conn *npgx.Conn) {
+	if nodePool, ok := pool.nodePools[nodeId]; !ok {
+		conn.Close()
+	} else {
+		nodePool.Release(conn)
+	}
 }

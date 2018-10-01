@@ -51,6 +51,7 @@ package sql
 
 import (
 	"github.com/Ready-Stock/Noah/db/sql/plan"
+	"github.com/Ready-Stock/Noah/db/system"
 	pg_query2 "github.com/Ready-Stock/pg_query_go"
 	"github.com/Ready-Stock/pg_query_go/nodes"
 )
@@ -80,11 +81,11 @@ func (stmt *VariableShowStatement) Execute(ex *connExecutor, res RestrictedComma
 	return ex.ExecutePlans(plans)
 }
 
-func (stmt *VariableShowStatement) getTargetNodes(ex *connExecutor) ([]uint64, error) {
+func (stmt *VariableShowStatement) getTargetNodes(ex *connExecutor) ([]system.NNode, error) {
 	return ex.GetNodesForAccountID(nil)
 }
 
-func (stmt *VariableShowStatement) compilePlan(ex *connExecutor, nodes []uint64) ([]plan.NodeExecutionPlan, error) {
+func (stmt *VariableShowStatement) compilePlan(ex *connExecutor, nodes []system.NNode) ([]plan.NodeExecutionPlan, error) {
 	plans := make([]plan.NodeExecutionPlan, len(nodes))
 	deparsed, err := pg_query2.Deparse(stmt.Statement)
 	if err != nil {
@@ -94,6 +95,7 @@ func (stmt *VariableShowStatement) compilePlan(ex *connExecutor, nodes []uint64)
 		plans[i] = plan.NodeExecutionPlan{
 			CompiledQuery: *deparsed,
 			NodeID:        nodes[i],
+			ReadOnly:      true,
 		}
 	}
 	return plans, nil

@@ -99,6 +99,10 @@ const (
 	TransactionStatusRollbackSuccess         = 2
 	TransactionStatusTwoPhasePrepared        = 3
 	TransactionStatusTwoPhasePreparedFailure = 4
+	TransactionStatusTwoPhaseCommitSuccess   = 5
+	TransactionStatusTwoPhaseCommitFailure   = 6
+	TransactionStatusTwoPhaseRollbackSuccess = 7
+	TransactionStatusTwoPhaseRollbackFailure = 8
 )
 
 // Tx represents a database transaction.
@@ -199,12 +203,33 @@ func (tx *Transaction) CommitTwoPhase() error {
 func (tx *Transaction) CommitTwoPhaseEx(ctx context.Context, transactionId uint64) error {
 	commandTag, err := tx.conn.ExecEx(ctx, fmt.Sprintf("commit prepared '%d';", transactionId), nil)
 	if err == nil && commandTag == "" { // I don't know yet what the command tag will be for this query.
-		tx.status = TransactionStatusTwoPhasePrepared
-		tx.twoPhaseTransactionId = &transactionId
+
 	} else {
-		tx.status = TransactionStatusTwoPhasePreparedFailure
 		tx.err = err
 		tx.conn.die(errors.New("prepare two-phase commit failed"))
+	}
+
+	if tx.connPool != nil {
+		tx.connPool.Release(tx.conn)
+	}
+
+	return tx.err
+}
+
+func (tx *Transaction) RollbackTwoPhase() error {
+	if tx.twoPhaseTransactionId == nil {
+		return errors.New("not in two-phase transaction")
+	}
+	return tx.CommitTwoPhaseEx(context.Background(), *tx.twoPhaseTransactionId)
+}
+
+func (tx *Transaction) RollbackTwoPhaseEx(ctx context.Context, transactionId uint64) error {
+	commandTag, err := tx.conn.ExecEx(ctx, fmt.Sprintf("rollback prepared '%d';", transactionId), nil)
+	if err == nil && commandTag == "" { // I don't know yet what the command tag will be for this query.
+		tx.twoPhaseTransactionId = &transactionId
+	} else {
+		tx.err = err
+		tx.conn.die(errors.New("prepare two-phase rollback failed"))
 	}
 
 	if tx.connPool != nil {
@@ -274,4 +299,9 @@ func (tx *Transaction) RollbackEx(ctx context.Context) error {
 	}
 
 	return tx.err
+}
+
+
+func (tx *Transaction) Query(sql string) (*Rows, error) {
+	return nil, nil
 }

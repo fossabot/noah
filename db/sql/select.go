@@ -51,6 +51,7 @@ package sql
 
 import (
 	"github.com/Ready-Stock/Noah/db/sql/plan"
+	"github.com/Ready-Stock/Noah/db/system"
 	pg_query2 "github.com/Ready-Stock/pg_query_go"
 	"github.com/Ready-Stock/pg_query_go/nodes"
 	. "github.com/ahmetb/go-linq"
@@ -82,7 +83,7 @@ func (stmt *SelectStatement) Execute(ex *connExecutor, res RestrictedCommandResu
 	return ex.ExecutePlans(plans)
 }
 
-func (stmt *SelectStatement) getTargetNodes(ex *connExecutor) ([]uint64, error) {
+func (stmt *SelectStatement) getTargetNodes(ex *connExecutor) ([]system.NNode, error) {
 	accounts, err := stmt.getAccountIDs()
 	if err != nil {
 		return nil, err
@@ -113,7 +114,7 @@ func (stmt *SelectStatement) getAccountIDs() ([]uint64, error) {
 	return nil, nil
 }
 
-func (stmt *SelectStatement) compilePlan(ex *connExecutor, nodes []uint64) ([]plan.NodeExecutionPlan, error) {
+func (stmt *SelectStatement) compilePlan(ex *connExecutor, nodes []system.NNode) ([]plan.NodeExecutionPlan, error) {
 	plans := make([]plan.NodeExecutionPlan, len(nodes))
 	deparsed, err := pg_query2.Deparse(stmt.Statement)
 	if err != nil {
@@ -123,6 +124,7 @@ func (stmt *SelectStatement) compilePlan(ex *connExecutor, nodes []uint64) ([]pl
 		plans[i] = plan.NodeExecutionPlan{
 			CompiledQuery: *deparsed,
 			NodeID:        nodes[i],
+			ReadOnly:      true,
 		}
 	}
 	return plans, nil

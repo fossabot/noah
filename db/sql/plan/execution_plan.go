@@ -49,7 +49,16 @@
 
 package plan
 
+import (
+	"github.com/Ready-Stock/Noah/db/system"
+)
+
 type NodeExecutionPlan struct {
 	CompiledQuery string
-	NodeID        uint64
+	ReadOnly      bool
+	Node          system.NNode
+}
+
+type NodeBeginTransaction struct {
+	Node          system.NNode
 }
