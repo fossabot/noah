@@ -34,7 +34,7 @@ The extension `postgres_fdw` is installed in order to communicate with other dat
 Once the schema is created the following query is sent to the recovering node. 
 The query will give us a hierarchy of data within the database; also giving us the order in which we need to recreate the data.
 
-```postgresql
+```sql
 WITH RECURSIVE ref (tbl, reftbl, depth) AS (
   SELECT pg_class.oid, NULL::oid, 0
   FROM pg_class
@@ -66,13 +66,13 @@ ORDER BY max(depth)
 
 Starting with the highest table in the hierarchy, and taking into account which accounts need to have their data on this node; we spawn a connection using `postgres_fdw` to a node that contains the data for that account.
 
-```postgresql
+```sql
 CREATE SERVER account_data_wrapper_0X FOREIGN DATA WRAPPER postgres_fdw OPTIONS (host '10.0.0.2', dbname 'ready', port '5432');
 ```
 
 Then a temporary foreign table is created to mirror the data on the other database node.
 
-```postgresql
+```sql
 CREATE FOREIGN TABLE users_temp_0X (
     user_id     BIGINT,
     email       CITEXT NOT NULL,
