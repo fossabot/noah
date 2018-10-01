@@ -51,16 +51,15 @@ package pgwire
 
 import (
 	"fmt"
+	"github.com/Ready-Stock/Noah/db/sql/pgwire/pgproto"
 	"github.com/Ready-Stock/Noah/db/sql/pgwire/pgwirebase"
 	"github.com/Ready-Stock/Noah/db/sql/types"
-	"github.com/cockroachdb/cockroach/pkg/sql/sqlbase"
-
-	//"github.com/cockroachdb/cockroach/pkg/sql/sqlbase"
-	"github.com/lib/pq/oid"
-	"github.com/Ready-Stock/Noah/db/sql/sessiondata"
 	"github.com/Ready-Stock/Noah/db/sql"
-	"github.com/pkg/errors"
+	"github.com/Ready-Stock/Noah/db/sql/sessiondata"
 	nodes "github.com/Ready-Stock/pg_query_go/nodes"
+	// "github.com/cockroachdb/cockroach/pkg/sql/sqlbase"
+	"github.com/lib/pq/oid"
+	"github.com/pkg/errors"
 )
 
 type completionMsgType int
@@ -256,7 +255,7 @@ func (r *commandResult) AddRow(row []types.Value) error {
 }
 
 // SetColumns is part of the CommandResult interface.
-func (r *commandResult) SetColumns(cols .ResultColumns) {
+func (r *commandResult) SetColumns(cols []pgproto.FieldDescription) {
 	r.conn.writerState.fi.registerCmd(r.pos)
 	if r.descOpt == sql.NeedRowDesc {
 		_ /* err */ = r.conn.writeRowDescription(cols, r.formatCodes, &r.conn.writerState.buf)

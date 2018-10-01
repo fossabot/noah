@@ -52,6 +52,7 @@ package pgwire
 import (
 	"fmt"
 	"github.com/Ready-Stock/Noah/db/sql/lex"
+	"github.com/Ready-Stock/Noah/db/sql/pgwire/pgproto"
 	"github.com/Ready-Stock/Noah/db/sql/pgwire/pgwirebase"
 	"github.com/Ready-Stock/Noah/db/sql/sem/tree"
 	"github.com/Ready-Stock/Noah/db/sql/sessiondata"
@@ -86,16 +87,16 @@ type pgType struct {
 	size int
 }
 
-// func pgTypeForParserType(t types.T) pgType {
-// 	size := -1
-// 	if s, variable := tree.DatumTypeSize(t); !variable {
-// 		size = int(s)
-// 	}
-// 	return pgType{
-// 		oid:  t.Oid(),
-// 		size: size,
-// 	}
-// }
+func pgTypeForParserType(t pgproto.FieldDescription) pgType {
+	size := -1
+	if s, variable := tree.DatumTypeSize(t); !variable {
+		size = int(s)
+	}
+	return pgType{
+		oid:  oid.Oid(t.DataTypeOID),
+		size: size,
+	}
+}
 
 const secondsInDay = 24 * 60 * 60
 

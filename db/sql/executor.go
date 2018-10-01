@@ -126,6 +126,7 @@ func (ex *connExecutor) ExecutePlans(plans []plan.NodeExecutionPlan, res Command
 			for response.Rows.Next() {
 				if len(columns) == 0 {
 					columns = response.Rows.FieldDescriptions()
+					res.SetColumns(columns)
 				}
 				row := make([]types.Value, len(columns))
 				if values, err := response.Rows.PgValues(); err != nil {

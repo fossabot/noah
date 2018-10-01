@@ -52,6 +52,7 @@ package sql
 import (
 	"context"
 	"fmt"
+	"github.com/Ready-Stock/Noah/db/sql/pgwire/pgproto"
 	"github.com/Ready-Stock/Noah/db/sql/types"
 	"io"
 	"sync"
@@ -779,7 +780,7 @@ type RestrictedCommandResult interface {
 	// can be nil.
 	//
 	// This needs to be called (once) before AddRow.
-	// SetColumns(context.Context, sqlbase.ResultColumns)
+	SetColumns(cols []pgproto.FieldDescription)
 
 	// ResetStmtType allows a client to change the statement type of the current
 	// result, from the original one set when the result was created trough

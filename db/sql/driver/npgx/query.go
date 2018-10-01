@@ -81,6 +81,10 @@ func (rows *Rows) FieldDescriptions() []FieldDescription {
 	return rows.fields
 }
 
+func (rows *Rows) PgFieldDescriptions() []pgproto.FieldDescription {
+
+}
+
 // Close closes the rows, making the connection ready for use again. It is safe
 // to call Close after rows is already closed.
 func (rows *Rows) Close() {

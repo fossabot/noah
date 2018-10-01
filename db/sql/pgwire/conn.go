@@ -54,6 +54,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"github.com/Ready-Stock/Noah/db/sql/pgwire/pgproto"
 	"github.com/Ready-Stock/Noah/db/sql/types"
 	"github.com/Ready-Stock/Noah/db/system"
 	"github.com/Ready-Stock/Noah/db/util/timeutil"
@@ -937,43 +938,30 @@ func (c *conn) bufferNoDataMsg() {
 //
 // If an error is returned, it has also been saved on c.err.
 func (c *conn) writeRowDescription(
-	ctx context.Context,
-// columns []sqlbase.ResultColumn,
+	columns []pgproto.FieldDescription,
 	formatCodes []pgwirebase.FormatCode,
 	w io.Writer,
 ) error {
-	// c.msgBuilder.initMsg(pgwirebase.ServerMsgRowDescription)
-	// c.msgBuilder.putInt16(int16(len(columns)))
-	// for i, column := range columns {
-	// 	fmt.Printf("pgwire: writing column %s of type: %T", column.Name, column.Typ)
-	//
-	// 	c.msgBuilder.writeTerminatedString(column.Name)
-	//
-	// 	typ := pgTypeForParserType(column.Typ)
-	// 	c.msgBuilder.putInt32(0) // Table OID (optional).
-	// 	c.msgBuilder.putInt16(0) // Column attribute ID (optional).
-	// 	c.msgBuilder.putInt32(int32(typ.oid))
-	// 	c.msgBuilder.putInt16(int16(typ.size))
-	// 	// The type modifier (atttypmod) is used to include various extra information
-	// 	// about the type being sent. -1 is used for values which don't make use of
-	// 	// atttypmod and is generally an acceptable catch-all for those that do.
-	// 	// See https://www.postgresql.org/docs/9.6/static/catalog-pg-attribute.html
-	// 	// for information on atttypmod. In theory we differ from Postgres by never
-	// 	// giving the scale/precision, and by not including the length of a VARCHAR,
-	// 	// but it's not clear if any drivers/ORMs depend on this.
-	// 	//
-	// 	// TODO(justin): It would be good to include this information when possible.
-	// 	c.msgBuilder.putInt32(-1)
-	// 	if formatCodes == nil {
-	// 		c.msgBuilder.putInt16(int16(pgwirebase.FormatText))
-	// 	} else {
-	// 		c.msgBuilder.putInt16(int16(formatCodes[i]))
-	// 	}
-	// }
-	// if err := c.msgBuilder.finishMsg(w); err != nil {
-	// 	c.setErr(err)
-	// 	return err
-	// }
+	c.msgBuilder.initMsg(pgwirebase.ServerMsgRowDescription)
+	c.msgBuilder.putInt16(int16(len(columns)))
+	for i, column := range columns {
+		c.msgBuilder.writeTerminatedString(column.Name)
+		c.msgBuilder.putInt32(0) // Table OID (optional).
+		c.msgBuilder.putInt16(0) // Column attribute ID (optional).
+		c.msgBuilder.putInt32(int32(column.DataTypeOID))
+		c.msgBuilder.putInt16(int16(column.DataTypeSize))
+
+		c.msgBuilder.putInt32(-1)
+		if formatCodes == nil {
+			c.msgBuilder.putInt16(int16(pgwirebase.FormatText))
+		} else {
+			c.msgBuilder.putInt16(int16(formatCodes[i]))
+		}
+	}
+	if err := c.msgBuilder.finishMsg(w); err != nil {
+		c.setErr(err)
+		return err
+	}
 	return nil
 }
 
