@@ -121,23 +121,24 @@ func (ctx *BaseContext) GetNode(nodeId uint64) (n *NNode, e error) {
 	return &node, e
 }
 
-func (ctx *BaseContext) AddNode(node NNode) (error) {
-	return ctx.Badger.Update(func(txn *badger.Txn) error {
-		existingNodes, err := ctx.GetNodes()
-		if linq.From(existingNodes).AnyWithT(func(existing NNode) bool {
-			return node.Database == existing.Database && node.IPAddress == existing.IPAddress && node.Port == existing.Port
-		}) {
-			return errors.New("a node already exists with the same connection string.")
-		}
-		nodeId, err := ctx.NodeIDs.Next()
-		if err != nil {
-			return err
-		}
-		node.NodeID = nodeId
-		j, err := json.Marshal(node)
-		if err != nil {
-			return err
-		}
-		return txn.Set([]byte(fmt.Sprintf("%s%d", NodesPath, nodeId)), j)
-	})
+func (ctx *SContext) AddNode(node NNode) (error) {
+	return errors.New("cannot add nodes at this time")
+	// return ctx.Badger.Update(func(txn *badger.Txn) error {
+	// 	existingNodes, err := ctx.GetNodes()
+	// 	if linq.From(existingNodes).AnyWithT(func(existing NNode) bool {
+	// 		return node.Database == existing.Database && node.IPAddress == existing.IPAddress && node.Port == existing.Port
+	// 	}) {
+	// 		return errors.New("a node already exists with the same connection string.")
+	// 	}
+	// 	nodeId, err := ctx.NodeIDs.Next()
+	// 	if err != nil {
+	// 		return err
+	// 	}
+	// 	node.NodeID = nodeId
+	// 	j, err := json.Marshal(node)
+	// 	if err != nil {
+	// 		return err
+	// 	}
+	// 	return txn.Set([]byte(fmt.Sprintf("%s%d", NodesPath, nodeId)), j)
+	// })
 }

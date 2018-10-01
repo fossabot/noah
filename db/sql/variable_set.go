@@ -93,7 +93,8 @@ func (stmt *VariableSetStatement) Execute(ex *connExecutor, res RestrictedComman
 }
 
 func (stmt *VariableSetStatement) getTargetNodes(ex *connExecutor) ([]system.NNode, error) {
-	return ex.GetNodesForAccountID(nil)
+	return nil, nil
+	// return ex.GetNodesForAccountID(nil)
 }
 
 func (stmt *VariableSetStatement) compilePlan(ex *connExecutor, nodes []system.NNode) ([]plan.NodeExecutionPlan, error) {
@@ -105,7 +106,7 @@ func (stmt *VariableSetStatement) compilePlan(ex *connExecutor, nodes []system.N
 	for i := 0; i < len(plans); i++ {
 		plans[i] = plan.NodeExecutionPlan{
 			CompiledQuery: *deparsed,
-			NodeID:        nodes[i],
+			Node:          nodes[i],
 		}
 	}
 	return plans, nil

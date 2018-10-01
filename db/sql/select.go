@@ -54,7 +54,6 @@ import (
 	"github.com/Ready-Stock/Noah/db/system"
 	pg_query2 "github.com/Ready-Stock/pg_query_go"
 	"github.com/Ready-Stock/pg_query_go/nodes"
-	. "github.com/ahmetb/go-linq"
 	"github.com/kataras/go-errors"
 )
 
@@ -90,22 +89,23 @@ func (stmt *SelectStatement) getTargetNodes(ex *connExecutor) ([]system.NNode, e
 	}
 
 	if len(accounts) == 1 {
-		return ex.GetNodesForAccountID(&accounts[0])
+		return ex.SystemContext.GetNodesForAccount(accounts[0])
 	} else if len(accounts) > 1 {
-		node_ids := make([]uint64, 0)
-		From(accounts).SelectManyT(func(id uint64) Query {
-			if ids, err := ex.GetNodesForAccountID(&id); err == nil {
-				return From(ids)
-			}
-			return From(make([]uint64, 0))
-		}).Distinct().ToSlice(&node_ids)
-		if len(node_ids) == 0 {
-			return nil, errors.New("could not find nodes for account IDs")
-		} else {
-			return node_ids, nil
-		}
+		return nil, errors.New("multi account queries are not supported at this time.")
+		// node_ids := make([]uint64, 0)
+		// From(accounts).SelectManyT(func(id uint64) Query {
+		// 	if ids, err := ex.GetNodesForAccountID(&id); err == nil {
+		// 		return From(ids)
+		// 	}
+		// 	return From(make([]uint64, 0))
+		// }).Distinct().ToSlice(&node_ids)
+		// if len(node_ids) == 0 {
+		// 	return nil, errors.New("could not find nodes for account IDs")
+		// } else {
+		// 	return node_ids, nil
+		// }
 	} else {
-		return ex.GetNodesForAccountID(nil)
+		return ex.SystemContext.GetNodes()
 	}
 }
 
@@ -123,7 +123,7 @@ func (stmt *SelectStatement) compilePlan(ex *connExecutor, nodes []system.NNode)
 	for i := 0; i < len(plans); i++ {
 		plans[i] = plan.NodeExecutionPlan{
 			CompiledQuery: *deparsed,
-			NodeID:        nodes[i],
+			Node:          nodes[i],
 			ReadOnly:      true,
 		}
 	}
