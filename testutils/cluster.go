@@ -49,4 +49,10 @@
 
 package testutils
 
+import (
+	"testing"
+)
 
+func CreateNewTestCoordinator(t *testing.T) {
+
+}

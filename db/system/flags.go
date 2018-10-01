@@ -51,82 +51,15 @@ package system
 
 import (
 	"flag"
-	"github.com/Ready-Stock/Noah/db/util/snowflake"
-	"github.com/Ready-Stock/badger"
 )
 
-const (
-	CoordinatorsPath           = "/coordinators/"
-	NodesPath                  = "/nodes/"
-	SettingsPath               = "/settings/"
-	TablesPath                 = "/tables/"
-	PreloadPoolConnectionCount = 5
+var (
+	RunType       = *flag.String("type", "coordinator", "Type of handler to run, defaults to `coordinator`. Valid values are: `tablet` and `coordinator`.")
+	Role          = *flag.String("role", "master", "Type of role for the coordinator, not valid for tablets. Value values are `master` and `follower`. Defaults to `master`")
+	Join          = *flag.String("join", "", "The IP of another coordinator in the cluster.")
+	HttpPort      = *flag.Int("http-port", 8080, "Listen port for Noah's HTTP REST interface.")
+	PostgresPort  = *flag.Int("psql-port", 5433, "Listen port for Noah's PostgreSQL client connectivity.")
+	DataDirectory = *flag.String("data-dir", "data", "Directory for Noah's embedded database.")
+	WalDirectory  = *flag.String("wal-dir", "wal", "Directory for Noah's write ahead log.")
+	LogLevel      = *flag.String("log-level", "debug", "Log verbosity for message written to the console window.")
 )
-
-type BaseContext struct {
-	Badger *badger.DB
-}
-
-type SContext struct {
-	BaseContext
-	// NodeIDs   *badger.Sequence
-	Snowflake *snowflake.Snowflake
-	Flags     SFlags
-	Pool      NodePool
-	Wal       NWal
-}
-
-type SFlags struct {
-	HTTPPort      int
-	PostgresPort  int
-	DataDirectory string
-	WalDirectory  string
-	LogLevel      string
-}
-
-func NewSystemContext() (*SContext, error) {
-	flag.Parse()
-	sctx := SContext{
-		Flags: SFlags{
-			HTTPPort:      HttpPort,
-			PostgresPort:  PostgresPort,
-			DataDirectory: DataDirectory,
-			WalDirectory:  WalDirectory,
-			LogLevel:	   LogLevel,
-		},
-		Snowflake: snowflake.NewSnowflake(1),
-	}
-	opts := badger.DefaultOptions
-
-	opts.Dir = sctx.Flags.DataDirectory
-	opts.ValueDir = sctx.Flags.DataDirectory
-	badgerData, err := badger.Open(opts)
-	if err != nil {
-		panic(err)
-	}
-	sctx.Badger = badgerData
-	return &sctx, nil
-}
-
-func (ctx *SContext) Close() {
-	ctx.Badger.Close()
-}
-
-func (ctx *BaseContext) GetSettings() (*map[string]string, error) {
-	m := map[string]string{}
-	e := ctx.Badger.View(func(txn *badger.Txn) error {
-		it := txn.NewIterator(badger.DefaultIteratorOptions)
-		defer it.Close()
-		prefix := []byte(SettingsPath)
-		for it.Seek(prefix); it.ValidForPrefix(prefix); it.Next() {
-			item := it.Item()
-			v, err := item.Value()
-			if err != nil {
-				return err
-			}
-			m[string(item.Key()[len(prefix)-1:])] = string(v)
-		}
-		return nil
-	})
-	return &m, e
-}
