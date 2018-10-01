@@ -132,6 +132,7 @@ func (ex *connExecutor) ExecutePlans(plans []plan.NodeExecutionPlan) error {
 			}
 		}
 	}
+	ex.Error("finished compiling results for query `%s`", plans[0].CompiledQuery)
 	return nil
 }
 
