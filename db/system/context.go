@@ -60,6 +60,9 @@ const (
 	NodesPath                  = "/nodes/"
 	SettingsPath               = "/settings/"
 	TablesPath                 = "/tables/"
+	NodeIDSequencePath         = "/sequences/internal/nodes"
+	AccountIDSequencePath	   = "/sequences/internal/accounts"
+	CoordinatorIDSequencePath  = "/sequences/internal/coordinators"
 	PreloadPoolConnectionCount = 5
 )
 
@@ -69,7 +72,7 @@ type BaseContext struct {
 
 type SContext struct {
 	BaseContext
-	// NodeIDs   *badger.Sequence
+	NodeIDSequence  *badger.Sequence
 	Snowflake *snowflake.Snowflake
 	Flags     SFlags
 	Pool      NodePool
@@ -92,7 +95,7 @@ func NewSystemContext() (*SContext, error) {
 			PostgresPort:  PostgresPort,
 			DataDirectory: DataDirectory,
 			WalDirectory:  WalDirectory,
-			LogLevel:	   LogLevel,
+			LogLevel:      LogLevel,
 		},
 		Snowflake: snowflake.NewSnowflake(1),
 	}
@@ -105,6 +108,12 @@ func NewSystemContext() (*SContext, error) {
 		panic(err)
 	}
 	sctx.Badger = badgerData
+
+	nodeIdSequence, err := sctx.Badger.GetSequence([]byte(NodeIDSequencePath), 1)
+	if err != nil {
+		panic(err)
+	}
+	sctx.NodeIDSequence = nodeIdSequence
 	return &sctx, nil
 }
 

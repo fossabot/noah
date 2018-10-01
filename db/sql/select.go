@@ -69,12 +69,13 @@ func CreateSelectStatement(stmt pg_query.SelectStmt) *SelectStatement {
 }
 
 func (stmt *SelectStatement) Execute(ex *connExecutor, res RestrictedCommandResult) error {
-	target_nodes, err := stmt.getTargetNodes(ex)
+	targetNodes, err := stmt.getTargetNodes(ex)
 	if err != nil {
 		return err
 	}
+	ex.Debug("Preparing to send query to %d node(s)", len(targetNodes))
 
-	plans, err := stmt.compilePlan(ex, target_nodes)
+	plans, err := stmt.compilePlan(ex, targetNodes)
 	if err != nil {
 		return err
 	}
@@ -111,7 +112,7 @@ func (stmt *SelectStatement) getTargetNodes(ex *connExecutor) ([]system.NNode, e
 
 func (stmt *SelectStatement) getAccountIDs() ([]uint64, error) {
 
-	return nil, nil
+	return make([]uint64, 0), nil
 }
 
 func (stmt *SelectStatement) compilePlan(ex *connExecutor, nodes []system.NNode) ([]plan.NodeExecutionPlan, error) {

@@ -56,6 +56,7 @@ import (
 	"fmt"
 	"github.com/Ready-Stock/Noah/db/sql/types"
 	"github.com/Ready-Stock/Noah/db/system"
+	"github.com/Ready-Stock/Noah/db/util/timeutil"
 	"github.com/kataras/golog"
 	"io"
 	"net"
@@ -172,7 +173,7 @@ func serveConn(
 ) error {
 	sArgs.RemoteAddr = netConn.RemoteAddr()
 
-	//fmt.Println("new connection with options: %+v", sArgs)
+	// fmt.Println("new connection with options: %+v", sArgs)
 
 	c := newConn(netConn, sArgs)
 
@@ -180,7 +181,6 @@ func serveConn(
 	// 	_ /* err */ = writeErr(err, c.msgBuilder, c.conn)
 	// 	return err
 	// }
-
 
 	if err := c.handleAuthentication(insecure); err != nil {
 		_ = c.conn.Close()
@@ -199,7 +199,7 @@ func newConn(netConn net.Conn, sArgs sql.SessionArgs) *conn {
 		sessionArgs: sArgs,
 		msgBuilder:  newWriteBuffer(),
 		rd:          *bufio.NewReader(netConn),
-		pginfo:		 types.NewConnInfo(),
+		pginfo:      types.NewConnInfo(),
 	}
 	c.writerState.fi.buf = &c.writerState.buf
 	c.writerState.fi.lastFlushed = -1
@@ -303,7 +303,9 @@ Loop:
 		timeReceived := time.Now().UTC()
 		switch typ {
 		case pgwirebase.ClientMsgSimpleQuery:
+			golog.Debug("handling simple query message")
 			if doingExtendedQueryMessage {
+				golog.Error("SimpleQuery not allowed while in extended protocol mode")
 				if err = c.stmtBuf.Push(
 					sql.SendError{
 						Err: pgwirebase.NewProtocolViolationErrorf(
@@ -314,6 +316,8 @@ Loop:
 				}
 			}
 			if err = c.handleSimpleQuery(&c.readBuf, timeReceived); err != nil {
+				golog.Error(err.Error())
+				golog.Error("Could not handle simple query")
 				break
 			}
 			err = c.stmtBuf.Push(sql.Sync{})
@@ -394,68 +398,33 @@ Loop:
 func (c *conn) handleSimpleQuery(
 	buf *pgwirebase.ReadBuffer, timeReceived time.Time,
 ) error {
-	// query, err := buf.GetString()
-	// if err != nil {
-	// 	return c.stmtBuf.Push(ctx, sql.SendError{Err: err})
-	// }
-	//
-	// tracing.AnnotateTrace()
-	//
-	// startParse := timeutil.Now()
-	// stmts, err := parser.Parse(query)
-	// if err != nil {
-	// 	return c.stmtBuf.Push(ctx, sql.SendError{Err: err})
-	// }
-	// endParse := timeutil.Now()
-	//
-	// if len(stmts) == 0 {
-	// 	return c.stmtBuf.Push(
-	// 		ctx, sql.ExecStmt{
-	// 			Stmt:         nil,
-	// 			TimeReceived: timeReceived,
-	// 			ParseStart:   startParse,
-	// 			ParseEnd:     endParse,
-	// 		})
-	// }
-	//
-	// for _, stmt := range stmts {
-	// 	// The CopyFrom statement is special. We need to detect it so we can hand
-	// 	// control of the connection, through the stmtBuf, to a copyMachine, and
-	// 	// block this network routine until control is passed back.
-	// 	if cp, ok := stmt.(*tree.CopyFrom); ok {
-	// 		if len(stmts) != 1 {
-	// 			// NOTE(andrei): I don't know if Postgres supports receiving a COPY
-	// 			// together with other statements in the "simple" protocol, but I'd
-	// 			// rather not worry about it since execution of COPY is special - it
-	// 			// takes control over the connection.
-	// 			return c.stmtBuf.Push(
-	// 				ctx,
-	// 				sql.SendError{
-	// 					Err: pgwirebase.NewProtocolViolationErrorf(
-	// 						"COPY together with other statements in a query string is not supported"),
-	// 				})
-	// 		}
-	// 		copyDone := sync.WaitGroup{}
-	// 		copyDone.Add(1)
-	// 		if err := c.stmtBuf.Push(ctx, sql.CopyIn{Conn: c, Stmt: cp, CopyDone: &copyDone}); err != nil {
-	// 			return err
-	// 		}
-	// 		copyDone.Wait()
-	// 		return nil
-	// 	}
-	//
-	// 	if err := c.stmtBuf.Push(
-	// 		ctx,
-	// 		sql.ExecStmt{
-	// 			Stmt:         stmt,
-	// 			TimeReceived: timeReceived,
-	// 			ParseStart:   startParse,
-	// 			ParseEnd:     endParse,
-	// 		}); err != nil {
-	// 		return err
-	// 	}
-	// }
-	return nil
+	query, err := buf.GetString()
+	if err != nil {
+		return c.stmtBuf.Push(sql.SendError{Err: err})
+	}
+
+	startParse := timeutil.Now()
+	golog.Infof("[%s] Query: `%s`", c.conn.RemoteAddr().String(), query)
+	p, err := pg_query.Parse(query)
+	endParse := time.Now().UTC()
+	if err != nil {
+		golog.Errorf("[%s] %s", c.conn.RemoteAddr().String(), err.Error())
+		return c.stmtBuf.Push(sql.SendError{Err: err})
+	}
+
+	j, _ := p.MarshalJSON()
+	golog.Debugf("[%s] Tree: %s", c.conn.RemoteAddr().String(), string(j))
+
+	if stmt, ok := p.Statements[0].(nodes.RawStmt).Stmt.(nodes.Stmt); !ok {
+		return c.stmtBuf.Push(sql.SendError{Err: errors.Errorf("error, cannot currently handle statements of type: %s, json: %s", reflect.TypeOf(p.Statements[0].(nodes.RawStmt).Stmt).Name(), string(j))})
+	} else {
+		return c.stmtBuf.Push(sql.ExecStmt{
+			Stmt:         stmt,
+			TimeReceived: timeReceived,
+			ParseStart:   startParse,
+			ParseEnd:     endParse,
+		})
+	}
 }
 
 // An error is returned iff the statement buffer has been closed. In that case,
@@ -499,7 +468,6 @@ func (c *conn) handleParse(buf *pgwirebase.ReadBuffer) error {
 
 	j, _ := p.MarshalJSON()
 	golog.Debugf("[%s] Tree: %s", c.conn.RemoteAddr().String(), string(j))
-
 
 	if stmt, ok := p.Statements[0].(nodes.RawStmt).Stmt.(nodes.Stmt); !ok {
 		return c.stmtBuf.Push(sql.SendError{Err: errors.Errorf("error, cannot currently handle statements of type: %s, json: %s", reflect.TypeOf(p.Statements[0].(nodes.RawStmt).Stmt).Name(), string(j))})

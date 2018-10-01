@@ -51,6 +51,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/Ready-Stock/Noah/api"
 	"github.com/Ready-Stock/Noah/db/coordinator"
 	"github.com/Ready-Stock/Noah/db/system"
 	"github.com/kataras/golog"
@@ -65,6 +66,10 @@ const (
 
 
 func main() {
+	StartCoordinator()
+}
+
+func StartCoordinator() {
 	sctx, err := system.NewSystemContext()
 	if err != nil {
 		panic(err)
@@ -73,6 +78,6 @@ func main() {
 	fmt.Println("Starting admin application with port:", sctx.Flags.HTTPPort)
 	fmt.Println("Listening for connections on:", sctx.Flags.PostgresPort)
 
-	// go api.StartApp(&SystemContext)
+	go api.StartApp(sctx)
 	coordinator.Start(sctx)
 }

@@ -179,7 +179,7 @@ type ExecStmt struct {
 	// option is to keep track of the query as we got it from the client, except
 	// that we might have gotten a batch of them at once, in which case only the
 	// parser can do the splitting.
-	// Stmt tree.Statement
+	Stmt nodes.Stmt
 
 	// TimeReceived is the time at which the exec message was received
 	// from the client. Used to compute the service latency.

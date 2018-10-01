@@ -205,11 +205,33 @@ func (ex *connExecutor) run() (err error) {
 			}
 			return err
 		}
+		if cmd == nil {
+			ex.Warn("found null command, advancing 1")
+			ex.stmtBuf.advanceOne()
+		}
 		var res ResultBase
 		var payload fsm.EventPayload
 		switch tcmd := cmd.(type) {
 		case ExecStmt:
 			// TODO (elliotcourant) add ExecStmt handling. Currently only ExecPortal is supported. I've not found a query yet that needs to be performed via exec stmt though.
+			ex.Debug("executing statment")
+			if tcmd.Stmt == nil {
+				res = ex.clientComm.CreateEmptyQueryResult(pos)
+				break
+			}
+			ex.curStmt = &tcmd.Stmt
+
+			stmtRes := ex.clientComm.CreateStatementResult(tcmd.Stmt, NeedRowDesc, pos, nil /* formatCodes */)
+			res = stmtRes
+
+			// ex.phaseTimes[sessionQueryReceived] = tcmd.TimeReceived
+			// ex.phaseTimes[sessionStartParse] = tcmd.ParseStart
+			// ex.phaseTimes[sessionEndParse] = tcmd.ParseEnd
+
+			err = ex.execStmt(*ex.curStmt, stmtRes,  pos)
+			if err != nil {
+				return err
+			}
 		case ExecPortal:
 			portal, ok := ex.prepStmtsNamespace.portals[tcmd.Name]
 			if !ok {

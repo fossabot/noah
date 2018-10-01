@@ -53,6 +53,7 @@ import (
 	"github.com/Ready-Stock/Noah/db/sql/driver/npgx"
 	"github.com/Ready-Stock/Noah/db/sql/plan"
 	"github.com/Ready-Stock/Noah/db/sql/types"
+	"github.com/kataras/go-errors"
 )
 
 type executeResponse struct {
@@ -62,6 +63,10 @@ type executeResponse struct {
 }
 
 func (ex *connExecutor) ExecutePlans(plans []plan.NodeExecutionPlan) error {
+	if len(plans) == 0 {
+		ex.Error("no plans were provided, nothing will be executed")
+		return errors.New("no plans were provided")
+	}
 	responses := make(chan *executeResponse, len(plans))
 	for _, p := range plans {
 		go func(ex *connExecutor, pln plan.NodeExecutionPlan) {
@@ -93,23 +98,21 @@ func (ex *connExecutor) ExecutePlans(plans []plan.NodeExecutionPlan) error {
 				ex.TransactionStatus = NTXInProgress
 			}
 
-			if pln.ReadOnly {
-				rows, err := tx.Query(pln.CompiledQuery)
-				if err != nil {
-					ex.Error(err.Error())
-					exResponse.Error = err
-					return
-				}
-				exResponse.Rows = rows
-			} else {
-
+			rows, err := tx.Query(pln.CompiledQuery)
+			if err != nil {
+				ex.Error(err.Error())
+				exResponse.Error = err
+				return
 			}
+			exResponse.Rows = rows
+			ex.Debug("received repsonse from node [%d]", pln.Node.NodeID)
 		}(ex, p)
 	}
 	columns := make([]npgx.FieldDescription, 0)
 	result := make([][]types.Value, 0)
 	for i := 0; i < len(plans); i++ {
-		response := <-responses
+		response := <- responses
+		ex.Debug("handling response from node [%d]", response.NodeID)
 		if response.Error != nil {
 			return response.Error
 		}
@@ -120,19 +123,24 @@ func (ex *connExecutor) ExecutePlans(plans []plan.NodeExecutionPlan) error {
 				}
 				row := make([]types.Value, len(columns))
 				if values, err := response.Rows.Values(); err != nil {
-
+					ex.Error(err.Error())
+					return err
 				} else {
 					for c, v := range values {
 						if tValue, ok := v.(types.Value); ok {
 							row[c] = tValue
+						} else {
+							ex.Error("could not convert value returned")
 						}
 					}
 				}
 				result = append(result, row)
 			}
+		} else {
+			ex.Debug("no rows returned for query `%s`", plans[0].CompiledQuery)
 		}
 	}
-	ex.Error("finished compiling results for query `%s`", plans[0].CompiledQuery)
+	ex.Debug("%d row(s) compiled for query `%s`", len(result), plans[0].CompiledQuery)
 	return nil
 }
 

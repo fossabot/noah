@@ -47,12 +47,34 @@
  * License (MIT) https://github.com/sony/sonyflake/blob/master/LICENSE
  */
 
-package main
+package main_test
 
 import (
+	"database/sql"
+	_ "github.com/lib/pq"
 	"testing"
 )
 
 func Test_EntryPoint(t *testing.T) {
-	main()
+	connStr := "postgres://postgres:password@localhost:5433/pqgotest?sslmode=disable"
+	db, err := sql.Open("postgres", connStr)
+	if err != nil {
+		t.Fatal(err)
+	}
+	rows, err := db.Query(`SELECT 1`)
+	if err != nil {
+		t.Error(err)
+		t.Fail()
+	}
+	for rows.Next() {
+		i := 0
+		rows.Scan(&i)
+		if i != 1 {
+			t.Error("result does not equal 1")
+			t.Fail()
+		}
+		return
+	}
+	t.Error("no rows returned")
+	t.Fail()
 }
