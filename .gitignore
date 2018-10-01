@@ -17,3 +17,4 @@ vendor/golang.org/.DS_Store
 vendor/golang.org/x/.DS_Store
 vendor/github.com/.DS_Store
 bin/noah
+noah

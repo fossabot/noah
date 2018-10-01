@@ -69,7 +69,7 @@ func Test_EntryPoint(t *testing.T) {
 	for rows.Next() {
 		i := ""
 		rows.Scan(&i)
-		if i != "1" {
+		if i != "2" {
 			t.Error("result does not equal")
 			t.Fail()
 		}
