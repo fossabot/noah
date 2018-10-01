@@ -53,6 +53,9 @@ import (
 	"fmt"
 	"github.com/Ready-Stock/Noah/db/sql/pgwire/pgwirebase"
 	"github.com/Ready-Stock/Noah/db/sql/types"
+	"github.com/cockroachdb/cockroach/pkg/sql/sqlbase"
+
+	//"github.com/cockroachdb/cockroach/pkg/sql/sqlbase"
 	"github.com/lib/pq/oid"
 	"github.com/Ready-Stock/Noah/db/sql/sessiondata"
 	"github.com/Ready-Stock/Noah/db/sql"
@@ -253,12 +256,12 @@ func (r *commandResult) AddRow(row []types.Value) error {
 }
 
 // SetColumns is part of the CommandResult interface.
-// func (r *commandResult) SetColumns(ctx context.Context, cols sqlbase.ResultColumns) {
-// 	r.conn.writerState.fi.registerCmd(r.pos)
-// 	if r.descOpt == sql.NeedRowDesc {
-// 		_ /* err */ = r.conn.writeRowDescription(ctx, cols, r.formatCodes, &r.conn.writerState.buf)
-// 	}
-// }
+func (r *commandResult) SetColumns(cols .ResultColumns) {
+	r.conn.writerState.fi.registerCmd(r.pos)
+	if r.descOpt == sql.NeedRowDesc {
+		_ /* err */ = r.conn.writeRowDescription(cols, r.formatCodes, &r.conn.writerState.buf)
+	}
+}
 
 // SetInTypes is part of the DescribeResult interface.
 func (r *commandResult) SetInTypes(types []oid.Oid) {

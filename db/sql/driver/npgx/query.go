@@ -404,6 +404,75 @@ func (rows *Rows) Values() ([]interface{}, error) {
 	return values, rows.Err()
 }
 
+func (rows *Rows) PgValues() ([]types.Value, error) {
+	if rows.closed {
+		return nil, errors.New("rows is closed")
+	}
+
+	values := make([]types.Value, 0, len(rows.fields))
+
+	for range rows.fields {
+		buf, fd, _ := rows.nextColumn()
+
+		if buf == nil {
+			values = append(values, nil)
+			continue
+		}
+
+		if dt, ok := rows.conn.ConnInfo.DataTypeForOID(fd.DataType); ok {
+			value := reflect.New(reflect.ValueOf(dt.Value).Elem().Type()).Interface().(types.Value)
+			switch fd.FormatCode {
+			case TextFormatCode:
+				decoder := value.(types.TextDecoder)
+				if decoder == nil {
+					decoder = &types.GenericText{}
+				}
+				err := decoder.DecodeText(rows.conn.ConnInfo, buf)
+				if err != nil {
+					rows.fatal(err)
+				}
+				values = append(values, decoder.(types.Value))
+			case BinaryFormatCode:
+				decoder := value.(types.BinaryDecoder)
+				if decoder == nil {
+					decoder = &types.GenericBinary{}
+				}
+				err := decoder.DecodeBinary(rows.conn.ConnInfo, buf)
+				if err != nil {
+					rows.fatal(err)
+				}
+				values = append(values, value)
+			default:
+				rows.fatal(errors.New("Unknown format code"))
+			}
+		} else {
+			value := &types.Text{}
+			switch fd.FormatCode {
+			case TextFormatCode:
+				err := value.DecodeText(rows.conn.ConnInfo, buf)
+				if err != nil {
+					rows.fatal(err)
+				}
+				values = append(values, value)
+			case BinaryFormatCode:
+				err := value.DecodeBinary(rows.conn.ConnInfo, buf)
+				if err != nil {
+					rows.fatal(err)
+				}
+				values = append(values, value)
+			default:
+				rows.fatal(errors.New("Unknown format code"))
+			}
+		}
+
+		if rows.Err() != nil {
+			return nil, rows.Err()
+		}
+	}
+
+	return values, rows.Err()
+}
+
 func (c *Conn) getRows(sql string) *Rows {
 	if len(c.preallocatedRows) == 0 {
 		c.preallocatedRows = make([]Rows, 64)

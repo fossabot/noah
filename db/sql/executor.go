@@ -54,7 +54,6 @@ import (
 	"github.com/Ready-Stock/Noah/db/sql/plan"
 	"github.com/Ready-Stock/Noah/db/sql/types"
 	"github.com/kataras/go-errors"
-	"reflect"
 )
 
 type executeResponse struct {
@@ -63,7 +62,7 @@ type executeResponse struct {
 	NodeID  uint64
 }
 
-func (ex *connExecutor) ExecutePlans(plans []plan.NodeExecutionPlan) (err error) {
+func (ex *connExecutor) ExecutePlans(plans []plan.NodeExecutionPlan, res CommandResult) (err error) {
 	//defer util.CatchPanic(&err)
 	if len(plans) == 0 {
 		ex.Error("no plans were provided, nothing will be executed")
@@ -129,19 +128,15 @@ func (ex *connExecutor) ExecutePlans(plans []plan.NodeExecutionPlan) (err error)
 					columns = response.Rows.FieldDescriptions()
 				}
 				row := make([]types.Value, len(columns))
-				if values, err := response.Rows.Values(); err != nil {
+				if values, err := response.Rows.PgValues(); err != nil {
 					ex.Error(err.Error())
 					return err
 				} else {
 					for c, v := range values {
-						ex.Debug("received value of type %s", reflect.TypeOf(v).Name())
-						if tValue, ok := v.(types.Value); ok {
-							row[c] = tValue
-						} else {
-							ex.Error("could not convert value returned")
-						}
+						row[c] = v
 					}
 				}
+				res.AddRow(row)
 				result = append(result, row)
 			}
 		} else {

@@ -80,7 +80,7 @@ func (stmt *SelectStatement) Execute(ex *connExecutor, res RestrictedCommandResu
 		return err
 	}
 
-	return ex.ExecutePlans(plans)
+	return ex.ExecutePlans(plans, res)
 }
 
 func (stmt *SelectStatement) getTargetNodes(ex *connExecutor) ([]system.NNode, error) {
