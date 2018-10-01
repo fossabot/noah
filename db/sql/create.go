@@ -68,12 +68,12 @@ func CreateCreateStatement(stmt pg_query.CreateStmt) *CreateStatement {
 }
 
 func (stmt *CreateStatement) Execute(ex *connExecutor, res RestrictedCommandResult) error {
-	target_nodes, err := stmt.getTargetNodes(ex)
+	targetNodes, err := stmt.getTargetNodes(ex)
 	if err != nil {
 		return err
 	}
 
-	plans, err := stmt.compilePlan(ex, target_nodes)
+	plans, err := stmt.compilePlan(ex, targetNodes)
 	if err != nil {
 		return err
 	}

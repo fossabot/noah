@@ -77,7 +77,8 @@ const (
 type NTXStatus int
 
 const (
-	NTXNoTransaction = NTXStatus(0)
-	NTXNotStarted    = NTXStatus(1)
-	NTXInProgress    = NTXStatus(2)
+	NTXNoTransaction   = NTXStatus(0)
+	NTXNotStarted      = NTXStatus(1)
+	NTXInProgress      = NTXStatus(2)
+	NTXPreparedSuccess = NTXStatus(3)
 )

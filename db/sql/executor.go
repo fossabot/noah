@@ -135,7 +135,7 @@ func (ex *connExecutor) ExecutePlans(plans []plan.NodeExecutionPlan) error {
 	return nil
 }
 
-func (ex *connExecutor) PrepareCommit() error {
+func (ex *connExecutor) PrepareTwoPhase() error {
 	responses := make(chan *executeResponse, len(ex.nodes))
 	for nodeId, tx := range ex.nodes {
 		go func(tx *npgx.Transaction) {
@@ -150,7 +150,15 @@ func (ex *connExecutor) PrepareCommit() error {
 				return
 			}
 
+			if !node.Alive {
+				return // TODO (elliotcourant) Add handling for a dead node.
+			}
 
+			if err := tx.PrepareTwoPhase(ex.TransactionID); err != nil {
+				ex.Error(err.Error())
+				exResponse.Error = err
+				return
+			}
 		}(tx)
 	}
 	for i := 0; i < len(ex.nodes); i++ {
@@ -159,5 +167,22 @@ func (ex *connExecutor) PrepareCommit() error {
 			return response.Error
 		}
 	}
+	ex.TransactionStatus = NTXPreparedSuccess
+	return nil
+}
+
+func (ex *connExecutor) CommitTwoPhase() error {
+	return nil
+}
+
+func (ex *connExecutor) RollbackTwoPhase() error {
+	return nil
+}
+
+func (ex *connExecutor) Commit() error {
+	return nil
+}
+
+func (ex *connExecutor) Rollback() error {
 	return nil
 }

@@ -47,4 +47,12 @@
  * License (MIT) https://github.com/sony/sonyflake/blob/master/LICENSE
  */
 
-package sql
+package sql_test
+
+import (
+	"testing"
+)
+
+func Test_thing(t *testing.T) {
+
+}
