@@ -51,6 +51,7 @@ package sql
 
 import (
 	"github.com/Ready-Stock/Noah/db/sql/driver/npgx"
+	"github.com/Ready-Stock/Noah/db/sql/pgwire/pgproto"
 	"github.com/Ready-Stock/Noah/db/sql/plan"
 	"github.com/Ready-Stock/Noah/db/sql/types"
 	"github.com/kataras/go-errors"
@@ -62,7 +63,7 @@ type executeResponse struct {
 	NodeID  uint64
 }
 
-func (ex *connExecutor) ExecutePlans(plans []plan.NodeExecutionPlan, res CommandResult) (err error) {
+func (ex *connExecutor) ExecutePlans(plans []plan.NodeExecutionPlan, res RestrictedCommandResult) (err error) {
 	//defer util.CatchPanic(&err)
 	if len(plans) == 0 {
 		ex.Error("no plans were provided, nothing will be executed")
@@ -114,7 +115,7 @@ func (ex *connExecutor) ExecutePlans(plans []plan.NodeExecutionPlan, res Command
 			exResponse.Rows = rows
 		}(ex, p)
 	}
-	columns := make([]npgx.FieldDescription, 0)
+	columns := make([]pgproto.FieldDescription, 0)
 	result := make([][]types.Value, 0)
 	for i := 0; i < len(plans); i++ {
 		response := <- responses
@@ -125,7 +126,8 @@ func (ex *connExecutor) ExecutePlans(plans []plan.NodeExecutionPlan, res Command
 		if response.Rows != nil {
 			for response.Rows.Next() {
 				if len(columns) == 0 {
-					columns = response.Rows.FieldDescriptions()
+					columns = response.Rows.PgFieldDescriptions()
+					ex.Debug("retrieved %d column(s)", len(columns))
 					res.SetColumns(columns)
 				}
 				row := make([]types.Value, len(columns))

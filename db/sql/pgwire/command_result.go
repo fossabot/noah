@@ -57,6 +57,8 @@ import (
 	"github.com/Ready-Stock/Noah/db/sql"
 	"github.com/Ready-Stock/Noah/db/sql/sessiondata"
 	nodes "github.com/Ready-Stock/pg_query_go/nodes"
+	"github.com/kataras/golog"
+
 	// "github.com/cockroachdb/cockroach/pkg/sql/sqlbase"
 	"github.com/lib/pq/oid"
 	"github.com/pkg/errors"
@@ -258,7 +260,9 @@ func (r *commandResult) AddRow(row []types.Value) error {
 func (r *commandResult) SetColumns(cols []pgproto.FieldDescription) {
 	r.conn.writerState.fi.registerCmd(r.pos)
 	if r.descOpt == sql.NeedRowDesc {
-		_ /* err */ = r.conn.writeRowDescription(cols, r.formatCodes, &r.conn.writerState.buf)
+		if err := r.conn.writeRowDescription(cols, r.formatCodes, &r.conn.writerState.buf); err != nil {
+			golog.Error(err.Error())
+		}
 	}
 }
 

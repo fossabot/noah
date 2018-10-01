@@ -255,7 +255,7 @@ func (ex *connExecutor) run() (err error) {
 				*portal.Stmt.Statement,
 				// The client is using the extended protocol, so no row description is
 				// needed.
-				DontNeedRowDesc, pos, portal.OutFormats)
+				NeedRowDesc, pos, portal.OutFormats)
 			res = stmtRes
 			err = ex.execStmt(*ex.curStmt, stmtRes, pos)
 		case PrepareStmt:

@@ -52,7 +52,6 @@ package pgwire
 import (
 	"fmt"
 	"github.com/Ready-Stock/Noah/db/sql/lex"
-	"github.com/Ready-Stock/Noah/db/sql/pgwire/pgproto"
 	"github.com/Ready-Stock/Noah/db/sql/pgwire/pgwirebase"
 	"github.com/Ready-Stock/Noah/db/sql/sem/tree"
 	"github.com/Ready-Stock/Noah/db/sql/sessiondata"
@@ -87,16 +86,6 @@ type pgType struct {
 	size int
 }
 
-func pgTypeForParserType(t pgproto.FieldDescription) pgType {
-	size := -1
-	if s, variable := tree.DatumTypeSize(t); !variable {
-		size = int(s)
-	}
-	return pgType{
-		oid:  oid.Oid(t.DataTypeOID),
-		size: size,
-	}
-}
 
 const secondsInDay = 24 * 60 * 60
 
@@ -152,6 +141,8 @@ func (b *writeBuffer) writeTextDatum(
 	case *types.Text: // Also serves varchar
 		b.writeLengthPrefixedString(v.String)
 
+	case *types.Name: // Also serves varchar
+		b.writeLengthPrefixedString(v.String)
 	// case *tree.DCollatedString:
 	// 	b.writeLengthPrefixedString(v.Contents)
 
@@ -205,6 +196,11 @@ func (b *writeBuffer) writeTextDatum(
 
 	case *types.JSONB:
 		b.writeLengthPrefixedBytes(v.Bytes)
+	case *types.OIDValue:
+		// Start at offset 4 because `putInt32` clobbers the first 4 bytes.
+		s := strconv.AppendInt(b.putbuf[4:4], int64(v.Uint), 10)
+		b.putInt32(int32(len(s)))
+		b.write(s)
 
 	// case *tree.DArray:
 	// 	// Arrays are serialized as a string of comma-separated values, surrounded

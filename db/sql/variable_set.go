@@ -89,7 +89,7 @@ func (stmt *VariableSetStatement) Execute(ex *connExecutor, res RestrictedComman
 		return err
 	}
 
-	return ex.ExecutePlans(plans)
+	return ex.ExecutePlans(plans, res)
 }
 
 func (stmt *VariableSetStatement) getTargetNodes(ex *connExecutor) ([]system.NNode, error) {

@@ -931,7 +931,7 @@ type bufferedCommandResult struct {
 	err          error
 	rows         [][]types.Value
 	rowsAffected int
-	// cols         sqlbase.ResultColumns
+	cols         []pgproto.FieldDescription
 
 	// errOnly, if set, makes AddRow() panic. This can be used when the execution
 	// of the query is not expected to produce any results.
@@ -945,12 +945,12 @@ type bufferedCommandResult struct {
 var _ RestrictedCommandResult = &bufferedCommandResult{}
 
 // SetColumns is part of the RestrictedCommandResult interface.
-// func (r *bufferedCommandResult) SetColumns(_ context.Context, cols sqlbase.ResultColumns) {
-// 	if r.errOnly {
-// 		panic("SetColumns() called when errOnly is set")
-// 	}
-// 	r.cols = cols
-// }
+func (r *bufferedCommandResult) SetColumns(cols []pgproto.FieldDescription) {
+	if r.errOnly {
+		panic("SetColumns() called when errOnly is set")
+	}
+	r.cols = cols
+}
 
 // // ResetStmtType is part of the RestrictedCommandResult interface.
 // func (r *bufferedCommandResult) ResetStmtType(stmt tree.Statement) {

@@ -61,16 +61,16 @@ func Test_EntryPoint(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	rows, err := db.Query(`SELECT 1`)
+	rows, err := db.Query(`SELECT 2::citext`)
 	if err != nil {
 		t.Error(err)
 		t.Fail()
 	}
 	for rows.Next() {
-		i := 0
+		i := ""
 		rows.Scan(&i)
-		if i != 1 {
-			t.Error("result does not equal 1")
+		if i != "1" {
+			t.Error("result does not equal")
 			t.Fail()
 		}
 		return

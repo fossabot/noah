@@ -67,6 +67,7 @@ type Rows struct {
 	connPool   *ConnPool
 	values     [][]byte
 	fields     []FieldDescription
+	pgFields   []pgproto.FieldDescription
 	rowCount   int
 	columnIdx  int
 	err        error
@@ -82,7 +83,7 @@ func (rows *Rows) FieldDescriptions() []FieldDescription {
 }
 
 func (rows *Rows) PgFieldDescriptions() []pgproto.FieldDescription {
-
+	return rows.pgFields
 }
 
 // Close closes the rows, making the connection ready for use again. It is safe
@@ -142,6 +143,7 @@ func (rows *Rows) Next() bool {
 		switch msg := msg.(type) {
 		case *pgproto.RowDescription:
 			rows.fields = rows.conn.rxRowDescription(msg)
+			rows.pgFields = msg.Fields
 			for i := range rows.fields {
 				if dt, ok := rows.conn.ConnInfo.DataTypeForOID(rows.fields[i].DataType); ok {
 					rows.fields[i].DataTypeName = dt.Name
@@ -149,8 +151,6 @@ func (rows *Rows) Next() bool {
 				} else {
 					rows.fields[i].DataTypeName = "text"
 					rows.fields[i].FormatCode = TextFormatCode
-					//rows.fatal(errors.Errorf("unknown oid: %d", rows.fields[i].DataType))
-					//return false
 				}
 			}
 		case *pgproto.DataRow:
