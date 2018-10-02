@@ -90,6 +90,7 @@ func (stmt *CreateStatement) compilePlan(ex *connExecutor, nodes []system.NNode)
 
 	// Add handling here for custom column types.
 
+
 	deparsed, err := pg_query2.Deparse(stmt.Statement)
 	if err != nil {
 		ex.Error(err.Error())
@@ -103,4 +104,12 @@ func (stmt *CreateStatement) compilePlan(ex *connExecutor, nodes []system.NNode)
 		}
 	}
 	return plans, nil
+}
+
+func (stmt *CreateStatement) handleSequences() {
+	if stmt.Statement.TableElts.Items != nil && len(stmt.Statement.TableElts.Items) > 0 {
+		for _, col := range stmt.Statement.TableElts.Items {
+
+		}
+	}
 }

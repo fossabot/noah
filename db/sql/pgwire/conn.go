@@ -414,7 +414,7 @@ func (c *conn) handleSimpleQuery(
 	}
 
 	j, _ := p.MarshalJSON()
-	golog.Debugf("[%s] Tree: %s", c.conn.RemoteAddr().String(), string(j))
+	// golog.Debugf("[%s] Tree: %s", c.conn.RemoteAddr().String(), string(j))
 
 	if stmt, ok := p.Statements[0].(nodes.RawStmt).Stmt.(nodes.Stmt); !ok {
 		return c.stmtBuf.Push(sql.SendError{Err: errors.Errorf("error, cannot currently handle statements of type: %s, json: %s", reflect.TypeOf(p.Statements[0].(nodes.RawStmt).Stmt).Name(), string(j))})
@@ -468,7 +468,7 @@ func (c *conn) handleParse(buf *pgwirebase.ReadBuffer) error {
 	}
 
 	j, _ := p.MarshalJSON()
-	golog.Debugf("[%s] Tree: %s", c.conn.RemoteAddr().String(), string(j))
+	// golog.Debugf("[%s] Tree: %s", c.conn.RemoteAddr().String(), string(j))
 
 	if stmt, ok := p.Statements[0].(nodes.RawStmt).Stmt.(nodes.Stmt); !ok {
 		return c.stmtBuf.Push(sql.SendError{Err: errors.Errorf("error, cannot currently handle statements of type: %s, json: %s", reflect.TypeOf(p.Statements[0].(nodes.RawStmt).Stmt).Name(), string(j))})

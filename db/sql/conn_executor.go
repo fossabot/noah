@@ -216,8 +216,6 @@ func (ex *connExecutor) run() (err error) {
 		var payload fsm.EventPayload
 		switch tcmd := cmd.(type) {
 		case ExecStmt:
-			// TODO (elliotcourant) add ExecStmt handling. Currently only ExecPortal is supported. I've not found a query yet that needs to be performed via exec stmt though.
-			ex.Debug("executing statment")
 			if tcmd.Stmt == nil {
 				res = ex.clientComm.CreateEmptyQueryResult(pos)
 				break
