@@ -55,6 +55,9 @@ import (
 	"github.com/Ready-Stock/Noah/db/coordinator"
 	"github.com/Ready-Stock/Noah/db/system"
 	"github.com/kataras/golog"
+	"os"
+	"os/signal"
+	"syscall"
 )
 
 type ServiceType string
@@ -77,6 +80,15 @@ func StartCoordinator() {
 	golog.SetLevel(sctx.Flags.LogLevel)
 	fmt.Println("Starting admin application with port:", sctx.Flags.HTTPPort)
 	fmt.Println("Listening for connections on:", sctx.Flags.PostgresPort)
+
+	c := make(chan os.Signal)
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+	go func() {
+		<-c
+		sctx.Close()
+		fmt.Println("")
+		os.Exit(1)
+	}()
 
 	go api.StartApp(sctx)
 	coordinator.Start(sctx)
