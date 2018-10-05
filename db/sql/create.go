@@ -54,6 +54,7 @@ import (
 	"github.com/Ready-Stock/Noah/db/system"
 	pg_query2 "github.com/Ready-Stock/pg_query_go"
 	"github.com/Ready-Stock/pg_query_go/nodes"
+	"strings"
 )
 
 type CreateStatement struct {
@@ -88,6 +89,8 @@ func (stmt *CreateStatement) getTargetNodes(ex *connExecutor) ([]system.NNode, e
 func (stmt *CreateStatement) compilePlan(ex *connExecutor, nodes []system.NNode) ([]plan.NodeExecutionPlan, error) {
 	plans := make([]plan.NodeExecutionPlan, len(nodes))
 
+	stmt.handleTableType(ex) // Handle sharding
+
 	// Add handling here for custom column types.
 
 
@@ -110,6 +113,21 @@ func (stmt *CreateStatement) handleSequences() {
 	if stmt.Statement.TableElts.Items != nil && len(stmt.Statement.TableElts.Items) > 0 {
 		for _, col := range stmt.Statement.TableElts.Items {
 
+		}
+	}
+}
+
+func (stmt *CreateStatement) handleTableType(ex *connExecutor) error {
+	if stmt.Statement.Tablespacename != nil {
+		switch strings.ToLower(*stmt.Statement.Tablespacename) {
+		case "global": // Table has the same data on all shards
+
+			return nil
+		case "account": // Table is sharded by shard column
+
+			return nil
+		default: // Other
+			return nil
 		}
 	}
 }
