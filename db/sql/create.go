@@ -93,7 +93,6 @@ func (stmt *CreateStatement) compilePlan(ex *connExecutor, nodes []system.NNode)
 
 	// Add handling here for custom column types.
 
-
 	deparsed, err := pg_query2.Deparse(stmt.Statement)
 	if err != nil {
 		ex.Error(err.Error())
@@ -112,7 +111,22 @@ func (stmt *CreateStatement) compilePlan(ex *connExecutor, nodes []system.NNode)
 func (stmt *CreateStatement) handleSequences() {
 	if stmt.Statement.TableElts.Items != nil && len(stmt.Statement.TableElts.Items) > 0 {
 		for _, col := range stmt.Statement.TableElts.Items {
+			columnDefinition := col.(pg_query.ColumnDef)
+			if columnDefinition.TypeName != nil &&
+				columnDefinition.TypeName.Names.Items != nil &&
+				len(columnDefinition.TypeName.Names.Items) > 0 {
+				columnType := columnDefinition.TypeName.Names.Items[len(columnDefinition.TypeName.Names.Items)].(pg_query.String) // The last type name
 
+				// This switch statement will handle any custom column types that we would like.
+				switch strings.ToLower(columnType.Str) {
+				case "nserial": // Emulate 32 bit sequence
+
+				case "nbigserial": // Emulate 64 bit sequence
+
+				default:
+
+				}
+			}
 		}
 	}
 }
@@ -122,12 +136,11 @@ func (stmt *CreateStatement) handleTableType(ex *connExecutor) error {
 		switch strings.ToLower(*stmt.Statement.Tablespacename) {
 		case "global": // Table has the same data on all shards
 
-			return nil
 		case "account": // Table is sharded by shard column
 
-			return nil
 		default: // Other
-			return nil
+
 		}
 	}
+	return nil
 }

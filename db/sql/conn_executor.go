@@ -53,6 +53,7 @@ import (
 	"fmt"
 	"github.com/Ready-Stock/Noah/db/sql/driver/npgx"
 	"github.com/Ready-Stock/Noah/db/sql/pgwire/pgerror"
+	"github.com/Ready-Stock/Noah/db/store"
 	"github.com/Ready-Stock/Noah/db/system"
 	"github.com/Ready-Stock/Noah/db/util"
 	"github.com/Ready-Stock/Noah/db/util/fsm"
@@ -80,6 +81,8 @@ type connExecutor struct {
 	nodes             map[uint64]*npgx.Transaction
 	TransactionStatus NTXStatus
 	TransactionID     uint64
+
+	storeTransaction *store.StoreTransaction
 }
 
 func (ex *connExecutor) GetNodesForAccountID(id *uint64) ([]uint64, error) {
@@ -229,7 +232,7 @@ func (ex *connExecutor) run() (err error) {
 			// ex.phaseTimes[sessionStartParse] = tcmd.ParseStart
 			// ex.phaseTimes[sessionEndParse] = tcmd.ParseEnd
 
-			err = ex.execStmt(*ex.curStmt, stmtRes,  pos)
+			err = ex.execStmt(*ex.curStmt, stmtRes, pos)
 			if err != nil {
 				return err
 			}

@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package system;
+
+service SequenceService {
+
+}
+
+message SequenceRangeRequest {
+    uint64 sequence_id = 1;
+}
+
+message SequenceRangeResponse {
+    uint64 sequence_id = 1;
+    string sequence_name = 2;
+    uint64 start = 3;
+    uint64 end = 4;
+    uint64 offset = 5;
+    uint64 count = 6;
+}

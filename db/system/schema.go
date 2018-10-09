@@ -47,4 +47,29 @@
  * License (MIT) https://github.com/sony/sonyflake/blob/master/LICENSE
  */
 
-package main
+package system
+
+import (
+	"github.com/Ready-Stock/pg_query_go/nodes"
+)
+
+type NTable struct {
+	TableID   uint64
+	TableName string
+	Schema    *string
+	Columns   map[string]NColumn
+}
+
+type NColumn struct {
+	ColumnID   uint64
+	ColumnName string
+}
+
+func ConvertToNTable(tableStmt pg_query.CreateStmt) (*NTable, error) {
+
+	return nil, nil
+}
+
+func (ctx *BaseContext) CreateTable(table NTable) (error) {
+	return nil
+}

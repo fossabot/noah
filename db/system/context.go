@@ -53,6 +53,7 @@ import (
 	"flag"
 	"github.com/Ready-Stock/Noah/db/util/snowflake"
 	"github.com/Ready-Stock/badger"
+	"github.com/hashicorp/raft"
 )
 
 const (
@@ -69,6 +70,8 @@ const (
 type BaseContext struct {
 	Badger *badger.DB
 }
+
+
 
 type SContext struct {
 	BaseContext
