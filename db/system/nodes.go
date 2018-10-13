@@ -50,49 +50,28 @@
 package system
 
 import (
-	"encoding/json"
 	"fmt"
-	"github.com/Ready-Stock/badger"
 	"github.com/ahmetb/go-linq"
+	"github.com/golang/protobuf/proto"
 	"github.com/kataras/go-errors"
 )
 
 type SNode baseContext
 
-type NNode struct {
-	NodeID    uint64
-	Region    string
-	Zone      string
-	IPAddress string
-	Port      uint16
-	Database  string
-	User      string
-	Password  string
-	ReplicaOf *uint64
-	Alive	  bool
-}
-
-func (ctx *SNode) GetNodes() (n []NNode, e error) {
-	n = make([]NNode, 0)
-	e = ctx.Badger.View(func(txn *badger.Txn) error {
-		it := txn.NewIterator(badger.DefaultIteratorOptions)
-		defer it.Close()
-		prefix := []byte(NodesPath)
-		for it.Seek(prefix); it.ValidForPrefix(prefix); it.Next() {
-			item := it.Item()
-			v, err := item.Value()
-			if err != nil {
-				return err
-			}
-			node := NNode{}
-			if err := json.Unmarshal(v, &node); err != nil {
-				return err
-			}
-			n = append(n, node)
+func (ctx *SNode) GetNodes() (nodes []NNode, e error) {
+	nodes = make([]NNode, 0)
+	values, err := ctx.db.GetPrefix([]byte(nodesPath))
+	if err != nil {
+		return nil, err
+	}
+	for _, val := range values {
+		node := NNode{}
+		if err := proto.Unmarshal(val.Value, &node); err != nil {
+			return nil, err
 		}
-		return nil
-	})
-	return n, e
+		nodes = append(nodes, node)
+	}
+	return nodes, nil
 }
 
 func (ctx *SNode) GetLiveNodes() (n []NNode, e error) {
@@ -100,46 +79,38 @@ func (ctx *SNode) GetLiveNodes() (n []NNode, e error) {
 		return nil, err
 	} else {
 		linq.From(nodes).WhereT(func(node NNode) bool {
-			return node.Alive
+			return node.IsAlive
 		}).ToSlice(&n)
 	}
 	return n, e
 }
 
-func (ctx *SNode) GetNode(nodeId uint64) (n *NNode, e error) {
-	node := NNode{}
-	e = ctx.Badger.View(func(txn *badger.Txn) error {
-		j, err := txn.Get([]byte(fmt.Sprintf("%s%d", NodesPath, nodeId)))
-		if err != nil {
-			return err
-		}
-		v, err := j.Value()
-		if err != nil {
-			return err
-		}
-		err = json.Unmarshal(v, &node)
-		return err
-	})
-	return &node, e
+func (ctx *SNode) GetNode(nodeId uint64) (node NNode, e error) {
+	value, err := ctx.db.Get([]byte(fmt.Sprintf("%s%d", nodesPath, nodeId)))
+	if err != nil {
+		return node, err
+	}
+	if err := proto.Unmarshal(value, &node); err != nil {
+		return node, err
+	}
+	return node, nil
 }
 
-func (ctx *SNode) AddNode(node NNode) (error) {
-	return ctx.Badger.Update(func(txn *badger.Txn) error {
-		existingNodes, err := ctx.GetNodes()
-		if linq.From(existingNodes).AnyWithT(func(existing NNode) bool {
-			return node.Database == existing.Database && node.IPAddress == existing.IPAddress && node.Port == existing.Port
-		}) {
-			return errors.New("a node already exists with the same connection string.")
-		}
-		nodeId, err := ctx.NodeIDSequence.Next()
-		if err != nil {
-			return err
-		}
-		node.NodeID = nodeId
-		j, err := json.Marshal(node)
-		if err != nil {
-			return err
-		}
-		return txn.Set([]byte(fmt.Sprintf("%s%d", NodesPath, nodeId)), j)
-	})
+func (ctx *SNode) AddNode(node NNode) error {
+	existingNodes, err := ctx.GetNodes()
+	if err != nil {
+		return err
+	}
+	if linq.From(existingNodes).AnyWithT(func(existing NNode) bool {
+		return node.Database == existing.Database && node.Address == existing.Address && node.Port == existing.Port
+	}) {
+		return errors.New("a node already exists with the same connection string.")
+	}
+	id, err := ctx.snowflake.NextID()
+	node.NodeId = id
+	b, err := proto.Marshal(&node)
+	if err != nil {
+		return err
+	}
+	return ctx.db.Set([]byte(fmt.Sprintf("%s%d", nodesPath, node.NodeId)), b)
 }
