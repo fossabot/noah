@@ -58,26 +58,4 @@ type NRaftLog struct {
 	badger *badger.DB
 }
 
-func (ctx *NRaftLog) FirstIndex() (uint64, error) {
-	return 0, nil
-}
 
-func (ctx *NRaftLog) LastIndex() (uint64, error) {
-	return 0, nil
-}
-
-func (ctx *NRaftLog) GetLog(index uint64, log *raft.Log) error {
-	return  nil
-}
-
-func (ctx *NRaftLog) StoreLog(log *raft.Log) error {
-	return  nil
-}
-
-func (ctx *NRaftLog) StoreLogs(log []*raft.Log) error {
-	return  nil
-}
-
-func (ctx *NRaftLog) DeleteRange(min, max uint64) error {
-	return nil
-}

@@ -53,7 +53,7 @@ import (
 	"flag"
 	"github.com/Ready-Stock/Noah/db/util/snowflake"
 	"github.com/Ready-Stock/badger"
-	"github.com/hashicorp/raft"
+	"github.com/Ready-Stock/raft-badger"
 )
 
 const (
@@ -62,24 +62,23 @@ const (
 	SettingsPath               = "/settings/"
 	TablesPath                 = "/tables/"
 	NodeIDSequencePath         = "/sequences/internal/nodes"
-	AccountIDSequencePath	   = "/sequences/internal/accounts"
+	AccountIDSequencePath      = "/sequences/internal/accounts"
 	CoordinatorIDSequencePath  = "/sequences/internal/coordinators"
 	PreloadPoolConnectionCount = 5
 )
 
 type BaseContext struct {
-	Badger *badger.DB
+	db   *raft_badger.Store
 }
-
-
 
 type SContext struct {
 	BaseContext
-	NodeIDSequence  *badger.Sequence
-	Snowflake *snowflake.Snowflake
-	Flags     SFlags
-	Pool      NodePool
-	Wal       NWal
+	NodeIDSequence *badger.Sequence
+	Snowflake      *snowflake.Snowflake
+	Flags          SFlags
+	Pool           *NodePool
+	Wal            NWal
+	Schema         *NSchema
 }
 
 type SFlags struct {
@@ -102,46 +101,21 @@ func NewSystemContext() (*SContext, error) {
 		},
 		Snowflake: snowflake.NewSnowflake(1),
 	}
-	opts := badger.DefaultOptions
 
-	opts.Dir = sctx.Flags.DataDirectory
-	opts.ValueDir = sctx.Flags.DataDirectory
-	badgerData, err := badger.Open(opts)
-	if err != nil {
-		panic(err)
-	}
-	sctx.Badger = badgerData
-	sctx.Pool = NodePool{
-		base: &sctx.BaseContext,
-	}
-
-	nodeIdSequence, err := sctx.Badger.GetSequence([]byte(NodeIDSequencePath), 1)
-	if err != nil {
-		panic(err)
-	}
-	sctx.NodeIDSequence = nodeIdSequence
 	return &sctx, nil
 }
 
 func (ctx *SContext) Close() {
-	ctx.Badger.Close()
+	ctx.db.Close()
 }
 
 func (ctx *BaseContext) GetSettings() (*map[string]string, error) {
 	m := map[string]string{}
-	e := ctx.Badger.View(func(txn *badger.Txn) error {
-		it := txn.NewIterator(badger.DefaultIteratorOptions)
-		defer it.Close()
-		prefix := []byte(SettingsPath)
-		for it.Seek(prefix); it.ValidForPrefix(prefix); it.Next() {
-			item := it.Item()
-			v, err := item.Value()
-			if err != nil {
-				return err
-			}
-			m[string(item.Key()[len(prefix)-1:])] = string(v)
+	if values, err := ctx.db.GetPrefix([]byte(SettingsPath)); err != nil {
+		return nil, err
+	} else {
+		for _, value := range values {
+			m[string(value.Key[len([]byte(SettingsPath))-1:])] = string(value.Value)
 		}
-		return nil
-	})
-	return &m, e
+	}
 }

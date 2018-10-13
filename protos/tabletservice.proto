@@ -1,9 +1,0 @@
-syntax = "proto3";
-
-package tabletservice;
-
-import "protos/tablet.proto";
-
-service Noah {
-
-}

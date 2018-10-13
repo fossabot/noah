@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+package system;
+
+service SchemaService {
+    // Execute executes the specified SQL query (might be in a
+    // transaction context, if Query.transaction_id is set).
+    rpc CreateTable(NTable) returns (NTable) {};
+}
+
+message NTable {
+    uint64 table_id = 1;
+    string table_name = 2;
+    string schema = 3;
+    repeated NColumn columns = 4;
+}
+
+message NColumn {
+    uint64 column_id = 1;
+    string column_name = 2;
+    string column_type_name = 3;
+}
