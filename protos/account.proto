@@ -1,0 +1,7 @@
+syntax = "proto3";
+
+package system;
+
+message NAccount {
+    uint64 account_id = 1;
+}

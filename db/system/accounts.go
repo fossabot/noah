@@ -62,10 +62,6 @@ const (
 
 type SAccounts baseContext
 
-type NAccount struct {
-	AccountID uint64
-}
-
 func (ctx *SAccounts) GetAccounts() (a []NAccount, e error) {
 	a = make([]NAccount, 0)
 	e = ctx.Badger.View(func(txn *badger.Txn) error {
