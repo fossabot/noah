@@ -60,11 +60,13 @@ const (
 	AccountNodesPath		   = "/account_nodes/%d/" // `/account_nodes/0000/0000`
 )
 
+type SAccounts baseContext
+
 type NAccount struct {
 	AccountID uint64
 }
 
-func (ctx *BaseContext) GetAccounts() (a []NAccount, e error) {
+func (ctx *SAccounts) GetAccounts() (a []NAccount, e error) {
 	a = make([]NAccount, 0)
 	e = ctx.Badger.View(func(txn *badger.Txn) error {
 		accountsIterator := txn.NewIterator(badger.DefaultIteratorOptions)
@@ -87,7 +89,7 @@ func (ctx *BaseContext) GetAccounts() (a []NAccount, e error) {
 	return a, e
 }
 
-func (ctx *BaseContext) GetNodesForAccount(accountId uint64) (n []NNode, e error) {
+func (ctx *SAccounts) GetNodesForAccount(accountId uint64) (n []NNode, e error) {
 	e = ctx.Badger.View(func(txn *badger.Txn) error {
 		n, e = ctx.getNodesForAccountEx(txn, accountId)
 		return e
@@ -95,7 +97,7 @@ func (ctx *BaseContext) GetNodesForAccount(accountId uint64) (n []NNode, e error
 	return n, e
 }
 
-func (ctx *BaseContext) getNodesForAccountEx(txn *badger.Txn, accountId uint64) (n []NNode, e error) {
+func (ctx *SAccounts) getNodesForAccountEx(txn *badger.Txn, accountId uint64) (n []NNode, e error) {
 	nodesIterator := txn.NewIterator(badger.DefaultIteratorOptions)
 	defer nodesIterator.Close()
 	n = make([]NNode, 0)

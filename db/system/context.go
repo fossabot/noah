@@ -52,13 +52,11 @@ package system
 import (
 	"flag"
 	"github.com/Ready-Stock/Noah/db/util/snowflake"
-	"github.com/Ready-Stock/badger"
 	"github.com/Ready-Stock/raft-badger"
 )
 
 const (
 	CoordinatorsPath           = "/coordinators/"
-	NodesPath                  = "/nodes/"
 	SettingsPath               = "/settings/"
 	TablesPath                 = "/tables/"
 	NodeIDSequencePath         = "/sequences/internal/nodes"
@@ -67,18 +65,20 @@ const (
 	PreloadPoolConnectionCount = 5
 )
 
-type BaseContext struct {
-	db   *raft_badger.Store
+type baseContext struct {
+	db        *raft_badger.Store
+	snowflake *snowflake.Snowflake
 }
 
 type SContext struct {
-	BaseContext
-	NodeIDSequence *badger.Sequence
-	Snowflake      *snowflake.Snowflake
-	Flags          SFlags
-	Pool           *NodePool
-	Wal            NWal
-	Schema         *NSchema
+	baseContext
+	Settings *SSettings
+	Accounts *SAccounts
+
+	Flags    SFlags
+	Pool     *NodePool
+	Wal      NWal
+	Schema   *NSchema
 }
 
 type SFlags struct {
@@ -91,6 +91,14 @@ type SFlags struct {
 
 func NewSystemContext() (*SContext, error) {
 	flag.Parse()
+	db, err := raft_badger.CreateStore("data", ":5431", ":5430", "")
+	if err != nil {
+		return nil, err
+	}
+	base := baseContext{
+		snowflake: snowflake.NewSnowflake(1),
+		db:        db,
+	}
 	sctx := SContext{
 		Flags: SFlags{
 			HTTPPort:      HttpPort,
@@ -99,23 +107,16 @@ func NewSystemContext() (*SContext, error) {
 			WalDirectory:  WalDirectory,
 			LogLevel:      LogLevel,
 		},
-		Snowflake: snowflake.NewSnowflake(1),
 	}
+
+	settings := SSettings(base)
+	accounts := SAccounts(base)
+	sctx.Settings = &settings
+	sctx.Accounts = &accounts
 
 	return &sctx, nil
 }
 
 func (ctx *SContext) Close() {
 	ctx.db.Close()
-}
-
-func (ctx *BaseContext) GetSettings() (*map[string]string, error) {
-	m := map[string]string{}
-	if values, err := ctx.db.GetPrefix([]byte(SettingsPath)); err != nil {
-		return nil, err
-	} else {
-		for _, value := range values {
-			m[string(value.Key[len([]byte(SettingsPath))-1:])] = string(value.Value)
-		}
-	}
 }

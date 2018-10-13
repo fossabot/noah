@@ -51,22 +51,15 @@ package system
 
 import (
 	"github.com/Ready-Stock/pg_query_go/nodes"
-	"github.com/hashicorp/raft"
-	"sync"
 )
 
-type NSchema struct {
-	base      *BaseContext
-	sync      sync.Mutex
-}
+type SSchema baseContext
+
 
 func ConvertToNTable(tableStmt pg_query.CreateStmt) (*NTable, error) {
 	return nil, nil
 }
 
-func (ctx *NSchema) CreateTable(table NTable) (error) {
-	if ctx.base.raft.State() != raft.Leader {
-		// The current node is not the leader, direct the request to the current leader to maintain consensus
-	}
-	return nil
+func (ctx *SSchema) CreateTable(table NTable) (error) {
+		return nil
 }

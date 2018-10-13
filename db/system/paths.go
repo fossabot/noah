@@ -49,51 +49,10 @@
 
 package system
 
-import (
-	"encoding/json"
-	"fmt"
-	"github.com/kataras/go-errors"
-	"strconv"
-)
-
 var (
-	settingsKeys = map[NoahSetting]interface{}{
-		ConnectionPoolInitConnections: int64(5),
-	}
+	accountsPath         = "/accounts/"
+	nodesPath			 = "/nodes/"
+	tablesPath           = "/tables/"
+	settingsExternalPath = "/settings/public/"
+	settingsInternalPath = "/settings/internal/"
 )
-
-type SSettings baseContext
-
-type NoahSetting string
-
-const (
-	ConnectionPoolInitConnections NoahSetting = "connection_pool_init_connections"
-)
-
-func (ctx *SSettings) SetSetting(SettingName string, SettingValue interface{}) (error) {
-	if _, ok := settingsKeys[NoahSetting(SettingName)]; !ok {
-		return errors.New("setting key `%s` is not valid and has not been set.").Format(SettingName)
-	}
-	if j, err := json.Marshal(SettingValue); err != nil {
-		return err
-	} else{
-		return ctx.db.Set([]byte(fmt.Sprintf("%s%s", SettingsPath, SettingName)), j)
-	}
-}
-
-func (ctx *SSettings) GetSettingInt64(SettingName string) (*int64, error) {
-	if _, ok := settingsKeys[NoahSetting(SettingName)]; !ok {
-		return nil, errors.New("setting key `%s` is not valid and cannot be returned.").Format(SettingName)
-	}
-	value, err := ctx.db.Get([]byte(fmt.Sprintf("%s%s", SettingsPath, SettingName)))
-	if err != nil {
-		return nil, err
-	}
-	number, err := strconv.ParseInt(string(value), 10, 64)
-	if err != nil {
-		return nil, err
-	}
-	return &number, nil
-}
-
-

@@ -57,6 +57,8 @@ import (
 	"github.com/kataras/go-errors"
 )
 
+type SNode baseContext
+
 type NNode struct {
 	NodeID    uint64
 	Region    string
@@ -70,7 +72,7 @@ type NNode struct {
 	Alive	  bool
 }
 
-func (ctx *BaseContext) GetNodes() (n []NNode, e error) {
+func (ctx *SNode) GetNodes() (n []NNode, e error) {
 	n = make([]NNode, 0)
 	e = ctx.Badger.View(func(txn *badger.Txn) error {
 		it := txn.NewIterator(badger.DefaultIteratorOptions)
@@ -93,7 +95,7 @@ func (ctx *BaseContext) GetNodes() (n []NNode, e error) {
 	return n, e
 }
 
-func (ctx *BaseContext) GetLiveNodes() (n []NNode, e error) {
+func (ctx *SNode) GetLiveNodes() (n []NNode, e error) {
 	if nodes, err := ctx.GetNodes(); err != nil {
 		return nil, err
 	} else {
@@ -104,7 +106,7 @@ func (ctx *BaseContext) GetLiveNodes() (n []NNode, e error) {
 	return n, e
 }
 
-func (ctx *BaseContext) GetNode(nodeId uint64) (n *NNode, e error) {
+func (ctx *SNode) GetNode(nodeId uint64) (n *NNode, e error) {
 	node := NNode{}
 	e = ctx.Badger.View(func(txn *badger.Txn) error {
 		j, err := txn.Get([]byte(fmt.Sprintf("%s%d", NodesPath, nodeId)))
@@ -121,7 +123,7 @@ func (ctx *BaseContext) GetNode(nodeId uint64) (n *NNode, e error) {
 	return &node, e
 }
 
-func (ctx *SContext) AddNode(node NNode) (error) {
+func (ctx *SNode) AddNode(node NNode) (error) {
 	return ctx.Badger.Update(func(txn *badger.Txn) error {
 		existingNodes, err := ctx.GetNodes()
 		if linq.From(existingNodes).AnyWithT(func(existing NNode) bool {
