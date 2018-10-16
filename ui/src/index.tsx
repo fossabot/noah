@@ -45,5 +45,9 @@
  * Project: Sonyflake https://github.com/sony/sonyflake
  * Copyright 2018 Sony Corporation
  * License (MIT) https://github.com/sony/sonyflake/blob/master/LICENSE
+ *
+ * Project: Raft https://github.com/hashicorp/raft
+ * Copyright 2018 HashiCorp
+ * License (MPL-2.0) https://github.com/hashicorp/raft/blob/master/LICENSE
  */
 
