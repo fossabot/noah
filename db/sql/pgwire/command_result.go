@@ -150,7 +150,6 @@ func (c *conn) makeMiscResult(pos sql.CmdPos, typ completionMsgType) commandResu
 
 // Close is part of the CommandResult interface.
 func (r *commandResult) Close(t sql.TransactionStatusIndicator) {
-	golog.Debugf("finished executing command")
 	if r.errExpected && r.err == nil {
 		panic("expected err to be set on result by Close, but wasn't")
 	}

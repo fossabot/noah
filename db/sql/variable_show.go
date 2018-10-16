@@ -83,7 +83,7 @@ func (stmt *VariableShowStatement) Execute(ex *connExecutor, res RestrictedComma
 		}
 		columns := []pgproto.FieldDescription{
 			{
-				Name:                 "value",
+				Name:                 settingName,
 				TableOID:             0,
 				TableAttributeNumber: 0,
 				DataTypeOID:          25,

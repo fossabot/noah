@@ -56,7 +56,7 @@ package system
 import (
 	"flag"
 	"github.com/Ready-Stock/Noah/db/util/snowflake"
-	"github.com/Ready-Stock/raft-badger"
+	"github.com/Ready-Stock/arctonyx"
 	"time"
 )
 
@@ -70,7 +70,7 @@ const (
 )
 
 type baseContext struct {
-	db        *raft_badger.Store
+	db        *arctonyx.Store
 	snowflake *snowflake.Snowflake
 }
 
@@ -94,7 +94,7 @@ type SFlags struct {
 
 func NewSystemContext() (*SContext, error) {
 	flag.Parse()
-	db, err := raft_badger.CreateStore("data", ":5431", ":5430", "")
+	db, err := arctonyx.CreateStore("data", ":5431", ":5430", "")
 	if err != nil {
 		return nil, err
 	}

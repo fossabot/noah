@@ -54,7 +54,6 @@
 package main
 
 import (
-	"fmt"
 	"github.com/Ready-Stock/Noah/api"
 	"github.com/Ready-Stock/Noah/db/coordinator"
 	"github.com/Ready-Stock/Noah/db/system"
@@ -92,7 +91,6 @@ func StartCoordinator() {
 	go func() {
 		<-c
 		sctx.Close()
-		fmt.Println("")
 		os.Exit(1)
 	}()
 
