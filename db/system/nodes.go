@@ -98,6 +98,7 @@ func (ctx *SNode) GetLiveNodes(scope NodeScope) (n []NNode, e error) {
 			} else if scope == StandardNodes {
 				return node.IsAlive && node.ReplicaOf == 0
 			}
+			return false
 		}).ToSlice(&n)
 	}
 	return n, e

@@ -97,7 +97,8 @@ func (stmt *CreateStatement) Execute(ex *connExecutor, res RestrictedCommandResu
 }
 
 func (stmt *CreateStatement) getTargetNodes(ex *connExecutor) ([]system.NNode, error) {
-	return ex.SystemContext.Nodes.GetLiveNodes()
+	return nil, nil
+	//return ex.SystemContext.Nodes.GetLiveNodes()
 }
 
 func (stmt *CreateStatement) compilePlan(ex *connExecutor, nodes []system.NNode) ([]plan.NodeExecutionPlan, error) {

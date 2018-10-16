@@ -78,7 +78,7 @@ func (ex *connExecutor) ExecutePlans(plans []plan.NodeExecutionPlan, res Restric
 		go func(ex *connExecutor, pln plan.NodeExecutionPlan) {
 			//defer util.CatchPanic(&err)
 			exResponse := executeResponse{
-				NodeID: pln.Node.NodeID,
+				NodeID: pln.Node.NodeId,
 			}
 
 			defer func() {
@@ -91,17 +91,17 @@ func (ex *connExecutor) ExecutePlans(plans []plan.NodeExecutionPlan, res Restric
 			// 	return
 			// }
 
-			ex.Info("Executing query: `%s` on node [%d]", pln.CompiledQuery, pln.Node.NodeID)
-			tx, ok := ex.GetNodeTransaction(pln.Node.NodeID)
+			ex.Info("Executing query: `%s` on node [%d]", pln.CompiledQuery, pln.Node.NodeId)
+			tx, ok := ex.GetNodeTransaction(pln.Node.NodeId)
 			if !ok {
-				ex.Debug("node [%d] is not in the session, acquiring connection", pln.Node.NodeID)
+				ex.Debug("node [%d] is not in the session, acquiring connection", pln.Node.NodeId)
 				// A connection has not yet been made to this node. Allocate one.
-				if t, err := ex.SystemContext.Pool.AcquireTransaction(pln.Node.NodeID); err != nil {
+				if t, err := ex.SystemContext.Pool.AcquireTransaction(pln.Node.NodeId); err != nil {
 					ex.Error(err.Error())
 					exResponse.Error = err
 					return
 				} else {
-					ex.SetNodeTransaction(pln.Node.NodeID, t)
+					ex.SetNodeTransaction(pln.Node.NodeId, t)
 					tx = t
 				}
 			}
@@ -115,7 +115,7 @@ func (ex *connExecutor) ExecutePlans(plans []plan.NodeExecutionPlan, res Restric
 				exResponse.Error = err
 				return
 			}
-			ex.Debug("received rows response from node [%d]", pln.Node.NodeID)
+			ex.Debug("received rows response from node [%d]", pln.Node.NodeId)
 			exResponse.Rows = rows
 		}(ex, p)
 	}
@@ -162,14 +162,14 @@ func (ex *connExecutor) PrepareTwoPhase() error {
 				NodeID: nodeId,
 			}
 			defer func() { responses <- &exResponse }()
-			node, err := ex.SystemContext.GetNode(nodeId)
+			node, err := ex.SystemContext.Nodes.GetNode(nodeId)
 			if err != nil {
 				ex.Error(err.Error())
 				exResponse.Error = err
 				return
 			}
 
-			if !node.Alive {
+			if !node.IsAlive {
 				return // TODO (elliotcourant) Add handling for a dead node.
 			}
 

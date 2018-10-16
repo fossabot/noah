@@ -84,7 +84,10 @@ func (ctx *SAccounts) GetAccounts() (accounts []NAccount, err error) {
 }
 
 func (ctx *SAccounts) CreateAccount() (*NAccount, []NNode, error) {
-	nodes, err := SNode(*ctx).GetNodes()
+	sNode := SNode(*ctx)
+	sSettings := SSettings(*ctx)
+	sSequence := SSequence(*ctx)
+	nodes, err := (&sNode).GetNodes()
 	if err != nil {
 		return nil, nil, err
 	}
@@ -98,7 +101,7 @@ func (ctx *SAccounts) CreateAccount() (*NAccount, []NNode, error) {
 	if len(liveNodes) < nonReplicas { // If there are any database nodes that are currently offline and accept writes, then reject the new account
 		return nil, nil, errors.New("could not create account at this time, insufficient database nodes are available")
 	}
-	replicationFactor, err := SSettings(*ctx).GetSettingInt64(QueryReplicationFactor)
+	replicationFactor, err := (&sSettings).GetSettingInt64(QueryReplicationFactor)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -107,7 +110,7 @@ func (ctx *SAccounts) CreateAccount() (*NAccount, []NNode, error) {
 		return nil, nil, errors.New("could not create account, replication factor is greater than the number of nodes available in cluster")
 	}
 
-	accountId, err := SSequence(*ctx).NewAccountID()
+	accountId, err := (&sSequence).NewAccountID()
 	if err != nil {
 		return nil, nil, err
 	}

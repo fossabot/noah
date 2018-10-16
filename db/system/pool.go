@@ -76,7 +76,8 @@ func (pool *SPool) AcquireTransaction(nodeId uint64) (*npgx.Transaction, error) 
 func (pool *SPool) AcquireConnection(nodeId uint64) (*npgx.Conn, error) {
 	if nodePool, ok := pool.nodePools[nodeId]; !ok {
 		// Init a new connection
-		if node, err :=  SNode(*pool.baseContext).GetNode(nodeId); err != nil {
+		sNode := SNode(*pool.baseContext)
+		if node, err :=  (&sNode).GetNode(nodeId); err != nil {
 			return nil, err
 		} else {
 			return npgx.Connect(driver.ConnConfig{

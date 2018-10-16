@@ -127,6 +127,10 @@ func NewSystemContext() (*SContext, error) {
 	return &sctx, nil
 }
 
+func (ctx *SContext) NewSnowflake() (uint64, error) {
+	return ctx.snowflake.NextID()
+}
+
 func (ctx *SContext) Close() {
 	ctx.db.Close()
 }

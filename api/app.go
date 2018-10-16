@@ -63,7 +63,7 @@ func StartApp(sctx *system.SContext) {
 	app := iris.Default()
 
 	app.Get("/nodes", func(ctx iris.Context) {
-		if nodes, err := sctx.GetNodes(); err != nil {
+		if nodes, err := sctx.Nodes.GetNodes(); err != nil {
 			ctx.StatusCode(500)
 			ctx.JSON(struct{
 				Error string
@@ -84,7 +84,7 @@ func StartApp(sctx *system.SContext) {
 			}{
 				Error: err.Error(),
 			})
-		} else if err := sctx.AddNode(node); err != nil {
+		} else if err := sctx.Nodes.AddNode(node); err != nil {
 			ctx.StatusCode(500)
 			ctx.JSON(struct {
 				Error string
@@ -99,18 +99,18 @@ func StartApp(sctx *system.SContext) {
 		}
 	})
 
-	app.Get("/settings", func(ctx iris.Context) {
-		if settings, err := sctx.GetSettings(); err != nil {
-			ctx.StatusCode(500)
-			ctx.JSON(struct{
-				Error string
-			}{
-				Error: err.Error(),
-			})
-		} else {
-			ctx.JSON(settings)
-		}
-	})
+	// app.Get("/settings", func(ctx iris.Context) {
+	// 	if settings, err := sctx.Settings.GetSettings(); err != nil {
+	// 		ctx.StatusCode(500)
+	// 		ctx.JSON(struct{
+	// 			Error string
+	// 		}{
+	// 			Error: err.Error(),
+	// 		})
+	// 	} else {
+	// 		ctx.JSON(settings)
+	// 	}
+	// })
 
 	app.Build()
 	srv := &http.Server{Handler: app, Addr: ":8080"} // you have to set Handler:app and Addr, see "iris-way" which does this automatically.

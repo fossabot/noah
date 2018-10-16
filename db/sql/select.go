@@ -94,7 +94,7 @@ func (stmt *SelectStatement) getTargetNodes(ex *connExecutor) ([]system.NNode, e
 	}
 
 	if len(accounts) == 1 {
-		return ex.SystemContext.GetNodesForAccount(accounts[0])
+		return ex.SystemContext.Accounts.GetNodesForAccount(accounts[0])
 	} else if len(accounts) > 1 {
 		return nil, errors.New("multi account queries are not supported at this time.")
 		// node_ids := make([]uint64, 0)
@@ -110,7 +110,7 @@ func (stmt *SelectStatement) getTargetNodes(ex *connExecutor) ([]system.NNode, e
 		// 	return node_ids, nil
 		// }
 	} else {
-		return ex.SystemContext.GetNodes()
+		return ex.SystemContext.Nodes.GetNodes()
 	}
 }
 

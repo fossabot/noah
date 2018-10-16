@@ -79,7 +79,7 @@ func (stmt *VariableSetStatement) Execute(ex *connExecutor, res RestrictedComman
 		if err != nil {
 			return err
 		}
-		return ex.SystemContext.SetSetting(setting_name, setting_value)
+		return ex.SystemContext.Settings.SetSetting(setting_name, setting_value)
 	}
 
 	return nil

@@ -104,7 +104,7 @@ func (ex *connExecutor) BeginTransaction() error {
 	if ex.TransactionStatus != NTXNoTransaction {
 		return errors.New("error cannot begin transaction at this time")
 	}
-	if id, err := ex.SystemContext.Snowflake.NextID(); err != nil {
+	if id, err := ex.SystemContext.NewSnowflake(); err != nil {
 		return err
 	} else {
 		ex.TransactionID = id
