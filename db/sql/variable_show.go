@@ -54,10 +54,13 @@
 package sql
 
 import (
+	"github.com/Ready-Stock/Noah/db/sql/pgwire/pgproto"
 	"github.com/Ready-Stock/Noah/db/sql/plan"
+	"github.com/Ready-Stock/Noah/db/sql/types"
 	"github.com/Ready-Stock/Noah/db/system"
 	pg_query2 "github.com/Ready-Stock/pg_query_go"
 	"github.com/Ready-Stock/pg_query_go/nodes"
+	"strings"
 )
 
 type VariableShowStatement struct {
@@ -72,6 +75,34 @@ func CreateVariableShowStatement(stmt pg_query.VariableShowStmt) *VariableShowSt
 }
 
 func (stmt *VariableShowStatement) Execute(ex *connExecutor, res RestrictedCommandResult) error {
+	if strings.HasPrefix(strings.ToLower(*stmt.Statement.Name), "noah") {
+		settingName := strings.Replace(strings.ToLower(*stmt.Statement.Name), "noah.", "", 1)
+		value, err := ex.SystemContext.Settings.GetSetting(system.NoahSetting(settingName))
+		if err != nil {
+			return err
+		}
+		columns := []pgproto.FieldDescription{
+			{
+				Name:                 "value",
+				TableOID:             0,
+				TableAttributeNumber: 0,
+				DataTypeOID:          25,
+				DataTypeSize:         int16(len(*value)),
+				TypeModifier:         0,
+				Format:               0,
+			},
+		}
+		res.SetColumns(columns)
+		values := []types.Value{
+			&types.Text{
+				String: *value,
+				Status: types.Present,
+			},
+		}
+		res.AddRow(values)
+		return nil
+	}
+
 	target_nodes, err := stmt.getTargetNodes(ex)
 	if err != nil {
 		return err

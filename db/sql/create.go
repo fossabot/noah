@@ -58,6 +58,7 @@ import (
 	"github.com/Ready-Stock/Noah/db/system"
 	parser "github.com/Ready-Stock/pg_query_go"
 	"github.com/Ready-Stock/pg_query_go/nodes"
+	"github.com/ahmetb/go-linq"
 	"github.com/kataras/go-errors"
 	"strings"
 )
@@ -97,8 +98,25 @@ func (stmt *CreateStatement) Execute(ex *connExecutor, res RestrictedCommandResu
 }
 
 func (stmt *CreateStatement) getTargetNodes(ex *connExecutor) ([]system.NNode, error) {
-	return nil, nil
-	//return ex.SystemContext.Nodes.GetLiveNodes()
+	writeNodes, err := ex.SystemContext.Nodes.GetNodes()
+	if err != nil {
+		return nil, err
+	}
+
+	allNodes := make([]system.NNode, 0)
+	linq.From(writeNodes).WhereT(func(node system.NNode) bool {
+		return node.ReplicaOf == 0
+	}).ToSlice(&allNodes)
+
+	liveNodes := linq.From(allNodes).CountWithT(func(node system.NNode) bool {
+		return node.IsAlive && node.ReplicaOf == 0
+	})
+
+	if liveNodes != len(allNodes) {
+		return nil, errors.New("not enough nodes available in cluster to create table")
+	}
+
+	return allNodes, nil
 }
 
 func (stmt *CreateStatement) compilePlan(ex *connExecutor, nodes []system.NNode) ([]plan.NodeExecutionPlan, error) {
@@ -113,6 +131,7 @@ func (stmt *CreateStatement) compilePlan(ex *connExecutor, nodes []system.NNode)
 		ex.Error(err.Error())
 		return nil, err
 	}
+	ex.Debug(*deparsed)
 	for i := 0; i < len(plans); i++ {
 		plans[i] = plan.NodeExecutionPlan{
 			CompiledQuery: *deparsed,

@@ -87,6 +87,18 @@ func (ctx *SSettings) SetSetting(SettingName string, SettingValue interface{}) (
 	}
 }
 
+func (ctx *SSettings) GetSetting(SettingName NoahSetting) (*string, error) {
+	if _, ok := settingsKeys[NoahSetting(SettingName)]; !ok {
+		return nil, errors.New("setting key `%s` is not valid and cannot be returned.").Format(SettingName)
+	}
+	value, err := ctx.db.Get([]byte(fmt.Sprintf("%s%s", SettingsPath, SettingName)))
+	if err != nil {
+		return nil, err
+	}
+	valueString := string(value)
+	return &valueString, nil
+}
+
 func (ctx *SSettings) GetSettingInt64(SettingName NoahSetting) (*int64, error) {
 	if _, ok := settingsKeys[NoahSetting(SettingName)]; !ok {
 		return nil, errors.New("setting key `%s` is not valid and cannot be returned.").Format(SettingName)
