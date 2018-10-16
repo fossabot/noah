@@ -114,3 +114,21 @@ func (ctx *SNode) AddNode(node NNode) error {
 	}
 	return ctx.db.Set([]byte(fmt.Sprintf("%s%d", nodesPath, node.NodeId)), b)
 }
+
+func (ctx *SNode) SetNodeLive(nodeId uint64, isAlive bool) (err error) {
+	path := []byte(fmt.Sprintf("%s%d", nodesPath, nodeId))
+	nodeBytes, err := ctx.db.Get(path)
+	if err != nil {
+		return err
+	}
+	node := NNode{}
+	if err := proto.Unmarshal(nodeBytes, &node); err != nil {
+		return err
+	}
+	node.IsAlive = isAlive
+	b, err := proto.Marshal(&node)
+	if err != nil {
+		return err
+	}
+	return ctx.db.Set(path, b)
+}
