@@ -82,8 +82,9 @@ func StartCoordinator() {
 		panic(err)
 	}
 	golog.SetLevel(sctx.Flags.LogLevel)
-	fmt.Println("Starting admin application with port:", sctx.Flags.HTTPPort)
-	fmt.Println("Listening for connections on:", sctx.Flags.PostgresPort)
+	golog.Infof("Coordinator ID [%d] starting...", sctx.CoordinatorID())
+	golog.Infof("Starting admin application with port [%d]", sctx.Flags.HTTPPort)
+	golog.Infof("Listening for PostgreSQL connection on port [%d]", sctx.Flags.PostgresPort)
 
 	c := make(chan os.Signal)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)

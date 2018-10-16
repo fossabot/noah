@@ -57,6 +57,7 @@ import (
 	"flag"
 	"github.com/Ready-Stock/Noah/db/util/snowflake"
 	"github.com/Ready-Stock/raft-badger"
+	"time"
 )
 
 const (
@@ -97,8 +98,9 @@ func NewSystemContext() (*SContext, error) {
 	if err != nil {
 		return nil, err
 	}
+	time.Sleep(5 * time.Second)
 	base := baseContext{
-		snowflake: snowflake.NewSnowflake(1),
+		snowflake: snowflake.NewSnowflake(uint16(db.NodeID())),
 		db:        db,
 	}
 	sctx := SContext{
@@ -108,6 +110,7 @@ func NewSystemContext() (*SContext, error) {
 			DataDirectory: DataDirectory,
 			LogLevel:      LogLevel,
 		},
+		baseContext: base,
 	}
 
 	settings := SSettings(base)
@@ -127,6 +130,10 @@ func NewSystemContext() (*SContext, error) {
 
 func (ctx *SContext) NewSnowflake() (uint64, error) {
 	return ctx.snowflake.NextID()
+}
+
+func (ctx *SContext) CoordinatorID() (uint64) {
+	return ctx.db.NodeID()
 }
 
 func (ctx *SContext) Close() {
