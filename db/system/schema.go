@@ -53,20 +53,16 @@
 
 package system
 
-import (
-	"github.com/Ready-Stock/pg_query_go/nodes"
-)
-
 type SSchema baseContext
-
-func ConvertToNTable(tableStmt pg_query.CreateStmt) (*NTable, error) {
-	return nil, nil
-}
 
 func (ctx *SSchema) CreateTable(table NTable) (error) {
 	return nil
 }
 
 func (ctx *SSchema) GetTable(tableName string) (*NTable, error) {
+	return nil, nil
+}
+
+func (ctx *SSchema) DropTable(tableName string) (*NTable, error) {
 	return nil, nil
 }

@@ -55,7 +55,6 @@ package sql
 
 import (
 	"github.com/Ready-Stock/Noah/db/sql/plan"
-	"github.com/Ready-Stock/Noah/db/store"
 	"github.com/Ready-Stock/Noah/db/system"
 	pq "github.com/Ready-Stock/pg_query_go/nodes"
 	"github.com/kataras/go-errors"
@@ -74,7 +73,6 @@ func CreateTransactionStatement(stmt pq.TransactionStmt) *TransactionStatement {
 
 func (stmt *TransactionStatement) Execute(ex *connExecutor, res RestrictedCommandResult) error {
 	if stmt.Statement.Kind == pq.TRANS_STMT_BEGIN || stmt.Statement.Kind == pq.TRANS_STMT_START {
-		ex.storeTransaction = store.BeginStoreUpdateTransaction(ex.SystemContext)
 		return ex.BeginTransaction()
 	}
 	switch stmt.Statement.Kind {
@@ -82,16 +80,12 @@ func (stmt *TransactionStatement) Execute(ex *connExecutor, res RestrictedComman
 		if err := ex.PrepareTwoPhase(); err != nil {
 			return err
 		} else {
-			if err := ex.storeTransaction.Commit(); err != nil {
-				return err
-			}
 			return ex.CommitTwoPhase()
 		}
 	case pq.TRANS_STMT_ROLLBACK:
 		if ex.TransactionStatus != NTXPreparedSuccess {
 			return errors.New("no transaction to rollback")
 		}
-		ex.storeTransaction.Rollback()
 		return ex.RollbackTwoPhase()
 	}
 	return nil

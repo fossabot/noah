@@ -1,3 +1,5 @@
+// +build !386,!amd64
+
 /*
  * Copyright (c) 2018 Ready Stock
  *
@@ -50,8 +52,6 @@
  * Copyright 2018 HashiCorp
  * License (MPL-2.0) https://github.com/hashicorp/raft/blob/master/LICENSE
  */
-
-// +build !386,!amd64
 
 package encoding
 
