@@ -58,10 +58,11 @@ import (
 )
 
 var (
-	Join          = *flag.String("join", "", "The IP of another coordinator in the cluster.")
+	Join          = *flag.String("join", "", "The IP and gRPC port of another coordinator in the cluster. If node defined this node will be the leader.")
+	GRPCPort      = *flag.Int("grpc-port", 5450, "Listen port for Noah's internal distributed key value store gRPC interface.")
+	RaftPort      = *flag.Int("raft-port", 5451, "Listen port for Noah's Raft consensus system.")
 	HttpPort      = *flag.Int("http-port", 8080, "Listen port for Noah's HTTP REST interface.")
 	PostgresPort  = *flag.Int("psql-port", 5433, "Listen port for Noah's PostgreSQL client connectivity.")
 	DataDirectory = *flag.String("data-dir", "data", "Directory for Noah's embedded database.")
-	WalDirectory  = *flag.String("wal-dir", "wal", "Directory for Noah's write ahead log.")
 	LogLevel      = *flag.String("log-level", "debug", "Log verbosity for message written to the console window.")
 )

@@ -87,6 +87,7 @@ func StartCoordinator() {
 
 	c := make(chan os.Signal)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+	signal.Notify(c, os.Interrupt, syscall.SIGSEGV)
 	go func() {
 		<-c
 		sctx.Close()

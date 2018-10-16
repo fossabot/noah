@@ -88,7 +88,6 @@ type SFlags struct {
 	HTTPPort      int
 	PostgresPort  int
 	DataDirectory string
-	WalDirectory  string
 	LogLevel      string
 }
 
@@ -107,7 +106,6 @@ func NewSystemContext() (*SContext, error) {
 			HTTPPort:      HttpPort,
 			PostgresPort:  PostgresPort,
 			DataDirectory: DataDirectory,
-			WalDirectory:  WalDirectory,
 			LogLevel:      LogLevel,
 		},
 	}
