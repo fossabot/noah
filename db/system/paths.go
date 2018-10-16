@@ -55,6 +55,7 @@ package system
 
 var (
 	accountsPath         = "/accounts/"
+	accountsNodesPath    = "/accounts_nodes/"
 	nodesPath			 = "/nodes/"
 	tablesPath           = "/tables/"
 	settingsExternalPath = "/settings/public/"

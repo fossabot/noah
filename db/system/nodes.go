@@ -62,6 +62,14 @@ import (
 
 type SNode baseContext
 
+type NodeScope int
+
+const (
+	StandardNodes NodeScope = 1
+	ReplicaNodes  NodeScope = 2
+	AllNodes      NodeScope = 4
+)
+
 func (ctx *SNode) GetNodes() (nodes []NNode, e error) {
 	nodes = make([]NNode, 0)
 	values, err := ctx.db.GetPrefix([]byte(nodesPath))
@@ -78,12 +86,18 @@ func (ctx *SNode) GetNodes() (nodes []NNode, e error) {
 	return nodes, nil
 }
 
-func (ctx *SNode) GetLiveNodes() (n []NNode, e error) {
+func (ctx *SNode) GetLiveNodes(scope NodeScope) (n []NNode, e error) {
 	if nodes, err := ctx.GetNodes(); err != nil {
 		return nil, err
 	} else {
 		linq.From(nodes).WhereT(func(node NNode) bool {
-			return node.IsAlive
+			if scope == AllNodes {
+				return node.IsAlive
+			} else if scope == ReplicaNodes {
+				return node.IsAlive && node.ReplicaOf > 0
+			} else if scope == StandardNodes {
+				return node.IsAlive && node.ReplicaOf == 0
+			}
 		}).ToSlice(&n)
 	}
 	return n, e

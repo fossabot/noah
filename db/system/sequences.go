@@ -55,6 +55,14 @@ package system
 
 type SSequence baseContext
 
+const (
+	AccountIdSequence = "noah.account_ids"
+)
+
 func (sequences *SSequence) GetNextValueForSequence(sequenceName string) (*uint64, error) {
 	return sequences.db.NextSequenceValueById(sequenceName)
+}
+
+func (sequences *SSequence) NewAccountID() (*uint64, error) {
+	return sequences.db.NextSequenceValueById(AccountIdSequence)
 }

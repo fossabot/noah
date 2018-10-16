@@ -64,7 +64,6 @@ const (
 	SettingsPath               = "/settings/"
 	TablesPath                 = "/tables/"
 	NodeIDSequencePath         = "/sequences/internal/nodes"
-	AccountIDSequencePath      = "/sequences/internal/accounts"
 	CoordinatorIDSequencePath  = "/sequences/internal/coordinators"
 	PreloadPoolConnectionCount = 5
 )

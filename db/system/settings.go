@@ -63,6 +63,7 @@ import (
 var (
 	settingsKeys = map[NoahSetting]interface{}{
 		ConnectionPoolInitConnections: int64(5),
+		QueryReplicationFactor:        int64(2),
 	}
 )
 
@@ -72,6 +73,7 @@ type NoahSetting string
 
 const (
 	ConnectionPoolInitConnections NoahSetting = "connection_pool_init_connections"
+	QueryReplicationFactor        NoahSetting = "query_replication_factor"
 )
 
 func (ctx *SSettings) SetSetting(SettingName string, SettingValue interface{}) (error) {
@@ -80,12 +82,12 @@ func (ctx *SSettings) SetSetting(SettingName string, SettingValue interface{}) (
 	}
 	if j, err := json.Marshal(SettingValue); err != nil {
 		return err
-	} else{
+	} else {
 		return ctx.db.Set([]byte(fmt.Sprintf("%s%s", SettingsPath, SettingName)), j)
 	}
 }
 
-func (ctx *SSettings) GetSettingInt64(SettingName string) (*int64, error) {
+func (ctx *SSettings) GetSettingInt64(SettingName NoahSetting) (*int64, error) {
 	if _, ok := settingsKeys[NoahSetting(SettingName)]; !ok {
 		return nil, errors.New("setting key `%s` is not valid and cannot be returned.").Format(SettingName)
 	}
@@ -99,5 +101,3 @@ func (ctx *SSettings) GetSettingInt64(SettingName string) (*int64, error) {
 	}
 	return &number, nil
 }
-
-

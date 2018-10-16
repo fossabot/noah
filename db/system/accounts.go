@@ -57,36 +57,84 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/Ready-Stock/badger"
+	"github.com/ahmetb/go-linq"
+	"github.com/golang/protobuf/proto"
+	"github.com/kataras/go-errors"
 )
 
 const (
-	AccountsPath			   = "/accounts/"
-	AccountNodesPath		   = "/account_nodes/%d/" // `/account_nodes/0000/0000`
+	AccountNodesPath = "/account_nodes/%d/" // `/account_nodes/0000/0000`
 )
 
 type SAccounts baseContext
 
-func (ctx *SAccounts) GetAccounts() (a []NAccount, e error) {
-	a = make([]NAccount, 0)
-	e = ctx.Badger.View(func(txn *badger.Txn) error {
-		accountsIterator := txn.NewIterator(badger.DefaultIteratorOptions)
-		defer accountsIterator.Close()
-		accountsPrefix := []byte(AccountsPath)
-		for accountsIterator.Seek(accountsPrefix); accountsIterator.ValidForPrefix(accountsPrefix); accountsIterator.Next() {
-			item := accountsIterator.Item()
-			account := NAccount{}
-			v, err := item.Value()
-			if err != nil {
-				return err
-			}
-			if err := json.Unmarshal(v, &account); err != nil {
-				return err
-			}
-			a = append(a, account)
+func (ctx *SAccounts) GetAccounts() (accounts []NAccount, err error) {
+	accountsBytes, err := ctx.db.GetPrefix([]byte(accountsPath))
+	if err != nil {
+		return nil, err
+	}
+	accounts = make([]NAccount, len(accountsBytes))
+	for i, kv := range accountsBytes {
+		account := NAccount{}
+		err := proto.Unmarshal(kv.Value, &account)
+		if err != nil {
+			return nil, err
 		}
-		return nil
+		accounts[i] = account
+	}
+	return accounts, nil
+}
+
+func (ctx *SAccounts) CreateAccount() (*NAccount, []NNode, error) {
+	nodes, err := SNode(*ctx).GetNodes()
+	if err != nil {
+		return nil, nil, err
+	}
+	liveNodes := make([]NNode, 0)
+	linq.From(nodes).WhereT(func(node NNode) bool {
+		return node.IsAlive && node.ReplicaOf == 0
+	}).ToSlice(&liveNodes)
+	nonReplicas := linq.From(nodes).CountWithT(func(node NNode) bool {
+		return node.ReplicaOf == 0
 	})
-	return a, e
+	if len(liveNodes) < nonReplicas { // If there are any database nodes that are currently offline and accept writes, then reject the new account
+		return nil, nil, errors.New("could not create account at this time, insufficient database nodes are available")
+	}
+	replicationFactor, err := SSettings(*ctx).GetSettingInt64(QueryReplicationFactor)
+	if err != nil {
+		return nil, nil, err
+	}
+	if int64(len(liveNodes)) < *replicationFactor { // If there are not enough nodes to adequately replicate data.
+		return nil, nil, errors.New("could not create account, replication factor is greater than the number of nodes available in cluster")
+	}
+
+	accountId, err := SSequence(*ctx).NewAccountID()
+	if err != nil {
+		return nil, nil, err
+	}
+	accountNodes := make([]NNode, *replicationFactor)
+	for i := uint64(0); i < uint64(*replicationFactor); i++ {
+		accountNodes[i] = liveNodes[(*accountId + (i * uint64(*replicationFactor))) % uint64(len(nodes))]
+		// TODO (elliotcourant) if the replication factor is > 1 and at least 1 of these sets fail then it could mess up the records of what nodes host what account
+		err = ctx.db.Set([]byte(fmt.Sprintf("%s%d/%d", accountsNodesPath, accountId, accountNodes[i].NodeId)), []byte{})
+		if err != nil {
+			return nil, nil, err
+		}
+	}
+
+	account := &NAccount{
+		AccountId:*accountId,
+	}
+	b, err := proto.Marshal(account)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	err = ctx.db.Set([]byte(fmt.Sprintf("%s%d", accountsPath, accountId)), b)
+	if err != nil {
+		return nil, nil, err
+	}
+	return account, accountNodes, nil
 }
 
 func (ctx *SAccounts) GetNodesForAccount(accountId uint64) (n []NNode, e error) {
@@ -116,4 +164,3 @@ func (ctx *SAccounts) getNodesForAccountEx(txn *badger.Txn, accountId uint64) (n
 	}
 	return n, nil
 }
-
