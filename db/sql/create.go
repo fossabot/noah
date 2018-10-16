@@ -56,9 +56,14 @@ package sql
 import (
 	"github.com/Ready-Stock/Noah/db/sql/plan"
 	"github.com/Ready-Stock/Noah/db/system"
-	pg_query2 "github.com/Ready-Stock/pg_query_go"
+	parser "github.com/Ready-Stock/pg_query_go"
 	"github.com/Ready-Stock/pg_query_go/nodes"
+	"github.com/kataras/go-errors"
 	"strings"
+)
+
+var (
+	ErrTableExists = errors.New("table with name [%s] already exists in the cluster")
 )
 
 type CreateStatement struct {
@@ -73,6 +78,11 @@ func CreateCreateStatement(stmt pg_query.CreateStmt) *CreateStatement {
 }
 
 func (stmt *CreateStatement) Execute(ex *connExecutor, res RestrictedCommandResult) error {
+	existingTable, _ := ex.SystemContext.Schema.GetTable(*stmt.Statement.Relation.Relname)
+	if existingTable != nil {
+		return ErrTableExists.Format(*stmt.Statement.Relation.Relname)
+	}
+
 	targetNodes, err := stmt.getTargetNodes(ex)
 	if err != nil {
 		return err
@@ -87,7 +97,7 @@ func (stmt *CreateStatement) Execute(ex *connExecutor, res RestrictedCommandResu
 }
 
 func (stmt *CreateStatement) getTargetNodes(ex *connExecutor) ([]system.NNode, error) {
-	return ex.SystemContext.GetNodes()
+	return ex.SystemContext.Nodes.GetLiveNodes()
 }
 
 func (stmt *CreateStatement) compilePlan(ex *connExecutor, nodes []system.NNode) ([]plan.NodeExecutionPlan, error) {
@@ -97,7 +107,7 @@ func (stmt *CreateStatement) compilePlan(ex *connExecutor, nodes []system.NNode)
 
 	// Add handling here for custom column types.
 
-	deparsed, err := pg_query2.Deparse(stmt.Statement)
+	deparsed, err := parser.Deparse(stmt.Statement)
 	if err != nil {
 		ex.Error(err.Error())
 		return nil, err

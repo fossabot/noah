@@ -19,4 +19,5 @@ message NColumn {
     uint64 column_id = 1;
     string column_name = 2;
     string column_type_name = 3;
+    bool is_sequence = 4;
 }
