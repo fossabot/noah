@@ -76,12 +76,13 @@ type baseContext struct {
 
 type SContext struct {
 	baseContext
-	Settings *SSettings
-	Accounts *SAccounts
-	Schema   *SSchema
-	Pool     *SPool
-	Nodes    *SNode
-	Flags    SFlags
+	Settings  *SSettings
+	Accounts  *SAccounts
+	Schema    *SSchema
+	Pool      *SPool
+	Nodes     *SNode
+	Sequences *SSequence
+	Flags     SFlags
 }
 
 type SFlags struct {
@@ -115,13 +116,15 @@ func NewSystemContext() (*SContext, error) {
 	settings := SSettings(base)
 	accounts := SAccounts(base)
 	schema := SSchema(base)
-	pool := SPool{baseContext: &base}
+	sequences := SSequence(base)
 	nodes := SNode(base)
+	pool := SPool{baseContext: &base}
 	sctx.Settings = &settings
 	sctx.Accounts = &accounts
 	sctx.Schema = &schema
 	sctx.Pool = &pool
 	sctx.Nodes = &nodes
+	sctx.Sequences = &sequences
 	return &sctx, nil
 }
 

@@ -53,3 +53,8 @@
 
 package system
 
+type SSequence baseContext
+
+func (sequences *SSequence) GetNextValueForSequence(sequenceName string) (*uint64, error) {
+	return sequences.db.NextSequenceValueById(sequenceName)
+}
