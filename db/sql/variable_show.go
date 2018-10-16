@@ -103,12 +103,12 @@ func (stmt *VariableShowStatement) Execute(ex *connExecutor, res RestrictedComma
 		return nil
 	}
 
-	target_nodes, err := stmt.getTargetNodes(ex)
+	targetNodes, err := stmt.getTargetNodes(ex)
 	if err != nil {
 		return err
 	}
 
-	plans, err := stmt.compilePlan(ex, target_nodes)
+	plans, err := stmt.compilePlan(ex, targetNodes)
 	if err != nil {
 		return err
 	}

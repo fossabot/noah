@@ -2,22 +2,21 @@ syntax = "proto3";
 
 package system;
 
-service SchemaService {
-    // Execute executes the specified SQL query (might be in a
-    // transaction context, if Query.transaction_id is set).
-    rpc CreateTable(NTable) returns (NTable) {};
+enum NTableType {
+    Global = 0;
+    Shard = 1;
 }
 
 message NTable {
-    uint64 table_id = 1;
-    string table_name = 2;
-    string schema = 3;
+    string table_name = 1;
+    string schema = 2;
+    NTableType table_type = 3;
     repeated NColumn columns = 4;
 }
 
 message NColumn {
-    uint64 column_id = 1;
-    string column_name = 2;
-    string column_type_name = 3;
+    string column_name = 1;
+    string column_type_name = 2;
+    bool account_id_column = 3;
     bool is_sequence = 4;
 }

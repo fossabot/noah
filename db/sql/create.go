@@ -122,16 +122,25 @@ func (stmt *CreateStatement) getTargetNodes(ex *connExecutor) ([]system.NNode, e
 func (stmt *CreateStatement) compilePlan(ex *connExecutor, nodes []system.NNode) ([]plan.NodeExecutionPlan, error) {
 	plans := make([]plan.NodeExecutionPlan, len(nodes))
 
-	stmt.handleTableType(ex) // Handle sharding
-
+	table := system.NTable{
+		TableName: *stmt.Statement.Relation.Relname,
+		Schema: "default",
+		Columns: make([]*system.NColumn, len(stmt.Statement.TableElts.Items)),
+	}
+	if err := stmt.handleTableType(ex, &table); err != nil { // Handle sharding
+		return nil, err
+	}
 	// Add handling here for custom column types.
+	if err := stmt.handleColumns(ex, &table); err != nil { // Handle sharding
+		return nil, err
+	}
 
 	deparsed, err := parser.Deparse(stmt.Statement)
 	if err != nil {
 		ex.Error(err.Error())
 		return nil, err
 	}
-	ex.Debug(*deparsed)
+	ex.Debug("Recompiled query: %s", *deparsed)
 	for i := 0; i < len(plans); i++ {
 		plans[i] = plan.NodeExecutionPlan{
 			CompiledQuery: *deparsed,
@@ -142,38 +151,45 @@ func (stmt *CreateStatement) compilePlan(ex *connExecutor, nodes []system.NNode)
 	return plans, nil
 }
 
-func (stmt *CreateStatement) handleSequences() {
+func (stmt *CreateStatement) handleColumns(ex *connExecutor, table *system.NTable) error {
 	if stmt.Statement.TableElts.Items != nil && len(stmt.Statement.TableElts.Items) > 0 {
-		for _, col := range stmt.Statement.TableElts.Items {
+		for i, col := range stmt.Statement.TableElts.Items {
 			columnDefinition := col.(pg_query.ColumnDef)
+			table.Columns[i].ColumnName = *columnDefinition.Colname
 			if columnDefinition.TypeName != nil &&
 				columnDefinition.TypeName.Names.Items != nil &&
 				len(columnDefinition.TypeName.Names.Items) > 0 {
-				columnType := columnDefinition.TypeName.Names.Items[len(columnDefinition.TypeName.Names.Items)].(pg_query.String) // The last type name
-
+				columnType := columnDefinition.TypeName.Names.Items[len(columnDefinition.TypeName.Names.Items) - 1].(pg_query.String) // The last type name
+				table.Columns[i].ColumnTypeName = strings.ToLower(columnType.Str)
+				ex.Debug("Processing column [%s] type [%s]", *columnDefinition.Colname, strings.ToLower(columnType.Str))
 				// This switch statement will handle any custom column types that we would like.
 				switch strings.ToLower(columnType.Str) {
-				case "nserial": // Emulate 32 bit sequence
-
-				case "nbigserial": // Emulate 64 bit sequence
-
+				case "serial": // Emulate 32 bit sequence
+					columnType.Str = "INT"
+					table.Columns[i].IsSequence = true
+				case "bigserial": // Emulate 64 bit sequence
+					columnType.Str = "BIGINT"
+					table.Columns[i].IsSequence = true
 				default:
 
 				}
+				columnDefinition.TypeName.Names.Items = []pg_query.Node{columnType}
+				stmt.Statement.TableElts.Items[i] = columnDefinition
 			}
 		}
 	}
+	return nil
 }
 
-func (stmt *CreateStatement) handleTableType(ex *connExecutor) error {
+func (stmt *CreateStatement) handleTableType(ex *connExecutor, table *system.NTable) error {
 	if stmt.Statement.Tablespacename != nil {
 		switch strings.ToLower(*stmt.Statement.Tablespacename) {
 		case "global": // Table has the same data on all shards
-
-		case "account": // Table is sharded by shard column
-
+			table.TableType = system.NTableType_Global
+		case "shard": // Table is sharded by shard column
+			table.TableType = system.NTableType_Shard
 		default: // Other
-
+			return errors.New("tablespace must be specified when creating a table")
 		}
 	}
 	return nil
