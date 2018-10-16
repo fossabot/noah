@@ -54,9 +54,7 @@
 package system
 
 import (
-	"encoding/json"
 	"fmt"
-	"github.com/Ready-Stock/badger"
 	"github.com/ahmetb/go-linq"
 	"github.com/golang/protobuf/proto"
 	"github.com/kataras/go-errors"
@@ -104,6 +102,7 @@ func (ctx *SAccounts) CreateAccount() (*NAccount, []NNode, error) {
 	if err != nil {
 		return nil, nil, err
 	}
+
 	if int64(len(liveNodes)) < *replicationFactor { // If there are not enough nodes to adequately replicate data.
 		return nil, nil, errors.New("could not create account, replication factor is greater than the number of nodes available in cluster")
 	}
@@ -112,13 +111,24 @@ func (ctx *SAccounts) CreateAccount() (*NAccount, []NNode, error) {
 	if err != nil {
 		return nil, nil, err
 	}
+
 	accountNodes := make([]NNode, *replicationFactor)
-	for i := uint64(0); i < uint64(*replicationFactor); i++ {
-		accountNodes[i] = liveNodes[(*accountId + (i * uint64(*replicationFactor))) % uint64(len(nodes))]
-		// TODO (elliotcourant) if the replication factor is > 1 and at least 1 of these sets fail then it could mess up the records of what nodes host what account
-		err = ctx.db.Set([]byte(fmt.Sprintf("%s%d/%d", accountsNodesPath, accountId, accountNodes[i].NodeId)), []byte{})
-		if err != nil {
-			return nil, nil, err
+	if int64(len(liveNodes)) == *replicationFactor {
+		accountNodes = liveNodes
+		for i := 0; i < len(liveNodes); i++ {
+			err = ctx.db.Set([]byte(fmt.Sprintf("%s%d/%d", accountsNodesPath, accountId, accountNodes[i].NodeId)), []byte{})
+			if err != nil {
+				return nil, nil, err
+			}
+		}
+	} else {
+		for i := uint64(0); i < uint64(*replicationFactor); i++ {
+			accountNodes[i] = liveNodes[(*accountId + (i * uint64(*replicationFactor))) % uint64(len(nodes))] // This math takes the account id and distributes it in the cluster to pick a node
+			// TODO (elliotcourant) if the replication factor is > 1 and at least 1 of these sets fail then it could mess up the records of what nodes host what account
+			err = ctx.db.Set([]byte(fmt.Sprintf("%s%d/%d", accountsNodesPath, accountId, accountNodes[i].NodeId)), []byte{})
+			if err != nil {
+				return nil, nil, err
+			}
 		}
 	}
 
@@ -137,30 +147,19 @@ func (ctx *SAccounts) CreateAccount() (*NAccount, []NNode, error) {
 	return account, accountNodes, nil
 }
 
-func (ctx *SAccounts) GetNodesForAccount(accountId uint64) (n []NNode, e error) {
-	e = ctx.Badger.View(func(txn *badger.Txn) error {
-		n, e = ctx.getNodesForAccountEx(txn, accountId)
-		return e
-	})
-	return n, e
-}
-
-func (ctx *SAccounts) getNodesForAccountEx(txn *badger.Txn, accountId uint64) (n []NNode, e error) {
-	nodesIterator := txn.NewIterator(badger.DefaultIteratorOptions)
-	defer nodesIterator.Close()
-	n = make([]NNode, 0)
-	accountNodesPrefix := []byte(fmt.Sprintf(AccountNodesPath, accountId))
-	for nodesIterator.Seek(accountNodesPrefix); nodesIterator.ValidForPrefix(accountNodesPrefix); nodesIterator.Next() {
-		nodeItem := nodesIterator.Item()
-		nodeValue, err := nodeItem.Value()
+func (ctx *SAccounts) GetNodesForAccount(accountId uint64) (nodes []NNode, err error) {
+	nodeBytes, err := ctx.db.GetPrefix([]byte(fmt.Sprintf("%s%d", accountsNodesPath, accountId)))
+	if err != nil {
+		return nil, err
+	}
+	nodes = make([]NNode, len(nodeBytes))
+	for i, kv := range nodeBytes {
+		node := NNode{}
+		err := proto.Unmarshal(kv.Value, &node)
 		if err != nil {
 			return nil, err
 		}
-		node := NNode{}
-		if err := json.Unmarshal(nodeValue, &node); err != nil {
-			return nil, err
-		}
-		n = append(n, node)
+		nodes[i] = node
 	}
-	return n, nil
+	return nodes, nil
 }
