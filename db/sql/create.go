@@ -161,6 +161,18 @@ func (stmt *CreateStatement) compilePlan(ex *connExecutor, nodes []system.NNode)
 	return plans, nil
 }
 
+func (stmt *CreateStatement) handleValidation(ex *connExecutor, table *system.NTable) error {
+	if table.TableType == system.NTableType_Account {
+		if accountsTable, err := ex.SystemContext.Schema.GetAccountsTable(); err != nil {
+			return err
+		} else if accountsTable != nil {
+			return errors.New("an accounts table named [%s] already exists in this cluster").Format(accountsTable.TableName)
+		}
+	}
+
+	return nil
+}
+
 func (stmt *CreateStatement) handleColumns(ex *connExecutor, table *system.NTable) error {
 	primaryKeyFound := false
 	if stmt.Statement.TableElts.Items != nil && len(stmt.Statement.TableElts.Items) > 0 {
@@ -173,6 +185,9 @@ func (stmt *CreateStatement) handleColumns(ex *connExecutor, table *system.NTabl
 					return constraint.Contype == pg_query.CONSTR_PRIMARY
 				})
 				if table.Columns[i].IsPrimaryKey {
+					if primaryKeyFound {
+						return errors.New("cannot define more than 1 primary key on a single table")
+					}
 					primaryKeyFound = true
 				}
 			}
