@@ -72,10 +72,9 @@ func CreateTransactionStatement(stmt pq.TransactionStmt) *TransactionStatement {
 }
 
 func (stmt *TransactionStatement) Execute(ex *connExecutor, res RestrictedCommandResult) error {
-	if stmt.Statement.Kind == pq.TRANS_STMT_BEGIN || stmt.Statement.Kind == pq.TRANS_STMT_START {
-		return ex.BeginTransaction()
-	}
 	switch stmt.Statement.Kind {
+	case pq.TRANS_STMT_BEGIN, pq.TRANS_STMT_START:
+		return ex.BeginTransaction()
 	case pq.TRANS_STMT_COMMIT:
 		if err := ex.PrepareTwoPhase(); err != nil {
 			return err
@@ -83,7 +82,7 @@ func (stmt *TransactionStatement) Execute(ex *connExecutor, res RestrictedComman
 			return ex.CommitTwoPhase()
 		}
 	case pq.TRANS_STMT_ROLLBACK:
-		if ex.TransactionStatus != NTXPreparedSuccess {
+		if ex.TransactionState != TransactionState_Open {
 			return errors.New("no transaction to rollback")
 		}
 		return ex.RollbackTwoPhase()

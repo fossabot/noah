@@ -96,39 +96,14 @@ func (stmt *CreateStatement) Execute(ex *connExecutor, res RestrictedCommandResu
 		return err
 	}
 
-	if ex.TransactionStatus == NTXNoTransaction { // When creating a table try to create a new transaction if we are not in one
-		if err := ex.execStmt(pg_query.TransactionStmt{Kind: pg_query.TRANS_STMT_BEGIN}, nil, 0); err != nil {
-			return err
-		}
-		ex.TransactionStatus = NTXInProgress
-	}
+	// if ex.TransactionState == NTXNoTransaction { // When creating a table try to create a new transaction if we are not in one
+	// 	if err := ex.execStmt(pg_query.TransactionStmt{Kind: pg_query.TRANS_STMT_BEGIN}, nil, 0); err != nil {
+	// 		return err
+	// 	}
+	// 	ex.TransactionStatus = NTXInProgress
+	// }
 
-	if err := ex.ExecutePlans(plans, res); err != nil {
-		rollbackPlans := make([]plan.NodeExecutionPlan, len(plans))
-		for i := 0; i < len(plans); i++ {
-			rollbackPlans[i] = plan.NodeExecutionPlan{
-				CompiledQuery: "ROLLBACK",
-				Node:          plans[i].Node,
-				ReadOnly:      false,
-			}
-		}
-		if err := ex.ExecutePlans(rollbackPlans, res); err != nil {
-			return err
-		}
-	} else {
-		commitPlans := make([]plan.NodeExecutionPlan, len(plans))
-		for i := 0; i < len(plans); i++ {
-			commitPlans[i] = plan.NodeExecutionPlan{
-				CompiledQuery: "COMMIT",
-				Node:          plans[i].Node,
-				ReadOnly:      false,
-			}
-		}
-		if err := ex.ExecutePlans(commitPlans, res); err != nil {
-			return err
-		}
-	}
-	return nil
+	return ex.ExecutePlans(plans, res)
 }
 
 func (stmt *CreateStatement) getTargetNodes(ex *connExecutor) ([]system.NNode, error) {

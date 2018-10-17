@@ -63,6 +63,11 @@ func (ex *connExecutor) execStmt(
 	res RestrictedCommandResult,
 	pos CmdPos,
 ) error {
+	switch tree.StatementType() {
+	case nodes.DDL, nodes.RowsAffected:
+
+	}
+
 	switch stmt := tree.(type) {
 	// case nodes.AlterCollationStmt:
 	// case nodes.AlterDatabaseSetStmt:

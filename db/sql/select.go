@@ -88,6 +88,23 @@ func (stmt *SelectStatement) Execute(ex *connExecutor, res RestrictedCommandResu
 }
 
 func (stmt *SelectStatement) getTargetNodes(ex *connExecutor) ([]system.NNode, error) {
+	// If there is no from clause, this query can be sent to any node, if we already have a connection to a node use that one, if not get a new one.
+	if stmt.Statement.FromClause.Items == nil || len(stmt.Statement.FromClause.Items) == 0 {
+		if len(ex.nodes) > 0 {
+			for id := range ex.nodes {
+				node, err := ex.SystemContext.Nodes.GetNode(id)
+				return []system.NNode{node}, err
+			}
+		} else {
+			nodes, err := ex.SystemContext.Nodes.GetLiveNodes(system.AllNodes)
+			if len(nodes) > 0 {
+				return []system.NNode{nodes[0]}, err
+			} else{
+				return nil, errors.New("no nodes available to serve this query.")
+			}
+		}
+	}
+
 	accounts, err := stmt.getAccountIDs()
 	if err != nil {
 		return nil, err

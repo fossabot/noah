@@ -98,6 +98,9 @@ func (ex *connExecutor) BacklogQuery(query string) {
 func (ex *connExecutor) GetNodeTransaction(nodeId uint64) (*npgx.Transaction, error) {
 	ex.nSync.Lock()
 	defer ex.nSync.Unlock()
+	if ex.nodes == nil {
+		ex.nodes = map[uint64]*npgx.Transaction{}
+	}
 	tx, ok := ex.nodes[nodeId]
 	if !ok {
 		ex.Debug("node [%d] is not in the session, acquiring connection", nodeId)
@@ -123,6 +126,16 @@ func (ex *connExecutor) SetNodeTransaction(nodeId uint64, tx *npgx.Transaction) 
 		ex.nodes = map[uint64]*npgx.Transaction{}
 	}
 	ex.nodes[nodeId] = tx
+}
+
+func (ex *connExecutor) ReleaseTransaction(nodeId uint64) (error) {
+	ex.nSync.Lock()
+	defer ex.nSync.Unlock()
+	if ex.nodes == nil {
+		ex.nodes = map[uint64]*npgx.Transaction{}
+		return nil // There were never any transactions to release
+	}
+
 }
 
 type prepStmtNamespace struct {
@@ -212,7 +225,8 @@ func (s *Server) newConnExecutor(stmtBuf *StmtBuf, clientComm ClientComm) *connE
 			prepStmts: make(map[string]prepStmtEntry),
 			portals:   make(map[string]portalEntry),
 		},
-		TransactionStatus: NTXNoTransaction,
+		TransactionState: TransactionState_None,
+		TransactionMode: TransactionMode_AutoCommit,
 	}
 	return ex
 }
