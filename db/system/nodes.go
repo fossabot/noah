@@ -125,8 +125,11 @@ func (ctx *SNode) AddNode(node NNode) error {
 	}) {
 		return errors.New("a node already exists with the same connection string.")
 	}
-	id, err := ctx.snowflake.NextID()
-	node.NodeId = id
+	id, err := ctx.db.NextSequenceValueById("_noah.nodes_")
+	if err != nil {
+		return err
+	}
+	node.NodeId = *id
 	b, err := proto.Marshal(&node)
 	if err != nil {
 		return err
