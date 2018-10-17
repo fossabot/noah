@@ -53,7 +53,7 @@
 
 package system
 
-var (
+const (
 	accountsPath         = "/accounts/"
 	accountsNodesPath    = "/accounts_nodes/"
 	nodesPath			 = "/nodes/"

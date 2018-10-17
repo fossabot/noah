@@ -19,4 +19,5 @@ message NColumn {
     string column_type_name = 2;
     bool account_id_column = 3;
     bool is_sequence = 4;
+    bool is_primary_key = 5;
 }

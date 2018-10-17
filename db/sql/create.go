@@ -65,6 +65,8 @@ import (
 
 var (
 	ErrTableExists = errors.New("table with name [%s] already exists in the cluster")
+	ErrNotEnoughNodesAvailable = errors.New("not enough nodes available in cluster to create table")
+	ErrTablespaceNotSpecified = errors.New("tablespace must be specified when creating a table")
 )
 
 type CreateStatement struct {
@@ -113,7 +115,7 @@ func (stmt *CreateStatement) getTargetNodes(ex *connExecutor) ([]system.NNode, e
 	})
 
 	if liveNodes != len(allNodes) {
-		return nil, errors.New("not enough nodes available in cluster to create table")
+		return nil, ErrNotEnoughNodesAvailable
 	}
 
 	return allNodes, nil
@@ -151,6 +153,7 @@ func (stmt *CreateStatement) compilePlan(ex *connExecutor, nodes []system.NNode)
 }
 
 func (stmt *CreateStatement) handleColumns(ex *connExecutor, table *system.NTable) error {
+	primaryKeyFound := false
 	if stmt.Statement.TableElts.Items != nil && len(stmt.Statement.TableElts.Items) > 0 {
 		for i, col := range stmt.Statement.TableElts.Items {
 			columnDefinition := col.(pg_query.ColumnDef)
@@ -188,7 +191,7 @@ func (stmt *CreateStatement) handleTableType(ex *connExecutor, table *system.NTa
 		case "shard": // Table is sharded by shard column
 			table.TableType = system.NTableType_Shard
 		default: // Other
-			return errors.New("tablespace must be specified when creating a table")
+			return ErrTablespaceNotSpecified
 		}
 	}
 	return nil

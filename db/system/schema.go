@@ -53,6 +53,10 @@
 
 package system
 
+import (
+	"github.com/golang/protobuf/proto"
+)
+
 type SSchema baseContext
 
 func (ctx *SSchema) CreateTable(table NTable) (error) {
@@ -61,6 +65,23 @@ func (ctx *SSchema) CreateTable(table NTable) (error) {
 
 func (ctx *SSchema) GetTable(tableName string) (*NTable, error) {
 	return nil, nil
+}
+
+func (ctx *SSchema) GetTables() ([]NTable, error) {
+	tableBytes, err := ctx.db.GetPrefix([]byte(tablesPath))
+	if err != nil {
+		return nil, err
+	}
+	tables := make([]NTable, len(tableBytes))
+	for i, kv := range tableBytes {
+		table := NTable{}
+		err := proto.Unmarshal(kv.Value, &table)
+		if err != nil {
+			return nil, err
+		}
+		tables[i] = table
+	}
+	return tables, nil
 }
 
 func (ctx *SSchema) DropTable(tableName string) (*NTable, error) {

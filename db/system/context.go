@@ -63,7 +63,6 @@ import (
 const (
 	CoordinatorsPath           = "/coordinators/"
 	SettingsPath               = "/settings/"
-	TablesPath                 = "/tables/"
 	NodeIDSequencePath         = "/sequences/internal/nodes"
 	CoordinatorIDSequencePath  = "/sequences/internal/coordinators"
 	PreloadPoolConnectionCount = 5
