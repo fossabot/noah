@@ -83,7 +83,7 @@ func (ctx *SSettings) SetSetting(SettingName string, SettingValue interface{}) (
 	if j, err := json.Marshal(SettingValue); err != nil {
 		return err
 	} else {
-		return ctx.db.Set([]byte(fmt.Sprintf("%s%s", SettingsPath, SettingName)), j)
+		return ctx.db.Set([]byte(fmt.Sprintf("%s%s", settingsExternalPath, SettingName)), j)
 	}
 }
 
@@ -91,7 +91,7 @@ func (ctx *SSettings) GetSetting(SettingName NoahSetting) (*string, error) {
 	if _, ok := settingsKeys[NoahSetting(SettingName)]; !ok {
 		return nil, errors.New("setting key `%s` is not valid and cannot be returned.").Format(SettingName)
 	}
-	value, err := ctx.db.Get([]byte(fmt.Sprintf("%s%s", SettingsPath, SettingName)))
+	value, err := ctx.db.Get([]byte(fmt.Sprintf("%s%s", settingsExternalPath, SettingName)))
 	if err != nil {
 		return nil, err
 	}
@@ -103,7 +103,7 @@ func (ctx *SSettings) GetSettingInt64(SettingName NoahSetting) (*int64, error) {
 	if _, ok := settingsKeys[NoahSetting(SettingName)]; !ok {
 		return nil, errors.New("setting key `%s` is not valid and cannot be returned.").Format(SettingName)
 	}
-	value, err := ctx.db.Get([]byte(fmt.Sprintf("%s%s", SettingsPath, SettingName)))
+	value, err := ctx.db.Get([]byte(fmt.Sprintf("%s%s", settingsExternalPath, SettingName)))
 	if err != nil {
 		return nil, err
 	}

@@ -177,6 +177,9 @@ func (stmt *CreateStatement) handleColumns(ex *connExecutor, table *system.NTabl
 				case "serial": // Emulate 32 bit sequence
 					columnType.Str = "int"
 					table.Columns[i].IsSequence = true
+				case "snowflake":
+					table.Columns[i].IsSnowflake = true
+					fallthrough
 				case "bigserial": // Emulate 64 bit sequence
 					columnType.Str = "bigint"
 					table.Columns[i].IsSequence = true

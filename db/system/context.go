@@ -60,14 +60,6 @@ import (
 	"time"
 )
 
-const (
-	CoordinatorsPath           = "/coordinators/"
-	SettingsPath               = "/settings/"
-	NodeIDSequencePath         = "/sequences/internal/nodes"
-	CoordinatorIDSequencePath  = "/sequences/internal/coordinators"
-	PreloadPoolConnectionCount = 5
-)
-
 type baseContext struct {
 	db        *arctonyx.Store
 	snowflake *snowflake.Snowflake
