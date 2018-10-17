@@ -54,6 +54,7 @@
 package npgx
 
 import (
+	"context"
 	"github.com/Ready-Stock/Noah/db/sql/driver"
 	"github.com/Ready-Stock/Noah/db/sql/types"
 	"github.com/kataras/go-errors"
@@ -284,6 +285,43 @@ func (p *ConnPool) acquire(deadline *time.Time) (*Conn, error) {
 	}
 	return p.acquire(deadline)
 }
+
+// Begin acquires a connection and begins a transaction on it. When the
+// transaction is closed the connection will be automatically released.
+func (p *ConnPool) Begin() (*Transaction, error) {
+	return p.BeginEx(context.Background(), nil)
+}
+
+// BeginEx acquires a connection and starts a transaction with txOptions
+// determining the transaction mode. When the transaction is closed the
+// connection will be automatically released.
+func (p *ConnPool) BeginEx(ctx context.Context, txOptions *TransactionOptions) (*Transaction, error) {
+	for {
+		c, err := p.Acquire()
+		if err != nil {
+			return nil, err
+		}
+
+		tx, err := c.BeginEx(ctx, txOptions)
+		if err != nil {
+			alive := c.IsAlive()
+			p.Release(c)
+
+			// If connection is still alive then the error is not something trying
+			// again on a new connection would fix, so just return the error. But
+			// if the connection is dead try to acquire a new connection and try
+			// again.
+			if alive {
+				return nil, err
+			}
+			continue
+		}
+
+		tx.connPool = p
+		return tx, nil
+	}
+}
+
 
 // deadlinePassed returns true if the given deadline has passed.
 func (p *ConnPool) deadlinePassed(deadline *time.Time) bool {

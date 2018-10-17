@@ -162,6 +162,7 @@ func (ex *connExecutor) ExecutePlans(plans []plan.NodeExecutionPlan, res Restric
 				res.AddRow(row)
 				result = append(result, row)
 			}
+			response.Rows.Close()
 		} else {
 			ex.Debug("no rows returned for query `%s`", plans[0].CompiledQuery)
 		}
