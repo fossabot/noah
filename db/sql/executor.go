@@ -75,7 +75,7 @@ func (ex *connExecutor) ExecutePlans(plans []plan.NodeExecutionPlan, res Restric
 	}
 	responses := make(chan *executeResponse, len(plans))
 	for _, p := range plans {
-		go func(ex *connExecutor, pln plan.NodeExecutionPlan) {
+		func(ex *connExecutor, pln plan.NodeExecutionPlan) {
 			//defer util.CatchPanic(&err)
 			exResponse := executeResponse{
 				NodeID: pln.Node.NodeId,

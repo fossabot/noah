@@ -64,9 +64,9 @@ import (
 )
 
 var (
-	ErrTableExists = errors.New("table with name [%s] already exists in the cluster")
+	ErrTableExists             = errors.New("table with name [%s] already exists in the cluster")
 	ErrNotEnoughNodesAvailable = errors.New("not enough nodes available in cluster to create table")
-	ErrTablespaceNotSpecified = errors.New("tablespace must be specified when creating a table")
+	ErrTablespaceNotSpecified  = errors.New("tablespace must be specified when creating a table")
 )
 
 type CreateStatement struct {
@@ -95,8 +95,32 @@ func (stmt *CreateStatement) Execute(ex *connExecutor, res RestrictedCommandResu
 	if err != nil {
 		return err
 	}
-
-	return ex.ExecutePlans(plans, res)
+	if err := ex.ExecutePlans(plans, res); err != nil {
+		rollbackPlans := make([]plan.NodeExecutionPlan, len(plans))
+		for i := 0; i < len(plans); i++ {
+			rollbackPlans[i] = plan.NodeExecutionPlan{
+				CompiledQuery: "ROLLBACK",
+				Node:          plans[i].Node,
+				ReadOnly:      false,
+			}
+		}
+		if err := ex.ExecutePlans(rollbackPlans, res); err != nil {
+			return err
+		}
+	} else {
+		commitPlans := make([]plan.NodeExecutionPlan, len(plans))
+		for i := 0; i < len(plans); i++ {
+			commitPlans[i] = plan.NodeExecutionPlan{
+				CompiledQuery: "COMMIT",
+				Node:          plans[i].Node,
+				ReadOnly:      false,
+			}
+		}
+		if err := ex.ExecutePlans(commitPlans, res); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (stmt *CreateStatement) getTargetNodes(ex *connExecutor) ([]system.NNode, error) {
@@ -126,8 +150,8 @@ func (stmt *CreateStatement) compilePlan(ex *connExecutor, nodes []system.NNode)
 
 	table := system.NTable{
 		TableName: *stmt.Statement.Relation.Relname,
-		Schema: "default",
-		Columns: make([]*system.NColumn, len(stmt.Statement.TableElts.Items)),
+		Schema:    "default",
+		Columns:   make([]*system.NColumn, len(stmt.Statement.TableElts.Items)),
 	}
 
 	// Determine the distribution of a table in the cluster
@@ -178,7 +202,7 @@ func (stmt *CreateStatement) handleColumns(ex *connExecutor, table *system.NTabl
 	if stmt.Statement.TableElts.Items != nil && len(stmt.Statement.TableElts.Items) > 0 {
 		for i, col := range stmt.Statement.TableElts.Items {
 			columnDefinition := col.(pg_query.ColumnDef)
-			table.Columns[i] = &system.NColumn{ColumnName:*columnDefinition.Colname}
+			table.Columns[i] = &system.NColumn{ColumnName: *columnDefinition.Colname}
 
 			if columnDefinition.Constraints.Items != nil && len(columnDefinition.Constraints.Items) > 0 {
 				table.Columns[i].IsPrimaryKey = linq.From(columnDefinition.Constraints.Items).AnyWithT(func(constraint pg_query.Constraint) bool {
@@ -195,7 +219,7 @@ func (stmt *CreateStatement) handleColumns(ex *connExecutor, table *system.NTabl
 			if columnDefinition.TypeName != nil &&
 				columnDefinition.TypeName.Names.Items != nil &&
 				len(columnDefinition.TypeName.Names.Items) > 0 {
-				columnType := columnDefinition.TypeName.Names.Items[len(columnDefinition.TypeName.Names.Items) - 1].(pg_query.String) // The last type name
+				columnType := columnDefinition.TypeName.Names.Items[len(columnDefinition.TypeName.Names.Items)-1].(pg_query.String) // The last type name
 				ex.Debug("Processing column [%s] type [%s]", *columnDefinition.Colname, strings.ToLower(columnType.Str))
 				// This switch statement will handle any custom column types that we would like.
 				switch strings.ToLower(columnType.Str) {

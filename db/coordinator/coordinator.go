@@ -110,18 +110,18 @@ func Start(sctx *system.SContext) (err error)  {
 			return errors.Errorf("unable to listen on address %q: %v", addvertise_addr, err)
 		}
 
-		pending, complete := make(chan *net.TCPConn), make(chan *net.TCPConn)
-
-		for i := 0; i < 5; i++ {
-			go StartIncomingConnection(sctx, pending, complete)
-		}
+		// pending, complete := make(chan *net.TCPConn), make(chan *net.TCPConn)
+		//
+		// for i := 0; i < 5; i++ {
+		// 	go StartIncomingConnection(sctx, pending, complete)
+		// }
 
 		for {
 			conn, err := listener.AcceptTCP()
 			if err != nil {
 				golog.Error(err.Error())
 			}
-			pending <- conn
+			go handleConnection(sctx, conn)
 		}
 	}
 }

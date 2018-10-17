@@ -130,6 +130,7 @@ func (ctx *SNode) AddNode(node NNode) error {
 		return err
 	}
 	node.NodeId = *id
+	node.IsAlive = true
 	b, err := proto.Marshal(&node)
 	if err != nil {
 		return err

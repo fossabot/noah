@@ -60,6 +60,7 @@ import (
 	"github.com/Ready-Stock/Noah/db/system"
 	"github.com/Ready-Stock/Noah/db/util/fsm"
 	nodes "github.com/Ready-Stock/pg_query_go/nodes"
+	"github.com/kataras/golog"
 	"sync"
 
 	// "github.com/Ready-Stock/pgx"
@@ -259,6 +260,7 @@ func (ex *connExecutor) run() (err error) {
 				NeedRowDesc, pos, portal.OutFormats)
 			res = stmtRes
 			err = ex.execStmt(*ex.curStmt, stmtRes, pos)
+			golog.Debugf("done executing statement")
 		case PrepareStmt:
 			res = ex.clientComm.CreatePrepareResult(pos)
 			err = ex.execPrepare(tcmd)
