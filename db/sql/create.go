@@ -129,13 +129,22 @@ func (stmt *CreateStatement) compilePlan(ex *connExecutor, nodes []system.NNode)
 		Schema: "default",
 		Columns: make([]*system.NColumn, len(stmt.Statement.TableElts.Items)),
 	}
+
+	// Determine the distribution of a table in the cluster
 	if err := stmt.handleTableType(ex, &table); err != nil { // Handle sharding
 		return nil, err
 	}
+
 	// Add handling here for custom column types.
 	if err := stmt.handleColumns(ex, &table); err != nil { // Handle sharding
 		return nil, err
 	}
+
+	// Create the table in the coordinator cluster
+	if err := ex.SystemContext.Schema.CreateTable(table); err != nil {
+		return nil, err
+	}
+
 	deparsed, err := parser.Deparse(stmt.Statement)
 	if err != nil {
 		ex.Error(err.Error())

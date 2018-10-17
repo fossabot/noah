@@ -54,17 +54,46 @@
 package system
 
 import (
+	"fmt"
 	"github.com/golang/protobuf/proto"
+	"github.com/kataras/go-errors"
+	"strings"
+)
+
+var (
+	ErrTableAlreadyExists = errors.New("table with name [%s] already exists")
 )
 
 type SSchema baseContext
 
 func (ctx *SSchema) CreateTable(table NTable) (error) {
+	if existingTable, err := ctx.GetTable(table.TableName); err != nil {
+		return err
+	} else if existingTable != nil {
+		return ErrTableAlreadyExists.Format(table.TableName)
+	}
+	b, err := proto.Marshal(&table)
+	if err != nil {
+		return err
+	}
+	ctx.db.Set([]byte(fmt.Sprintf("%s%s", tablesPath, strings.ToLower(table.TableName))), b)
 	return nil
 }
 
 func (ctx *SSchema) GetTable(tableName string) (*NTable, error) {
-	return nil, nil
+	bytes, err := ctx.db.Get([]byte(fmt.Sprintf("%s%s", tablesPath, strings.ToLower(tableName))))
+	if err != nil {
+		return nil, err
+	}
+	if len(bytes) == 0 {
+		return nil, nil
+	}
+	table := NTable{}
+	err = proto.Unmarshal(bytes, &table)
+	if err != nil {
+		return nil, err
+	}
+	return &table, nil
 }
 
 func (ctx *SSchema) GetTables() ([]NTable, error) {

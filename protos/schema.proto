@@ -5,6 +5,7 @@ package system;
 enum NTableType {
     Global = 0;
     Shard = 1;
+    Account = 2;
 }
 
 message NTable {
