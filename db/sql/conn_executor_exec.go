@@ -151,8 +151,8 @@ func (ex *connExecutor) execStmt(
 	// case nodes.GrantRoleStmt:
 	// case nodes.ImportForeignSchemaStmt:
 	// case nodes.IndexStmt:
-	// case nodes.InsertStmt:
-	// 	// return nil, _insert.CreateInsertStatment(stmt, tree).HandleInsert(ctx)
+	case nodes.InsertStmt:
+		return CreateInsertStatement(stmt).Execute(ex, res)
 	// case nodes.ListenStmt:
 	// case nodes.LoadStmt:
 	// case nodes.LockStmt:
