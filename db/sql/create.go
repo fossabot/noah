@@ -167,6 +167,16 @@ func (stmt *CreateStatement) handleColumns(ex *connExecutor, table *system.NTabl
 		for i, col := range stmt.Statement.TableElts.Items {
 			columnDefinition := col.(pg_query.ColumnDef)
 			table.Columns[i] = &system.NColumn{ColumnName:*columnDefinition.Colname}
+
+			if columnDefinition.Constraints.Items != nil && len(columnDefinition.Constraints.Items) > 0 {
+				table.Columns[i].IsPrimaryKey = linq.From(columnDefinition.Constraints.Items).AnyWithT(func(constraint pg_query.Constraint) bool {
+					return constraint.Contype == pg_query.CONSTR_PRIMARY
+				})
+				if table.Columns[i].IsPrimaryKey {
+					primaryKeyFound = true
+				}
+			}
+
 			if columnDefinition.TypeName != nil &&
 				columnDefinition.TypeName.Names.Items != nil &&
 				len(columnDefinition.TypeName.Names.Items) > 0 {
@@ -177,14 +187,14 @@ func (stmt *CreateStatement) handleColumns(ex *connExecutor, table *system.NTabl
 				case "serial": // Emulate 32 bit sequence
 					columnType.Str = "int"
 					table.Columns[i].IsSequence = true
-				case "snowflake":
+				case "snowflake": // Snowflakes are generated using twitters id system
 					table.Columns[i].IsSnowflake = true
 					fallthrough
 				case "bigserial": // Emulate 64 bit sequence
 					columnType.Str = "bigint"
 					table.Columns[i].IsSequence = true
 				default:
-
+					// Other column types wont be handled.
 				}
 				table.Columns[i].ColumnTypeName = strings.ToLower(columnType.Str)
 				columnDefinition.TypeName.Names.Items = []pg_query.Node{columnType}
@@ -192,6 +202,11 @@ func (stmt *CreateStatement) handleColumns(ex *connExecutor, table *system.NTabl
 			}
 		}
 	}
+
+	if !primaryKeyFound && table.TableType == system.NTableType_Account {
+		return errors.New("cannot create an account table without a primary key")
+	}
+
 	return nil
 }
 

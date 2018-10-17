@@ -58,7 +58,6 @@ import (
 	"github.com/Ready-Stock/Noah/db/sql/driver/npgx"
 	"github.com/Ready-Stock/Noah/db/sql/pgwire/pgerror"
 	"github.com/Ready-Stock/Noah/db/system"
-	"github.com/Ready-Stock/Noah/db/util"
 	"github.com/Ready-Stock/Noah/db/util/fsm"
 	nodes "github.com/Ready-Stock/pg_query_go/nodes"
 	"sync"
@@ -203,7 +202,7 @@ func (s *Server) newConnExecutor(stmtBuf *StmtBuf, clientComm ClientComm) *connE
 }
 
 func (ex *connExecutor) run() (err error) {
-	defer util.CatchPanic(&err)
+	//defer util.CatchPanic(&err)
 	for {
 		cmd, pos, err := ex.stmtBuf.curCmd()
 		if err != nil {

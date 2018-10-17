@@ -55,6 +55,7 @@ package system
 
 import (
 	"fmt"
+	"github.com/ahmetb/go-linq"
 	"github.com/golang/protobuf/proto"
 	"github.com/kataras/go-errors"
 	"strings"
@@ -111,6 +112,17 @@ func (ctx *SSchema) GetTables() ([]NTable, error) {
 		tables[i] = table
 	}
 	return tables, nil
+}
+
+func (ctx *SSchema) GetAccountsTable() (*NTable, error) {
+	tables, err := ctx.GetTables()
+	if err != nil {
+		return nil, err
+	}
+	table := linq.From(tables).FirstWithT(func(t NTable) bool {
+		return t.TableType == NTableType_Account
+	}).(NTable)
+	return &table, nil
 }
 
 func (ctx *SSchema) DropTable(tableName string) (*NTable, error) {
