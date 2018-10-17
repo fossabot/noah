@@ -134,7 +134,6 @@ func (stmt *CreateStatement) compilePlan(ex *connExecutor, nodes []system.NNode)
 	if err := stmt.handleColumns(ex, &table); err != nil { // Handle sharding
 		return nil, err
 	}
-
 	deparsed, err := parser.Deparse(stmt.Statement)
 	if err != nil {
 		ex.Error(err.Error())
@@ -155,24 +154,24 @@ func (stmt *CreateStatement) handleColumns(ex *connExecutor, table *system.NTabl
 	if stmt.Statement.TableElts.Items != nil && len(stmt.Statement.TableElts.Items) > 0 {
 		for i, col := range stmt.Statement.TableElts.Items {
 			columnDefinition := col.(pg_query.ColumnDef)
-			table.Columns[i].ColumnName = *columnDefinition.Colname
+			table.Columns[i] = &system.NColumn{ColumnName:*columnDefinition.Colname}
 			if columnDefinition.TypeName != nil &&
 				columnDefinition.TypeName.Names.Items != nil &&
 				len(columnDefinition.TypeName.Names.Items) > 0 {
 				columnType := columnDefinition.TypeName.Names.Items[len(columnDefinition.TypeName.Names.Items) - 1].(pg_query.String) // The last type name
-				table.Columns[i].ColumnTypeName = strings.ToLower(columnType.Str)
 				ex.Debug("Processing column [%s] type [%s]", *columnDefinition.Colname, strings.ToLower(columnType.Str))
 				// This switch statement will handle any custom column types that we would like.
 				switch strings.ToLower(columnType.Str) {
 				case "serial": // Emulate 32 bit sequence
-					columnType.Str = "INT"
+					columnType.Str = "int"
 					table.Columns[i].IsSequence = true
 				case "bigserial": // Emulate 64 bit sequence
-					columnType.Str = "BIGINT"
+					columnType.Str = "bigint"
 					table.Columns[i].IsSequence = true
 				default:
 
 				}
+				table.Columns[i].ColumnTypeName = strings.ToLower(columnType.Str)
 				columnDefinition.TypeName.Names.Items = []pg_query.Node{columnType}
 				stmt.Statement.TableElts.Items[i] = columnDefinition
 			}
