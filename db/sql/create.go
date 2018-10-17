@@ -95,6 +95,14 @@ func (stmt *CreateStatement) Execute(ex *connExecutor, res RestrictedCommandResu
 	if err != nil {
 		return err
 	}
+
+	if ex.TransactionStatus == NTXNoTransaction { // When creating a table try to create a new transaction if we are not in one
+		if err := ex.execStmt(pg_query.TransactionStmt{Kind: pg_query.TRANS_STMT_BEGIN}, nil, 0); err != nil {
+			return err
+		}
+		ex.TransactionStatus = NTXInProgress
+	}
+
 	if err := ex.ExecutePlans(plans, res); err != nil {
 		rollbackPlans := make([]plan.NodeExecutionPlan, len(plans))
 		for i := 0; i < len(plans); i++ {
