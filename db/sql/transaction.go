@@ -101,14 +101,15 @@ func (stmt *TransactionStatement) compilePlan(ex *connExecutor, nodes []system.N
 
 
 func (ex *connExecutor) BeginTransaction() error {
-	if ex.TransactionStatus != NTXNoTransaction {
+	if ex.TransactionState != TransactionState_None {
 		return errors.New("error cannot begin transaction at this time")
 	}
 	if id, err := ex.SystemContext.NewSnowflake(); err != nil {
 		return err
 	} else {
 		ex.TransactionID = id
-		ex.TransactionStatus = NTXNotStarted
+		ex.TransactionState = TransactionState_Open
+		ex.TransactionMode = TransactionMode_Manual
 		return nil
 	}
 }

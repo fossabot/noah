@@ -80,10 +80,11 @@ type connExecutor struct {
 	curStmt            *nodes.Stmt
 	SystemContext      *system.SContext
 
-	nSync             sync.Mutex
-	nodes             map[uint64]*npgx.Transaction
-	TransactionStatus NTXStatus
-	TransactionID     uint64
+	nSync            sync.Mutex
+	nodes            map[uint64]*npgx.Transaction
+	TransactionState TransactionState
+	TransactionMode  TransactionMode
+	TransactionID    uint64
 }
 
 func (ex *connExecutor) GetNodesForAccountID(id *uint64) ([]uint64, error) {
@@ -94,11 +95,25 @@ func (ex *connExecutor) BacklogQuery(query string) {
 	ex.Backlog = append(ex.Backlog, query)
 }
 
-func (ex *connExecutor) GetNodeTransaction(nodeId uint64) (*npgx.Transaction, bool) {
+func (ex *connExecutor) GetNodeTransaction(nodeId uint64) (*npgx.Transaction, error) {
 	ex.nSync.Lock()
 	defer ex.nSync.Unlock()
 	tx, ok := ex.nodes[nodeId]
-	return tx, ok
+	if !ok {
+		ex.Debug("node [%d] is not in the session, acquiring connection", nodeId)
+		// A connection has not yet been made to this node. Allocate one.
+		if t, err := ex.SystemContext.Pool.AcquireTransaction(nodeId); err != nil {
+			ex.Error(err.Error())
+			return nil, err
+		} else {
+			if ex.nodes == nil {
+				ex.nodes = map[uint64]*npgx.Transaction{}
+			}
+			ex.nodes[nodeId] = t
+			return t, nil
+		}
+	}
+	return tx, nil
 }
 
 func (ex *connExecutor) SetNodeTransaction(nodeId uint64, tx *npgx.Transaction) {
@@ -203,7 +218,7 @@ func (s *Server) newConnExecutor(stmtBuf *StmtBuf, clientComm ClientComm) *connE
 }
 
 func (ex *connExecutor) run() (err error) {
-	//defer util.CatchPanic(&err)
+	// defer util.CatchPanic(&err)
 	for {
 		cmd, pos, err := ex.stmtBuf.curCmd()
 		if err != nil {

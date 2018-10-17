@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package sql;
+
+enum TransactionMode {
+    AutoCommit = 0;
+    Manual = 1;
+}
+
+enum TransactionState {
+    None = 0;
+    Open = 1;
+}

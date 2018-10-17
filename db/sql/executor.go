@@ -59,6 +59,7 @@ import (
 	"github.com/Ready-Stock/Noah/db/sql/plan"
 	"github.com/Ready-Stock/Noah/db/sql/types"
 	"github.com/kataras/go-errors"
+	"sync"
 )
 
 type executeResponse struct {
@@ -73,6 +74,18 @@ func (ex *connExecutor) ExecutePlans(plans []plan.NodeExecutionPlan, res Restric
 		ex.Error("no plans were provided, nothing will be executed")
 		return errors.New("no plans were provided")
 	}
+
+	transactionId := uint64(-1)
+	if ex.TransactionMode == TransactionMode_AutoCommit { // If we are auto-committing and we are targeting multiple nodes
+		id, err := ex.SystemContext.NewSnowflake()
+		if err != nil {
+			return err
+		}
+		transactionId = id
+	} else {
+		transactionId = ex.TransactionID
+	}
+
 	responses := make(chan *executeResponse, len(plans))
 	for _, p := range plans {
 		func(ex *connExecutor, pln plan.NodeExecutionPlan) {
@@ -92,40 +105,43 @@ func (ex *connExecutor) ExecutePlans(plans []plan.NodeExecutionPlan, res Restric
 			// }
 
 			ex.Info("Executing query: `%s` on node [%d]", pln.CompiledQuery, pln.Node.NodeId)
-			tx, ok := ex.GetNodeTransaction(pln.Node.NodeId)
-			if !ok {
-				ex.Debug("node [%d] is not in the session, acquiring connection", pln.Node.NodeId)
-				// A connection has not yet been made to this node. Allocate one.
-				if t, err := ex.SystemContext.Pool.AcquireTransaction(pln.Node.NodeId); err != nil {
-					ex.Error(err.Error())
-					exResponse.Error = err
-					return
-				} else {
-					ex.SetNodeTransaction(pln.Node.NodeId, t)
-					tx = t
-				}
+			tx, err := ex.GetNodeTransaction(pln.Node.NodeId)
+			if err != nil {
+				ex.Error(err.Error())
+				exResponse.Error = err
+				return
 			}
 
-			if ex.TransactionStatus == NTXNoTransaction {
-				ex.TransactionStatus = NTXInProgress
-			}
 			rows, err := tx.Query(pln.CompiledQuery)
 			if err != nil {
 				ex.Error(err.Error())
 				exResponse.Error = err
 				return
 			}
+
+			if ex.TransactionMode == TransactionMode_AutoCommit && len(plans) > 1 { // If we are auto-committing and we are targeting multiple nodes
+				if err := tx.PrepareTwoPhase(transactionId); err != nil {
+					ex.Error(err.Error())
+					exResponse.Error = err
+					return
+				}
+			}
+
 			ex.Debug("received rows response from node [%d]", pln.Node.NodeId)
 			exResponse.Rows = rows
 		}(ex, p)
 	}
 	columns := make([]pgproto.FieldDescription, 0)
 	result := make([][]types.Value, 0)
+	errs := make([]error, 0)
 	for i := 0; i < len(plans); i++ {
 		response := <- responses
 		ex.Debug("handling response from node [%d]", response.NodeID)
 		if response.Error != nil {
-			return response.Error
+			ex.Error("received error from node [%d]: %s", response.NodeID, response.Error.Error())
+
+			errs = append(errs, response.Error)
+			continue
 		}
 		if response.Rows != nil {
 			for response.Rows.Next() {
@@ -137,7 +153,8 @@ func (ex *connExecutor) ExecutePlans(plans []plan.NodeExecutionPlan, res Restric
 				row := make([]types.Value, len(columns))
 				if values, err := response.Rows.PgValues(); err != nil {
 					ex.Error(err.Error())
-					return err
+					errs = append(errs, err)
+					continue
 				} else {
 					for c, v := range values {
 						row[c] = v
@@ -151,6 +168,64 @@ func (ex *connExecutor) ExecutePlans(plans []plan.NodeExecutionPlan, res Restric
 		}
 	}
 	ex.Debug("%d row(s) compiled for query `%s`", len(result), plans[0].CompiledQuery)
+
+	if ex.TransactionMode == TransactionMode_AutoCommit { // If we are auto-committing this stuff and there are no errors
+		if len(errs) == 0 {
+			if len(plans) > 1 {
+				var wg sync.WaitGroup
+				wg.Add(len(plans))
+				for _, p := range plans {
+					go func(pln plan.NodeExecutionPlan){
+						tx, err := ex.GetNodeTransaction(pln.Node.NodeId)
+						if err != nil {
+							ex.Fatal("could not retrieve transaction for node [%d] for commit: %s", pln.Node.NodeId, err.Error())
+						}
+						if err := tx.CommitTwoPhase(); err != nil {
+							ex.Fatal("could not commit 2nd phase for node [%d]: %s", pln.Node.NodeId, err.Error())
+						}
+						wg.Done()
+					}(p)
+				}
+				wg.Wait()
+			} else {
+				pln := plans[0]
+				tx, err := ex.GetNodeTransaction(pln.Node.NodeId)
+				if err != nil {
+					ex.Fatal("could not retrieve transaction for node [%d] for commit: %s", pln.Node.NodeId, err.Error())
+				}
+				if err := tx.Commit(); err != nil {
+					ex.Fatal("could not commit for node [%d]: %s", pln.Node.NodeId, err.Error())
+				}
+			}
+		} else {
+			if len(plans) > 1 {
+				var wg sync.WaitGroup
+				wg.Add(len(plans))
+				for _, p := range plans {
+					go func(pln plan.NodeExecutionPlan){
+						tx, err := ex.GetNodeTransaction(pln.Node.NodeId)
+						if err != nil {
+							ex.Fatal("could not retrieve transaction for node [%d] for commit: %s", pln.Node.NodeId, err.Error())
+						}
+						if err := tx.RollbackTwoPhase(); err != nil {
+							ex.Fatal("could not commit 2nd phase for node [%d]: %s", pln.Node.NodeId, err.Error())
+						}
+						wg.Done()
+					}(p)
+				}
+				wg.Wait()
+			} else {
+				pln := plans[0]
+				tx, err := ex.GetNodeTransaction(pln.Node.NodeId)
+				if err != nil {
+					ex.Fatal("could not retrieve transaction for node [%d] for commit: %s", pln.Node.NodeId, err.Error())
+				}
+				if err := tx.Rollback(); err != nil {
+					ex.Fatal("could not commit for node [%d]: %s", pln.Node.NodeId, err.Error())
+				}
+			}
+		}
+	}
 	return nil
 }
 
