@@ -2,6 +2,14 @@ syntax = "proto3";
 
 package system;
 
+service NodeService {
+    rpc AddNode(NNode) returns (EmptyResponse) {}
+}
+
+message EmptyResponse {
+
+}
+
 message NNode {
     uint64 node_id = 1;
     string address = 2;

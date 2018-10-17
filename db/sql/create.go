@@ -232,6 +232,8 @@ func (stmt *CreateStatement) handleTableType(ex *connExecutor, table *system.NTa
 			table.TableType = system.NTableType_Global
 		case "shard": // Table is sharded by shard column
 			table.TableType = system.NTableType_Shard
+		case "account": // Table contains all of the records of accounts for cluster
+			table.TableType = system.NTableType_Account
 		default: // Other
 			return ErrTablespaceNotSpecified
 		}
