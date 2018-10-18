@@ -58,38 +58,27 @@ import (
 	"github.com/Ready-Stock/Noah/db/sql/pgwire/pgproto"
 	"github.com/Ready-Stock/Noah/db/sql/plan"
 	"github.com/Ready-Stock/Noah/db/sql/types"
+	"github.com/Ready-Stock/Noah/db/util"
+	"github.com/ahmetb/go-linq"
 	"github.com/kataras/go-errors"
-	"sync"
 )
 
 type executeResponse struct {
-	Error   error
-	Rows    *npgx.Rows
-	NodeID  uint64
+	Error  error
+	Rows   *npgx.Rows
+	NodeID uint64
 }
 
 func (ex *connExecutor) ExecutePlans(plans []plan.NodeExecutionPlan, res RestrictedCommandResult) (err error) {
-	//defer util.CatchPanic(&err)
+	// defer util.CatchPanic(&err)
 	if len(plans) == 0 {
 		ex.Error("no plans were provided, nothing will be executed")
 		return errors.New("no plans were provided")
 	}
-
-	transactionId := uint64(0)
-	if ex.TransactionMode == TransactionMode_AutoCommit { // If we are auto-committing and we are targeting multiple nodes
-		id, err := ex.SystemContext.NewSnowflake()
-		if err != nil {
-			return err
-		}
-		transactionId = id
-	} else {
-		transactionId = ex.TransactionID
-	}
-
 	responses := make(chan *executeResponse, len(plans))
 	for _, p := range plans {
 		go func(ex *connExecutor, pln plan.NodeExecutionPlan) {
-			//defer util.CatchPanic(&err)
+			// defer util.CatchPanic(&err)
 			exResponse := executeResponse{
 				NodeID: pln.Node.NodeId,
 			}
@@ -98,11 +87,6 @@ func (ex *connExecutor) ExecutePlans(plans []plan.NodeExecutionPlan, res Restric
 				exResponse.Error = err
 				responses <- &exResponse
 			}()
-
-			// if !pln.Node.Alive {
-			// 	ex.Warn("Deferring query: `%s` for node [%d]", pln.CompiledQuery, pln.Node.NodeID)
-			// 	return
-			// }
 
 			ex.Info("Executing query: `%s` on node [%d]", pln.CompiledQuery, pln.Node.NodeId)
 			tx, err := ex.GetNodeTransaction(pln.Node.NodeId)
@@ -119,14 +103,6 @@ func (ex *connExecutor) ExecutePlans(plans []plan.NodeExecutionPlan, res Restric
 				return
 			}
 
-			if ex.TransactionMode == TransactionMode_AutoCommit && len(plans) > 1 { // If we are auto-committing and we are targeting multiple nodes
-				if err := tx.PrepareTwoPhase(transactionId); err != nil {
-					ex.Error(err.Error())
-					exResponse.Error = err
-					return
-				}
-			}
-
 			ex.Debug("received rows response from node [%d]", pln.Node.NodeId)
 			exResponse.Rows = rows
 		}(ex, p)
@@ -135,7 +111,7 @@ func (ex *connExecutor) ExecutePlans(plans []plan.NodeExecutionPlan, res Restric
 	result := make([][]types.Value, 0)
 	errs := make([]error, 0)
 	for i := 0; i < len(plans); i++ {
-		response := <- responses
+		response := <-responses
 		ex.Debug("handling response from node [%d]", response.NodeID)
 		if response.Error != nil {
 			ex.Error("received error from node [%d]: %s", response.NodeID, response.Error.Error())
@@ -169,100 +145,181 @@ func (ex *connExecutor) ExecutePlans(plans []plan.NodeExecutionPlan, res Restric
 	}
 	ex.Debug("%d row(s) compiled for query `%s`", len(result), plans[0].CompiledQuery)
 
-	if ex.TransactionMode == TransactionMode_AutoCommit { // If we are auto-committing this stuff and there are no errors
-		var wg sync.WaitGroup
-		wg.Add(len(plans))
+	if ex.TransactionMode == TransactionMode_AutoCommit && linq.From(plans).AnyWithT(func(plan plan.NodeExecutionPlan) bool {
+		return !plan.ReadOnly
+	}) { // If we are auto-committing this stuff and there are no errors
 		if len(errs) == 0 {
-			for _, p := range plans {
-				go func(pln plan.NodeExecutionPlan){
-					tx, err := ex.GetNodeTransaction(pln.Node.NodeId)
-					if err != nil {
-						ex.Error("could not retrieve transaction for node [%d] for commit: %s", pln.Node.NodeId, err.Error())
-					}
-					if len(plans) > 1 {
-						if err := tx.CommitTwoPhase(); err != nil {
-							ex.Error("could not commit 2nd phase for node [%d]: %s", pln.Node.NodeId, err.Error())
-						}
-					} else {
-						if err := tx.Commit(); err != nil {
-							ex.Error("could not commit for node [%d]: %s", pln.Node.NodeId, err.Error())
-						}
-					}
-					wg.Done()
-				}(p)
+			if err := ex.PrepareTwoPhase(); err != nil {
+				return errors.New(err.Error()).AppendErr(ex.Rollback()) // If the prepare two phase failed (which is really rare) then rollback the current changes in autocommit and return an error
+			} else {
+				return ex.CommitTwoPhase()
 			}
 		} else {
-			for _, p := range plans {
-				go func(pln plan.NodeExecutionPlan){
-					tx, err := ex.GetNodeTransaction(pln.Node.NodeId)
-					if err != nil {
-						ex.Error("could not retrieve transaction for node [%d] for commit: %s", pln.Node.NodeId, err.Error())
-					}
-					if len(plans) > 1 {
-						if err := tx.RollbackTwoPhase(); err != nil {
-							ex.Error("could not commit 2nd phase for node [%d]: %s", pln.Node.NodeId, err.Error())
-						}
-					} else {
-						if err := tx.Rollback(); err != nil {
-							ex.Error("could not commit for node [%d]: %s", pln.Node.NodeId, err.Error())
-						}
-					}
-					wg.Done()
-				}(p)
-			}
+			return ex.Rollback()
 		}
-		wg.Wait()
 	}
-	return nil
+	return util.CombineErrors(errs)
 }
 
-func (ex *connExecutor) PrepareTwoPhase() error {
-	responses := make(chan *executeResponse, len(ex.nodes))
-	for nodeId, tx := range ex.nodes {
-		go func(tx *npgx.Transaction) {
-			exResponse := executeResponse{
-				NodeID: nodeId,
-			}
-			defer func() { responses <- &exResponse }()
-			node, err := ex.SystemContext.Nodes.GetNode(nodeId)
-			if err != nil {
-				ex.Error(err.Error())
-				exResponse.Error = err
-				return
-			}
+func (ex *connExecutor) PrepareTwoPhase() (error) {
+	if ex.nodes == nil {
+		ex.nodes = map[uint64]*npgx.Transaction{}
+		return nil // There were never any transactions to release
+	}
 
-			if !node.IsAlive {
-				return // TODO (elliotcourant) Add handling for a dead node.
-			}
+	transactionId := uint64(0)
+	if ex.TransactionMode == TransactionMode_AutoCommit { // If we are auto-committing and we are targeting multiple nodes
+		id, err := ex.SystemContext.NewSnowflake()
+		if err != nil {
+			return err
+		}
+		transactionId = id
+		ex.TransactionID = id
+	}
 
-			if err := tx.PrepareTwoPhase(ex.TransactionID); err != nil {
-				ex.Error(err.Error())
-				exResponse.Error = err
-				return
+	transactionId = ex.TransactionID
+
+	count := len(ex.nodes)
+	responses := make(chan executeResponse, count)
+	for id, tx := range ex.nodes {
+		func(tx *npgx.Transaction) {
+			response := executeResponse{
+				NodeID: id,
 			}
+			defer func() { responses <- response }()
+			response.Error = tx.PrepareTwoPhase(transactionId)
 		}(tx)
 	}
-	for i := 0; i < len(ex.nodes); i++ {
+	errs := make([]error, 0)
+	for i := 0; i < count; i++ {
 		response := <- responses
 		if response.Error != nil {
-			return response.Error
+			errs = append(errs, response.Error)
 		}
 	}
-	return nil
+	return util.CombineErrors(errs)
 }
 
 func (ex *connExecutor) CommitTwoPhase() error {
-	return nil
+	if ex.nodes == nil {
+		ex.nodes = map[uint64]*npgx.Transaction{}
+		return nil // There were never any transactions to commit
+	}
+
+	count := len(ex.nodes)
+	responses := make(chan executeResponse, count)
+	for id, tx := range ex.nodes {
+		func(tx *npgx.Transaction) {
+			response := executeResponse{
+				NodeID: id,
+			}
+			defer func() { responses <- response }()
+			response.Error = tx.CommitTwoPhase()
+		}(tx)
+	}
+
+	ex.nSync.Lock()
+	defer ex.nSync.Unlock()
+	errs := make([]error, 0)
+	for i := 0; i < count; i++ {
+		response := <- responses
+		if response.Error != nil {
+			errs = append(errs, response.Error)
+		}
+		delete(ex.nodes, response.NodeID)
+	}
+	return util.CombineErrors(errs)
 }
 
 func (ex *connExecutor) RollbackTwoPhase() error {
-	return nil
+	if ex.nodes == nil {
+		ex.nodes = map[uint64]*npgx.Transaction{}
+		return nil // There were never any transactions to commit
+	}
+
+	count := len(ex.nodes)
+	responses := make(chan executeResponse, count)
+	for id, tx := range ex.nodes {
+		func(tx *npgx.Transaction) {
+			response := executeResponse{
+				NodeID: id,
+			}
+			defer func() { responses <- response }()
+			response.Error = tx.RollbackTwoPhase()
+		}(tx)
+	}
+
+	ex.nSync.Lock()
+	defer ex.nSync.Unlock()
+	errs := make([]error, 0)
+	for i := 0; i < count; i++ {
+		response := <- responses
+		if response.Error != nil {
+			errs = append(errs, response.Error)
+		}
+		delete(ex.nodes, response.NodeID)
+	}
+	return util.CombineErrors(errs)
 }
 
 func (ex *connExecutor) Commit() error {
-	return nil
+	if ex.nodes == nil {
+		ex.nodes = map[uint64]*npgx.Transaction{}
+		return nil // There were never any transactions to commit
+	}
+
+	count := len(ex.nodes)
+	responses := make(chan executeResponse, count)
+	for id, tx := range ex.nodes {
+		func(tx *npgx.Transaction) {
+			response := executeResponse{
+				NodeID: id,
+			}
+			defer func() { responses <- response }()
+			response.Error = tx.Commit()
+		}(tx)
+	}
+
+	ex.nSync.Lock()
+	defer ex.nSync.Unlock()
+	errs := make([]error, 0)
+	for i := 0; i < count; i++ {
+		response := <- responses
+		if response.Error != nil {
+			errs = append(errs, response.Error)
+		}
+		delete(ex.nodes, response.NodeID)
+	}
+	return util.CombineErrors(errs)
 }
 
 func (ex *connExecutor) Rollback() error {
-	return nil
+	if ex.nodes == nil {
+		ex.nodes = map[uint64]*npgx.Transaction{}
+		return nil // There were never any transactions to commit
+	}
+
+	count := len(ex.nodes)
+	responses := make(chan executeResponse, count)
+	for id, tx := range ex.nodes {
+		func(tx *npgx.Transaction) {
+			response := executeResponse{
+				NodeID: id,
+			}
+			defer func() { responses <- response }()
+			response.Error = tx.Rollback()
+		}(tx)
+	}
+
+	ex.nSync.Lock()
+	defer ex.nSync.Unlock()
+	errs := make([]error, 0)
+	for i := 0; i < count; i++ {
+		response := <- responses
+		if response.Error != nil {
+			errs = append(errs, response.Error)
+		}
+		delete(ex.nodes, response.NodeID)
+	}
+	return util.CombineErrors(errs)
 }

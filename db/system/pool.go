@@ -92,11 +92,3 @@ func (pool *SPool) AcquireConnection(nodeId uint64) (*npgx.Conn, error) {
 		return nodePool.Acquire()
 	}
 }
-
-func (pool *SPool) ReleaseTransaction(nodeId uint64, tx *npgx.Transaction) error {
-	if nodePool, ok := pool.nodePools[nodeId]; !ok {
-
-	} else {
-
-	}
-}

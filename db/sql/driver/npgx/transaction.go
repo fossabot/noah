@@ -186,10 +186,6 @@ func (tx *Transaction) PrepareTwoPhaseEx(ctx context.Context, transactionId uint
 		tx.conn.die(errors.New("prepare two-phase commit failed"))
 	}
 
-	if tx.connPool != nil {
-		tx.connPool.Release(tx.conn)
-	}
-
 	return tx.err
 }
 

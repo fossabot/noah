@@ -128,15 +128,7 @@ func (ex *connExecutor) SetNodeTransaction(nodeId uint64, tx *npgx.Transaction) 
 	ex.nodes[nodeId] = tx
 }
 
-func (ex *connExecutor) ReleaseTransaction(nodeId uint64) (error) {
-	ex.nSync.Lock()
-	defer ex.nSync.Unlock()
-	if ex.nodes == nil {
-		ex.nodes = map[uint64]*npgx.Transaction{}
-		return nil // There were never any transactions to release
-	}
 
-}
 
 type prepStmtNamespace struct {
 	// prepStmts contains the prepared statements currently available on the
