@@ -141,6 +141,8 @@ func (b *writeBuffer) writeTextDatum(
 
 	//case *tree.DIPAddr:
 	//	b.writeLengthPrefixedString(v.IPAddr.String())
+	case *types.GenericText:
+		b.writeLengthPrefixedString(v.String)
 
 	case *types.Text: // Also serves varchar
 		b.writeLengthPrefixedString(v.String)

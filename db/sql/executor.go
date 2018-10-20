@@ -60,7 +60,7 @@ import (
 	"github.com/Ready-Stock/Noah/db/sql/types"
 	"github.com/Ready-Stock/Noah/db/util"
 	"github.com/ahmetb/go-linq"
-	"github.com/kataras/go-errors"
+	"github.com/juju/errors"
 )
 
 type executeResponse struct {
@@ -150,7 +150,7 @@ func (ex *connExecutor) ExecutePlans(plans []plan.NodeExecutionPlan, res Restric
 	}) { // If we are auto-committing this stuff and there are no errors
 		if len(errs) == 0 {
 			if err := ex.PrepareTwoPhase(); err != nil {
-				return errors.New(err.Error()).AppendErr(ex.Rollback()) // If the prepare two phase failed (which is really rare) then rollback the current changes in autocommit and return an error
+				return errors.Wrap(err, ex.Rollback()) // If the prepare two phase failed (which is really rare) then rollback the current changes in autocommit and return an error
 			} else {
 				return ex.CommitTwoPhase()
 			}

@@ -103,7 +103,7 @@ func (stmt *VariableSetStatement) getTargetNodes(ex *connExecutor) ([]system.NNo
 
 func (stmt *VariableSetStatement) compilePlan(ex *connExecutor, nodes []system.NNode) ([]plan.NodeExecutionPlan, error) {
 	plans := make([]plan.NodeExecutionPlan, len(nodes))
-	deparsed, err := pg_query2.Deparse(stmt.Statement)
+	deparsed, err := pg_query.Deparse(stmt.Statement)
 	if err != nil {
 		return nil, err
 	}

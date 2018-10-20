@@ -56,15 +56,13 @@ package sql
 import (
 	"github.com/Ready-Stock/Noah/db/sql/plan"
 	"github.com/Ready-Stock/Noah/db/system"
-	parser "github.com/Ready-Stock/pg_query_go"
 	"github.com/Ready-Stock/pg_query_go/nodes"
 	"github.com/ahmetb/go-linq"
-	"github.com/kataras/go-errors"
+	"github.com/juju/errors"
 	"strings"
 )
 
 var (
-	ErrTableExists             = errors.New("table with name [%s] already exists in the cluster")
 	ErrNotEnoughNodesAvailable = errors.New("not enough nodes available in cluster to create table")
 	ErrTablespaceNotSpecified  = errors.New("tablespace must be specified when creating a table")
 )
@@ -83,7 +81,7 @@ func CreateCreateStatement(stmt pg_query.CreateStmt) *CreateStatement {
 func (stmt *CreateStatement) Execute(ex *connExecutor, res RestrictedCommandResult) error {
 	existingTable, _ := ex.SystemContext.Schema.GetTable(*stmt.Statement.Relation.Relname)
 	if existingTable != nil {
-		return ErrTableExists.Format(*stmt.Statement.Relation.Relname)
+		return errors.Errorf("table with name [%s] already exists in the cluster", *stmt.Statement.Relation.Relname)
 	}
 
 	targetNodes, err := stmt.getTargetNodes(ex)
@@ -125,6 +123,10 @@ func (stmt *CreateStatement) getTargetNodes(ex *connExecutor) ([]system.NNode, e
 		return nil, ErrNotEnoughNodesAvailable
 	}
 
+	if liveNodes == 0 {
+		return nil, errors.Errorf("no live nodes, ddl cannot be processed at this time")
+	}
+
 	return allNodes, nil
 }
 
@@ -152,7 +154,7 @@ func (stmt *CreateStatement) compilePlan(ex *connExecutor, nodes []system.NNode)
 		return nil, err
 	}
 
-	deparsed, err := parser.Deparse(stmt.Statement)
+	deparsed, err := pg_query.Deparse(stmt.Statement)
 	if err != nil {
 		ex.Error(err.Error())
 		return nil, err
@@ -173,7 +175,7 @@ func (stmt *CreateStatement) handleValidation(ex *connExecutor, table *system.NT
 		if accountsTable, err := ex.SystemContext.Schema.GetAccountsTable(); err != nil {
 			return err
 		} else if accountsTable != nil {
-			return errors.New("an accounts table named [%s] already exists in this cluster").Format(accountsTable.TableName)
+			return errors.Errorf("an accounts table named [%s] already exists in this cluster", accountsTable.TableName)
 		}
 	}
 

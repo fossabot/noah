@@ -56,7 +56,6 @@ package sql
 import (
 	"github.com/Ready-Stock/Noah/db/sql/plan"
 	"github.com/Ready-Stock/Noah/db/system"
-	pg_query2 "github.com/Ready-Stock/pg_query_go"
 	"github.com/Ready-Stock/pg_query_go/nodes"
 	"github.com/kataras/go-errors"
 )
@@ -138,7 +137,7 @@ func (stmt *SelectStatement) getAccountIDs() ([]uint64, error) {
 
 func (stmt *SelectStatement) compilePlan(ex *connExecutor, nodes []system.NNode) ([]plan.NodeExecutionPlan, error) {
 	plans := make([]plan.NodeExecutionPlan, len(nodes))
-	deparsed, err := pg_query2.Deparse(stmt.Statement)
+	deparsed, err := pg_query.Deparse(stmt.Statement)
 	if err != nil {
 		return nil, err
 	}

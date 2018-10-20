@@ -51,87 +51,21 @@
  * License (MPL-2.0) https://github.com/hashicorp/raft/blob/master/LICENSE
  */
 
-package sql
+package tracing
 
+// static void annotateTrace() {
+// }
+import "C"
 import (
-	"github.com/Ready-Stock/Noah/db/sql/pgwire/pgproto"
-	"github.com/Ready-Stock/Noah/db/sql/plan"
-	"github.com/Ready-Stock/Noah/db/sql/types"
-	"github.com/Ready-Stock/Noah/db/system"
-	"github.com/Ready-Stock/pg_query_go/nodes"
-	"strings"
+	"github.com/Ready-Stock/Noah/db/util/envutil"
 )
 
-type VariableShowStatement struct {
-	Statement pg_query.VariableShowStmt
-	IQueryStatement
-}
+var annotationEnabled = envutil.EnvOrDefaultBool("NOAH_ANNOTATE_TRACES", false)
 
-func CreateVariableShowStatement(stmt pg_query.VariableShowStmt) *VariableShowStatement {
-	return &VariableShowStatement{
-		Statement: stmt,
+// AnnotateTrace adds an annotation to the golang executation tracer by calling
+// a no-op cgo function.
+func AnnotateTrace() {
+	if annotationEnabled {
+		C.annotateTrace()
 	}
-}
-
-func (stmt *VariableShowStatement) Execute(ex *connExecutor, res RestrictedCommandResult) error {
-	if strings.HasPrefix(strings.ToLower(*stmt.Statement.Name), "noah") {
-		settingName := strings.Replace(strings.ToLower(*stmt.Statement.Name), "noah.", "", 1)
-		value, err := ex.SystemContext.Settings.GetSetting(system.NoahSetting(settingName))
-		if err != nil {
-			return err
-		}
-		columns := []pgproto.FieldDescription{
-			{
-				Name:                 settingName,
-				TableOID:             0,
-				TableAttributeNumber: 0,
-				DataTypeOID:          25,
-				DataTypeSize:         int16(len(*value)),
-				TypeModifier:         0,
-				Format:               0,
-			},
-		}
-		res.SetColumns(columns)
-		values := []types.Value{
-			&types.Text{
-				String: *value,
-				Status: types.Present,
-			},
-		}
-		res.AddRow(values)
-		return nil
-	}
-
-	targetNodes, err := stmt.getTargetNodes(ex)
-	if err != nil {
-		return err
-	}
-
-	plans, err := stmt.compilePlan(ex, targetNodes)
-	if err != nil {
-		return err
-	}
-
-	return ex.ExecutePlans(plans, res)
-}
-
-func (stmt *VariableShowStatement) getTargetNodes(ex *connExecutor) ([]system.NNode, error) {
-	return nil, nil
-	// return ex.GetNodesForAccountID(nil)
-}
-
-func (stmt *VariableShowStatement) compilePlan(ex *connExecutor, nodes []system.NNode) ([]plan.NodeExecutionPlan, error) {
-	plans := make([]plan.NodeExecutionPlan, len(nodes))
-	deparsed, err := pg_query.Deparse(stmt.Statement)
-	if err != nil {
-		return nil, err
-	}
-	for i := 0; i < len(plans); i++ {
-		plans[i] = plan.NodeExecutionPlan{
-			CompiledQuery: *deparsed,
-			Node:          nodes[i],
-			ReadOnly:      true,
-		}
-	}
-	return plans, nil
 }

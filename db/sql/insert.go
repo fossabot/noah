@@ -57,7 +57,6 @@ import (
 	"github.com/Ready-Stock/Noah/db/sql/plan"
 	"github.com/Ready-Stock/Noah/db/system"
 	"github.com/Ready-Stock/pg_query_go/nodes"
-	parser "github.com/Ready-Stock/pg_query_go"
 	"github.com/kataras/go-errors"
 )
 
@@ -120,7 +119,7 @@ func (stmt *InsertStatement) getAccountIDs() ([]uint64, error) {
 
 func (stmt *InsertStatement) compilePlan(ex *connExecutor, nodes []system.NNode) ([]plan.NodeExecutionPlan, error) {
 	plans := make([]plan.NodeExecutionPlan, len(nodes))
-	deparsed, err := parser.Deparse(stmt.Statement)
+	deparsed, err := pg_query.Deparse(stmt.Statement)
 	if err != nil {
 		return nil, err
 	}

@@ -58,6 +58,7 @@ import (
 	"github.com/Ready-Stock/Noah/db/coordinator"
 	"github.com/Ready-Stock/Noah/db/system"
 	"github.com/kataras/golog"
+	"github.com/sirupsen/logrus"
 	"os"
 	"os/signal"
 	"syscall"
@@ -94,6 +95,7 @@ func StartCoordinator() {
 		os.Exit(1)
 	}()
 
+	logrus.SetLevel(logrus.DebugLevel)
 	go api.StartApp(sctx)
 	coordinator.Start(sctx)
 }

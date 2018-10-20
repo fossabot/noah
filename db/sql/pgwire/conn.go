@@ -63,6 +63,9 @@ import (
 	"github.com/Ready-Stock/Noah/db/system"
 	"github.com/Ready-Stock/Noah/db/util/timeutil"
 	"github.com/kataras/golog"
+	"github.com/sirupsen/logrus"
+
+	// log "github.com/sirupsen/logrus"
 	"io"
 	"net"
 	"strconv"
@@ -129,6 +132,8 @@ type conn struct {
 	msgBuilder *writeBuffer
 
 	pginfo *types.ConnInfo
+
+	log *logrus.Entry
 }
 
 // serveConn creates a conn that will serve the netConn. It returns once the
@@ -205,6 +210,9 @@ func newConn(netConn net.Conn, sArgs sql.SessionArgs) *conn {
 		msgBuilder:  newWriteBuffer(),
 		rd:          *bufio.NewReader(netConn),
 		pginfo:      types.NewConnInfo(),
+		log: logrus.WithFields(logrus.Fields{
+			"Addr": netConn.RemoteAddr(),
+		}),
 	}
 	c.writerState.fi.buf = &c.writerState.buf
 	c.writerState.fi.lastFlushed = -1
@@ -654,6 +662,13 @@ func (c *conn) handleBind(buf *pgwirebase.ReadBuffer) error {
 			columnFormatCodes[i] = pgwirebase.FormatCode(ch)
 		}
 	}
+
+	c.log.WithFields(logrus.Fields{
+		"PreparedStatementName": statementName,
+		"PortalName":            portalName,
+		"Args":                  qargs,
+	}).Debug("Bind statement received.")
+
 	return c.stmtBuf.Push(
 		sql.BindStmt{
 			PreparedStatementName: statementName,
