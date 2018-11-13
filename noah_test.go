@@ -51,25 +51,36 @@
  * License (MPL-2.0) https://github.com/hashicorp/raft/blob/master/LICENSE
  */
 
-package main_test
+package main
 
 import (
 	"database/sql"
+	"fmt"
 	_ "github.com/lib/pq"
 	"testing"
+	"time"
 )
 
-func Test_EntryPoint(t *testing.T) {
+func Test_Prepare(t *testing.T) {
+	go StartCoordinator()
+	// defer StopCoordinator()
+	time.Sleep(15 * time.Second)
 	connStr := "postgres://postgres:password@localhost:5433/pqgotest?sslmode=disable"
 	db, err := sql.Open("postgres", connStr)
 	if err != nil {
 		t.Fatal(err)
 	}
-	rows, err := db.Query(`SELECT 2::citext`)
+	fmt.Println("test 1")
+	stmt, err := db.Prepare("SELECT ?::citext")
+	fmt.Println("test 2")
 	if err != nil {
+		fmt.Println("test error")
 		t.Error(err)
 		t.Fail()
+		return
 	}
+	fmt.Println("test 3")
+	rows, err := stmt.Query("test")
 	for rows.Next() {
 		i := ""
 		rows.Scan(&i)

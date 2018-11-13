@@ -71,6 +71,10 @@ const (
 	Tablet      ServiceType = "tablet"
 )
 
+var (
+	systemContext *system.SContext
+	ch            chan os.Signal
+)
 
 func main() {
 	StartCoordinator()
@@ -85,17 +89,21 @@ func StartCoordinator() {
 	golog.Infof("Coordinator ID [%d] starting...", sctx.CoordinatorID())
 	golog.Infof("Starting admin application with port [%d]", sctx.Flags.HTTPPort)
 	golog.Infof("Listening for PostgreSQL connection on port [%d]", sctx.Flags.PostgresPort)
-
-	c := make(chan os.Signal)
-	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
-	signal.Notify(c, os.Interrupt, syscall.SIGSEGV)
+	systemContext = sctx
+	ch = make(chan os.Signal)
+	signal.Notify(ch, os.Interrupt, syscall.SIGTERM)
+	signal.Notify(ch, os.Interrupt, syscall.SIGSEGV)
 	go func() {
-		<-c
-		sctx.Close()
-		os.Exit(1)
+		<-ch
+		StopCoordinator()
 	}()
 
 	logrus.SetLevel(logrus.DebugLevel)
 	go api.StartApp(sctx)
 	coordinator.Start(sctx)
+}
+
+func StopCoordinator() {
+	systemContext.Close()
+	os.Exit(1)
 }

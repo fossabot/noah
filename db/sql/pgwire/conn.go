@@ -314,6 +314,11 @@ Loop:
 			break Loop
 		}
 		timeReceived := time.Now().UTC()
+
+		c.log.WithFields(logrus.Fields{
+			"Type": typ,
+		}).Debug("Receiving input.")
+
 		switch typ {
 		case pgwirebase.ClientMsgSimpleQuery:
 			golog.Debug("handling simple query message")
