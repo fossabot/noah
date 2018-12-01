@@ -51,67 +51,54 @@
  * License (MPL-2.0) https://github.com/hashicorp/raft/blob/master/LICENSE
  */
 
-package main
+package sql
 
 import (
-	"database/sql"
-	"fmt"
-	_ "github.com/lib/pq"
-	"testing"
-	"time"
+	"context"
+	"github.com/Ready-Stock/Noah/db/sql/pgwire/pgerror"
+	"github.com/Ready-Stock/Noah/db/sql/pgwire/pgwirebase"
+	"github.com/Ready-Stock/Noah/db/util/fsm"
+	"github.com/pkg/errors"
 )
 
-func Test_Select(t *testing.T) {
-	go StartCoordinator()
-	// defer StopCoordinator()
-	time.Sleep(15 * time.Second)
-	connStr := "postgres://postgres:password@localhost:5433/pqgotest?sslmode=disable"
-	db, err := sql.Open("postgres", connStr)
-	if err != nil {
-		panic(err)
-	}
-	res, err := db.Query("SELECT $1", "test")
-	if err != nil {
-		panic(err)
-	}
-	for res.Next() {
-		resultString := ""
-		if err := res.Scan(&resultString); err != nil {
-			panic(err)
-		}
-		fmt.Printf("Result: [%s]", resultString)
-	}
-}
+func (ex *connExecutor) execDescribe(
+	ctx context.Context, descCmd DescribeStmt, res DescribeResult,
+) (fsm.Event, fsm.EventPayload) {
 
-func Test_Prepare(t *testing.T) {
-	go StartCoordinator()
-	// defer StopCoordinator()
-	time.Sleep(15 * time.Second)
-	connStr := "postgres://postgres:password@localhost:5433/pqgotest?sslmode=disable"
-	db, err := sql.Open("postgres", connStr)
-	if err != nil {
-		t.Fatal(err)
+	retErr := func(err error) (fsm.Event, fsm.EventPayload) {
+		return eventNonRetriableErr{IsCommit: fsm.False}, eventNonRetriableErrPayload{err: err}
 	}
-	fmt.Println("test 1")
-	stmt, err := db.Prepare("SELECT $1::citext")
-	fmt.Println("test 2")
-	if err != nil {
-		fmt.Println("test error")
-		t.Error(err)
-		t.Fail()
-		return
-	}
-	fmt.Println("test 3")
-	rows, err := stmt.Query("test")
-	for rows.Next() {
-		i := ""
-		rows.Scan(&i)
-		if i != "2" {
-			t.Error("result does not equal")
-			t.Fail()
+
+	switch descCmd.Type {
+	case pgwirebase.PrepareStatement:
+		ps, ok := ex.prepStmtsNamespace.prepStmts[descCmd.Name]
+		if !ok {
+			return retErr(pgerror.NewErrorf(
+				pgerror.CodeInvalidSQLStatementNameError,
+				"unknown prepared statement %q", descCmd.Name))
 		}
-		return
+
+		res.SetInTypes(ps.InTypes)
+
+		if stmtHasNoData(ps.Statement) {
+			res.SetNoDataRowDescription()
+		} else {
+			res.SetPrepStmtOutput(ctx, ps.Columns)
+		}
+	case pgwirebase.PreparePortal:
+		portal, ok := ex.prepStmtsNamespace.portals[descCmd.Name]
+		if !ok {
+			return retErr(pgerror.NewErrorf(
+				pgerror.CodeInvalidCursorNameError, "unknown portal %q", descCmd.Name))
+		}
+
+		if stmtHasNoData(portal.Stmt.Statement) {
+			res.SetNoDataRowDescription()
+		} else {
+			res.SetPortalOutput(ctx, portal.Stmt.Columns, portal.OutFormats)
+		}
+	default:
+		return retErr(errors.Errorf("unknown describe type: %s", descCmd.Type))
 	}
-	t.Error("no rows returned")
-	t.Fail()
+	return nil, nil
 }

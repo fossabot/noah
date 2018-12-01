@@ -54,6 +54,7 @@
 package sql
 
 import (
+	"context"
 	"fmt"
 	"github.com/Ready-Stock/Noah/db/sql/driver/npgx"
 	"github.com/Ready-Stock/Noah/db/sql/pgwire/pgerror"
@@ -128,8 +129,6 @@ func (ex *connExecutor) SetNodeTransaction(nodeId uint64, tx *npgx.Transaction) 
 	ex.nodes[nodeId] = tx
 }
 
-
-
 type prepStmtNamespace struct {
 	// prepStmts contains the prepared statements currently available on the
 	// session.
@@ -196,9 +195,7 @@ func (ns *prepStmtNamespace) copy() prepStmtNamespace {
 }
 
 func NewServer() *Server {
-	return &Server{
-
-	}
+	return &Server{}
 }
 
 func (s *Server) ServeConn(stmtBuf *StmtBuf, clientComm ClientComm, clientAddress string, sctx *system.SContext) error {
@@ -218,7 +215,7 @@ func (s *Server) newConnExecutor(stmtBuf *StmtBuf, clientComm ClientComm) *connE
 			portals:   make(map[string]portalEntry),
 		},
 		TransactionState: TransactionState_None,
-		TransactionMode: TransactionMode_AutoCommit,
+		TransactionMode:  TransactionMode_AutoCommit,
 	}
 	return ex
 }
@@ -288,6 +285,7 @@ func (ex *connExecutor) run() (err error) {
 		case DescribeStmt:
 			descRes := ex.clientComm.CreateDescribeResult(pos)
 			res = descRes
+			err = ex.execDescribe(context.Background(), tcmd, descRes)
 		case BindStmt:
 			res = ex.clientComm.CreateBindResult(pos)
 			err = ex.execBind(tcmd)
