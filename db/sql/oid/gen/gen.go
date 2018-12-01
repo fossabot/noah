@@ -55,7 +55,7 @@
 
 // Generate the table of OID values
 // Run with 'go run gen.go'.
-package main
+package gen
 
 import (
 	"database/sql"

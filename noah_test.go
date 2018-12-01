@@ -70,7 +70,7 @@ func Test_Select(t *testing.T) {
 	if err != nil {
 		panic(err)
 	}
-	res, err := db.Query("SELECT $1", "test")
+	res, err := db.Query("SELECT 1")
 	if err != nil {
 		panic(err)
 	}
@@ -87,7 +87,7 @@ func Test_Prepare(t *testing.T) {
 	go StartCoordinator()
 	// defer StopCoordinator()
 	time.Sleep(15 * time.Second)
-	connStr := "postgres://postgres:password@localhost:5433/pqgotest?sslmode=disable"
+	connStr := "postgres://postgres:Spring!2016@localhost:5433/app?sslmode=disable"
 	db, err := sql.Open("postgres", connStr)
 	if err != nil {
 		t.Fatal(err)

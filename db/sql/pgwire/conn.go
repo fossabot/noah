@@ -58,6 +58,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"github.com/Ready-Stock/Noah/db/sql/oid"
 	"github.com/Ready-Stock/Noah/db/sql/pgwire/pgproto"
 	"github.com/Ready-Stock/Noah/db/sql/types"
 	"github.com/Ready-Stock/Noah/db/system"
@@ -65,6 +66,7 @@ import (
 	"github.com/kataras/golog"
 	"github.com/sirupsen/logrus"
 
+	"github.com/pkg/errors"
 	// log "github.com/sirupsen/logrus"
 	"io"
 	"net"
@@ -72,9 +74,6 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
-
-	"github.com/lib/pq/oid"
-	"github.com/pkg/errors"
 
 	"github.com/Ready-Stock/Noah/db/sql"
 	"github.com/Ready-Stock/Noah/db/sql/pgwire/pgerror"

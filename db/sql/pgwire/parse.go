@@ -54,14 +54,13 @@
 package pgwire
 
 import (
-	"fmt"
 	"github.com/Ready-Stock/Noah/db/sql"
+	"github.com/Ready-Stock/Noah/db/sql/oid"
 	"github.com/Ready-Stock/Noah/db/sql/pgwire/pgerror"
 	"github.com/Ready-Stock/Noah/db/sql/pgwire/pgwirebase"
 	"github.com/Ready-Stock/pg_query_go"
 	nodes "github.com/Ready-Stock/pg_query_go/nodes"
 	"github.com/kataras/golog"
-	"github.com/lib/pq/oid"
 	"github.com/pkg/errors"
 	"reflect"
 	"time"
@@ -84,10 +83,8 @@ func (c *conn) handleParse(buf *pgwirebase.ReadBuffer) error {
 	if err != nil {
 		return c.stmtBuf.Push(sql.SendError{Err: err})
 	}
-
 	// The client may provide type information for (some of) the placeholders.
 	numQArgTypes, err := buf.GetUint16()
-	fmt.Printf("NumQArgsTyps: %+v\n", numQArgTypes)
 	if err != nil {
 		return err
 	}
@@ -99,7 +96,6 @@ func (c *conn) handleParse(buf *pgwirebase.ReadBuffer) error {
 		}
 		inTypeHints[i] = oid.Oid(typ)
 	}
-	fmt.Printf("InTypeHints: %+v\n", inTypeHints)
 	golog.Infof("[%s] Query: `%s`", c.conn.RemoteAddr().String(), query)
 	p, err := pg_query.Parse(query)
 	endParse := time.Now().UTC()

@@ -56,14 +56,13 @@ package sql
 import (
 	"context"
 	"fmt"
+	"github.com/Ready-Stock/Noah/db/sql/oid"
 	"github.com/Ready-Stock/Noah/db/sql/pgwire/pgproto"
 	"github.com/Ready-Stock/Noah/db/sql/types"
+	"github.com/pkg/errors"
 	"io"
 	"sync"
 	"time"
-
-	"github.com/lib/pq/oid"
-	"github.com/pkg/errors"
 
 	"github.com/Ready-Stock/Noah/db/sql/pgwire/pgwirebase"
 	"github.com/Ready-Stock/Noah/db/util/syncutil"
