@@ -57,8 +57,8 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/Ready-Stock/Noah/db/sql/types"
-	"github.com/Ready-Stock/Noah/db/sql/types/testutil"
+    "github.com/Ready-Stock/noah/db/sql/types"
+    "github.com/Ready-Stock/noah/db/sql/types/testutil"
 )
 
 func TestByteaTranscode(t *testing.T) {
@@ -109,8 +109,8 @@ func TestByteaAssignTo(t *testing.T) {
 		{src: types.Bytea{Bytes: []byte{1, 2, 3}, Status: types.Present}, dst: &_buf, expected: _byteSlice{1, 2, 3}},
 		{src: types.Bytea{Bytes: []byte{1, 2, 3}, Status: types.Present}, dst: &pbuf, expected: &[]byte{1, 2, 3}},
 		{src: types.Bytea{Bytes: []byte{1, 2, 3}, Status: types.Present}, dst: &_pbuf, expected: &_byteSlice{1, 2, 3}},
-		{src: types.Bytea{Status: types.Null}, dst: &pbuf, expected: ((*[]byte)(nil))},
-		{src: types.Bytea{Status: types.Null}, dst: &_pbuf, expected: ((*_byteSlice)(nil))},
+        {src: types.Bytea{Status: types.Null}, dst: &pbuf, expected: (*[]byte)(nil)},
+        {src: types.Bytea{Status: types.Null}, dst: &_pbuf, expected: (*_byteSlice)(nil)},
 	}
 
 	for i, tt := range simpleTests {

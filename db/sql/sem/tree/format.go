@@ -54,13 +54,13 @@
 package tree
 
 import (
-	"bytes"
-	"fmt"
-	"sync"
+    "bytes"
+    "fmt"
+    "sync"
 
-	"github.com/Ready-Stock/Noah/db/sql/lex"
-	"github.com/Ready-Stock/Noah/db/sql/sem/types"
-	"github.com/Ready-Stock/Noah/db/sql/coltypes"
+    "github.com/Ready-Stock/noah/db/sql/coltypes"
+    "github.com/Ready-Stock/noah/db/sql/lex"
+    "github.com/Ready-Stock/noah/db/sql/sem/types"
 )
 
 // FmtFlags carries options for the pretty-printer.
@@ -89,7 +89,7 @@ const (
 
 	// FmtShowPasswords instructs the pretty-printer to not suppress passwords.
 	// If not set, passwords are replaced by *****.
-	FmtShowPasswords FmtFlags = FmtFlags(lex.EncFirstFreeFlagBit) << iota
+    FmtShowPasswords = FmtFlags(lex.EncFirstFreeFlagBit) << iota
 
 	// FmtShowTypes instructs the pretty-printer to
 	// annotate expressions with their resolved types.
@@ -141,20 +141,20 @@ const (
 const (
 	// FmtBareStrings instructs the pretty-printer to print strings without
 	// wrapping quotes, if the string contains no special characters.
-	FmtBareStrings FmtFlags = FmtFlags(lex.EncBareStrings)
+    FmtBareStrings = FmtFlags(lex.EncBareStrings)
 
 	// FmtBareIdentifiers instructs the pretty-printer to print
 	// identifiers without wrapping quotes in any case.
-	FmtBareIdentifiers FmtFlags = FmtFlags(lex.EncBareIdentifiers)
+    FmtBareIdentifiers = FmtFlags(lex.EncBareIdentifiers)
 
 	// FmtArrays instructs the pretty-printer to print strings without
 	// wrapping quotes, if the string contains no special characters.
-	FmtArrays FmtFlags = fmtWithinArray | FmtFlags(lex.EncBareStrings)
+    FmtArrays = fmtWithinArray | FmtFlags(lex.EncBareStrings)
 
 	// FmtParsable instructs the pretty-printer to produce a representation that
 	// can be parsed into an equivalent expression (useful for serialization of
 	// expressions).
-	FmtParsable FmtFlags = fmtDisambiguateDatumTypes
+    FmtParsable = fmtDisambiguateDatumTypes
 
 	// FmtCheckEquivalence instructs the pretty-printer to produce a representation
 	// that can be used to check equivalence of expressions. Specifically:
@@ -164,12 +164,12 @@ const (
 	//    annotations. This is necessary because datums of different types
 	//    can otherwise be formatted to the same string: (for example the
 	//    DDecimal 1 and the DInt 1).
-	FmtCheckEquivalence FmtFlags = fmtSymbolicVars | fmtDisambiguateDatumTypes
+    FmtCheckEquivalence = fmtSymbolicVars | fmtDisambiguateDatumTypes
 
 	// FmtParseDatums, if set, formats datums in a raw form
 	// (e.g. suitable for output into a CSV file) such that they can be
 	// round-tripped with their associated Parse func.
-	FmtParseDatums FmtFlags = FmtBareStrings | fmtUnicodeStrings
+    FmtParseDatums = FmtBareStrings | fmtUnicodeStrings
 )
 
 // FmtCtx is suitable for passing to Format() methods.

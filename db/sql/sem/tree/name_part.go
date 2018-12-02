@@ -54,7 +54,7 @@
 package tree
 
 import (
-	"github.com/Ready-Stock/Noah/db/sql/lex"
+    "github.com/Ready-Stock/noah/db/sql/lex"
 )
 
 // A Name is an SQL identifier.
@@ -95,7 +95,7 @@ func NameString(s string) string {
 // identifier suitable for printing in error messages, avoiding a heap
 // allocation.
 func ErrNameString(s *string) string {
-	return ErrString(((*Name)(s)))
+    return ErrString((*Name)(s))
 }
 
 // Normalize normalizes to lowercase and Unicode Normalization Form C

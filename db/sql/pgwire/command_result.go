@@ -55,12 +55,12 @@ package pgwire
 
 import (
 	"fmt"
-	"github.com/Ready-Stock/Noah/db/sql"
-	"github.com/Ready-Stock/Noah/db/sql/oid"
-	"github.com/Ready-Stock/Noah/db/sql/pgwire/pgproto"
-	"github.com/Ready-Stock/Noah/db/sql/pgwire/pgwirebase"
-	"github.com/Ready-Stock/Noah/db/sql/sessiondata"
-	"github.com/Ready-Stock/Noah/db/sql/types"
+	"github.com/Ready-Stock/noah/db/sql"
+	"github.com/Ready-Stock/noah/db/sql/oid"
+	"github.com/Ready-Stock/noah/db/sql/pgwire/pgproto"
+	"github.com/Ready-Stock/noah/db/sql/pgwire/pgwirebase"
+	"github.com/Ready-Stock/noah/db/sql/sessiondata"
+	"github.com/Ready-Stock/noah/db/sql/types"
 	nodes "github.com/Ready-Stock/pg_query_go/nodes"
 	"github.com/kataras/golog"
 

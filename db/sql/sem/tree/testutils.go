@@ -54,12 +54,12 @@
 package tree
 
 import (
-	"fmt"
-	"time"
+    "fmt"
+    "time"
 
-	"github.com/Ready-Stock/Noah/db/sql/sem/types"
-	"github.com/Ready-Stock/Noah/db/util/timeutil"
-	"github.com/Ready-Stock/Noah/db/util/timeofday"
+    "github.com/Ready-Stock/noah/db/sql/sem/types"
+    "github.com/Ready-Stock/noah/db/util/timeofday"
+    "github.com/Ready-Stock/noah/db/util/timeutil"
 )
 
 // presetTypesForTesting is a mapping of qualified names to types that can be mocked out

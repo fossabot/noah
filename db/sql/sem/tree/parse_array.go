@@ -54,13 +54,13 @@
 package tree
 
 import (
-	"bytes"
-	"strings"
-	"unicode"
-	"unicode/utf8"
+    "bytes"
+    "strings"
+    "unicode"
+    "unicode/utf8"
 
-	"github.com/Ready-Stock/Noah/db/sql/pgwire/pgerror"
-	"github.com/Ready-Stock/Noah/db/sql/coltypes"
+    "github.com/Ready-Stock/noah/db/sql/coltypes"
+    "github.com/Ready-Stock/noah/db/sql/pgwire/pgerror"
 )
 
 var enclosingError = pgerror.NewErrorf(pgerror.CodeInvalidTextRepresentationError, "array must be enclosed in { and }")

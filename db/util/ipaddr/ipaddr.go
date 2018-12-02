@@ -63,8 +63,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/Ready-Stock/Noah/db/sql/pgwire/pgerror"
-	"github.com/Ready-Stock/Noah/db/util/uint128"
+    "github.com/Ready-Stock/noah/db/sql/pgwire/pgerror"
+    "github.com/Ready-Stock/noah/db/util/uint128"
 )
 
 var errResultOutOfRange = pgerror.NewError(pgerror.CodeNumericValueOutOfRangeError, "result out of range")

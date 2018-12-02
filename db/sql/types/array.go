@@ -54,14 +54,14 @@
 package types
 
 import (
-	"bytes"
-	"encoding/binary"
-	"github.com/Ready-Stock/Noah/db/sql/pgio"
-	"io"
-	"strconv"
-	"strings"
-	"unicode"
-	"github.com/pkg/errors"
+    "bytes"
+    "encoding/binary"
+    "github.com/Ready-Stock/noah/db/sql/pgio"
+    "github.com/pkg/errors"
+    "io"
+    "strconv"
+    "strings"
+    "unicode"
 )
 
 // Information on the internals of PostgreSQL arrays can be found in

@@ -58,8 +58,8 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/Ready-Stock/Noah/db/sql/types"
-	"github.com/Ready-Stock/Noah/db/sql/types/testutil"
+    "github.com/Ready-Stock/noah/db/sql/types"
+    "github.com/Ready-Stock/noah/db/sql/types/testutil"
 )
 
 func TestInetTranscode(t *testing.T) {
@@ -116,8 +116,8 @@ func TestInetAssignTo(t *testing.T) {
 	}{
 		{src: types.Inet{IPNet: mustParseCIDR(t, "127.0.0.1/32"), Status: types.Present}, dst: &ipnet, expected: *mustParseCIDR(t, "127.0.0.1/32")},
 		{src: types.Inet{IPNet: mustParseCIDR(t, "127.0.0.1/32"), Status: types.Present}, dst: &ip, expected: mustParseCIDR(t, "127.0.0.1/32").IP},
-		{src: types.Inet{Status: types.Null}, dst: &pipnet, expected: ((*net.IPNet)(nil))},
-		{src: types.Inet{Status: types.Null}, dst: &pip, expected: ((*net.IP)(nil))},
+        {src: types.Inet{Status: types.Null}, dst: &pipnet, expected: (*net.IPNet)(nil)},
+        {src: types.Inet{Status: types.Null}, dst: &pip, expected: (*net.IP)(nil)},
 	}
 
 	for i, tt := range simpleTests {

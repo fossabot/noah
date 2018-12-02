@@ -55,7 +55,7 @@ package sql
 
 import (
 	"fmt"
-	"github.com/Ready-Stock/Noah/db/sql/pgwire/pgerror"
+    "github.com/Ready-Stock/noah/db/sql/pgwire/pgerror"
 	nodes "github.com/Ready-Stock/pg_query_go/nodes"
 )
 

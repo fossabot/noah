@@ -54,15 +54,15 @@
 package _select
 
 import (
-	"github.com/Ready-Stock/pg_query_go/nodes"
-	"fmt"
-	"github.com/Ready-Stock/Noah/Prototype/cluster"
-	"errors"
-	pgq "github.com/Ready-Stock/pg_query_go"
-	data "github.com/Ready-Stock/Noah/Prototype/datums"
-	"strconv"
-	"github.com/Ready-Stock/Noah/Prototype/context"
-	"database/sql"
+    "database/sql"
+    "errors"
+    "fmt"
+    "github.com/Ready-Stock/noah/Prototype/cluster"
+    "github.com/Ready-Stock/noah/Prototype/context"
+    data "github.com/Ready-Stock/noah/Prototype/datums"
+    pgq "github.com/Ready-Stock/pg_query_go"
+    "github.com/Ready-Stock/pg_query_go/nodes"
+    "strconv"
 )
 
 type SelectStatement struct {
@@ -164,9 +164,7 @@ func parseExpression(filter pg_query.Node) (*int, error) {
 	return nil, nil
 }
 
-
-
-func aExprIsAccountID(expr pg_query.A_Expr) (bool) {
+func aExprIsAccountID(expr pg_query.A_Expr) bool {
 	return expr.Lexpr.(pg_query.ColumnRef).Fields.Items[len(expr.Lexpr.(pg_query.ColumnRef).Fields.Items)-1].(pg_query.String).Str == "account_id"
 }
 

@@ -54,7 +54,7 @@
 package cluster
 
 import (
-	 "github.com/Ready-Stock/Noah/Prototype/datums"
+    "github.com/Ready-Stock/noah/Prototype/datums"
 		"math/rand"
 		"time"
 )

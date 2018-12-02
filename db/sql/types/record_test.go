@@ -54,13 +54,13 @@
 package types_test
 
 import (
-	"fmt"
-	"reflect"
-	"testing"
+    "fmt"
+    "reflect"
+    "testing"
 
-	"github.com/Ready-Stock/pgx"
-	"github.com/Ready-Stock/Noah/db/sql/types"
-	"github.com/Ready-Stock/Noah/db/sql/types/testutil"
+    "github.com/Ready-Stock/noah/db/sql/types"
+    "github.com/Ready-Stock/noah/db/sql/types/testutil"
+    "github.com/Ready-Stock/pgx"
 )
 
 func TestRecordTranscode(t *testing.T) {
@@ -214,12 +214,12 @@ func TestRecordAssignTo(t *testing.T) {
 		{
 			src:      types.Record{Status: types.Null},
 			dst:      &valueSlice,
-			expected: (([]types.Value)(nil)),
+            expected: ([]types.Value)(nil),
 		},
 		{
 			src:      types.Record{Status: types.Null},
 			dst:      &interfaceSlice,
-			expected: (([]interface{})(nil)),
+            expected: ([]interface{})(nil),
 		},
 	}
 

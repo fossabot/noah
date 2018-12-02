@@ -57,13 +57,13 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"github.com/Ready-Stock/Noah/db/sql/driver/npgx"
+    "github.com/Ready-Stock/noah/db/sql/driver/npgx"
 	"github.com/Ready-Stock/pgx"
 	"os"
 	"reflect"
 	"testing"
 
-	"github.com/Ready-Stock/Noah/db/sql/types"
+    "github.com/Ready-Stock/noah/db/sql/types"
 	_ "github.com/lib/pq"
 )
 

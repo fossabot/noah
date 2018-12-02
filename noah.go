@@ -54,9 +54,9 @@
 package main
 
 import (
-	"github.com/Ready-Stock/Noah/api"
-	"github.com/Ready-Stock/Noah/db/coordinator"
-	"github.com/Ready-Stock/Noah/db/system"
+	"github.com/Ready-Stock/noah/api"
+	"github.com/Ready-Stock/noah/db/coordinator"
+	"github.com/Ready-Stock/noah/db/system"
 	"github.com/kataras/golog"
 	"github.com/sirupsen/logrus"
 	"os"

@@ -57,7 +57,7 @@
 package leaktest
 
 import (
-	"github.com/Ready-Stock/Noah/db/util/timeutil"
+    "github.com/Ready-Stock/noah/db/util/timeutil"
 	"runtime"
 	"sort"
 	"strings"
@@ -84,8 +84,8 @@ func interestingGoroutines() map[int64]string {
 		}
 
 		if stack == "" ||
-			strings.Contains(stack, "github.com/Ready-Stock/Noah/db/util/log.init") ||
-			strings.Contains(stack, "github.com/Ready-Stock/Noah/db/util/log.NewSecondaryLogger") ||
+            strings.Contains(stack, "github.com/Ready-Stock/noah/db/util/log.init") ||
+            strings.Contains(stack, "github.com/Ready-Stock/noah/db/util/log.NewSecondaryLogger") ||
 		// Seems to be gccgo specific.
 			(runtime.Compiler == "gccgo" && strings.Contains(stack, "testing.T.Parallel")) ||
 		// Below are the stacks ignored by the upstream leaktest code.

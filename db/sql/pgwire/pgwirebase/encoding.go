@@ -62,7 +62,7 @@ import (
 	"unicode/utf8"
 	"unsafe"
 
-	"github.com/Ready-Stock/Noah/db/sql/pgwire/pgerror"
+    "github.com/Ready-Stock/noah/db/sql/pgwire/pgerror"
 )
 
 const secondsInDay = 24 * 60 * 60

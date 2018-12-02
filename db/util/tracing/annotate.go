@@ -57,7 +57,7 @@ package tracing
 // }
 import "C"
 import (
-	"github.com/Ready-Stock/Noah/db/util/envutil"
+    "github.com/Ready-Stock/noah/db/util/envutil"
 )
 
 var annotationEnabled = envutil.EnvOrDefaultBool("NOAH_ANNOTATE_TRACES", false)

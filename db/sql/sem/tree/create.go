@@ -56,16 +56,14 @@
 package tree
 
 import (
-	"fmt"
+    "fmt"
 
+    "golang.org/x/text/language"
 
-
-	"golang.org/x/text/language"
-
-	"github.com/pkg/errors"
-	"github.com/Ready-Stock/Noah/db/sql/coltypes"
-	"github.com/Ready-Stock/Noah/db/sql/pgwire/pgerror"
-	"github.com/Ready-Stock/Noah/db/sql/lex"
+    "github.com/Ready-Stock/noah/db/sql/coltypes"
+    "github.com/Ready-Stock/noah/db/sql/lex"
+    "github.com/Ready-Stock/noah/db/sql/pgwire/pgerror"
+    "github.com/pkg/errors"
 )
 
 // CreateDatabase represents a CREATE DATABASE statement.

@@ -61,8 +61,8 @@ import (
 
 	"strings"
 
-	"github.com/Ready-Stock/Noah/db/util/duration"
-	"github.com/Ready-Stock/Noah/db/util/timeutil"
+    "github.com/Ready-Stock/noah/db/util/duration"
+    "github.com/Ready-Stock/noah/db/util/timeutil"
 )
 
 // TimeOfDay represents a time of day (no date), stored as microseconds since

@@ -54,18 +54,18 @@
 package tree
 
 import (
-	"fmt"
-	"strings"
-	"time"
+    "fmt"
+    "strings"
+    "time"
 
-	"github.com/pkg/errors"
-	"golang.org/x/text/language"
+    "github.com/pkg/errors"
+    "golang.org/x/text/language"
 
-	"github.com/Ready-Stock/Noah/db/sql/sessiondata"
-	"github.com/Ready-Stock/Noah/db/sql/sem/types"
-	"github.com/Ready-Stock/Noah/db/sql/coltypes"
-	"github.com/Ready-Stock/Noah/db/sql/pgwire/pgerror"
-	"github.com/Ready-Stock/Noah/db/sql/lex"
+    "github.com/Ready-Stock/noah/db/sql/coltypes"
+    "github.com/Ready-Stock/noah/db/sql/lex"
+    "github.com/Ready-Stock/noah/db/sql/pgwire/pgerror"
+    "github.com/Ready-Stock/noah/db/sql/sem/types"
+    "github.com/Ready-Stock/noah/db/sql/sessiondata"
 )
 
 // SemaContext defines the context in which to perform semantic analysis on an
@@ -167,7 +167,7 @@ const (
 	RejectSubqueries
 
 	// RejectSpecial is used in common places like the LIMIT clause.
-	RejectSpecial SemaRejectFlags = RejectAggregates | RejectGenerators | RejectWindowApplications
+    RejectSpecial = RejectAggregates | RejectGenerators | RejectWindowApplications
 )
 
 // ScalarProperties contains the properties of the current scalar

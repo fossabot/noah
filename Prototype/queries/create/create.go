@@ -54,12 +54,12 @@
 package create
 
 import (
-	"github.com/Ready-Stock/pg_query_go/nodes"
-	pgq "github.com/Ready-Stock/pg_query_go"
-	"github.com/Ready-Stock/Noah/Prototype/context"
-	"fmt"
-	"github.com/Ready-Stock/Noah/Prototype/cluster"
-	"github.com/Ready-Stock/Noah/Prototype/datums"
+    "fmt"
+    "github.com/Ready-Stock/noah/Prototype/cluster"
+    "github.com/Ready-Stock/noah/Prototype/context"
+    "github.com/Ready-Stock/noah/Prototype/datums"
+    pgq "github.com/Ready-Stock/pg_query_go"
+    "github.com/Ready-Stock/pg_query_go/nodes"
 )
 
 type CreateStatement struct {

@@ -61,40 +61,40 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/Ready-Stock/Noah/db/sql/pgio"
+    "github.com/Ready-Stock/noah/db/sql/pgio"
 	"github.com/pkg/errors"
 )
 
 // PostgreSQL internal numeric storage uses 16-bit "digits" with base of 10,000
 const nbase = 10000
 
-var big0 *big.Int = big.NewInt(0)
-var big1 *big.Int = big.NewInt(1)
-var big10 *big.Int = big.NewInt(10)
-var big100 *big.Int = big.NewInt(100)
-var big1000 *big.Int = big.NewInt(1000)
+var big0 = big.NewInt(0)
+var big1 = big.NewInt(1)
+var big10 = big.NewInt(10)
+var big100 = big.NewInt(100)
+var big1000 = big.NewInt(1000)
 
-var bigMaxInt8 *big.Int = big.NewInt(math.MaxInt8)
-var bigMinInt8 *big.Int = big.NewInt(math.MinInt8)
-var bigMaxInt16 *big.Int = big.NewInt(math.MaxInt16)
-var bigMinInt16 *big.Int = big.NewInt(math.MinInt16)
-var bigMaxInt32 *big.Int = big.NewInt(math.MaxInt32)
-var bigMinInt32 *big.Int = big.NewInt(math.MinInt32)
-var bigMaxInt64 *big.Int = big.NewInt(math.MaxInt64)
-var bigMinInt64 *big.Int = big.NewInt(math.MinInt64)
-var bigMaxInt *big.Int = big.NewInt(int64(maxInt))
-var bigMinInt *big.Int = big.NewInt(int64(minInt))
+var bigMaxInt8 = big.NewInt(math.MaxInt8)
+var bigMinInt8 = big.NewInt(math.MinInt8)
+var bigMaxInt16 = big.NewInt(math.MaxInt16)
+var bigMinInt16 = big.NewInt(math.MinInt16)
+var bigMaxInt32 = big.NewInt(math.MaxInt32)
+var bigMinInt32 = big.NewInt(math.MinInt32)
+var bigMaxInt64 = big.NewInt(math.MaxInt64)
+var bigMinInt64 = big.NewInt(math.MinInt64)
+var bigMaxInt = big.NewInt(int64(maxInt))
+var bigMinInt = big.NewInt(int64(minInt))
 
-var bigMaxUint8 *big.Int = big.NewInt(math.MaxUint8)
-var bigMaxUint16 *big.Int = big.NewInt(math.MaxUint16)
-var bigMaxUint32 *big.Int = big.NewInt(math.MaxUint32)
-var bigMaxUint64 *big.Int = (&big.Int{}).SetUint64(uint64(math.MaxUint64))
-var bigMaxUint *big.Int = (&big.Int{}).SetUint64(uint64(maxUint))
+var bigMaxUint8 = big.NewInt(math.MaxUint8)
+var bigMaxUint16 = big.NewInt(math.MaxUint16)
+var bigMaxUint32 = big.NewInt(math.MaxUint32)
+var bigMaxUint64 = (&big.Int{}).SetUint64(uint64(math.MaxUint64))
+var bigMaxUint = (&big.Int{}).SetUint64(uint64(maxUint))
 
-var bigNBase *big.Int = big.NewInt(nbase)
-var bigNBaseX2 *big.Int = big.NewInt(nbase * nbase)
-var bigNBaseX3 *big.Int = big.NewInt(nbase * nbase * nbase)
-var bigNBaseX4 *big.Int = big.NewInt(nbase * nbase * nbase * nbase)
+var bigNBase = big.NewInt(nbase)
+var bigNBaseX2 = big.NewInt(nbase * nbase)
+var bigNBaseX3 = big.NewInt(nbase * nbase * nbase)
+var bigNBaseX4 = big.NewInt(nbase * nbase * nbase * nbase)
 
 type Numeric struct {
 	Int    *big.Int

@@ -58,8 +58,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Ready-Stock/Noah/db/sql/types"
-	"github.com/Ready-Stock/Noah/db/sql/types/testutil"
+    "github.com/Ready-Stock/noah/db/sql/types"
+    "github.com/Ready-Stock/noah/db/sql/types/testutil"
 )
 
 func TestTimestampTranscode(t *testing.T) {
@@ -125,7 +125,7 @@ func TestTimestampAssignTo(t *testing.T) {
 		expected interface{}
 	}{
 		{src: types.Timestamp{Time: time.Date(2015, 1, 1, 0, 0, 0, 0, time.UTC), Status: types.Present}, dst: &tim, expected: time.Date(2015, 1, 1, 0, 0, 0, 0, time.UTC)},
-		{src: types.Timestamp{Time: time.Time{}, Status: types.Null}, dst: &ptim, expected: ((*time.Time)(nil))},
+        {src: types.Timestamp{Time: time.Time{}, Status: types.Null}, dst: &ptim, expected: (*time.Time)(nil)},
 	}
 
 	for i, tt := range simpleTests {

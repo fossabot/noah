@@ -57,8 +57,8 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/Ready-Stock/Noah/db/sql/types"
-	"github.com/Ready-Stock/Noah/db/sql/types/testutil"
+    "github.com/Ready-Stock/noah/db/sql/types"
+    "github.com/Ready-Stock/noah/db/sql/types/testutil"
 )
 
 func TestACLItemTranscode(t *testing.T) {
@@ -101,7 +101,7 @@ func TestACLItemAssignTo(t *testing.T) {
 		expected interface{}
 	}{
 		{src: types.ACLItem{String: "postgres=arwdDxt/postgres", Status: types.Present}, dst: &s, expected: "postgres=arwdDxt/postgres"},
-		{src: types.ACLItem{Status: types.Null}, dst: &ps, expected: ((*string)(nil))},
+        {src: types.ACLItem{Status: types.Null}, dst: &ps, expected: (*string)(nil)},
 	}
 
 	for i, tt := range simpleTests {

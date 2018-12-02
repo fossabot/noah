@@ -54,14 +54,14 @@
 package insert
 
 import (
-	"github.com/Ready-Stock/pg_query_go/nodes"
-	"github.com/Ready-Stock/Noah/Prototype/context"
-	"fmt"
-		"github.com/Ready-Stock/Noah/Prototype/cluster"
-	"github.com/kataras/go-errors"
-	"strconv"
-	pgq "github.com/Ready-Stock/pg_query_go"
-	)
+    "fmt"
+    "github.com/Ready-Stock/noah/Prototype/cluster"
+    "github.com/Ready-Stock/noah/Prototype/context"
+    pgq "github.com/Ready-Stock/pg_query_go"
+    "github.com/Ready-Stock/pg_query_go/nodes"
+    "github.com/kataras/go-errors"
+    "strconv"
+)
 
 var (
 	errorInsertWithoutTransaction = errors.New("inserts can only be performed from within a transaction")

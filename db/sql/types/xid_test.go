@@ -57,8 +57,8 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/Ready-Stock/Noah/db/sql/types"
-	"github.com/Ready-Stock/Noah/db/sql/types/testutil"
+    "github.com/Ready-Stock/noah/db/sql/types"
+    "github.com/Ready-Stock/noah/db/sql/types/testutil"
 )
 
 func TestXIDTranscode(t *testing.T) {
@@ -112,7 +112,7 @@ func TestXIDAssignTo(t *testing.T) {
 		expected interface{}
 	}{
 		{src: types.XID{Uint: 42, Status: types.Present}, dst: &ui32, expected: uint32(42)},
-		{src: types.XID{Status: types.Null}, dst: &pui32, expected: ((*uint32)(nil))},
+        {src: types.XID{Status: types.Null}, dst: &pui32, expected: (*uint32)(nil)},
 	}
 
 	for i, tt := range simpleTests {

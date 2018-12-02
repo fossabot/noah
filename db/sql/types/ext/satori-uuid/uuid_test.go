@@ -57,9 +57,9 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/Ready-Stock/Noah/db/sql/types"
-	satori "github.com/Ready-Stock/Noah/db/sql/types/ext/satori-uuid"
-	"github.com/Ready-Stock/Noah/db/sql/types/testutil"
+    "github.com/Ready-Stock/noah/db/sql/types"
+    satori "github.com/Ready-Stock/noah/db/sql/types/ext/satori-uuid"
+    "github.com/Ready-Stock/noah/db/sql/types/testutil"
 )
 
 func TestUUIDTranscode(t *testing.T) {

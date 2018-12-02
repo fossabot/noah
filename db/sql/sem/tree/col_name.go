@@ -56,7 +56,7 @@ package tree
 import (
 	"strings"
 
-	"github.com/Ready-Stock/Noah/db/sql/sessiondata"
+    "github.com/Ready-Stock/noah/db/sql/sessiondata"
 )
 
 // GetRenderColName computes a name for a result column.

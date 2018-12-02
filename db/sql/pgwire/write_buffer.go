@@ -56,10 +56,10 @@ package pgwire
 import (
 	"bytes"
 	"encoding/binary"
-	"github.com/Ready-Stock/Noah/db/sql/pgwire/pgwirebase"
-	"github.com/Ready-Stock/Noah/db/sql/sem/tree"
-	"github.com/Ready-Stock/Noah/db/sql/types"
-	"github.com/Ready-Stock/Noah/db/util"
+    "github.com/Ready-Stock/noah/db/sql/pgwire/pgwirebase"
+    "github.com/Ready-Stock/noah/db/sql/sem/tree"
+    "github.com/Ready-Stock/noah/db/sql/types"
+    "github.com/Ready-Stock/noah/db/util"
 	"io"
 )
 

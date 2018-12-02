@@ -56,7 +56,7 @@ package types
 import (
 	"database/sql/driver"
 	"encoding/binary"
-	"github.com/Ready-Stock/Noah/db/sql/pgio"
+    "github.com/Ready-Stock/noah/db/sql/pgio"
 	"github.com/pkg/errors"
 )
 

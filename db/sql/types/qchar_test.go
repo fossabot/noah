@@ -58,8 +58,8 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/Ready-Stock/Noah/db/sql/types"
-	"github.com/Ready-Stock/Noah/db/sql/types/testutil"
+    "github.com/Ready-Stock/noah/db/sql/types"
+    "github.com/Ready-Stock/noah/db/sql/types/testutil"
 )
 
 func TestQCharTranscode(t *testing.T) {
@@ -140,8 +140,8 @@ func TestQCharAssignTo(t *testing.T) {
 		{src: types.QChar{Int: 42, Status: types.Present}, dst: &ui64, expected: uint64(42)},
 		{src: types.QChar{Int: 42, Status: types.Present}, dst: &ui, expected: uint(42)},
 		{src: types.QChar{Int: 42, Status: types.Present}, dst: &_i8, expected: _int8(42)},
-		{src: types.QChar{Int: 0, Status: types.Null}, dst: &pi8, expected: ((*int8)(nil))},
-		{src: types.QChar{Int: 0, Status: types.Null}, dst: &_pi8, expected: ((*_int8)(nil))},
+        {src: types.QChar{Int: 0, Status: types.Null}, dst: &pi8, expected: (*int8)(nil)},
+        {src: types.QChar{Int: 0, Status: types.Null}, dst: &_pi8, expected: (*_int8)(nil)},
 	}
 
 	for i, tt := range simpleTests {

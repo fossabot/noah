@@ -54,8 +54,8 @@
 package coltypes
 
 import (
-	"github.com/Ready-Stock/Noah/db/sql/pgwire/pgerror"
-	"github.com/Ready-Stock/Noah/db/sql/sem/types"
+    "github.com/Ready-Stock/noah/db/sql/pgwire/pgerror"
+    "github.com/Ready-Stock/noah/db/sql/sem/types"
 )
 
 var (

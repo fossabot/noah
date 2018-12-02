@@ -60,7 +60,7 @@ import (
 
 	"math"
 
-	"github.com/Ready-Stock/Noah/db/util/uint128"
+    "github.com/Ready-Stock/noah/db/util/uint128"
 )
 
 func TestIPAddrParseInet(t *testing.T) {

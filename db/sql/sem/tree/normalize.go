@@ -54,10 +54,10 @@
 package tree
 
 import (
-	"github.com/Ready-Stock/Noah/db/sql/sem/types"
-	"github.com/Ready-Stock/Noah/db/util/json"
-	"github.com/Ready-Stock/Noah/db/sql/pgwire/pgerror"
-	"github.com/Ready-Stock/Noah/db/sql/coltypes"
+    "github.com/Ready-Stock/noah/db/sql/coltypes"
+    "github.com/Ready-Stock/noah/db/sql/pgwire/pgerror"
+    "github.com/Ready-Stock/noah/db/sql/sem/types"
+    "github.com/Ready-Stock/noah/db/util/json"
 )
 
 type normalizableExpr interface {

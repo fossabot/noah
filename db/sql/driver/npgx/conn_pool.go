@@ -55,8 +55,8 @@ package npgx
 
 import (
 	"context"
-	"github.com/Ready-Stock/Noah/db/sql/driver"
-	"github.com/Ready-Stock/Noah/db/sql/types"
+    "github.com/Ready-Stock/noah/db/sql/driver"
+    "github.com/Ready-Stock/noah/db/sql/types"
 	"github.com/kataras/go-errors"
 	"github.com/kataras/golog"
 	"sync"

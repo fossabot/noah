@@ -57,7 +57,7 @@ import (
 	"bytes"
 	"fmt"
 
-	"github.com/Ready-Stock/Noah/db/sql/lex"
+    "github.com/Ready-Stock/noah/db/sql/lex"
 )
 
 // ColTypeFormatter knows how to format a ColType to a bytes.Buffer.

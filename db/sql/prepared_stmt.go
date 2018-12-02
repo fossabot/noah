@@ -55,8 +55,8 @@ package sql
 
 import (
 	"context"
-	"github.com/Ready-Stock/Noah/db/sql/pgwire/pgwirebase"
-	"github.com/Ready-Stock/Noah/db/sql/sem/tree"
+    "github.com/Ready-Stock/noah/db/sql/pgwire/pgwirebase"
+    "github.com/Ready-Stock/noah/db/sql/sem/tree"
 	nodes "github.com/Ready-Stock/pg_query_go/nodes"
 )
 

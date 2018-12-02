@@ -54,8 +54,8 @@
 package system
 
 import (
-	"github.com/Ready-Stock/Noah/db/sql/driver"
-	"github.com/Ready-Stock/Noah/db/sql/driver/npgx"
+    "github.com/Ready-Stock/noah/db/sql/driver"
+    "github.com/Ready-Stock/noah/db/sql/driver/npgx"
 	"sync"
 )
 

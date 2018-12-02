@@ -54,13 +54,13 @@
 package uuid
 
 import (
-	"encoding/binary"
-	"encoding/json"
-	"fmt"
+    "encoding/binary"
+    "encoding/json"
+    "fmt"
 
-	"github.com/pkg/errors"
-	"github.com/satori/go.uuid"
-	"github.com/Ready-Stock/Noah/db/util/uint128"
+    "github.com/Ready-Stock/noah/db/util/uint128"
+    "github.com/pkg/errors"
+    "github.com/satori/go.uuid"
 )
 
 // UUID is a thin wrapper around "github.com/satori/go.uuid".UUID that can be
@@ -100,7 +100,7 @@ func (UUID) Bytes() {
 }
 
 // Silence unused warning for UUID.Bytes.
-var _ = (UUID).Bytes
+var _ = UUID.Bytes
 
 // Equal returns true iff the receiver equals the argument.
 //

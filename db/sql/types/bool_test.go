@@ -57,8 +57,8 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/Ready-Stock/Noah/db/sql/types"
-	"github.com/Ready-Stock/Noah/db/sql/types/testutil"
+    "github.com/Ready-Stock/noah/db/sql/types"
+    "github.com/Ready-Stock/noah/db/sql/types/testutil"
 )
 
 func TestBoolTranscode(t *testing.T) {
@@ -113,8 +113,8 @@ func TestBoolAssignTo(t *testing.T) {
 		{src: types.Bool{Bool: true, Status: types.Present}, dst: &b, expected: true},
 		{src: types.Bool{Bool: false, Status: types.Present}, dst: &_b, expected: _bool(false)},
 		{src: types.Bool{Bool: true, Status: types.Present}, dst: &_b, expected: _bool(true)},
-		{src: types.Bool{Bool: false, Status: types.Null}, dst: &pb, expected: ((*bool)(nil))},
-		{src: types.Bool{Bool: false, Status: types.Null}, dst: &_pb, expected: ((*_bool)(nil))},
+        {src: types.Bool{Bool: false, Status: types.Null}, dst: &pb, expected: (*bool)(nil)},
+        {src: types.Bool{Bool: false, Status: types.Null}, dst: &_pb, expected: (*_bool)(nil)},
 	}
 
 	for i, tt := range simpleTests {

@@ -58,8 +58,8 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/Ready-Stock/Noah/db/sql/types"
-	uuid "github.com/satori/go.uuid"
+    "github.com/Ready-Stock/noah/db/sql/types"
+    "github.com/satori/go.uuid"
 )
 
 var errUndefined = errors.New("cannot encode status undefined")

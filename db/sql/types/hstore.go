@@ -63,7 +63,7 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/Ready-Stock/Noah/db/sql/pgio"
+    "github.com/Ready-Stock/noah/db/sql/pgio"
 )
 
 // Hstore represents an hstore column that can be null or have null values
@@ -437,7 +437,7 @@ func parseHstore(s string) (k []string, v []Text, err error) {
 				switch {
 				case end:
 					err = errors.New("Found EOS after ',', expcting space")
-				case (unicode.IsSpace(r)):
+                case unicode.IsSpace(r):
 					r, end = p.Consume()
 					state = hsKey
 				default:

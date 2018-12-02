@@ -54,13 +54,13 @@
 package context
 
 import (
-	"database/sql"
-	"sync"
-	_ "github.com/lib/pq"
-	"github.com/Ready-Stock/Noah/Prototype/cluster"
-	"github.com/kataras/go-errors"
-	"fmt"
-	)
+    "database/sql"
+    "fmt"
+    "github.com/Ready-Stock/noah/Prototype/cluster"
+    "github.com/kataras/go-errors"
+    _ "github.com/lib/pq"
+    "sync"
+)
 
 type TxnState string
 
@@ -272,7 +272,7 @@ func (ctx *SessionContext) HandleResponse(response DistributedResponse) error {
 	}
 }
 
-func (ctx *SessionContext) GetAllNodes() ([]int) {
+func (ctx *SessionContext) GetAllNodes() []int {
 	ids := make([]int, 0)
 	for _, node := range cluster.Nodes {
 		ids = append(ids, node.NodeID)

@@ -56,11 +56,11 @@ package sql
 import (
 	"time"
 
-	"github.com/Ready-Stock/Noah/db/sql/sem/tree"
+    "github.com/Ready-Stock/noah/db/sql/sem/tree"
 	// We dot-import fsm to use common names such as fsm.True/False. State machine
 	// implementations using that library are weird beasts intimately inter-twined
 	// with that package; therefor this file should stay as small as possible.
-	. "github.com/Ready-Stock/Noah/db/util/fsm"
+    . "github.com/Ready-Stock/noah/db/util/fsm"
 )
 
 // Constants for the String() representation of the session states. Shared with

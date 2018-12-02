@@ -58,8 +58,8 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/Ready-Stock/Noah/db/sql/types"
-	"github.com/Ready-Stock/Noah/db/sql/types/testutil"
+    "github.com/Ready-Stock/noah/db/sql/types"
+    "github.com/Ready-Stock/noah/db/sql/types/testutil"
 )
 
 func TestJSONTranscode(t *testing.T) {
@@ -128,7 +128,7 @@ func TestJSONAssignTo(t *testing.T) {
 		expected []byte
 	}{
 		{src: types.JSON{Bytes: []byte("{}"), Status: types.Present}, dst: &b, expected: []byte("{}")},
-		{src: types.JSON{Status: types.Null}, dst: &b, expected: (([]byte)(nil))},
+        {src: types.JSON{Status: types.Null}, dst: &b, expected: ([]byte)(nil)},
 	}
 
 	for i, tt := range rawBytesTests {
@@ -173,7 +173,7 @@ func TestJSONAssignTo(t *testing.T) {
 		dst      **string
 		expected *string
 	}{
-		{src: types.JSON{Status: types.Null}, dst: &ps, expected: ((*string)(nil))},
+        {src: types.JSON{Status: types.Null}, dst: &ps, expected: (*string)(nil)},
 	}
 
 	for i, tt := range pointerAllocTests {

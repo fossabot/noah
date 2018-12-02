@@ -55,7 +55,7 @@ package sql
 
 import (
 	"context"
-	"github.com/Ready-Stock/Noah/db/sql/pgwire/pgerror"
+	"github.com/Ready-Stock/noah/db/sql/pgwire/pgerror"
 )
 
 func (ex *connExecutor) execDescribe(

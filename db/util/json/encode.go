@@ -56,8 +56,8 @@ package json
 import (
 	"github.com/cockroachdb/apd"
 
-	"github.com/Ready-Stock/Noah/db/sql/pgwire/pgerror"
-	"github.com/Ready-Stock/Noah/db/util/encoding"
+    "github.com/Ready-Stock/noah/db/sql/pgwire/pgerror"
+    "github.com/Ready-Stock/noah/db/util/encoding"
 )
 
 // This file implements the format described in the JSONB encoding RFC.

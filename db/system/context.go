@@ -54,10 +54,10 @@
 package system
 
 import (
-	"flag"
-	"github.com/Ready-Stock/Noah/db/util/snowflake"
-	"github.com/Ready-Stock/arctonyx"
-	"time"
+    "flag"
+    "github.com/Ready-Stock/arctonyx"
+    "github.com/Ready-Stock/noah/db/util/snowflake"
+    "time"
 )
 
 type baseContext struct {
@@ -123,7 +123,7 @@ func (ctx *SContext) NewSnowflake() (uint64, error) {
 	return ctx.snowflake.NextID()
 }
 
-func (ctx *SContext) CoordinatorID() (uint64) {
+func (ctx *SContext) CoordinatorID() uint64 {
 	return ctx.db.NodeID()
 }
 

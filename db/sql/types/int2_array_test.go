@@ -57,8 +57,8 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/Ready-Stock/Noah/db/sql/types"
-	"github.com/Ready-Stock/Noah/db/sql/types/testutil"
+    "github.com/Ready-Stock/noah/db/sql/types"
+    "github.com/Ready-Stock/noah/db/sql/types/testutil"
 )
 
 func TestInt2ArrayTranscode(t *testing.T) {
@@ -125,7 +125,7 @@ func TestInt2ArraySet(t *testing.T) {
 				Status:     types.Present},
 		},
 		{
-			source: (([]int16)(nil)),
+            source: ([]int16)(nil),
 			result: types.Int2Array{Status: types.Null},
 		},
 	}
@@ -183,7 +183,7 @@ func TestInt2ArrayAssignTo(t *testing.T) {
 		{
 			src:      types.Int2Array{Status: types.Null},
 			dst:      &int16Slice,
-			expected: (([]int16)(nil)),
+            expected: ([]int16)(nil),
 		},
 	}
 

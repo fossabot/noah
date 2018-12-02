@@ -57,7 +57,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/Ready-Stock/Noah/db/sql/pgwire/pgerror"
+    "github.com/Ready-Stock/noah/db/sql/pgwire/pgerror"
 )
 
 // IsolationLevel holds the isolation level for a transaction.

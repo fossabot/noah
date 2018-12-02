@@ -63,9 +63,9 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	"github.com/Ready-Stock/Noah/db/sql/pgwire/pgerror"
-	"github.com/Ready-Stock/Noah/db/sql/sessiondata"
-	"github.com/Ready-Stock/Noah/db/util/stringencoding"
+    "github.com/Ready-Stock/noah/db/sql/pgwire/pgerror"
+    "github.com/Ready-Stock/noah/db/sql/sessiondata"
+    "github.com/Ready-Stock/noah/db/util/stringencoding"
 )
 
 var mustQuoteMap = map[byte]bool{

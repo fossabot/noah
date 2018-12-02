@@ -56,8 +56,8 @@ package npgx
 import (
 	"database/sql/driver"
 	"fmt"
-	"github.com/Ready-Stock/Noah/db/sql/pgio"
-	"github.com/Ready-Stock/Noah/db/sql/types"
+    "github.com/Ready-Stock/noah/db/sql/pgio"
+    "github.com/Ready-Stock/noah/db/sql/types"
 	"github.com/Ready-Stock/pgx/pgtype"
 	"github.com/pkg/errors"
 	"math"

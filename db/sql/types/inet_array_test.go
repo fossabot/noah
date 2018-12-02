@@ -58,8 +58,8 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/Ready-Stock/Noah/db/sql/types"
-	"github.com/Ready-Stock/Noah/db/sql/types/testutil"
+    "github.com/Ready-Stock/noah/db/sql/types"
+    "github.com/Ready-Stock/noah/db/sql/types/testutil"
 )
 
 func TestInetArrayTranscode(t *testing.T) {
@@ -119,7 +119,7 @@ func TestInetArraySet(t *testing.T) {
 				Status:     types.Present},
 		},
 		{
-			source: (([]*net.IPNet)(nil)),
+            source: ([]*net.IPNet)(nil),
 			result: types.InetArray{Status: types.Null},
 		},
 		{
@@ -130,7 +130,7 @@ func TestInetArraySet(t *testing.T) {
 				Status:     types.Present},
 		},
 		{
-			source: (([]net.IP)(nil)),
+            source: ([]net.IP)(nil),
 			result: types.InetArray{Status: types.Null},
 		},
 	}
@@ -196,12 +196,12 @@ func TestInetArrayAssignTo(t *testing.T) {
 		{
 			src:      types.InetArray{Status: types.Null},
 			dst:      &ipnetSlice,
-			expected: (([]*net.IPNet)(nil)),
+            expected: ([]*net.IPNet)(nil),
 		},
 		{
 			src:      types.InetArray{Status: types.Null},
 			dst:      &ipSlice,
-			expected: (([]net.IP)(nil)),
+            expected: ([]net.IP)(nil),
 		},
 	}
 

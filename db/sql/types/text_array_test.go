@@ -57,8 +57,8 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/Ready-Stock/Noah/db/sql/types"
-	"github.com/Ready-Stock/Noah/db/sql/types/testutil"
+    "github.com/Ready-Stock/noah/db/sql/types"
+    "github.com/Ready-Stock/noah/db/sql/types/testutil"
 )
 
 func TestTextArrayTranscode(t *testing.T) {
@@ -118,7 +118,7 @@ func TestTextArraySet(t *testing.T) {
 				Status:     types.Present},
 		},
 		{
-			source: (([]string)(nil)),
+            source: ([]string)(nil),
 			result: types.TextArray{Status: types.Null},
 		},
 	}
@@ -167,7 +167,7 @@ func TestTextArrayAssignTo(t *testing.T) {
 		{
 			src:      types.TextArray{Status: types.Null},
 			dst:      &stringSlice,
-			expected: (([]string)(nil)),
+            expected: ([]string)(nil),
 		},
 	}
 

@@ -54,11 +54,11 @@
 package tree
 
 import (
-	"time"
+    "time"
 
-	"github.com/Ready-Stock/Noah/db/sql/sem/types"
-	"github.com/Ready-Stock/Noah/db/sql/coltypes"
-	"github.com/Ready-Stock/Noah/db/sql/pgwire/pgerror"
+    "github.com/Ready-Stock/noah/db/sql/coltypes"
+    "github.com/Ready-Stock/noah/db/sql/pgwire/pgerror"
+    "github.com/Ready-Stock/noah/db/sql/sem/types"
 )
 
 // ParseStringAs reads s as type t. If t is Bytes or String, s is returned

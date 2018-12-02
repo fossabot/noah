@@ -55,7 +55,7 @@ package tree
 
 import (
 	"fmt"
-	"github.com/Ready-Stock/Noah/db/sql/pgwire/pgerror"
+    "github.com/Ready-Stock/noah/db/sql/pgwire/pgerror"
 )
 
 // Table names are used in statements like CREATE TABLE,

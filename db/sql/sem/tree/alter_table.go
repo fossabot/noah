@@ -54,7 +54,7 @@
 package tree
 
 import (
-	"github.com/Ready-Stock/Noah/db/sql/coltypes"
+    "github.com/Ready-Stock/noah/db/sql/coltypes"
 )
 
 // AlterTable represents an ALTER TABLE statement.

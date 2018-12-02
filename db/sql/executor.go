@@ -55,11 +55,11 @@ package sql
 
 import (
 	"fmt"
-	"github.com/Ready-Stock/Noah/db/sql/driver/npgx"
-	"github.com/Ready-Stock/Noah/db/sql/pgwire/pgproto"
-	"github.com/Ready-Stock/Noah/db/sql/plan"
-	"github.com/Ready-Stock/Noah/db/sql/types"
-	"github.com/Ready-Stock/Noah/db/util"
+	"github.com/Ready-Stock/noah/db/sql/driver/npgx"
+	"github.com/Ready-Stock/noah/db/sql/pgwire/pgproto"
+	"github.com/Ready-Stock/noah/db/sql/plan"
+	"github.com/Ready-Stock/noah/db/sql/types"
+	"github.com/Ready-Stock/noah/db/util"
 	"github.com/ahmetb/go-linq"
 	"github.com/juju/errors"
 )

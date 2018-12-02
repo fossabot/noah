@@ -54,8 +54,8 @@
 package sql
 
 import (
-"github.com/Ready-Stock/Noah/db/sql/plan"
-	"github.com/Ready-Stock/Noah/db/system"
+    "github.com/Ready-Stock/noah/db/sql/plan"
+    "github.com/Ready-Stock/noah/db/system"
 )
 
 type IQueryStatement interface {

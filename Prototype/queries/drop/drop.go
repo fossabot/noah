@@ -54,10 +54,10 @@
 package drop
 
 import (
-	"github.com/Ready-Stock/pg_query_go/nodes"
-	"github.com/Ready-Stock/Noah/Prototype/context"
-	pgq "github.com/Ready-Stock/pg_query_go"
-	"fmt"
+    "fmt"
+    "github.com/Ready-Stock/noah/Prototype/context"
+    pgq "github.com/Ready-Stock/pg_query_go"
+    "github.com/Ready-Stock/pg_query_go/nodes"
 )
 
 type DropStatement struct {

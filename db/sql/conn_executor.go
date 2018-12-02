@@ -55,10 +55,10 @@ package sql
 
 import (
 	"fmt"
-	"github.com/Ready-Stock/Noah/db/sql/driver/npgx"
-	"github.com/Ready-Stock/Noah/db/sql/pgwire/pgerror"
-	"github.com/Ready-Stock/Noah/db/system"
-	"github.com/Ready-Stock/Noah/db/util/fsm"
+	"github.com/Ready-Stock/noah/db/sql/driver/npgx"
+	"github.com/Ready-Stock/noah/db/sql/pgwire/pgerror"
+	"github.com/Ready-Stock/noah/db/system"
+	"github.com/Ready-Stock/noah/db/util/fsm"
 	nodes "github.com/Ready-Stock/pg_query_go/nodes"
 	"github.com/kataras/golog"
 	"sync"
@@ -233,8 +233,10 @@ func (ex *connExecutor) run() (err error) {
 			ex.Warn("found null command, advancing 1")
 			ex.stmtBuf.advanceOne()
 		}
+		var ev fsm.Event
 		var res ResultBase
 		var payload fsm.EventPayload
+
 		switch tcmd := cmd.(type) {
 		case ExecStmt:
 			if tcmd.Stmt == nil {
@@ -292,6 +294,7 @@ func (ex *connExecutor) run() (err error) {
 			res = ex.clientComm.CreateDeleteResult(pos)
 		case SendError:
 			res = ex.clientComm.CreateErrorResult(pos)
+			ev = eventNonRetriableErr{IsCommit: fsm.False}
 			payload = eventNonRetriableErrPayload{err: tcmd.Err}
 		case Sync:
 			// Note that the Sync result will flush results to the network connection.
@@ -309,6 +312,19 @@ func (ex *connExecutor) run() (err error) {
 			res = ex.clientComm.CreateFlushResult(pos)
 		default:
 			panic(fmt.Sprintf("unsupported command type: %T", cmd))
+		}
+
+		if ev != nil {
+			var err error
+			advInfo, err = ex.txnStateTransitionsApplyWrapper(ev, payload, res, pos)
+			if err != nil {
+				return err
+			}
+		} else {
+			// If no event was generated synthesize an advance code.
+			advInfo = advanceInfo{
+				code: advanceOne,
+			}
 		}
 
 		if err != nil {

@@ -55,10 +55,10 @@ package coordinator
 
 import (
 	"fmt"
-	"github.com/Ready-Stock/Noah/db/base"
-	"github.com/Ready-Stock/Noah/db/sql/pgwire"
-	"github.com/Ready-Stock/Noah/db/system"
-	"github.com/Ready-Stock/Noah/db/util"
+    "github.com/Ready-Stock/noah/db/base"
+    "github.com/Ready-Stock/noah/db/sql/pgwire"
+    "github.com/Ready-Stock/noah/db/system"
+    "github.com/Ready-Stock/noah/db/util"
 	"github.com/kataras/golog"
 	"github.com/pkg/errors"
 	"net"
