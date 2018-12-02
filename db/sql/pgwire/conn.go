@@ -313,10 +313,7 @@ Loop:
 			break Loop
 		}
 		timeReceived := time.Now().UTC()
-
-		c.log.WithFields(logrus.Fields{
-			"Type": typ,
-		}).Debug("Receiving input.")
+		golog.Debug("Receiving input.")
 
 		switch typ {
 		case pgwirebase.ClientMsgSimpleQuery:
@@ -595,12 +592,6 @@ func (c *conn) handleBind(buf *pgwirebase.ReadBuffer) error {
 			columnFormatCodes[i] = pgwirebase.FormatCode(ch)
 		}
 	}
-
-	c.log.WithFields(logrus.Fields{
-		"PreparedStatementName": statementName,
-		"PortalName":            portalName,
-		"Args":                  qargs,
-	}).Debug("Bind statement received.")
 
 	return c.stmtBuf.Push(
 		sql.BindStmt{

@@ -79,8 +79,9 @@ func Test_Select(t *testing.T) {
 		if err := res.Scan(&resultString); err != nil {
 			panic(err)
 		}
-		fmt.Printf("Result: [%s]", resultString)
+		fmt.Printf("Result: [%s]\n", resultString)
 	}
+
 }
 
 func Test_Prepare(t *testing.T) {

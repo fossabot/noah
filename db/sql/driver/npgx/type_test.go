@@ -54,68 +54,11 @@
 package npgx_test
 
 import (
-	"github.com/Ready-Stock/Noah/db/sql/driver"
 	"github.com/Ready-Stock/Noah/db/sql/driver/npgx"
 	"testing"
 )
 
-var (
-	ConnectionConfig = driver.ConnConfig{
-		Host:     "localhost",
-		Port:     5432,
-		User:     "postgres",
-		Password: "Spring!2016",
-		Database: "postgres",
-	}
-	ConnectionConfig2 = driver.ConnConfig{
-		Host:     "localhost",
-		Port:     5432,
-		User:     "postgres",
-		Password: "Spring!2016",
-		Database: "ready_three",
-	}
-
-	BadConnectionConfig = driver.ConnConfig{
-		Host:     "localhost",
-		Port:     123,
-		User:     "postgres",
-		Password: "Spring!2016",
-		Database: "postgres",
-	}
-)
-
-func Test_Connect(t *testing.T) {
-	d, err := npgx.Connect(ConnectionConfig)
-	if err != nil {
-		t.Error(err)
-		t.Fail()
-	}
-	r, err := d.Query("SELECT 1;")
-	if err != nil {
-		t.Error(err)
-		t.Fail()
-	}
-	for r.Next() {
-		fields, err := r.Values()
-		if err != nil {
-			t.Error(err)
-			t.Fail()
-		}
-		if len(fields) == 1 {
-			if fields[0].(int32) != 1 {
-				t.Error("Unexpected result!")
-				t.Fail()
-			}
-		}
-	}
-	err = d.Close()
-	if err != nil {
-		t.Error(err)
-		t.Fail()
-	}
-}
-
-func Test_CITEXT(t *testing.T) {
+func Test_CITEXT_InvalidType(t *testing.T) {
 	d, err := npgx.Connect(ConnectionConfig)
 	if err != nil {
 		t.Error(err)
@@ -139,17 +82,14 @@ func Test_CITEXT(t *testing.T) {
 			}
 		}
 	}
-	err = d.Close()
-	if err != nil {
+	if err := r.Err(); err != nil {
 		t.Error(err)
 		t.Fail()
 	}
-}
 
-
-func Test_BadConnection(t *testing.T) {
-	_, err := npgx.Connect(BadConnectionConfig)
-	if err == nil {
+	err = d.Close()
+	if err != nil {
+		t.Error(err)
 		t.Fail()
 	}
 }

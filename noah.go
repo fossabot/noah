@@ -103,7 +103,11 @@ func StartCoordinator() {
 	coordinator.Start(sctx)
 }
 
+func StartCoordinatorExt() {
+
+}
+
 func StopCoordinator() {
 	systemContext.Close()
-	os.Exit(1)
+	os.Exit(0)
 }

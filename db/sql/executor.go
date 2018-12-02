@@ -54,6 +54,7 @@
 package sql
 
 import (
+	"fmt"
 	"github.com/Ready-Stock/Noah/db/sql/driver/npgx"
 	"github.com/Ready-Stock/Noah/db/sql/pgwire/pgproto"
 	"github.com/Ready-Stock/Noah/db/sql/plan"
@@ -118,6 +119,7 @@ func (ex *connExecutor) ExecutePlans(plans []plan.NodeExecutionPlan, res Restric
 			errs = append(errs, response.Error)
 			continue
 		}
+
 		if response.Rows != nil {
 			for response.Rows.Next() {
 				if len(columns) == 0 {
@@ -135,9 +137,17 @@ func (ex *connExecutor) ExecutePlans(plans []plan.NodeExecutionPlan, res Restric
 						row[c] = v
 					}
 				}
+				fmt.Printf("Row: %+v\n", row)
 				res.AddRow(row)
 				result = append(result, row)
 			}
+
+			if err := response.Rows.Err(); err != nil {
+				ex.Error("received error from node [%d]: %s", response.NodeID, err)
+				errs = append(errs, err)
+				continue
+			}
+
 			response.Rows.Close()
 		} else {
 			ex.Debug("no rows returned for query `%s`", plans[0].CompiledQuery)
@@ -161,7 +171,7 @@ func (ex *connExecutor) ExecutePlans(plans []plan.NodeExecutionPlan, res Restric
 	return util.CombineErrors(errs)
 }
 
-func (ex *connExecutor) PrepareTwoPhase() (error) {
+func (ex *connExecutor) PrepareTwoPhase() error {
 	if ex.nodes == nil {
 		ex.nodes = map[uint64]*npgx.Transaction{}
 		return nil // There were never any transactions to release

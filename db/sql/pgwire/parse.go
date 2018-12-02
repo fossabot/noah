@@ -106,18 +106,22 @@ func (c *conn) handleParse(buf *pgwirebase.ReadBuffer) error {
 
 	j, _ := p.MarshalJSON()
 	// golog.Debugf("[%s] Tree: %s", c.conn.RemoteAddr().String(), string(j))
-
-	if stmt, ok := p.Statements[0].(nodes.RawStmt).Stmt.(nodes.Stmt); !ok {
-		return c.stmtBuf.Push(sql.SendError{Err: errors.Errorf("error, cannot currently handle statements of type: %s, json: %s", reflect.TypeOf(p.Statements[0].(nodes.RawStmt).Stmt).Name(), string(j))})
+	if len(p.Statements) > 0 {
+		if stmt, ok := p.Statements[0].(nodes.RawStmt).Stmt.(nodes.Stmt); !ok {
+			return c.stmtBuf.Push(sql.SendError{Err: errors.Errorf("error, cannot currently handle statements of type: %s, json: %s", reflect.TypeOf(p.Statements[0].(nodes.RawStmt).Stmt).Name(), string(j))})
+		} else {
+			return c.stmtBuf.Push(sql.PrepareStmt{
+				Name:         name,
+				RawTypeHints: inTypeHints,
+				ParseStart:   startParse,
+				ParseEnd:     endParse,
+				PGQuery:      stmt,
+			})
+		}
 	} else {
-		return c.stmtBuf.Push(sql.PrepareStmt{
-			Name:         name,
-			RawTypeHints: inTypeHints,
-			ParseStart:   startParse,
-			ParseEnd:     endParse,
-			PGQuery:      stmt,
-		})
+		return c.stmtBuf.Push(sql.SendError{Err: errors.Errorf("error, no statement to execute")})
 	}
+
 
 	// Prepare the mapping of SQL placeholder names to types. Pre-populate it with
 	// the type hints received from the client, if any.
