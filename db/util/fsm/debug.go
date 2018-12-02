@@ -49,6 +49,10 @@
  * Project: Raft https://github.com/hashicorp/raft
  * Copyright 2018 HashiCorp
  * License (MPL-2.0) https://github.com/hashicorp/raft/blob/master/LICENSE
+ *
+ * Project: pq github.com/lib/pq
+ * Copyright 2018  'pq' Contributors Portions Copyright (C) 2011 Blake Mizerany
+ * License https://github.com/lib/pq/blob/master/LICENSE.md
  */
 
 package fsm
@@ -261,4 +265,4 @@ func (t Transitions) WriteDotGraphString(w io.Writer, start string) {
 
 // Silence unused warning for Transitions.WriteDotGraphString. The method
 // is used by write_reports.go.tmpl.
-var _ = (Transitions).WriteDotGraphString
+var _ = Transitions.WriteDotGraphString

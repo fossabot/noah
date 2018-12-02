@@ -1,5 +1,3 @@
-// +build !386,!amd64
-
 /*
  * Copyright (c) 2018 Ready Stock
  *
@@ -51,7 +49,13 @@
  * Project: Raft https://github.com/hashicorp/raft
  * Copyright 2018 HashiCorp
  * License (MPL-2.0) https://github.com/hashicorp/raft/blob/master/LICENSE
+ *
+ * Project: pq github.com/lib/pq
+ * Copyright 2018  'pq' Contributors Portions Copyright (C) 2011 Blake Mizerany
+ * License https://github.com/lib/pq/blob/master/LICENSE.md
  */
+
+// +build !386,!amd64
 
 package encoding
 

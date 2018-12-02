@@ -49,6 +49,10 @@
  * Project: Raft https://github.com/hashicorp/raft
  * Copyright 2018 HashiCorp
  * License (MPL-2.0) https://github.com/hashicorp/raft/blob/master/LICENSE
+ *
+ * Project: pq github.com/lib/pq
+ * Copyright 2018  'pq' Contributors Portions Copyright (C) 2011 Blake Mizerany
+ * License https://github.com/lib/pq/blob/master/LICENSE.md
  */
 
 package system
@@ -76,7 +80,7 @@ const (
 	QueryReplicationFactor        NoahSetting = "query_replication_factor"
 )
 
-func (ctx *SSettings) SetSetting(SettingName string, SettingValue interface{}) (error) {
+func (ctx *SSettings) SetSetting(SettingName string, SettingValue interface{}) error {
 	if _, ok := settingsKeys[NoahSetting(SettingName)]; !ok {
 		return errors.New("setting key `%s` is not valid and has not been set.").Format(SettingName)
 	}

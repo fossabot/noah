@@ -49,6 +49,10 @@
  * Project: Raft https://github.com/hashicorp/raft
  * Copyright 2018 HashiCorp
  * License (MPL-2.0) https://github.com/hashicorp/raft/blob/master/LICENSE
+ *
+ * Project: pq github.com/lib/pq
+ * Copyright 2018  'pq' Contributors Portions Copyright (C) 2011 Blake Mizerany
+ * License https://github.com/lib/pq/blob/master/LICENSE.md
  */
 
 package util
@@ -102,7 +106,7 @@ func (s *FastIntSet) largeToSmall() (small uint64, otherValues bool) {
 		panic("set not large")
 	}
 	for x := s.large.LowerBound(0); x < smallCutoff; x = s.large.LowerBound(x + 1) {
-		small |= (1 << uint64(x))
+        small |= 1 << uint64(x)
 	}
 	return small, s.large.Min() < 0 || s.large.Max() >= smallCutoff
 }
@@ -111,7 +115,7 @@ func (s *FastIntSet) largeToSmall() (small uint64, otherValues bool) {
 func (s *FastIntSet) Add(i int) {
 	if i >= 0 && i < smallCutoff && s.large == nil {
 		// Fast path.
-		s.small |= (1 << uint64(i))
+        s.small |= 1 << uint64(i)
 		return
 	}
 	if s.large == nil {

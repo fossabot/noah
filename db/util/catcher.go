@@ -49,6 +49,10 @@
  * Project: Raft https://github.com/hashicorp/raft
  * Copyright 2018 HashiCorp
  * License (MPL-2.0) https://github.com/hashicorp/raft/blob/master/LICENSE
+ *
+ * Project: pq github.com/lib/pq
+ * Copyright 2018  'pq' Contributors Portions Copyright (C) 2011 Blake Mizerany
+ * License https://github.com/lib/pq/blob/master/LICENSE.md
  */
 
 package util
@@ -66,7 +70,7 @@ func CatchPanic(err *error) {
 	}
 }
 
-func CombineErrors(errs []error) (error) {
+func CombineErrors(errs []error) error {
 	if len(errs) > 0 {
 		err := errors.New(errs[0].Error())
 		for i := 1; i < len(errs); i++ {
