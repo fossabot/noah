@@ -58,7 +58,7 @@
 package tree
 
 import (
-    "github.com/Ready-Stock/noah/db/sql/sem/types"
+	"github.com/readystock/noah/db/sql/sem/types"
 )
 
 // Table generators, also called "set-generating functions", are

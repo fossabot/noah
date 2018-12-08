@@ -58,19 +58,19 @@
 package Prototype
 
 import (
-    "database/sql"
-    "errors"
-    "fmt"
-    "github.com/Ready-Stock/noah/Prototype/context"
-    _comment "github.com/Ready-Stock/noah/Prototype/queries/comment"
-    _create "github.com/Ready-Stock/noah/Prototype/queries/create"
-    _drop "github.com/Ready-Stock/noah/Prototype/queries/drop"
-    _insert "github.com/Ready-Stock/noah/Prototype/queries/insert"
-    "github.com/Ready-Stock/noah/Prototype/queries/select"
-    _transaction "github.com/Ready-Stock/noah/Prototype/queries/transaction"
-    _update "github.com/Ready-Stock/noah/Prototype/queries/update"
-    pgq "github.com/Ready-Stock/pg_query_go"
-    query "github.com/Ready-Stock/pg_query_go/nodes"
+	"database/sql"
+	"errors"
+	"fmt"
+	"github.com/readystock/noah/Prototype/context"
+	_comment "github.com/readystock/noah/Prototype/queries/comment"
+	_create "github.com/readystock/noah/Prototype/queries/create"
+	_drop "github.com/readystock/noah/Prototype/queries/drop"
+	_insert "github.com/readystock/noah/Prototype/queries/insert"
+	"github.com/readystock/noah/Prototype/queries/select"
+	_transaction "github.com/readystock/noah/Prototype/queries/transaction"
+	_update "github.com/readystock/noah/Prototype/queries/update"
+	pgq "github.com/readystock/pg_query_go"
+	query "github.com/readystock/pg_query_go/nodes"
 )
 
 func Start() context.SessionContext {

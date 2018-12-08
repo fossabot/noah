@@ -58,11 +58,11 @@
 package tree
 
 import (
-    "fmt"
-    "math"
+	"fmt"
+	"math"
 
-    "github.com/Ready-Stock/noah/db/sql/pgwire/pgerror"
-    "github.com/cockroachdb/apd"
+	"github.com/cockroachdb/apd"
+	"github.com/readystock/noah/db/sql/pgwire/pgerror"
 )
 
 var (

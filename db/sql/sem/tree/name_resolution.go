@@ -58,12 +58,12 @@
 package tree
 
 import (
-    "context"
-    "fmt"
-    "strings"
+	"context"
+	"fmt"
+	"strings"
 
-    "github.com/Ready-Stock/noah/db/sql/pgwire/pgerror"
-    "github.com/Ready-Stock/noah/db/sql/sessiondata"
+	"github.com/readystock/noah/db/sql/pgwire/pgerror"
+	"github.com/readystock/noah/db/sql/sessiondata"
 )
 
 // This file contains the two major components to name resolution:
@@ -179,7 +179,7 @@ const (
 	// database/catalog.
 	PublicSchema string = "public"
 	// PublicSchemaName is the same, typed as Name.
-    PublicSchemaName = Name(PublicSchema)
+	PublicSchemaName = Name(PublicSchema)
 )
 
 // NumResolutionResults represents the number of results in the lookup

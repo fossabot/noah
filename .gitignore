@@ -5,7 +5,7 @@
 .DS_Store
 \.idea/workspace\.xml
 vendor/github.com/.DS_Store
-vendor/github.com/Ready-Stock/.DS_Store
+vendor/github.com/readystock/.DS_Store
 vendor/github.com/.DS_Store
 Mac_OS_X
 badge/LOCK

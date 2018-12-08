@@ -6,16 +6,16 @@
  * You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
- *     
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express 
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
  * or implied. See the License for the specific language governing
  * permissions and limitations under the License.
  *
- * This application uses Open Source components. You can find the 
- * source code of their open source projects along with license 
- * information below. We acknowledge and are grateful to these 
+ * This application uses Open Source components. You can find the
+ * source code of their open source projects along with license
+ * information below. We acknowledge and are grateful to these
  * developers for their contributions to open source.
  *
  * Project: CockroachDB https://github.com/cockroachdb/cockroach
@@ -58,17 +58,17 @@
 package comment
 
 import (
-    "fmt"
-    "github.com/Ready-Stock/noah/Prototype/cluster"
-    "github.com/Ready-Stock/noah/Prototype/context"
-    pgq "github.com/Ready-Stock/pg_query_go"
-    "github.com/Ready-Stock/pg_query_go/nodes"
-    "github.com/kataras/go-errors"
-    "strings"
+	"fmt"
+	"github.com/kataras/go-errors"
+	"github.com/readystock/noah/Prototype/cluster"
+	"github.com/readystock/noah/Prototype/context"
+	pgq "github.com/readystock/pg_query_go"
+	"github.com/readystock/pg_query_go/nodes"
+	"strings"
 )
 
 var (
-	errorTableNotFound = errors.New("table (%s) cannot be found in metadata")
+	errorTableNotFound     = errors.New("table (%s) cannot be found in metadata")
 	errorTableTypeNotValid = errors.New("table type (%s) is not valid")
 )
 
@@ -91,7 +91,7 @@ func (stmt CommentStatement) HandleComment(ctx *context.SessionContext) error {
 
 	if stmt.Statement.Object != nil && len(stmt.Statement.Object.(pg_query.List).Items) > 0 {
 		lst := stmt.Statement.Object.(pg_query.List)
-		table := lst.Items[len(lst.Items) - 1].(pg_query.String).Str
+		table := lst.Items[len(lst.Items)-1].(pg_query.String).Str
 		if tblmeta, ok := cluster.Tables[table]; !ok {
 			return errorTableNotFound.Format(table)
 		} else {

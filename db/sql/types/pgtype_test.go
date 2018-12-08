@@ -61,8 +61,8 @@ import (
 	"net"
 	"testing"
 
-	_ "github.com/Ready-Stock/pgx/stdlib"
 	_ "github.com/lib/pq"
+	_ "github.com/readystock/pgx/stdlib"
 )
 
 // Test for renamed types

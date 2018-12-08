@@ -62,8 +62,8 @@ import (
 	"encoding/binary"
 	"encoding/json"
 
-	"github.com/Ready-Stock/pgx/pgio"
 	"github.com/pkg/errors"
+	"github.com/readystock/pgx/pgio"
 )
 
 const (

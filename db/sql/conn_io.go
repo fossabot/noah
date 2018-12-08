@@ -60,17 +60,17 @@ package sql
 import (
 	"context"
 	"fmt"
-	"github.com/Ready-Stock/noah/db/sql/oid"
-	"github.com/Ready-Stock/noah/db/sql/pgwire/pgproto"
-	"github.com/Ready-Stock/noah/db/sql/types"
 	"github.com/pkg/errors"
+	"github.com/readystock/noah/db/sql/oid"
+	"github.com/readystock/noah/db/sql/pgwire/pgproto"
+	"github.com/readystock/noah/db/sql/types"
 	"io"
 	"sync"
 	"time"
 
-	"github.com/Ready-Stock/noah/db/sql/pgwire/pgwirebase"
-	"github.com/Ready-Stock/noah/db/util/syncutil"
-	nodes "github.com/Ready-Stock/pg_query_go/nodes"
+	"github.com/readystock/noah/db/sql/pgwire/pgwirebase"
+	"github.com/readystock/noah/db/util/syncutil"
+	nodes "github.com/readystock/pg_query_go/nodes"
 	"net"
 )
 

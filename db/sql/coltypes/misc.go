@@ -60,7 +60,7 @@ package coltypes
 import (
 	"bytes"
 
-    "github.com/Ready-Stock/noah/db/sql/lex"
+	"github.com/readystock/noah/db/sql/lex"
 )
 
 // This file contains column type definitions that don't fit

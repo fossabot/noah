@@ -58,8 +58,8 @@
 package sql
 
 import (
-    "github.com/Ready-Stock/noah/db/sql/plan"
-    "github.com/Ready-Stock/noah/db/system"
+	"github.com/readystock/noah/db/sql/plan"
+	"github.com/readystock/noah/db/system"
 )
 
 type IQueryStatement interface {
@@ -67,4 +67,3 @@ type IQueryStatement interface {
 	compilePlan(ex *connExecutor, nodes []system.NNode) ([]plan.NodeExecutionPlan, error)
 	getTargetNodes(ex *connExecutor) ([]system.NNode, error)
 }
-

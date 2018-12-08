@@ -59,9 +59,9 @@ package sql
 
 import (
 	"context"
-    "github.com/Ready-Stock/noah/db/sql/pgwire/pgwirebase"
-    "github.com/Ready-Stock/noah/db/sql/sem/tree"
-	nodes "github.com/Ready-Stock/pg_query_go/nodes"
+	"github.com/readystock/noah/db/sql/pgwire/pgwirebase"
+	"github.com/readystock/noah/db/sql/sem/tree"
+	nodes "github.com/readystock/pg_query_go/nodes"
 )
 
 // PreparedStatement is a SQL statement that has been parsed and the types

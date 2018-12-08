@@ -58,7 +58,7 @@
 package npgx_test
 
 import (
-	"github.com/Ready-Stock/noah/db/sql/driver/npgx"
+	"github.com/readystock/noah/db/sql/driver/npgx"
 	"testing"
 )
 

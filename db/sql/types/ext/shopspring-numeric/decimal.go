@@ -63,7 +63,7 @@ import (
 
 	"github.com/pkg/errors"
 
-    "github.com/Ready-Stock/noah/db/sql/types"
+	"github.com/readystock/noah/db/sql/types"
 	"github.com/shopspring/decimal"
 )
 

@@ -60,8 +60,8 @@ package types_test
 import (
 	"testing"
 
-    "github.com/Ready-Stock/noah/db/sql/types"
-    "github.com/Ready-Stock/noah/db/sql/types/testutil"
+	"github.com/readystock/noah/db/sql/types"
+	"github.com/readystock/noah/db/sql/types/testutil"
 )
 
 func TestInt8rangeTranscode(t *testing.T) {

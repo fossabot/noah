@@ -61,9 +61,9 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"github.com/Ready-Stock/noah/db/sql/pgwire/pgproto"
-	"github.com/Ready-Stock/noah/db/sql/types"
 	"github.com/pkg/errors"
+	"github.com/readystock/noah/db/sql/pgwire/pgproto"
+	"github.com/readystock/noah/db/sql/types"
 	"reflect"
 	"time"
 )

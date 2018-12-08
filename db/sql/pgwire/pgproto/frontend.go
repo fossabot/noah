@@ -61,8 +61,8 @@ import (
 	"encoding/binary"
 	"io"
 
-	"github.com/Ready-Stock/pgx/chunkreader"
 	"github.com/pkg/errors"
+	"github.com/readystock/pgx/chunkreader"
 )
 
 type Frontend struct {

@@ -62,8 +62,8 @@ import (
 	"reflect"
 	"testing"
 
-    "github.com/Ready-Stock/noah/db/sql/types"
-    "github.com/Ready-Stock/noah/db/sql/types/testutil"
+	"github.com/readystock/noah/db/sql/types"
+	"github.com/readystock/noah/db/sql/types/testutil"
 )
 
 func TestTextTranscode(t *testing.T) {
@@ -109,7 +109,7 @@ func TestTextAssignTo(t *testing.T) {
 		expected interface{}
 	}{
 		{src: types.Text{String: "foo", Status: types.Present}, dst: &s, expected: "foo"},
-        {src: types.Text{Status: types.Null}, dst: &ps, expected: (*string)(nil)},
+		{src: types.Text{Status: types.Null}, dst: &ps, expected: (*string)(nil)},
 	}
 
 	for i, tt := range stringTests {

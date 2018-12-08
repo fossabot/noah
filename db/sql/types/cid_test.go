@@ -61,8 +61,8 @@ import (
 	"reflect"
 	"testing"
 
-    "github.com/Ready-Stock/noah/db/sql/types"
-    "github.com/Ready-Stock/noah/db/sql/types/testutil"
+	"github.com/readystock/noah/db/sql/types"
+	"github.com/readystock/noah/db/sql/types/testutil"
 )
 
 func TestCIDTranscode(t *testing.T) {
@@ -116,7 +116,7 @@ func TestCIDAssignTo(t *testing.T) {
 		expected interface{}
 	}{
 		{src: types.CID{Uint: 42, Status: types.Present}, dst: &ui32, expected: uint32(42)},
-        {src: types.CID{Status: types.Null}, dst: &pui32, expected: (*uint32)(nil)},
+		{src: types.CID{Status: types.Null}, dst: &pui32, expected: (*uint32)(nil)},
 	}
 
 	for i, tt := range simpleTests {

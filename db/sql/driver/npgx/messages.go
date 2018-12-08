@@ -58,12 +58,10 @@
 package npgx
 
 import (
-    "github.com/Ready-Stock/noah/db/sql/pgio"
-    "github.com/Ready-Stock/noah/db/sql/pgwire/pgproto"
-    "github.com/Ready-Stock/noah/db/sql/types"
+	"github.com/readystock/noah/db/sql/pgio"
+	"github.com/readystock/noah/db/sql/pgwire/pgproto"
+	"github.com/readystock/noah/db/sql/types"
 )
-
-
 
 type PgError struct {
 	Severity         string
@@ -140,7 +138,6 @@ func (c *Conn) rxRowDescription(msg *pgproto.RowDescription) []FieldDescription 
 	}
 	return fields
 }
-
 
 // appendParse appends a PostgreSQL wire protocol parse message to buf and returns it.
 func appendParse(buf []byte, name string, query string, parameterOIDs []types.OID) []byte {

@@ -58,8 +58,8 @@
 package pglex
 
 import (
-    "fmt"
-    node "github.com/Ready-Stock/pg_query_go/nodes"
+	"fmt"
+	node "github.com/readystock/pg_query_go/nodes"
 )
 
 func HandleRawStmt(stmt node.RawStmt) error {

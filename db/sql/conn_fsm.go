@@ -60,11 +60,11 @@ package sql
 import (
 	"time"
 
-    "github.com/Ready-Stock/noah/db/sql/sem/tree"
+	"github.com/readystock/noah/db/sql/sem/tree"
 	// We dot-import fsm to use common names such as fsm.True/False. State machine
 	// implementations using that library are weird beasts intimately inter-twined
 	// with that package; therefor this file should stay as small as possible.
-    . "github.com/Ready-Stock/noah/db/util/fsm"
+	. "github.com/readystock/noah/db/util/fsm"
 )
 
 // Constants for the String() representation of the session states. Shared with
@@ -156,11 +156,11 @@ type eventTxnStartPayload struct {
 }
 
 func makeEventTxnStartPayload(
-// iso enginepb.IsolationType,
-// pri roachpb.UserPriority,
+	// iso enginepb.IsolationType,
+	// pri roachpb.UserPriority,
 	readOnly tree.ReadWriteMode,
 	txnSQLTimestamp time.Time,
-// tranCtx transitionCtx,
+	// tranCtx transitionCtx,
 ) eventTxnStartPayload {
 	return eventTxnStartPayload{
 		// iso:             iso,

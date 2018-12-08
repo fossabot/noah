@@ -58,10 +58,10 @@
 package sql
 
 import (
-    "github.com/Ready-Stock/noah/db/sql/plan"
-    "github.com/Ready-Stock/noah/db/system"
-	pq "github.com/Ready-Stock/pg_query_go/nodes"
 	"github.com/kataras/go-errors"
+	"github.com/readystock/noah/db/sql/plan"
+	"github.com/readystock/noah/db/system"
+	pq "github.com/readystock/pg_query_go/nodes"
 )
 
 type TransactionStatement struct {
@@ -101,7 +101,6 @@ func (stmt *TransactionStatement) getTargetNodes(ex *connExecutor) ([]system.NNo
 func (stmt *TransactionStatement) compilePlan(ex *connExecutor, nodes []system.NNode) ([]plan.NodeExecutionPlan, error) {
 	return nil, nil
 }
-
 
 func (ex *connExecutor) BeginTransaction() error {
 	if ex.TransactionState != TransactionState_None {

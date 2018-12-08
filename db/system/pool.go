@@ -58,14 +58,14 @@
 package system
 
 import (
-    "github.com/Ready-Stock/noah/db/sql/driver"
-    "github.com/Ready-Stock/noah/db/sql/driver/npgx"
+	"github.com/readystock/noah/db/sql/driver"
+	"github.com/readystock/noah/db/sql/driver/npgx"
 	"sync"
 )
 
 type SPool struct {
 	*baseContext
-	sync *sync.Mutex
+	sync      *sync.Mutex
 	nodePools map[uint64]*npgx.ConnPool
 }
 
@@ -81,7 +81,7 @@ func (pool *SPool) AcquireConnection(nodeId uint64) (*npgx.Conn, error) {
 	if nodePool, ok := pool.nodePools[nodeId]; !ok {
 		// Init a new connection
 		sNode := SNode(*pool.baseContext)
-		if node, err :=  (&sNode).GetNode(nodeId); err != nil {
+		if node, err := (&sNode).GetNode(nodeId); err != nil {
 			return nil, err
 		} else {
 			return npgx.Connect(driver.ConnConfig{

@@ -58,13 +58,13 @@
 package uuid
 
 import (
-    "encoding/binary"
-    "encoding/json"
-    "fmt"
+	"encoding/binary"
+	"encoding/json"
+	"fmt"
 
-    "github.com/Ready-Stock/noah/db/util/uint128"
-    "github.com/pkg/errors"
-    "github.com/satori/go.uuid"
+	"github.com/pkg/errors"
+	"github.com/readystock/noah/db/util/uint128"
+	"github.com/satori/go.uuid"
 )
 
 // UUID is a thin wrapper around "github.com/satori/go.uuid".UUID that can be

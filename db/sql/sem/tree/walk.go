@@ -63,7 +63,7 @@ import (
 	"reflect"
 	"strings"
 
-    "github.com/Ready-Stock/noah/db/sql/pgwire/pgerror"
+	"github.com/readystock/noah/db/sql/pgwire/pgerror"
 )
 
 // Visitor defines methods that are called for nodes during an expression or statement walk.
@@ -698,7 +698,7 @@ func WalkExpr(v Visitor, expr Expr) (newExpr Expr, changed bool) {
 	}
 
 	// We cannot use == because some Expr implementations are not comparable (e.g. DTuple)
-    return newExpr, reflect.ValueOf(expr) != reflect.ValueOf(newExpr)
+	return newExpr, reflect.ValueOf(expr) != reflect.ValueOf(newExpr)
 }
 
 // WalkExprConst is a variant of WalkExpr for visitors that do not modify the expression.
@@ -730,7 +730,7 @@ func walkReturningClause(v Visitor, clause ReturningClause) (ReturningClause, bo
 				(*ret)[i].Expr = e
 			}
 		}
-        return ret, ret != t
+		return ret, ret != t
 	case *ReturningNothing, *NoReturningClause:
 		return t, false
 	default:
@@ -1331,6 +1331,7 @@ func (stmt *ValuesClause) WalkStmt(v Visitor) Statement {
 var _ WalkableStmt = &CreateTable{}
 var _ WalkableStmt = &Backup{}
 var _ WalkableStmt = &Delete{}
+
 //var _ WalkableStmt = &Explain{}
 var _ WalkableStmt = &Insert{}
 var _ WalkableStmt = &Import{}
@@ -1360,7 +1361,7 @@ func WalkStmt(v Visitor, stmt Statement) (newStmt Statement, changed bool) {
 		return stmt, false
 	}
 	newStmt = walkable.WalkStmt(v)
-    return newStmt, stmt != newStmt
+	return newStmt, stmt != newStmt
 }
 
 type simpleVisitor struct {

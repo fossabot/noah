@@ -59,16 +59,16 @@ package pgwire
 
 import (
 	"fmt"
-    "github.com/Ready-Stock/noah/db/sql/lex"
-    "github.com/Ready-Stock/noah/db/sql/pgwire/pgwirebase"
-    "github.com/Ready-Stock/noah/db/sql/sem/tree"
-    "github.com/Ready-Stock/noah/db/sql/sessiondata"
-    "github.com/Ready-Stock/noah/db/sql/types"
-    "github.com/Ready-Stock/noah/db/util/duration"
-    "github.com/Ready-Stock/noah/db/util/timeofday"
-    "github.com/Ready-Stock/noah/db/util/timeutil"
 	"github.com/lib/pq/oid"
 	"github.com/pkg/errors"
+	"github.com/readystock/noah/db/sql/lex"
+	"github.com/readystock/noah/db/sql/pgwire/pgwirebase"
+	"github.com/readystock/noah/db/sql/sem/tree"
+	"github.com/readystock/noah/db/sql/sessiondata"
+	"github.com/readystock/noah/db/sql/types"
+	"github.com/readystock/noah/db/util/duration"
+	"github.com/readystock/noah/db/util/timeofday"
+	"github.com/readystock/noah/db/util/timeutil"
 	"strconv"
 	"time"
 )
@@ -94,7 +94,6 @@ type pgType struct {
 	size int
 }
 
-
 const secondsInDay = 24 * 60 * 60
 
 func (b *writeBuffer) writeTextDatum(
@@ -107,7 +106,6 @@ func (b *writeBuffer) writeTextDatum(
 		return
 	}
 
-
 	switch v := d.(type) {
 	case *types.Bool:
 		b.putInt32(1)
@@ -118,7 +116,6 @@ func (b *writeBuffer) writeTextDatum(
 		}
 
 	case *types.BoolArray:
-
 
 	case types.Integer: // Int2, Int4, Int8
 		// Start at offset 4 because `putInt32` clobbers the first 4 bytes.
@@ -515,6 +512,7 @@ func timeToPgBinary(t time.Time, offset *time.Location) int64 {
 	}
 	return duration.DiffMicros(t, pgwirebase.PGEpochJDate)
 }
+
 //
 // // dateToPgBinary calculates the Postgres binary format for a date. The date is
 // // represented as the number of days between the given date and Jan 1, 2000

@@ -61,14 +61,14 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-    "github.com/Ready-Stock/noah/db/sql/driver/npgx"
-	"github.com/Ready-Stock/pgx"
+	"github.com/readystock/noah/db/sql/driver/npgx"
+	"github.com/readystock/pgx"
 	"os"
 	"reflect"
 	"testing"
 
-    "github.com/Ready-Stock/noah/db/sql/types"
 	_ "github.com/lib/pq"
+	"github.com/readystock/noah/db/sql/types"
 )
 
 func MustConnectDatabaseSQL(t testing.TB, driverName string) *sql.DB {

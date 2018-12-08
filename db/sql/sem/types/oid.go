@@ -58,10 +58,10 @@
 package types
 
 import (
-    "fmt"
+	"fmt"
 
-    "github.com/Ready-Stock/noah/db/sql/pgwire/pgerror"
-    "github.com/lib/pq/oid"
+	"github.com/lib/pq/oid"
+	"github.com/readystock/noah/db/sql/pgwire/pgerror"
 )
 
 var (

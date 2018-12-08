@@ -58,10 +58,10 @@
 package sql
 
 import (
-	"github.com/Ready-Stock/noah/db/sql/plan"
-	"github.com/Ready-Stock/noah/db/system"
-	"github.com/Ready-Stock/pg_query_go/nodes"
 	"github.com/kataras/go-errors"
+	"github.com/readystock/noah/db/sql/plan"
+	"github.com/readystock/noah/db/system"
+	"github.com/readystock/pg_query_go/nodes"
 )
 
 type SelectStatement struct {
@@ -102,7 +102,7 @@ func (stmt *SelectStatement) getTargetNodes(ex *connExecutor) ([]system.NNode, e
 			nodes, err := ex.SystemContext.Nodes.GetLiveNodes(system.AllNodes)
 			if len(nodes) > 0 {
 				return []system.NNode{nodes[0]}, err
-			} else{
+			} else {
 				return nil, errors.New("no nodes available to serve this query.")
 			}
 		}

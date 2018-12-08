@@ -59,10 +59,10 @@ package npgx
 
 import (
 	"context"
-    "github.com/Ready-Stock/noah/db/sql/driver"
-    "github.com/Ready-Stock/noah/db/sql/types"
 	"github.com/kataras/go-errors"
 	"github.com/kataras/golog"
+	"github.com/readystock/noah/db/sql/driver"
+	"github.com/readystock/noah/db/sql/types"
 	"sync"
 	"time"
 )
@@ -103,7 +103,6 @@ type ConnPoolStat struct {
 	CurrentConnections   int // current live connections
 	AvailableConnections int // unused live connections
 }
-
 
 // NewConnPool creates a new ConnPool. config.ConnConfig is passed through to
 // Connect directly.
@@ -172,7 +171,6 @@ func (p *ConnPool) afterConnectionCreated(c *Conn) (*Conn, error) {
 	return c, nil
 }
 
-
 // Release gives up use of a connection.
 func (p *ConnPool) Release(conn *Conn) {
 	if conn.ctxInProgress {
@@ -182,7 +180,6 @@ func (p *ConnPool) Release(conn *Conn) {
 	if conn.txStatus != 'I' {
 		conn.Exec("rollback")
 	}
-
 
 	p.cond.L.Lock()
 
@@ -274,7 +271,6 @@ func (p *ConnPool) acquire(deadline *time.Time) (*Conn, error) {
 	// All connections are in use and we cannot create more
 	golog.Warn("waiting for available connection")
 
-
 	// Wait until there is an available connection OR room to create a new connection
 	for len(p.availableConnections) == 0 && len(p.allConnections)+p.inProgressConnects == p.maxConnections {
 		if p.deadlinePassed(deadline) {
@@ -325,7 +321,6 @@ func (p *ConnPool) BeginEx(ctx context.Context, txOptions *TransactionOptions) (
 		return tx, nil
 	}
 }
-
 
 // deadlinePassed returns true if the given deadline has passed.
 func (p *ConnPool) deadlinePassed(deadline *time.Time) bool {

@@ -203,25 +203,25 @@
 		},
 		{
 			"checksumSHA1": "mcDE0G+qBcKax2g9lqWqDFDQSVs=",
-			"path": "github.com/Ready-Stock/pg_query_go",
+			"path": "github.com/readystock/pg_query_go",
 			"revision": "acbd6b71c9f948306a77cabce481d3adc17f4a90",
 			"revisionTime": "2018-07-27T01:49:19Z"
 		},
 		{
 			"checksumSHA1": "eLreQ66UtK4p0cExspNzyDkEA1E=",
-			"path": "github.com/Ready-Stock/pg_query_go/nodes",
+			"path": "github.com/readystock/pg_query_go/nodes",
 			"revision": "acbd6b71c9f948306a77cabce481d3adc17f4a90",
 			"revisionTime": "2018-07-27T01:49:19Z"
 		},
 		{
 			"checksumSHA1": "uWrLpnx0jZki2CoGyWVDJYWMHhg=",
-			"path": "github.com/Ready-Stock/pg_query_go/parser",
+			"path": "github.com/readystock/pg_query_go/parser",
 			"revision": "acbd6b71c9f948306a77cabce481d3adc17f4a90",
 			"revisionTime": "2018-07-27T01:49:19Z"
 		},
 		{
 			"checksumSHA1": "f1+Witma3Z3psP/gJ6h7ppEZq6U=",
-			"path": "github.com/Ready-Stock/pg_query_go/util",
+			"path": "github.com/readystock/pg_query_go/util",
 			"revision": "acbd6b71c9f948306a77cabce481d3adc17f4a90",
 			"revisionTime": "2018-07-27T01:49:19Z"
 		},
@@ -717,5 +717,5 @@
 			"revision": ""
 		}
 	],
-	"rootPath": "github.com/Ready-Stock/noah"
+	"rootPath": "github.com/readystock/noah"
 }

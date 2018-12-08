@@ -58,13 +58,13 @@
 package Prototype
 
 import (
-    "fmt"
-    "github.com/Ready-Stock/noah/Prototype/cluster"
-    "testing"
+	"fmt"
+	"github.com/readystock/noah/Prototype/cluster"
+	"testing"
 )
 
 var (
-	createQueries = [][]string {
+	createQueries = [][]string{
 		// {
 		// 	"BEGIN;",
 		// 	"INSERT INTO products (account_id,sku,title) VALUES(1,'test','test');",

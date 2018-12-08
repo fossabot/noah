@@ -61,7 +61,7 @@ import (
 	"fmt"
 	"strings"
 
-    "github.com/Ready-Stock/noah/db/sql/pgwire/pgerror"
+	"github.com/readystock/noah/db/sql/pgwire/pgerror"
 )
 
 // IsolationLevel holds the isolation level for a transaction.
@@ -105,9 +105,9 @@ const (
 
 var userPriorityNames = [...]string{
 	UnspecifiedUserPriority: "UNSPECIFIED",
-	Low:    "LOW",
-	Normal: "NORMAL",
-	High:   "HIGH",
+	Low:                     "LOW",
+	Normal:                  "NORMAL",
+	High:                    "HIGH",
 }
 
 func (up UserPriority) String() string {

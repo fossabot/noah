@@ -60,10 +60,10 @@ package pgwire
 import (
 	"bytes"
 	"encoding/binary"
-    "github.com/Ready-Stock/noah/db/sql/pgwire/pgwirebase"
-    "github.com/Ready-Stock/noah/db/sql/sem/tree"
-    "github.com/Ready-Stock/noah/db/sql/types"
-    "github.com/Ready-Stock/noah/db/util"
+	"github.com/readystock/noah/db/sql/pgwire/pgwirebase"
+	"github.com/readystock/noah/db/sql/sem/tree"
+	"github.com/readystock/noah/db/sql/types"
+	"github.com/readystock/noah/db/util"
 	"io"
 )
 
@@ -90,8 +90,7 @@ type writeBuffer struct {
 }
 
 func newWriteBuffer() *writeBuffer {
-	b := &writeBuffer{
-	}
+	b := &writeBuffer{}
 	b.simpleFormatter = tree.MakeFmtCtx(&b.variablePutbuf, tree.FmtSimple)
 	b.arrayFormatter = tree.MakeFmtCtx(&b.variablePutbuf, tree.FmtArrays)
 	return b

@@ -58,21 +58,21 @@
 package pgwire
 
 import (
-    "context"
-    "fmt"
-    "github.com/kataras/golog"
-    "io"
-    "net"
-    "time"
+	"context"
+	"fmt"
+	"github.com/kataras/golog"
+	"io"
+	"net"
+	"time"
 
-    "github.com/pkg/errors"
+	"github.com/pkg/errors"
 
-    "github.com/Ready-Stock/noah/db/base"
-    "github.com/Ready-Stock/noah/db/sql"
-    "github.com/Ready-Stock/noah/db/sql/pgwire/pgerror"
-    "github.com/Ready-Stock/noah/db/sql/pgwire/pgwirebase"
-    "github.com/Ready-Stock/noah/db/system"
-    "github.com/Ready-Stock/noah/db/util/syncutil"
+	"github.com/readystock/noah/db/base"
+	"github.com/readystock/noah/db/sql"
+	"github.com/readystock/noah/db/sql/pgwire/pgerror"
+	"github.com/readystock/noah/db/sql/pgwire/pgwirebase"
+	"github.com/readystock/noah/db/system"
+	"github.com/readystock/noah/db/util/syncutil"
 )
 
 const (

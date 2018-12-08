@@ -59,12 +59,12 @@ package coordinator
 
 import (
 	"fmt"
-    "github.com/Ready-Stock/noah/db/base"
-    "github.com/Ready-Stock/noah/db/sql/pgwire"
-    "github.com/Ready-Stock/noah/db/system"
-    "github.com/Ready-Stock/noah/db/util"
 	"github.com/kataras/golog"
 	"github.com/pkg/errors"
+	"github.com/readystock/noah/db/base"
+	"github.com/readystock/noah/db/sql/pgwire"
+	"github.com/readystock/noah/db/system"
+	"github.com/readystock/noah/db/util"
 	"net"
 	"time"
 )
@@ -100,10 +100,9 @@ var (
 )
 
 type Server struct {
-
 }
 
-func Start(sctx *system.SContext) (err error)  {
+func Start(sctx *system.SContext) (err error) {
 	defer util.CatchPanic(&err)
 	addvertise_addr := fmt.Sprintf("127.0.0.1:%d", sctx.Flags.PostgresPort)
 	if addr, err := net.ResolveTCPAddr("tcp", addvertise_addr); err != nil {
@@ -140,9 +139,7 @@ func StartIncomingConnection(sctx *system.SContext, in <-chan *net.TCPConn, out 
 func handleConnection(sctx *system.SContext, conn *net.TCPConn) error {
 	golog.Infof("Handling connection from %s", conn.RemoteAddr().String())
 	serv := pgwire.MakeServer(&base.Config{
-		Insecure:true,
+		Insecure: true,
 	})
 	return serv.ServeConn(sctx, conn)
 }
-
-

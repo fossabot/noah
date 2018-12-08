@@ -6,16 +6,16 @@
  * You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
- *     
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express 
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
  * or implied. See the License for the specific language governing
  * permissions and limitations under the License.
  *
- * This application uses Open Source components. You can find the 
- * source code of their open source projects along with license 
- * information below. We acknowledge and are grateful to these 
+ * This application uses Open Source components. You can find the
+ * source code of their open source projects along with license
+ * information below. We acknowledge and are grateful to these
  * developers for their contributions to open source.
  *
  * Project: CockroachDB https://github.com/cockroachdb/cockroach
@@ -58,12 +58,12 @@
 package create
 
 import (
-    "fmt"
-    "github.com/Ready-Stock/noah/Prototype/cluster"
-    "github.com/Ready-Stock/noah/Prototype/context"
-    "github.com/Ready-Stock/noah/Prototype/datums"
-    pgq "github.com/Ready-Stock/pg_query_go"
-    "github.com/Ready-Stock/pg_query_go/nodes"
+	"fmt"
+	"github.com/readystock/noah/Prototype/cluster"
+	"github.com/readystock/noah/Prototype/context"
+	"github.com/readystock/noah/Prototype/datums"
+	pgq "github.com/readystock/pg_query_go"
+	"github.com/readystock/pg_query_go/nodes"
 )
 
 type CreateStatement struct {
@@ -97,10 +97,10 @@ func (stmt CreateStatement) HandleCreate(ctx *context.SessionContext) error {
 
 	if response.Success {
 		cluster.Tables[*stmt.Statement.Relation.Relname] = datums.Table{
-			TableName:*stmt.Statement.Relation.Relname,
-			IsGlobal:false,
-			IsTenantTable:false,
-			IdentityColumn:id_name,
+			TableName:      *stmt.Statement.Relation.Relname,
+			IsGlobal:       false,
+			IsTenantTable:  false,
+			IdentityColumn: id_name,
 		}
 	}
 

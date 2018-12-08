@@ -58,13 +58,13 @@
 package opt
 
 import (
-    "bytes"
-    "context"
-    "fmt"
-    "github.com/Ready-Stock/noah/db/sql/sem/tree"
-    "github.com/Ready-Stock/noah/db/sql/sem/types"
-    "github.com/Ready-Stock/noah/db/util/treeprinter"
-    "time"
+	"bytes"
+	"context"
+	"fmt"
+	"github.com/readystock/noah/db/sql/sem/tree"
+	"github.com/readystock/noah/db/sql/sem/types"
+	"github.com/readystock/noah/db/util/treeprinter"
+	"time"
 )
 
 // This file contains interfaces that are used by the query optimizer to avoid

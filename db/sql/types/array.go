@@ -58,14 +58,14 @@
 package types
 
 import (
-    "bytes"
-    "encoding/binary"
-    "github.com/Ready-Stock/noah/db/sql/pgio"
-    "github.com/pkg/errors"
-    "io"
-    "strconv"
-    "strings"
-    "unicode"
+	"bytes"
+	"encoding/binary"
+	"github.com/pkg/errors"
+	"github.com/readystock/noah/db/sql/pgio"
+	"io"
+	"strconv"
+	"strings"
+	"unicode"
 )
 
 // Information on the internals of PostgreSQL arrays can be found in
@@ -117,7 +117,7 @@ func (dst *ArrayHeader) DecodeBinary(ci *ConnInfo, src []byte) (int, error) {
 }
 
 func (src *ArrayHeader) EncodeBinary(ci *ConnInfo, buf []byte) []byte {
-	buf =  pgio.AppendInt32(buf, int32(len(src.Dimensions)))
+	buf = pgio.AppendInt32(buf, int32(len(src.Dimensions)))
 
 	var containsNull int32
 	if src.ContainsNull {

@@ -75,19 +75,19 @@ import (
 	"golang.org/x/text/collate"
 	"golang.org/x/text/language"
 
-	"github.com/Ready-Stock/noah/db/sql/coltypes"
-	"github.com/Ready-Stock/noah/db/sql/lex"
-	"github.com/Ready-Stock/noah/db/sql/pgwire/pgerror"
-	"github.com/Ready-Stock/noah/db/sql/sem/types"
-	"github.com/Ready-Stock/noah/db/util/duration"
-	"github.com/Ready-Stock/noah/db/util/ipaddr"
-	"github.com/Ready-Stock/noah/db/util/json"
-	"github.com/Ready-Stock/noah/db/util/stringencoding"
-	"github.com/Ready-Stock/noah/db/util/timeofday"
-	"github.com/Ready-Stock/noah/db/util/timeutil"
-	"github.com/Ready-Stock/noah/db/util/uint128"
-	"github.com/Ready-Stock/noah/db/util/uuid"
 	"github.com/cockroachdb/apd"
+	"github.com/readystock/noah/db/sql/coltypes"
+	"github.com/readystock/noah/db/sql/lex"
+	"github.com/readystock/noah/db/sql/pgwire/pgerror"
+	"github.com/readystock/noah/db/sql/sem/types"
+	"github.com/readystock/noah/db/util/duration"
+	"github.com/readystock/noah/db/util/ipaddr"
+	"github.com/readystock/noah/db/util/json"
+	"github.com/readystock/noah/db/util/stringencoding"
+	"github.com/readystock/noah/db/util/timeofday"
+	"github.com/readystock/noah/db/util/timeutil"
+	"github.com/readystock/noah/db/util/uint128"
+	"github.com/readystock/noah/db/util/uuid"
 )
 
 var (
@@ -1839,8 +1839,8 @@ var timeFormats = []string{
 }
 
 var (
-	//tzMatch        = regexp.MustCompile(` [+-]`)
-	//loneZeroRMatch = regexp.MustCompile(`:(\d(?:[^\d]|$))`)
+//tzMatch        = regexp.MustCompile(` [+-]`)
+//loneZeroRMatch = regexp.MustCompile(`:(\d(?:[^\d]|$))`)
 )
 
 func parseTimestampInLocation(s string, loc *time.Location, typ types.T) (time.Time, error) {

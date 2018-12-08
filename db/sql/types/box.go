@@ -58,14 +58,14 @@
 package types
 
 import (
-    "database/sql/driver"
-    "encoding/binary"
-    "fmt"
-    "github.com/Ready-Stock/noah/db/sql/pgio"
-    "github.com/pkg/errors"
-    "math"
-    "strconv"
-    "strings"
+	"database/sql/driver"
+	"encoding/binary"
+	"fmt"
+	"github.com/pkg/errors"
+	"github.com/readystock/noah/db/sql/pgio"
+	"math"
+	"strconv"
+	"strings"
 )
 
 type Box struct {

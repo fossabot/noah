@@ -58,10 +58,10 @@
 package main
 
 import (
-	"github.com/Ready-Stock/noah/api"
-	"github.com/Ready-Stock/noah/db/coordinator"
-	"github.com/Ready-Stock/noah/db/system"
 	"github.com/kataras/golog"
+	"github.com/readystock/noah/api"
+	"github.com/readystock/noah/db/coordinator"
+	"github.com/readystock/noah/db/system"
 	"github.com/sirupsen/logrus"
 	"os"
 	"os/signal"

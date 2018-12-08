@@ -61,8 +61,8 @@ import (
 	"reflect"
 	"testing"
 
-    "github.com/Ready-Stock/noah/db/sql/types"
-    "github.com/Ready-Stock/noah/db/sql/types/testutil"
+	"github.com/readystock/noah/db/sql/types"
+	"github.com/readystock/noah/db/sql/types/testutil"
 )
 
 func TestByteaArrayTranscode(t *testing.T) {
@@ -122,7 +122,7 @@ func TestByteaArraySet(t *testing.T) {
 				Status:     types.Present},
 		},
 		{
-            source: ([][]byte)(nil),
+			source: ([][]byte)(nil),
 			result: types.ByteaArray{Status: types.Null},
 		},
 	}
@@ -160,7 +160,7 @@ func TestByteaArrayAssignTo(t *testing.T) {
 		{
 			src:      types.ByteaArray{Status: types.Null},
 			dst:      &byteByteSlice,
-            expected: ([][]byte)(nil),
+			expected: ([][]byte)(nil),
 		},
 	}
 

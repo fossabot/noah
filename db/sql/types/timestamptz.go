@@ -62,8 +62,8 @@ import (
 	"encoding/binary"
 	"time"
 
-    "github.com/Ready-Stock/noah/db/sql/pgio"
 	"github.com/pkg/errors"
+	"github.com/readystock/noah/db/sql/pgio"
 )
 
 const pgTimestamptzHourFormat = "2006-01-02 15:04:05.999999999Z07"

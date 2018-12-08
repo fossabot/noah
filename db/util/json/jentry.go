@@ -58,7 +58,7 @@
 package json
 
 import (
-    "github.com/Ready-Stock/noah/db/util/encoding"
+	"github.com/readystock/noah/db/util/encoding"
 )
 
 const nullTag = 0x00000000

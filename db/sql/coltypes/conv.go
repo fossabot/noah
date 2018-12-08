@@ -58,10 +58,10 @@
 package coltypes
 
 import (
-    "fmt"
+	"fmt"
 
-    "github.com/Ready-Stock/noah/db/sql/pgwire/pgerror"
-    "github.com/Ready-Stock/noah/db/sql/sem/types"
+	"github.com/readystock/noah/db/sql/pgwire/pgerror"
+	"github.com/readystock/noah/db/sql/sem/types"
 )
 
 // TOidToType produces a Datum type equivalent to the given

@@ -58,8 +58,8 @@
 package npgx_test
 
 import (
-	"github.com/Ready-Stock/noah/db/sql/driver"
-	"github.com/Ready-Stock/noah/db/sql/driver/npgx"
+	"github.com/readystock/noah/db/sql/driver"
+	"github.com/readystock/noah/db/sql/driver/npgx"
 	"testing"
 )
 
@@ -149,7 +149,6 @@ func Test_CITEXT(t *testing.T) {
 		t.Fail()
 	}
 }
-
 
 func Test_BadConnection(t *testing.T) {
 	_, err := npgx.Connect(BadConnectionConfig)

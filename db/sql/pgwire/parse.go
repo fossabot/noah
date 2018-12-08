@@ -58,14 +58,14 @@
 package pgwire
 
 import (
-	"github.com/Ready-Stock/noah/db/sql"
-	"github.com/Ready-Stock/noah/db/sql/oid"
-	"github.com/Ready-Stock/noah/db/sql/pgwire/pgerror"
-	"github.com/Ready-Stock/noah/db/sql/pgwire/pgwirebase"
-	"github.com/Ready-Stock/pg_query_go"
-	nodes "github.com/Ready-Stock/pg_query_go/nodes"
 	"github.com/kataras/golog"
 	"github.com/pkg/errors"
+	"github.com/readystock/noah/db/sql"
+	"github.com/readystock/noah/db/sql/oid"
+	"github.com/readystock/noah/db/sql/pgwire/pgerror"
+	"github.com/readystock/noah/db/sql/pgwire/pgwirebase"
+	"github.com/readystock/pg_query_go"
+	nodes "github.com/readystock/pg_query_go/nodes"
 	"reflect"
 	"time"
 )
@@ -125,7 +125,6 @@ func (c *conn) handleParse(buf *pgwirebase.ReadBuffer) error {
 	} else {
 		return c.stmtBuf.Push(sql.SendError{Err: errors.Errorf("error, no statement to execute")})
 	}
-
 
 	// Prepare the mapping of SQL placeholder names to types. Pre-populate it with
 	// the type hints received from the client, if any.

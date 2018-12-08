@@ -58,18 +58,18 @@
 package tree
 
 import (
-    "fmt"
-    "go/constant"
-    "go/token"
-    "math"
-    "strings"
+	"fmt"
+	"go/constant"
+	"go/token"
+	"math"
+	"strings"
 
-    "github.com/pkg/errors"
+	"github.com/pkg/errors"
 
-    "github.com/Ready-Stock/noah/db/sql/coltypes"
-    "github.com/Ready-Stock/noah/db/sql/lex"
-    "github.com/Ready-Stock/noah/db/sql/pgwire/pgerror"
-    "github.com/Ready-Stock/noah/db/sql/sem/types"
+	"github.com/readystock/noah/db/sql/coltypes"
+	"github.com/readystock/noah/db/sql/lex"
+	"github.com/readystock/noah/db/sql/pgwire/pgerror"
+	"github.com/readystock/noah/db/sql/sem/types"
 )
 
 // Constant is an constant literal expression which may be resolved to more than one type.

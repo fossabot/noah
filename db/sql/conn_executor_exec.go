@@ -59,7 +59,7 @@ package sql
 
 import (
 	"errors"
-	nodes "github.com/Ready-Stock/pg_query_go/nodes"
+	nodes "github.com/readystock/pg_query_go/nodes"
 )
 
 func (ex *connExecutor) execStmt(

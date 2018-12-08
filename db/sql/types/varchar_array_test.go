@@ -61,8 +61,8 @@ import (
 	"reflect"
 	"testing"
 
-    "github.com/Ready-Stock/noah/db/sql/types"
-    "github.com/Ready-Stock/noah/db/sql/types/testutil"
+	"github.com/readystock/noah/db/sql/types"
+	"github.com/readystock/noah/db/sql/types/testutil"
 )
 
 func TestVarcharArrayTranscode(t *testing.T) {
@@ -122,7 +122,7 @@ func TestVarcharArraySet(t *testing.T) {
 				Status:     types.Present},
 		},
 		{
-            source: ([]string)(nil),
+			source: ([]string)(nil),
 			result: types.VarcharArray{Status: types.Null},
 		},
 	}
@@ -171,7 +171,7 @@ func TestVarcharArrayAssignTo(t *testing.T) {
 		{
 			src:      types.VarcharArray{Status: types.Null},
 			dst:      &stringSlice,
-            expected: ([]string)(nil),
+			expected: ([]string)(nil),
 		},
 	}
 

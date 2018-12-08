@@ -61,7 +61,7 @@ import (
 	"bytes"
 	"encoding/json"
 
-	"github.com/Ready-Stock/pgx/pgio"
+	"github.com/readystock/pgx/pgio"
 )
 
 type Close struct {

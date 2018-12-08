@@ -65,7 +65,7 @@ import (
 	"math/big"
 	"time"
 
-    "github.com/Ready-Stock/noah/db/util/arith"
+	"github.com/readystock/noah/db/util/arith"
 )
 
 const (

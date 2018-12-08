@@ -61,8 +61,8 @@ import (
 	"reflect"
 	"testing"
 
-    "github.com/Ready-Stock/noah/db/sql/types"
-    "github.com/Ready-Stock/noah/db/sql/types/testutil"
+	"github.com/readystock/noah/db/sql/types"
+	"github.com/readystock/noah/db/sql/types/testutil"
 )
 
 func TestOIDValueTranscode(t *testing.T) {
@@ -103,7 +103,7 @@ func TestOIDValueAssignTo(t *testing.T) {
 		expected interface{}
 	}{
 		{src: types.OIDValue{Uint: 42, Status: types.Present}, dst: &ui32, expected: uint32(42)},
-        {src: types.OIDValue{Status: types.Null}, dst: &pui32, expected: (*uint32)(nil)},
+		{src: types.OIDValue{Status: types.Null}, dst: &pui32, expected: (*uint32)(nil)},
 	}
 
 	for i, tt := range simpleTests {

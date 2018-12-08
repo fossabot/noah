@@ -64,8 +64,8 @@ import (
 	"math"
 	"strconv"
 
-    "github.com/Ready-Stock/noah/db/sql/pgio"
 	"github.com/pkg/errors"
+	"github.com/readystock/noah/db/sql/pgio"
 )
 
 type Int8 struct {

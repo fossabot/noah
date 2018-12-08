@@ -58,32 +58,32 @@
 package tree
 
 import (
-    "context"
-    "fmt"
-    "math"
-    "math/big"
-    "regexp"
-    "strings"
-    "time"
-    "unicode/utf8"
+	"context"
+	"fmt"
+	"math"
+	"math/big"
+	"regexp"
+	"strings"
+	"time"
+	"unicode/utf8"
 
-    "github.com/lib/pq/oid"
-    "github.com/pkg/errors"
+	"github.com/lib/pq/oid"
+	"github.com/pkg/errors"
 
-    "github.com/cockroachdb/apd"
+	"github.com/cockroachdb/apd"
 
-    "github.com/Ready-Stock/noah/db/sql/coltypes"
-    "github.com/Ready-Stock/noah/db/sql/lex"
-    "github.com/Ready-Stock/noah/db/sql/pgwire/pgerror"
-    "github.com/Ready-Stock/noah/db/sql/sem/types"
-    "github.com/Ready-Stock/noah/db/sql/sessiondata"
-    "github.com/Ready-Stock/noah/db/util/arith"
-    "github.com/Ready-Stock/noah/db/util/duration"
-    "github.com/Ready-Stock/noah/db/util/hlc"
-    "github.com/Ready-Stock/noah/db/util/json"
-    "github.com/Ready-Stock/noah/db/util/timeofday"
-    "github.com/Ready-Stock/noah/db/util/timeutil"
-    "github.com/Ready-Stock/noah/db/util/uuid"
+	"github.com/readystock/noah/db/sql/coltypes"
+	"github.com/readystock/noah/db/sql/lex"
+	"github.com/readystock/noah/db/sql/pgwire/pgerror"
+	"github.com/readystock/noah/db/sql/sem/types"
+	"github.com/readystock/noah/db/sql/sessiondata"
+	"github.com/readystock/noah/db/util/arith"
+	"github.com/readystock/noah/db/util/duration"
+	"github.com/readystock/noah/db/util/hlc"
+	"github.com/readystock/noah/db/util/json"
+	"github.com/readystock/noah/db/util/timeofday"
+	"github.com/readystock/noah/db/util/timeutil"
+	"github.com/readystock/noah/db/util/uuid"
 )
 
 var (
@@ -2535,7 +2535,7 @@ type EvalContext struct {
 	Sequence SequenceOperators
 
 	// Ths transaction in which the statement is executing.
-	tmpDec  apd.Decimal
+	tmpDec apd.Decimal
 
 	// TODO(mjibson): remove prepareOnly in favor of a 2-step prepare-exec solution
 	// that is also able to save the plan to skip work during the exec step.

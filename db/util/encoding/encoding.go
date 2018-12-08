@@ -58,25 +58,25 @@
 package encoding
 
 import (
-    "bytes"
-    "encoding/binary"
-    "encoding/hex"
-    "fmt"
-    "math"
-    "reflect"
-    "strconv"
-    "time"
-    "unicode"
-    "unicode/utf8"
-    "unsafe"
+	"bytes"
+	"encoding/binary"
+	"encoding/hex"
+	"fmt"
+	"math"
+	"reflect"
+	"strconv"
+	"time"
+	"unicode"
+	"unicode/utf8"
+	"unsafe"
 
-    "github.com/pkg/errors"
+	"github.com/pkg/errors"
 
-    "github.com/Ready-Stock/noah/db/util/duration"
-    "github.com/Ready-Stock/noah/db/util/ipaddr"
-    "github.com/Ready-Stock/noah/db/util/timeutil"
-    "github.com/Ready-Stock/noah/db/util/uuid"
-    "github.com/cockroachdb/apd"
+	"github.com/cockroachdb/apd"
+	"github.com/readystock/noah/db/util/duration"
+	"github.com/readystock/noah/db/util/ipaddr"
+	"github.com/readystock/noah/db/util/timeutil"
+	"github.com/readystock/noah/db/util/uuid"
 )
 
 const (
@@ -95,11 +95,11 @@ const (
 	// The gap between floatNaNDesc and bytesMarker was left for
 	// compatibility reasons.
 	bytesMarker          byte = 0x12
-    bytesDescMarker           = bytesMarker + 1
-    timeMarker                = bytesDescMarker + 1
-    durationBigNegMarker      = timeMarker + 1 // Only used for durations < MinInt64 nanos.
-    durationMarker            = durationBigNegMarker + 1
-    durationBigPosMarker      = durationMarker + 1 // Only used for durations > MaxInt64 nanos.
+	bytesDescMarker           = bytesMarker + 1
+	timeMarker                = bytesDescMarker + 1
+	durationBigNegMarker      = timeMarker + 1 // Only used for durations < MinInt64 nanos.
+	durationMarker            = durationBigNegMarker + 1
+	durationBigPosMarker      = durationMarker + 1 // Only used for durations > MaxInt64 nanos.
 
 	decimalNaN              = durationBigPosMarker + 1 // 24
 	decimalNegativeInfinity = decimalNaN + 1
@@ -1305,7 +1305,7 @@ func prettyPrintFirstValue(dir Direction, b []byte) ([]byte, string, error) {
 	case NotNull:
 		// The tag can be either encodedNotNull or encodedNotNullDesc. The
 		// latter can be an interleaved sentinel.
-        isNotNullDesc := b[0] == encodedNotNullDesc
+		isNotNullDesc := b[0] == encodedNotNullDesc
 		b, _ = DecodeIfNotNull(b)
 		if dir != Ascending && dir != Descending && isNotNullDesc {
 			// Unspecified direction (0 value) will default to '#' for the

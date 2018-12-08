@@ -59,13 +59,13 @@ package sql
 
 import (
 	"fmt"
-	"github.com/Ready-Stock/noah/db/sql/driver/npgx"
-	"github.com/Ready-Stock/noah/db/sql/pgwire/pgproto"
-	"github.com/Ready-Stock/noah/db/sql/plan"
-	"github.com/Ready-Stock/noah/db/sql/types"
-	"github.com/Ready-Stock/noah/db/util"
 	"github.com/ahmetb/go-linq"
 	"github.com/juju/errors"
+	"github.com/readystock/noah/db/sql/driver/npgx"
+	"github.com/readystock/noah/db/sql/pgwire/pgproto"
+	"github.com/readystock/noah/db/sql/plan"
+	"github.com/readystock/noah/db/sql/types"
+	"github.com/readystock/noah/db/util"
 )
 
 type executeResponse struct {
@@ -206,7 +206,7 @@ func (ex *connExecutor) PrepareTwoPhase() error {
 	}
 	errs := make([]error, 0)
 	for i := 0; i < count; i++ {
-		response := <- responses
+		response := <-responses
 		if response.Error != nil {
 			errs = append(errs, response.Error)
 		}
@@ -236,7 +236,7 @@ func (ex *connExecutor) CommitTwoPhase() error {
 	defer ex.nSync.Unlock()
 	errs := make([]error, 0)
 	for i := 0; i < count; i++ {
-		response := <- responses
+		response := <-responses
 		if response.Error != nil {
 			errs = append(errs, response.Error)
 		}
@@ -267,7 +267,7 @@ func (ex *connExecutor) RollbackTwoPhase() error {
 	defer ex.nSync.Unlock()
 	errs := make([]error, 0)
 	for i := 0; i < count; i++ {
-		response := <- responses
+		response := <-responses
 		if response.Error != nil {
 			errs = append(errs, response.Error)
 		}
@@ -298,7 +298,7 @@ func (ex *connExecutor) Commit() error {
 	defer ex.nSync.Unlock()
 	errs := make([]error, 0)
 	for i := 0; i < count; i++ {
-		response := <- responses
+		response := <-responses
 		if response.Error != nil {
 			errs = append(errs, response.Error)
 		}
@@ -329,7 +329,7 @@ func (ex *connExecutor) Rollback() error {
 	defer ex.nSync.Unlock()
 	errs := make([]error, 0)
 	for i := 0; i < count; i++ {
-		response := <- responses
+		response := <-responses
 		if response.Error != nil {
 			errs = append(errs, response.Error)
 		}

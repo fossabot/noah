@@ -58,7 +58,7 @@
 package sqlbase
 
 import (
-    "github.com/Ready-Stock/noah/db/sql/pgwire/pgerror"
+	"github.com/readystock/noah/db/sql/pgwire/pgerror"
 )
 
 const (

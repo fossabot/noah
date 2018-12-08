@@ -59,8 +59,8 @@ package api
 
 import (
 	"fmt"
-    "github.com/Ready-Stock/noah/db/system"
 	"github.com/kataras/iris"
+	"github.com/readystock/noah/db/system"
 	"net/http"
 )
 
@@ -70,7 +70,7 @@ func StartApp(sctx *system.SContext) {
 	app.Get("/nodes", func(ctx iris.Context) {
 		if nodes, err := sctx.Nodes.GetNodes(); err != nil {
 			ctx.StatusCode(500)
-			ctx.JSON(struct{
+			ctx.JSON(struct {
 				Error string
 			}{
 				Error: err.Error(),
@@ -84,7 +84,7 @@ func StartApp(sctx *system.SContext) {
 		node := system.NNode{}
 		if err := ctx.ReadJSON(&node); err != nil {
 			ctx.StatusCode(500)
-			ctx.JSON(struct{
+			ctx.JSON(struct {
 				Error string
 			}{
 				Error: err.Error(),
@@ -122,7 +122,6 @@ func StartApp(sctx *system.SContext) {
 	// http://localhost:8080/
 	// http://localhost:8080/mypath
 	srv.ListenAndServe() // same as app.Run(iris.Addr(":8080"))
-
 
 	// listen and serve on http://0.0.0.0:8080.
 	app.Run(iris.Addr(fmt.Sprintf(":%d", sctx.Flags.HTTPPort)))

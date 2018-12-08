@@ -60,8 +60,8 @@ package pgproto
 import (
 	"encoding/binary"
 
-	"github.com/Ready-Stock/pgx/pgio"
 	"github.com/pkg/errors"
+	"github.com/readystock/pgx/pgio"
 )
 
 const (

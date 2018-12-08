@@ -59,14 +59,14 @@ package pgwire
 
 import (
 	"fmt"
-	"github.com/Ready-Stock/noah/db/sql"
-	"github.com/Ready-Stock/noah/db/sql/oid"
-	"github.com/Ready-Stock/noah/db/sql/pgwire/pgproto"
-	"github.com/Ready-Stock/noah/db/sql/pgwire/pgwirebase"
-	"github.com/Ready-Stock/noah/db/sql/sessiondata"
-	"github.com/Ready-Stock/noah/db/sql/types"
-	nodes "github.com/Ready-Stock/pg_query_go/nodes"
 	"github.com/kataras/golog"
+	"github.com/readystock/noah/db/sql"
+	"github.com/readystock/noah/db/sql/oid"
+	"github.com/readystock/noah/db/sql/pgwire/pgproto"
+	"github.com/readystock/noah/db/sql/pgwire/pgwirebase"
+	"github.com/readystock/noah/db/sql/sessiondata"
+	"github.com/readystock/noah/db/sql/types"
+	nodes "github.com/readystock/pg_query_go/nodes"
 
 	// "github.com/cockroachdb/cockroach/pkg/sql/sqlbase"
 	"github.com/pkg/errors"

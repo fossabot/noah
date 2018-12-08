@@ -58,10 +58,10 @@
 package system
 
 import (
-    "flag"
-    "github.com/Ready-Stock/arctonyx"
-    "github.com/Ready-Stock/noah/db/util/snowflake"
-    "time"
+	"flag"
+	"github.com/readystock/arctonyx"
+	"github.com/readystock/noah/db/util/snowflake"
+	"time"
 )
 
 type baseContext struct {

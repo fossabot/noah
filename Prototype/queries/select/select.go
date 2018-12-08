@@ -6,16 +6,16 @@
  * You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
- *     
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express 
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
  * or implied. See the License for the specific language governing
  * permissions and limitations under the License.
  *
- * This application uses Open Source components. You can find the 
- * source code of their open source projects along with license 
- * information below. We acknowledge and are grateful to these 
+ * This application uses Open Source components. You can find the
+ * source code of their open source projects along with license
+ * information below. We acknowledge and are grateful to these
  * developers for their contributions to open source.
  *
  * Project: CockroachDB https://github.com/cockroachdb/cockroach
@@ -58,15 +58,15 @@
 package _select
 
 import (
-    "database/sql"
-    "errors"
-    "fmt"
-    "github.com/Ready-Stock/noah/Prototype/cluster"
-    "github.com/Ready-Stock/noah/Prototype/context"
-    data "github.com/Ready-Stock/noah/Prototype/datums"
-    pgq "github.com/Ready-Stock/pg_query_go"
-    "github.com/Ready-Stock/pg_query_go/nodes"
-    "strconv"
+	"database/sql"
+	"errors"
+	"fmt"
+	"github.com/readystock/noah/Prototype/cluster"
+	"github.com/readystock/noah/Prototype/context"
+	data "github.com/readystock/noah/Prototype/datums"
+	pgq "github.com/readystock/pg_query_go"
+	"github.com/readystock/pg_query_go/nodes"
+	"strconv"
 )
 
 type SelectStatement struct {
@@ -130,8 +130,6 @@ func getTargetNodeForSelect(stmt pg_query.SelectStmt) (*data.Node, error) {
 		}
 	}
 }
-
-
 
 func getAccountIDForQuery(exp *pg_query.Node) (*int, error) {
 	if exp == nil {
@@ -227,7 +225,7 @@ func getTablesFromJoin(join pg_query.JoinExpr) ([]string, error) {
 	parseJoinArg := func(node pg_query.Node) ([]string, error) {
 		switch arg := node.(type) {
 		case pg_query.RangeVar:
-			return []string{ *arg.Relname }, nil
+			return []string{*arg.Relname}, nil
 		case pg_query.JoinExpr:
 			return getTablesFromJoin(arg)
 		default:

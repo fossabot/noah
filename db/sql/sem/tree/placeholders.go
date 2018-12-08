@@ -58,14 +58,14 @@
 package tree
 
 import (
-    "bytes"
-    "fmt"
-    "sort"
-    "strings"
+	"bytes"
+	"fmt"
+	"sort"
+	"strings"
 
-    "github.com/Ready-Stock/noah/db/sql/pgwire/pgerror"
-    "github.com/Ready-Stock/noah/db/sql/sem/types"
-    "github.com/Ready-Stock/noah/db/util"
+	"github.com/readystock/noah/db/sql/pgwire/pgerror"
+	"github.com/readystock/noah/db/sql/sem/types"
+	"github.com/readystock/noah/db/util"
 )
 
 // PlaceholderTypes relates placeholder names to their resolved type.

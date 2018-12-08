@@ -60,8 +60,8 @@ package tree
 import (
 	"fmt"
 
-    "github.com/Ready-Stock/noah/db/sql/pgwire/pgerror"
-    "github.com/Ready-Stock/noah/db/sql/sessiondata"
+	"github.com/readystock/noah/db/sql/pgwire/pgerror"
+	"github.com/readystock/noah/db/sql/sessiondata"
 )
 
 // Function names are used in expressions in the FuncExpr node.

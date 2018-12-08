@@ -60,8 +60,8 @@ package types
 import (
 	"database/sql/driver"
 
-    "github.com/Ready-Stock/noah/db/sql/pgio"
 	"github.com/pkg/errors"
+	"github.com/readystock/noah/db/sql/pgio"
 )
 
 type Int4range struct {

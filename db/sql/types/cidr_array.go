@@ -58,11 +58,11 @@
 package types
 
 import (
-    "database/sql/driver"
-    "encoding/binary"
-    "github.com/Ready-Stock/noah/db/sql/pgio"
-    "github.com/pkg/errors"
-    "net"
+	"database/sql/driver"
+	"encoding/binary"
+	"github.com/pkg/errors"
+	"github.com/readystock/noah/db/sql/pgio"
+	"net"
 )
 
 type CIDRArray struct {

@@ -61,8 +61,8 @@ import (
 	"reflect"
 	"testing"
 
-    "github.com/Ready-Stock/noah/db/sql/types"
-    "github.com/Ready-Stock/noah/db/sql/types/testutil"
+	"github.com/readystock/noah/db/sql/types"
+	"github.com/readystock/noah/db/sql/types/testutil"
 )
 
 func TestEnumArrayTranscode(t *testing.T) {
@@ -120,7 +120,7 @@ func TestEnumArrayArraySet(t *testing.T) {
 				Status:     types.Present},
 		},
 		{
-            source: ([]string)(nil),
+			source: ([]string)(nil),
 			result: types.EnumArray{Status: types.Null},
 		},
 	}
@@ -169,7 +169,7 @@ func TestEnumArrayArrayAssignTo(t *testing.T) {
 		{
 			src:      types.EnumArray{Status: types.Null},
 			dst:      &stringSlice,
-            expected: ([]string)(nil),
+			expected: ([]string)(nil),
 		},
 	}
 

@@ -57,7 +57,7 @@
 package npgx
 
 import (
-    "github.com/Ready-Stock/noah/db/sql/types"
+	"github.com/readystock/noah/db/sql/types"
 )
 
 var (

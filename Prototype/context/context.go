@@ -58,12 +58,12 @@
 package context
 
 import (
-    "database/sql"
-    "fmt"
-    "github.com/Ready-Stock/noah/Prototype/cluster"
-    "github.com/kataras/go-errors"
-    _ "github.com/lib/pq"
-    "sync"
+	"database/sql"
+	"fmt"
+	"github.com/kataras/go-errors"
+	_ "github.com/lib/pq"
+	"github.com/readystock/noah/Prototype/cluster"
+	"sync"
 )
 
 type TxnState string
@@ -176,18 +176,18 @@ func (ctx *SessionContext) DistributeQuery(query string, nodes ...int) Distribut
 	}
 	wg.Wait()
 	for i := 0; i < len(nodes); i++ {
-		node := <- updated_nodes
+		node := <-updated_nodes
 		ctx.Nodes[node.NodeID] = node
 
-		err := <- errs
+		err := <-errs
 		if err != nil {
 			response.Errors = append(response.Errors, err)
 		}
 
-		result := <- results
+		result := <-results
 		response.Results = append(response.Results, result)
 
-		rows := <- returned_rows
+		rows := <-returned_rows
 
 		if rows != nil {
 
@@ -252,12 +252,12 @@ func (ctx *SessionContext) DoTxnOnAllNodes(action TxnAction, nodes ...int) Distr
 	}
 	wg.Wait()
 	for i := 0; i < len(nodes); i++ {
-		err := <- errs
+		err := <-errs
 		if err != nil {
 			response.Errors = append(response.Errors, err)
 		}
 
-		result := <- results
+		result := <-results
 		response.Results = append(response.Results, result)
 	}
 	response.Success = len(response.Errors) == 0

@@ -58,12 +58,12 @@
 package types_test
 
 import (
-    "reflect"
-    "testing"
+	"reflect"
+	"testing"
 
-    "github.com/Ready-Stock/noah/db/sql/types"
-    "github.com/Ready-Stock/noah/db/sql/types/testutil"
-    "github.com/Ready-Stock/pgx"
+	"github.com/readystock/noah/db/sql/types"
+	"github.com/readystock/noah/db/sql/types/testutil"
+	"github.com/readystock/pgx"
 )
 
 func TestHstoreArrayTranscode(t *testing.T) {
@@ -225,7 +225,7 @@ func TestHstoreArrayAssignTo(t *testing.T) {
 			},
 			dst:      &m,
 			expected: []map[string]string{{"foo": "bar"}}},
-        {src: types.HstoreArray{Status: types.Null}, dst: &m, expected: ([]map[string]string)(nil)},
+		{src: types.HstoreArray{Status: types.Null}, dst: &m, expected: ([]map[string]string)(nil)},
 	}
 
 	for i, tt := range simpleTests {

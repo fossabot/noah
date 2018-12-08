@@ -58,9 +58,8 @@
 package pgproto_test
 
 import (
-    "github.com/Ready-Stock/noah/db/sql/pgwire/pgproto"
+	"github.com/readystock/noah/db/sql/pgwire/pgproto"
 	"testing"
-
 )
 
 func TestBackendReceiveInterrupted(t *testing.T) {

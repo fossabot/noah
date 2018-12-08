@@ -60,7 +60,7 @@
 package tree
 
 import (
-    "github.com/Ready-Stock/noah/db/sql/lex"
+	"github.com/readystock/noah/db/sql/lex"
 )
 
 // ShowVar represents a SHOW statement.

@@ -58,7 +58,7 @@
 package npgx
 
 import (
-	"github.com/Ready-Stock/noah/db/sql/types"
+	"github.com/readystock/noah/db/sql/types"
 	"math"
 	"reflect"
 	"time"
@@ -81,7 +81,6 @@ type FieldDescription struct {
 	Modifier        uint32
 	FormatCode      int16
 }
-
 
 func (fd FieldDescription) Length() (int64, bool) {
 	switch fd.DataType {

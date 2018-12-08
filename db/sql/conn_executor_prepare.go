@@ -59,8 +59,8 @@ package sql
 
 import (
 	"fmt"
-    "github.com/Ready-Stock/noah/db/sql/pgwire/pgerror"
-	nodes "github.com/Ready-Stock/pg_query_go/nodes"
+	"github.com/readystock/noah/db/sql/pgwire/pgerror"
+	nodes "github.com/readystock/pg_query_go/nodes"
 )
 
 func (ex *connExecutor) execPrepare(parseCmd PrepareStmt) error {

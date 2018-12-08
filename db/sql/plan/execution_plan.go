@@ -58,7 +58,7 @@
 package plan
 
 import (
-    "github.com/Ready-Stock/noah/db/system"
+	"github.com/readystock/noah/db/system"
 )
 
 type NodeExecutionPlan struct {
@@ -68,5 +68,5 @@ type NodeExecutionPlan struct {
 }
 
 type NodeBeginTransaction struct {
-	Node          system.NNode
+	Node system.NNode
 }

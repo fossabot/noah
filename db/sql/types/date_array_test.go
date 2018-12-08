@@ -62,8 +62,8 @@ import (
 	"testing"
 	"time"
 
-    "github.com/Ready-Stock/noah/db/sql/types"
-    "github.com/Ready-Stock/noah/db/sql/types/testutil"
+	"github.com/readystock/noah/db/sql/types"
+	"github.com/readystock/noah/db/sql/types/testutil"
 )
 
 func TestDateArrayTranscode(t *testing.T) {
@@ -123,7 +123,7 @@ func TestDateArraySet(t *testing.T) {
 				Status:     types.Present},
 		},
 		{
-            source: ([]time.Time)(nil),
+			source: ([]time.Time)(nil),
 			result: types.DateArray{Status: types.Null},
 		},
 	}
@@ -161,7 +161,7 @@ func TestDateArrayAssignTo(t *testing.T) {
 		{
 			src:      types.DateArray{Status: types.Null},
 			dst:      &timeSlice,
-            expected: ([]time.Time)(nil),
+			expected: ([]time.Time)(nil),
 		},
 	}
 

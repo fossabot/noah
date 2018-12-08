@@ -58,11 +58,11 @@
 package sql
 
 import (
-	"github.com/Ready-Stock/noah/db/sql/pgwire/pgproto"
-	"github.com/Ready-Stock/noah/db/sql/plan"
-	"github.com/Ready-Stock/noah/db/sql/types"
-	"github.com/Ready-Stock/noah/db/system"
-	"github.com/Ready-Stock/pg_query_go/nodes"
+	"github.com/readystock/noah/db/sql/pgwire/pgproto"
+	"github.com/readystock/noah/db/sql/plan"
+	"github.com/readystock/noah/db/sql/types"
+	"github.com/readystock/noah/db/system"
+	"github.com/readystock/pg_query_go/nodes"
 	"strings"
 )
 

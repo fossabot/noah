@@ -58,8 +58,8 @@
 package sessiondata
 
 import (
-    "github.com/Ready-Stock/noah/db/sql/pgwire/pgerror"
-    "github.com/Ready-Stock/noah/db/util/syncutil"
+	"github.com/readystock/noah/db/sql/pgwire/pgerror"
+	"github.com/readystock/noah/db/util/syncutil"
 )
 
 // SequenceState stores session-scoped state used by sequence builtins.

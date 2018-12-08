@@ -61,7 +61,7 @@ import (
 	"reflect"
 	"testing"
 
-    "github.com/Ready-Stock/noah/db/sql/types"
+	"github.com/readystock/noah/db/sql/types"
 )
 
 func TestParseUntypedTextArray(t *testing.T) {

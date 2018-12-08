@@ -61,7 +61,7 @@ import (
 	"bytes"
 	"fmt"
 
-    "github.com/Ready-Stock/noah/db/sql/lex"
+	"github.com/readystock/noah/db/sql/lex"
 )
 
 // TString represents a STRING, CHAR or VARCHAR type.

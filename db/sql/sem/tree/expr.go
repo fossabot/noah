@@ -58,13 +58,13 @@
 package tree
 
 import (
-    "bytes"
-    "fmt"
+	"bytes"
+	"fmt"
 
-    "github.com/Ready-Stock/noah/db/sql/coltypes"
-    "github.com/Ready-Stock/noah/db/sql/lex"
-    "github.com/Ready-Stock/noah/db/sql/sem/types"
-    "github.com/Ready-Stock/noah/db/util"
+	"github.com/readystock/noah/db/sql/coltypes"
+	"github.com/readystock/noah/db/sql/lex"
+	"github.com/readystock/noah/db/sql/sem/types"
+	"github.com/readystock/noah/db/util"
 )
 
 // Expr represents an expression.

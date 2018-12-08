@@ -58,7 +58,7 @@
 package tree
 
 import (
-    "github.com/Ready-Stock/noah/db/sql/sem/types"
+	"github.com/readystock/noah/db/sql/sem/types"
 )
 
 // VarName occurs inside scalar expressions.

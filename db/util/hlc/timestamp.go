@@ -62,7 +62,7 @@ import (
 	"math"
 	"time"
 
-    "github.com/Ready-Stock/noah/db/util/timeutil"
+	"github.com/readystock/noah/db/util/timeutil"
 )
 
 // Timestamp constant values.

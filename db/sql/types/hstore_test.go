@@ -61,8 +61,8 @@ import (
 	"reflect"
 	"testing"
 
-    "github.com/Ready-Stock/noah/db/sql/types"
-    "github.com/Ready-Stock/noah/db/sql/types/testutil"
+	"github.com/readystock/noah/db/sql/types"
+	"github.com/readystock/noah/db/sql/types/testutil"
 )
 
 func TestHstoreTranscode(t *testing.T) {
@@ -150,7 +150,7 @@ func TestHstoreAssignTo(t *testing.T) {
 		expected map[string]string
 	}{
 		{src: types.Hstore{Map: map[string]types.Text{"foo": {String: "bar", Status: types.Present}}, Status: types.Present}, dst: &m, expected: map[string]string{"foo": "bar"}},
-        {src: types.Hstore{Status: types.Null}, dst: &m, expected: (map[string]string)(nil)},
+		{src: types.Hstore{Status: types.Null}, dst: &m, expected: (map[string]string)(nil)},
 	}
 
 	for i, tt := range simpleTests {

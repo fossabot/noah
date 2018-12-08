@@ -62,13 +62,13 @@
 package hlc
 
 import (
-    "fmt"
-    "sync/atomic"
-    "time"
+	"fmt"
+	"sync/atomic"
+	"time"
 
-    "github.com/Ready-Stock/noah/db/util/syncutil"
-    "github.com/Ready-Stock/noah/db/util/timeutil"
-    "github.com/pkg/errors"
+	"github.com/pkg/errors"
+	"github.com/readystock/noah/db/util/syncutil"
+	"github.com/readystock/noah/db/util/timeutil"
 )
 
 // TODO(Tobias): Figure out if it would make sense to save some

@@ -58,7 +58,7 @@
 package humanizeutil_test
 
 import (
-    "github.com/Ready-Stock/noah/db/util/humanizeutil"
+	"github.com/readystock/noah/db/util/humanizeutil"
 	"math"
 	"testing"
 

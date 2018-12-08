@@ -59,15 +59,15 @@ package sql
 
 import (
 	"fmt"
-	"github.com/Ready-Stock/noah/db/sql/driver/npgx"
-	"github.com/Ready-Stock/noah/db/sql/pgwire/pgerror"
-	"github.com/Ready-Stock/noah/db/system"
-	"github.com/Ready-Stock/noah/db/util/fsm"
-	nodes "github.com/Ready-Stock/pg_query_go/nodes"
 	"github.com/kataras/golog"
+	"github.com/readystock/noah/db/sql/driver/npgx"
+	"github.com/readystock/noah/db/sql/pgwire/pgerror"
+	"github.com/readystock/noah/db/system"
+	"github.com/readystock/noah/db/util/fsm"
+	nodes "github.com/readystock/pg_query_go/nodes"
 	"sync"
 
-	// "github.com/Ready-Stock/pgx"
+	// "github.com/readystock/pgx"
 	"io"
 )
 

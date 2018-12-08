@@ -62,8 +62,8 @@ import (
 	"encoding/binary"
 	"strconv"
 
-    "github.com/Ready-Stock/noah/db/sql/pgio"
 	"github.com/pkg/errors"
+	"github.com/readystock/noah/db/sql/pgio"
 )
 
 // OID (Object Identifier Type) is, according to
