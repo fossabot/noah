@@ -1,3 +1,5 @@
+// +build 386 amd64
+
 /*
  * Copyright (c) 2018 Ready Stock
  *
@@ -54,8 +56,6 @@
  * Copyright 2018  'pq' Contributors Portions Copyright (C) 2011 Blake Mizerany
  * License https://github.com/lib/pq/blob/master/LICENSE.md
  */
-
-// +build 386 amd64
 
 package encoding
 
