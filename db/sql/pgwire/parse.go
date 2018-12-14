@@ -62,6 +62,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/readystock/noah/db/sql"
 	"github.com/readystock/noah/db/sql/oid"
+	"github.com/readystock/noah/db/sql/pgwire/arguments"
 	"github.com/readystock/noah/db/sql/pgwire/pgerror"
 	"github.com/readystock/noah/db/sql/pgwire/pgwirebase"
 	"github.com/readystock/pg_query_go"
@@ -114,6 +115,14 @@ func (c *conn) handleParse(buf *pgwirebase.ReadBuffer) error {
 		if stmt, ok := p.Statements[0].(nodes.RawStmt).Stmt.(nodes.Stmt); !ok {
 			return c.stmtBuf.Push(sql.SendError{Err: errors.Errorf("error, cannot currently handle statements of type: %s, json: %s", reflect.TypeOf(p.Statements[0].(nodes.RawStmt).Stmt).Name(), string(j))})
 		} else {
+			// If the number of arguments so far is 0, we want to check with our own function
+			// to double check.
+			if numQArgTypes == 0 {
+				if arguments.GetArguments(stmt) > 0 {
+
+				}
+			}
+
 			return c.stmtBuf.Push(sql.PrepareStmt{
 				Name:         name,
 				RawTypeHints: inTypeHints,

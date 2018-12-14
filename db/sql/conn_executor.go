@@ -237,7 +237,7 @@ func (ex *connExecutor) run() (err error) {
 			ex.Warn("found null command, advancing 1")
 			ex.stmtBuf.advanceOne()
 		}
-		var ev fsm.Event
+		// var ev fsm.Event
 		var res ResultBase
 		var payload fsm.EventPayload
 
@@ -298,7 +298,7 @@ func (ex *connExecutor) run() (err error) {
 			res = ex.clientComm.CreateDeleteResult(pos)
 		case SendError:
 			res = ex.clientComm.CreateErrorResult(pos)
-			ev = eventNonRetriableErr{IsCommit: fsm.False}
+			// ev = eventNonRetriableErr{IsCommit: fsm.False}
 			payload = eventNonRetriableErrPayload{err: tcmd.Err}
 		case Sync:
 			// Note that the Sync result will flush results to the network connection.
@@ -318,18 +318,18 @@ func (ex *connExecutor) run() (err error) {
 			panic(fmt.Sprintf("unsupported command type: %T", cmd))
 		}
 
-		if ev != nil {
-			var err error
-			advInfo, err = ex.txnStateTransitionsApplyWrapper(ev, payload, res, pos)
-			if err != nil {
-				return err
-			}
-		} else {
-			// If no event was generated synthesize an advance code.
-			advInfo = advanceInfo{
-				code: advanceOne,
-			}
-		}
+		// if ev != nil {
+		// 	var err error
+		// 	advInfo, err = ex.txnStateTransitionsApplyWrapper(ev, payload, res, pos)
+		// 	if err != nil {
+		// 		return err
+		// 	}
+		// } else {
+		// 	// If no event was generated synthesize an advance code.
+		// 	advInfo = advanceInfo{
+		// 		code: advanceOne,
+		// 	}
+		// }
 
 		if err != nil {
 			res.CloseWithErr(err)
