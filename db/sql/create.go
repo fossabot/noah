@@ -175,7 +175,7 @@ func (stmt *CreateStatement) compilePlan(ex *connExecutor, nodes []system.NNode)
 }
 
 func (stmt *CreateStatement) handleValidation(ex *connExecutor, table *system.NTable) error {
-	if table.TableType == system.NTableType_Account {
+	if table.TableType == system.NTableType_ACCOUNT {
 		if accountsTable, err := ex.SystemContext.Schema.GetAccountsTable(); err != nil {
 			return err
 		} else if accountsTable != nil {
@@ -231,7 +231,7 @@ func (stmt *CreateStatement) handleColumns(ex *connExecutor, table *system.NTabl
 		}
 	}
 
-	if !primaryKeyFound && table.TableType == system.NTableType_Account {
+	if !primaryKeyFound && table.TableType == system.NTableType_ACCOUNT {
 		return errors.New("cannot create an account table without a primary key")
 	}
 
@@ -242,11 +242,11 @@ func (stmt *CreateStatement) handleTableType(ex *connExecutor, table *system.NTa
 	if stmt.Statement.Tablespacename != nil {
 		switch strings.ToLower(*stmt.Statement.Tablespacename) {
 		case "global": // Table has the same data on all shards
-			table.TableType = system.NTableType_Global
+			table.TableType = system.NTableType_GLOBAL
 		case "shard": // Table is sharded by shard column
-			table.TableType = system.NTableType_Shard
+			table.TableType = system.NTableType_SHARD
 		case "account": // Table contains all of the records of accounts for cluster
-			table.TableType = system.NTableType_Account
+			table.TableType = system.NTableType_ACCOUNT
 		default: // Other
 			return ErrTablespaceNotSpecified
 		}

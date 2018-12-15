@@ -10,6 +10,12 @@ message EmptyResponse {
 
 }
 
+enum NNodeStatus {
+    NONE = 0;
+
+    STABLE = 10;
+}
+
 message NNode {
     uint64 node_id = 1;
     string address = 2;

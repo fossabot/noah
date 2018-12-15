@@ -60,6 +60,7 @@ package main
 import (
 	"github.com/kataras/golog"
 	"github.com/readystock/noah/api"
+	"github.com/readystock/noah/cmd"
 	"github.com/readystock/noah/db/coordinator"
 	"github.com/readystock/noah/db/system"
 	"github.com/sirupsen/logrus"
@@ -81,7 +82,8 @@ var (
 )
 
 func main() {
-	StartCoordinator()
+	cmd.Execute()
+	//StartCoordinator()
 }
 
 func StartCoordinator() {

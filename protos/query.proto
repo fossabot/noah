@@ -1,0 +1,9 @@
+syntax = "proto3";
+
+package system;
+
+enum NQueryType {
+    GLOBAL = 0;
+    SHARD = 1;
+    MULTI_SHARD = 2;
+}

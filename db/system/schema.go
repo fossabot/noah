@@ -81,8 +81,7 @@ func (ctx *SSchema) CreateTable(table NTable) error {
 	if err != nil {
 		return err
 	}
-	ctx.db.Set([]byte(fmt.Sprintf("%s%s", tablesPath, strings.ToLower(table.TableName))), b)
-	return nil
+	return ctx.db.Set([]byte(fmt.Sprintf("%s%s", tablesPath, strings.ToLower(table.TableName))), b)
 }
 
 func (ctx *SSchema) GetTable(tableName string) (*NTable, error) {
@@ -124,7 +123,7 @@ func (ctx *SSchema) GetAccountsTable() (*NTable, error) {
 		return nil, err
 	}
 	table := linq.From(tables).FirstWithT(func(t NTable) bool {
-		return t.TableType == NTableType_Account
+		return t.TableType == NTableType_ACCOUNT
 	}).(NTable)
 	return &table, nil
 }

@@ -57,11 +57,36 @@
 
 package system
 
+import (
+	"fmt"
+)
+
 const (
 	accountsPath         = "/accounts/"
 	accountsNodesPath    = "/accounts_nodes/"
-	nodesPath			 = "/nodes/"
-	tablesPath           = "/tables/"
+	nodesPath            = "/nodes/"
+	tablesPath           = "/schema/tables/"
+	viewsPath            = "/schema/views/"
 	settingsExternalPath = "/settings/public/"
 	settingsInternalPath = "/settings/internal/"
 )
+
+func getAccountsPath() []byte {
+	return []byte(accountsPath)
+}
+
+func getAccountPath(id uint64) []byte {
+	return []byte(fmt.Sprintf("%s%d", accountsPath, id))
+}
+
+func getAccountsNodesPath() []byte {
+	return []byte(accountsNodesPath)
+}
+
+func getAccountsNodesAccountPath(accountId uint64) []byte {
+	return []byte(fmt.Sprintf("%s%d/", accountsNodesPath, accountId))
+}
+
+func getAccountsNodesAccountNodePath(accountId, nodeId uint64) []byte {
+	return []byte(fmt.Sprintf("%s%d/%d", accountsNodesPath, accountId, nodeId))
+}

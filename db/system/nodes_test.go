@@ -69,7 +69,7 @@ func TestBaseContext_GetNodes(t *testing.T) {
 		return
 	}
 
-	n, err := sctx.GetNode(1)
+	n, err := sctx.Nodes.GetNode(1)
 	if err != nil {
 		t.Error(err)
 		t.Fail()

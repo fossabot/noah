@@ -97,7 +97,7 @@ func (stmt *SelectStatement) getTargetNodes(ex *connExecutor) ([]system.NNode, e
 		if len(ex.nodes) > 0 {
 			for id := range ex.nodes {
 				node, err := ex.SystemContext.Nodes.GetNode(id)
-				return []system.NNode{node}, err
+				return []system.NNode{*node}, err
 			}
 		} else {
 			nodes, err := ex.SystemContext.Nodes.GetLiveNodes(system.AllNodes)
@@ -111,7 +111,7 @@ func (stmt *SelectStatement) getTargetNodes(ex *connExecutor) ([]system.NNode, e
 
 	// Check to see if all of the tables are global or shard. If its a global table query it can be
 	// directed to any node in the cluster.
-	tables := stmt.getTables()
+	//tables := stmt.getTables()
 
 	accounts, err := stmt.getAccountIDs()
 	if err != nil {

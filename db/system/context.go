@@ -77,6 +77,7 @@ type SContext struct {
 	Pool      *SPool
 	Nodes     *SNode
 	Sequences *SSequence
+	Query     *SQuery
 	Flags     SFlags
 }
 
@@ -87,7 +88,7 @@ type SFlags struct {
 	LogLevel      string
 }
 
-func NewSystemContext() (*SContext, error) {
+func NewSystemContext(dataDirectory, listenAddr, raftAddr, joinAddr string) (*SContext, error) {
 	flag.Parse()
 	db, err := arctonyx.CreateStore("data", ":5431", ":5430", "")
 	if err != nil {
@@ -113,6 +114,7 @@ func NewSystemContext() (*SContext, error) {
 	schema := SSchema(base)
 	sequences := SSequence(base)
 	nodes := SNode(base)
+	query := SQuery(base)
 	pool := SPool{baseContext: &base}
 	sctx.Settings = &settings
 	sctx.Accounts = &accounts
@@ -120,6 +122,7 @@ func NewSystemContext() (*SContext, error) {
 	sctx.Pool = &pool
 	sctx.Nodes = &nodes
 	sctx.Sequences = &sequences
+	sctx.Query = &query
 	return &sctx, nil
 }
 

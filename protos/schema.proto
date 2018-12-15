@@ -3,9 +3,9 @@ syntax = "proto3";
 package system;
 
 enum NTableType {
-    Global = 0;
-    Shard = 1;
-    Account = 2;
+    GLOBAL = 0;
+    SHARD = 1;
+    ACCOUNT = 2;
 }
 
 message NTable {

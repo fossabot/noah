@@ -108,15 +108,13 @@ func (ctx *SNode) GetLiveNodes(scope NodeScope) (n []NNode, e error) {
 	return n, e
 }
 
-func (ctx *SNode) GetNode(nodeId uint64) (node NNode, e error) {
+func (ctx *SNode) GetNode(nodeId uint64) (node *NNode, e error) {
 	value, err := ctx.db.Get([]byte(fmt.Sprintf("%s%d", nodesPath, nodeId)))
 	if err != nil {
-		return node, err
+		return nil, err
 	}
-	if err := proto.Unmarshal(value, &node); err != nil {
-		return node, err
-	}
-	return node, nil
+	err = proto.Unmarshal(value, node)
+	return node, err
 }
 
 func (ctx *SNode) AddNode(node NNode) error {

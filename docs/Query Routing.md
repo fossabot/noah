@@ -21,6 +21,17 @@ The query above targets only 1 global table. Since the users table will be ident
 on all database servers this query can be served by any node. This query is also safe, the results
 returned by this query will be the same regardless of the node that serves it.
 
+Default prostgres tables are also considered global. So certain SQL drivers that query OIDs or other
+data from postgres tables can still get the data they need.
+
+![alt text](/docs/images/OID_Query_Diagram.png "OID Diagram")
+
+Because of this a lot of the types will be converted to a different type once Noah goes to
+concatenate the data. For example; a `CITEXT` type would be converted to the OID of `TEXT`.
+This may cause different issues with the actual driver as well if Noah returns the wrong type for an
+object. But it will also make sure that all of the data returned from Noah will have a static OID 
+that will be the same on every instance of postgres.
+
 #### Targets only sharded tables
 ```postgresql
 SELECT products.id FROM products;
@@ -35,5 +46,14 @@ any query to be accepted by the coordinator.
 ```postgresql
 SELECT products.id FROM products WHERE account_id = 12345;
 ```
-This is the easiest query for Noah to handle, because it targets a single account ID and is a sharded
-table
+This is the easiest query for Noah to handle, because it targets a single account ID and is a 
+sharded table. Noah will lookup that account ID and find out which nodes have that data and send the
+query to one of them.
+
+#### Targets global and sharded tables
+```postgresql
+SELECT products.id FROM products INNER JOIN users ON users.id = products.created_by WHERE products.account_id = 12345;
+```
+It's very similar when joining with a global table. Because we are still only looking at data for a
+single account ID and global tables are identical on all nodes, we can still just choose a node with
+that account's data and send the query through without modification.

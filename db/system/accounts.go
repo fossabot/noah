@@ -58,20 +58,24 @@
 package system
 
 import (
-	"fmt"
 	"github.com/ahmetb/go-linq"
 	"github.com/golang/protobuf/proto"
 	"github.com/kataras/go-errors"
 )
 
-const (
-	AccountNodesPath = "/account_nodes/%d/" // `/account_nodes/0000/0000`
-)
-
 type SAccounts baseContext
 
+func (ctx *SAccounts) GetAccount(accountId uint64) (account *NAccount, err error) {
+	accountBytes, err := ctx.db.Get(getAccountPath(accountId))
+	if err != nil {
+		return nil, err
+	}
+	err = proto.Unmarshal(accountBytes, account)
+	return account, err
+}
+
 func (ctx *SAccounts) GetAccounts() (accounts []NAccount, err error) {
-	accountsBytes, err := ctx.db.GetPrefix([]byte(accountsPath))
+	accountsBytes, err := ctx.db.GetPrefix(getAccountsPath())
 	if err != nil {
 		return nil, err
 	}
@@ -123,16 +127,16 @@ func (ctx *SAccounts) CreateAccount() (*NAccount, []NNode, error) {
 	if int64(len(liveNodes)) == *replicationFactor {
 		accountNodes = liveNodes
 		for i := 0; i < len(liveNodes); i++ {
-			err = ctx.db.Set([]byte(fmt.Sprintf("%s%d/%d", accountsNodesPath, accountId, accountNodes[i].NodeId)), []byte{})
+			err = ctx.db.Set(getAccountsNodesAccountNodePath(*accountId, accountNodes[i].NodeId), []byte{})
 			if err != nil {
 				return nil, nil, err
 			}
 		}
 	} else {
 		for i := uint64(0); i < uint64(*replicationFactor); i++ {
-			accountNodes[i] = liveNodes[(*accountId + (i * uint64(*replicationFactor))) % uint64(len(nodes))] // This math takes the account id and distributes it in the cluster to pick a node
+			accountNodes[i] = liveNodes[(*accountId+(i*uint64(*replicationFactor)))%uint64(len(nodes))] // This math takes the account id and distributes it in the cluster to pick a node
 			// TODO (elliotcourant) if the replication factor is > 1 and at least 1 of these sets fail then it could mess up the records of what nodes host what account
-			err = ctx.db.Set([]byte(fmt.Sprintf("%s%d/%d", accountsNodesPath, accountId, accountNodes[i].NodeId)), []byte{})
+			err = ctx.db.Set(getAccountsNodesAccountNodePath(*accountId, accountNodes[i].NodeId), []byte{})
 			if err != nil {
 				return nil, nil, err
 			}
@@ -140,14 +144,14 @@ func (ctx *SAccounts) CreateAccount() (*NAccount, []NNode, error) {
 	}
 
 	account := &NAccount{
-		AccountId:*accountId,
+		AccountId: *accountId,
 	}
 	b, err := proto.Marshal(account)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	err = ctx.db.Set([]byte(fmt.Sprintf("%s%d", accountsPath, accountId)), b)
+	err = ctx.db.Set(getAccountsNodesAccountPath(*accountId), b)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -155,7 +159,7 @@ func (ctx *SAccounts) CreateAccount() (*NAccount, []NNode, error) {
 }
 
 func (ctx *SAccounts) GetNodesForAccount(accountId uint64) (nodes []NNode, err error) {
-	nodeBytes, err := ctx.db.GetPrefix([]byte(fmt.Sprintf("%s%d", accountsNodesPath, accountId)))
+	nodeBytes, err := ctx.db.GetPrefix(getAccountsNodesAccountPath(accountId))
 	if err != nil {
 		return nil, err
 	}
