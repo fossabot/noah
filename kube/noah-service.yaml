@@ -1,0 +1,17 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: noah
+  namespace: default
+  labels:
+    app: noah
+spec:
+  ports:
+    - protocol: TCP
+      port: 5433
+      targetPort: 5433
+  selector:
+    app: noah
+  clusterIP: None
+  type: ClusterIP
+  sessionAffinity: None
