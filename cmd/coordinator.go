@@ -30,7 +30,7 @@ var (
 func init() {
 	rootCmd.Flags().IntVar(&PostgresPort, "postgres-port", 5433, "Port that will accept PostgreSQL connections.")
 	rootCmd.Flags().IntVar(&RaftPort, "raft-port", 5434, "Port that will be used for Noah's raft protocol.")
-	rootCmd.Flags().StringVar(&DataDirectory, "data-dir", "data", "Directory that will be used for Noah's key value store.")
+	rootCmd.Flags().StringVar(&DataDirectory, "data-dir", "data", "Directory that will be used for Noah's key value store. If no directory is specified then an in-memory store will be used.")
 	rootCmd.Flags().StringVar(&JoinAddr, "join", "", "The address of another node in a cluster to join.")
 }
 
