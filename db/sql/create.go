@@ -60,6 +60,7 @@ package sql
 import (
 	"github.com/ahmetb/go-linq"
 	"github.com/juju/errors"
+	"github.com/readystock/golog"
 	"github.com/readystock/noah/db/sql/plan"
 	"github.com/readystock/noah/db/system"
 	"github.com/readystock/pg_query_go/nodes"
@@ -123,6 +124,8 @@ func (stmt *CreateStatement) getTargetNodes(ex *connExecutor) ([]system.NNode, e
 		return node.IsAlive && node.ReplicaOf == 0
 	})
 
+	// Schema changes can only be made when all (non-replica) nodes are alive, if any nodes are
+	// unavailable then the schema change will be rejected to ensure consistency.
 	if liveNodes != len(allNodes) {
 		return nil, ErrNotEnoughNodesAvailable
 	}
@@ -209,7 +212,7 @@ func (stmt *CreateStatement) handleColumns(ex *connExecutor, table *system.NTabl
 				columnDefinition.TypeName.Names.Items != nil &&
 				len(columnDefinition.TypeName.Names.Items) > 0 {
 				columnType := columnDefinition.TypeName.Names.Items[len(columnDefinition.TypeName.Names.Items)-1].(pg_query.String) // The last type name
-				ex.Debug("Processing column [%s] type [%s]", *columnDefinition.Colname, strings.ToLower(columnType.Str))
+				golog.Verbosef("Processing column [%s] type [%s]", *columnDefinition.Colname, strings.ToLower(columnType.Str))
 				// This switch statement will handle any custom column types that we would like.
 				switch strings.ToLower(columnType.Str) {
 				case "serial": // Emulate 32 bit sequence
@@ -241,11 +244,11 @@ func (stmt *CreateStatement) handleColumns(ex *connExecutor, table *system.NTabl
 func (stmt *CreateStatement) handleTableType(ex *connExecutor, table *system.NTable) error {
 	if stmt.Statement.Tablespacename != nil {
 		switch strings.ToLower(*stmt.Statement.Tablespacename) {
-		case "global": // Table has the same data on all shards
+		case "noah.global": // Table has the same data on all shards
 			table.TableType = system.NTableType_GLOBAL
-		case "shard": // Table is sharded by shard column
+		case "noah.shard": // Table is sharded by shard column
 			table.TableType = system.NTableType_SHARD
-		case "account": // Table contains all of the records of accounts for cluster
+		case "noah.account": // Table contains all of the records of accounts for cluster
 			table.TableType = system.NTableType_ACCOUNT
 		default: // Other
 			return ErrTablespaceNotSpecified
