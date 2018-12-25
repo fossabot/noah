@@ -88,9 +88,9 @@ type SFlags struct {
 	LogLevel      string
 }
 
-func NewSystemContext(dataDirectory, listenAddr, raftAddr, joinAddr string) (*SContext, error) {
+func NewSystemContext(dataDirectory, listenAddr, joinAddr string) (*SContext, error) {
 	flag.Parse()
-	db, err := arctonyx.CreateStore("data", ":5431", ":5430", "")
+	db, err := arctonyx.CreateStore(dataDirectory, listenAddr, joinAddr)
 	if err != nil {
 		return nil, err
 	}

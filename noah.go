@@ -58,62 +58,9 @@
 package main
 
 import (
-	"github.com/kataras/golog"
-	"github.com/readystock/noah/api"
 	"github.com/readystock/noah/cmd"
-	"github.com/readystock/noah/db/coordinator"
-	"github.com/readystock/noah/db/system"
-	"github.com/sirupsen/logrus"
-	"os"
-	"os/signal"
-	"syscall"
-)
-
-type ServiceType string
-
-const (
-	Coordinator ServiceType = "coordinator"
-	Tablet      ServiceType = "tablet"
-)
-
-var (
-	systemContext *system.SContext
-	ch            chan os.Signal
 )
 
 func main() {
 	cmd.Execute()
-	//StartCoordinator()
-}
-
-func StartCoordinator() {
-	sctx, err := system.NewSystemContext()
-	if err != nil {
-		panic(err)
-	}
-	golog.SetLevel(sctx.Flags.LogLevel)
-	golog.Infof("Coordinator ID [%d] starting...", sctx.CoordinatorID())
-	golog.Infof("Starting admin application with port [%d]", sctx.Flags.HTTPPort)
-	golog.Infof("Listening for PostgreSQL connection on port [%d]", sctx.Flags.PostgresPort)
-	systemContext = sctx
-	ch = make(chan os.Signal)
-	signal.Notify(ch, os.Interrupt, syscall.SIGTERM)
-	signal.Notify(ch, os.Interrupt, syscall.SIGSEGV)
-	go func() {
-		<-ch
-		StopCoordinator()
-	}()
-
-	logrus.SetLevel(logrus.DebugLevel)
-	go api.StartApp(sctx)
-	coordinator.Start(sctx)
-}
-
-func StartCoordinatorExt() {
-
-}
-
-func StopCoordinator() {
-	systemContext.Close()
-	os.Exit(0)
 }
