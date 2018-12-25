@@ -72,6 +72,15 @@ func (ex *connExecutor) execStmt(
 
 	}
 
+	handler, err := ex.getStatementHandler(tree)
+	if err != nil {
+		return err
+	}
+
+	return handler.Execute(ex, res)
+}
+
+func (ex *connExecutor) getStatementHandler(tree nodes.Stmt) (IQueryStatement, error) {
 	switch stmt := tree.(type) {
 	// case nodes.AlterCollationStmt:
 	// case nodes.AlterDatabaseSetStmt:
@@ -131,8 +140,7 @@ func (ex *connExecutor) execStmt(
 	// case nodes.CreateSeqStmt:
 	// case nodes.CreateStatsStmt:
 	case nodes.CreateStmt:
-		return CreateCreateStatement(stmt).Execute(ex, res)
-	//     // return nil, _create.CreateCreateStatment(stmt, tree).HandleCreate(ctx)
+		return CreateCreateStatement(stmt), nil
 	// case nodes.CreateSubscriptionStmt:
 	// case nodes.CreateTableAsStmt:
 	// case nodes.CreateTableSpaceStmt:
@@ -161,7 +169,7 @@ func (ex *connExecutor) execStmt(
 	// case nodes.ImportForeignSchemaStmt:
 	// case nodes.IndexStmt:
 	case nodes.InsertStmt:
-		return CreateInsertStatement(stmt).Execute(ex, res)
+		return CreateInsertStatement(stmt), nil
 	// case nodes.ListenStmt:
 	// case nodes.LoadStmt:
 	// case nodes.LockStmt:
@@ -175,22 +183,21 @@ func (ex *connExecutor) execStmt(
 	// case nodes.RuleStmt:
 	// case nodes.SecLabelStmt:
 	case nodes.SelectStmt:
-		return CreateSelectStatement(stmt).Execute(ex, res)
+		return CreateSelectStatement(stmt), nil
 	// case nodes.SetOperationStmt:
 	case nodes.TransactionStmt:
-		return CreateTransactionStatement(stmt).Execute(ex, res)
+		return CreateTransactionStatement(stmt), nil
 	// case nodes.TruncateStmt:
 	// case nodes.UnlistenStmt:
 	// case nodes.UpdateStmt:
 	//     // return nil, _update.HandleUpdate(ctx, stmt)
 	// case nodes.VacuumStmt:
 	case nodes.VariableSetStmt:
-		return CreateVariableSetStatement(stmt).Execute(ex, res)
+		return CreateVariableSetStatement(stmt), nil
 	case nodes.VariableShowStmt:
-		return CreateVariableShowStatement(stmt).Execute(ex, res)
+		return CreateVariableShowStatement(stmt), nil
 	// case nodes.ViewStmt:
 	default:
-		return errors.New("invalid or unsupported nodes type")
+		return nil, errors.New("invalid or unsupported nodes type")
 	}
-	return nil
 }

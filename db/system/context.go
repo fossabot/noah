@@ -71,6 +71,9 @@ type baseContext struct {
 
 type SContext struct {
 	baseContext
+
+	PGWireAddress string
+
 	Settings  *SSettings
 	Accounts  *SAccounts
 	Schema    *SSchema
@@ -80,7 +83,7 @@ type SContext struct {
 	Query     *SQuery
 }
 
-func NewSystemContext(dataDirectory, listenAddr, joinAddr string) (*SContext, error) {
+func NewSystemContext(dataDirectory, listenAddr, joinAddr, pgWireAddr string) (*SContext, error) {
 	flag.Parse()
 	db, err := arctonyx.CreateStore(dataDirectory, listenAddr, joinAddr)
 	if err != nil {
@@ -95,7 +98,8 @@ func NewSystemContext(dataDirectory, listenAddr, joinAddr string) (*SContext, er
 	}
 
 	sctx := SContext{
-		baseContext: base,
+		baseContext:   base,
+		PGWireAddress: pgWireAddr,
 	}
 
 	settings := SSettings(base)

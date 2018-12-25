@@ -58,7 +58,6 @@
 package coordinator
 
 import (
-	"fmt"
 	"github.com/kataras/golog"
 	"github.com/pkg/errors"
 	"github.com/readystock/noah/db/base"
@@ -104,13 +103,13 @@ type Server struct {
 
 func Start(sctx *system.SContext) (err error) {
 	defer util.CatchPanic(&err)
-	addvertise_addr := fmt.Sprintf("127.0.0.1:%d", sctx.Flags.PostgresPort)
-	if addr, err := net.ResolveTCPAddr("tcp", addvertise_addr); err != nil {
-		return errors.Errorf("unable to resolve RPC address %q: %v", addvertise_addr, err)
+	advertiseAddr := sctx.PGWireAddress
+	if addr, err := net.ResolveTCPAddr("tcp", advertiseAddr); err != nil {
+		return errors.Errorf("unable to resolve RPC address %q: %v", advertiseAddr, err)
 	} else {
 		listener, err := net.ListenTCP("tcp", addr)
 		if err != nil {
-			return errors.Errorf("unable to listen on address %q: %v", addvertise_addr, err)
+			return errors.Errorf("unable to listen on address %q: %v", advertiseAddr, err)
 		}
 
 		// pending, complete := make(chan *net.TCPConn), make(chan *net.TCPConn)

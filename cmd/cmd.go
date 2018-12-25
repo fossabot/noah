@@ -45,7 +45,7 @@ with almost all typical Postgres drivers and IDEs.`,
 			golog.SetLevel(LogLevel)
 			golog.Infof("Starting noah...")
 
-			sctx, err := system.NewSystemContext(StoreDirectory, GrpcAddr, JoinAddr)
+			sctx, err := system.NewSystemContext(StoreDirectory, GrpcAddr, JoinAddr, PGWireAddr)
 			if err != nil {
 				golog.Fatalf("A fatal error was encountered trying to initialize store; %s", err.Error())
 			}

@@ -63,7 +63,7 @@ import (
 )
 
 type IQueryStatement interface {
-	Execute(ex *connExecutor, res RestrictedCommandResult)
+	Execute(ex *connExecutor, res RestrictedCommandResult) error
 	compilePlan(ex *connExecutor, nodes []system.NNode) ([]plan.NodeExecutionPlan, error)
 	getTargetNodes(ex *connExecutor) ([]system.NNode, error)
 }

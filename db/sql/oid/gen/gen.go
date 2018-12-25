@@ -1,3 +1,5 @@
+// +build ignore
+
 /*
  * Copyright (c) 2018 Ready Stock
  *
@@ -54,8 +56,6 @@
  * Copyright 2018  'pq' Contributors Portions Copyright (C) 2011 Blake Mizerany
  * License https://github.com/lib/pq/blob/master/LICENSE.md
  */
-
-// +build ignore
 
 // Generate the table of OID values
 // Run with 'go run gen.go'.

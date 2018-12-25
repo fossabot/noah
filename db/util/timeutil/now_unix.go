@@ -55,8 +55,6 @@
  * License https://github.com/lib/pq/blob/master/LICENSE.md
  */
 
-// +build !windows
-
 package timeutil
 
 import (
