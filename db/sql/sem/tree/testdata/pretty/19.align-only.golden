@@ -1,7 +1,7 @@
 1:
 -
 SELECT
-	BOOL 'foo'
+    BOOL 'foo'
 
 17:
 -----------------

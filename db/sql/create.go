@@ -99,10 +99,10 @@ func (stmt *CreateStatement) Execute(ex *connExecutor, res RestrictedCommandResu
 	}
 
 	// if ex.TransactionState == NTXNoTransaction { // When creating a table try to create a new transaction if we are not in one
-	// 	if err := ex.execStmt(pg_query.TransactionStmt{Kind: pg_query.TRANS_STMT_BEGIN}, nil, 0); err != nil {
-	// 		return err
-	// 	}
-	// 	ex.TransactionStatus = NTXInProgress
+	//     if err := ex.execStmt(pg_query.TransactionStmt{Kind: pg_query.TRANS_STMT_BEGIN}, nil, 0); err != nil {
+	//         return err
+	//     }
+	//     ex.TransactionStatus = NTXInProgress
 	// }
 
 	return ex.ExecutePlans(plans, res)

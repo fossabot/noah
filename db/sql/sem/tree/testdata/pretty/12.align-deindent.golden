@@ -2,48 +2,48 @@
 -
 INSERT
 INTO
-	t
-		(
-			a,
-			b
-		)
+    t
+        (
+            a,
+            b
+        )
 VALUES
-	(
-		1,
-		2
-	)
+    (
+        1,
+        2
+    )
 
 6:
 ------
 INSERT
   INTO t
-		(
-			a,
-			b
-		)
+        (
+            a,
+            b
+        )
 VALUES (
-		1,
-		2
+        1,
+        2
        )
 
 10:
 ----------
 INSERT
   INTO t (
-			a,
-			b
+            a,
+            b
          )
 VALUES (
-		1,
-		2
+        1,
+        2
        )
 
 13:
 -------------
 INSERT
   INTO t (
-			a,
-			b
+            a,
+            b
          )
 VALUES (1, 2)
 

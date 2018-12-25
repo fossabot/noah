@@ -1,112 +1,112 @@
 1:
 -
 SELECT
-	*
+    *
 FROM
-	a
-	JOIN
-		b
-	USING (c),
-	a
-	NATURAL JOIN
-		b,
-	a
-	JOIN
-		b
-	ON
-		c
+    a
+    JOIN
+        b
+    USING (c),
+    a
+    NATURAL JOIN
+        b,
+    a
+    JOIN
+        b
+    ON
+        c
 WHERE
-	true
+    true
 
 8:
 --------
 SELECT
-	*
+    *
 FROM
-	a
-	JOIN
-		b
-	USING (c),
-	a
-	NATURAL JOIN
-		b,
-	a
-	JOIN
-		b
-	ON c
+    a
+    JOIN
+        b
+    USING (c),
+    a
+    NATURAL JOIN
+        b,
+    a
+    JOIN
+        b
+    ON c
 WHERE
-	true
+    true
 
 10:
 ----------
 SELECT
-	*
+    *
 FROM
-	a
-	JOIN b
-	USING (c),
-	a
-	NATURAL JOIN
-		b,
-	a
-	JOIN b
-	ON c
+    a
+    JOIN b
+    USING (c),
+    a
+    NATURAL JOIN
+        b,
+    a
+    JOIN b
+    ON c
 WHERE
-	true
+    true
 
 15:
 ---------------
 SELECT
-	*
+    *
 FROM
-	a
-	JOIN b
-	USING (c),
-	a
-	NATURAL JOIN
-		b,
-	a
-	JOIN b ON c
+    a
+    JOIN b
+    USING (c),
+    a
+    NATURAL JOIN
+        b,
+    a
+    JOIN b ON c
 WHERE
-	true
+    true
 
 19:
 -------------------
 SELECT
-	*
+    *
 FROM
-	a
-	JOIN b
-	USING (c),
-	a
-	NATURAL JOIN b,
-	a
-	JOIN b ON c
+    a
+    JOIN b
+    USING (c),
+    a
+    NATURAL JOIN b,
+    a
+    JOIN b ON c
 WHERE
-	true
+    true
 
 21:
 ---------------------
 SELECT
-	*
+    *
 FROM
-	a
-	JOIN b USING (c),
-	a
-	NATURAL JOIN b,
-	a
-	JOIN b ON c
+    a
+    JOIN b USING (c),
+    a
+    NATURAL JOIN b,
+    a
+    JOIN b ON c
 WHERE
-	true
+    true
 
 55:
 -------------------------------------------------------
 SELECT
-	*
+    *
 FROM
-	a JOIN b USING (c), a NATURAL JOIN b, a JOIN b ON c
+    a JOIN b USING (c), a NATURAL JOIN b, a JOIN b ON c
 WHERE
-	true
+    true
 
 76:
 ----------------------------------------------------------------------------

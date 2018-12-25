@@ -1,53 +1,53 @@
 1:
 -
 SELECT
-	*
+    *
 FROM
-	a
-	CROSS JOIN
-		b,
-	a
-	CROSS JOIN
-		(
-			c
-			CROSS JOIN
-				d
-		),
-	d,
-	(
-		TABLE
-			x
-	),
-	(
-		TABLE
-			e
-		ORDER BY
-			f
-	)
+    a
+    CROSS JOIN
+        b,
+    a
+    CROSS JOIN
+        (
+            c
+            CROSS JOIN
+                d
+        ),
+    d,
+    (
+        TABLE
+            x
+    ),
+    (
+        TABLE
+            e
+        ORDER BY
+            f
+    )
 
 8:
 --------
 SELECT *
   FROM a
        CROSS JOIN
-		b,
+        b,
        a
        CROSS JOIN
-		(
-			c
-			CROSS JOIN
-				d
-		),
+        (
+            c
+            CROSS JOIN
+                d
+        ),
        d,
        (
-		TABLE
-			x
+        TABLE
+            x
        ),
        (
-		TABLE
-			e
-		ORDER BY
-			f
+        TABLE
+            e
+        ORDER BY
+            f
        )
 
 15:
@@ -55,23 +55,23 @@ SELECT *
 SELECT *
   FROM a
        CROSS JOIN
-		b,
+        b,
        a
        CROSS JOIN
-		(
-			c
-			CROSS JOIN
-				d
-		),
+        (
+            c
+            CROSS JOIN
+                d
+        ),
        d,
        (
-		TABLE x
+        TABLE x
        ),
        (
-		TABLE
-			e
-		ORDER BY
-			f
+        TABLE
+            e
+        ORDER BY
+            f
        )
 
 17:
@@ -79,21 +79,21 @@ SELECT *
 SELECT *
   FROM a
        CROSS JOIN
-		b,
+        b,
        a
        CROSS JOIN
-		(
-			c
-			CROSS JOIN
-				d
-		),
+        (
+            c
+            CROSS JOIN
+                d
+        ),
        d,
        (TABLE x),
        (
-		TABLE
-			e
-		ORDER BY
-			f
+        TABLE
+            e
+        ORDER BY
+            f
        )
 
 18:
@@ -101,19 +101,19 @@ SELECT *
 SELECT *
   FROM a
        CROSS JOIN
-		b,
+        b,
        a
        CROSS JOIN
-		(
-			c
-			CROSS JOIN
-				d
-		),
+        (
+            c
+            CROSS JOIN
+                d
+        ),
        d,
        (TABLE x),
        (
-		   TABLE e
-		ORDER BY f
+           TABLE e
+        ORDER BY f
        )
 
 19:
@@ -121,18 +121,18 @@ SELECT *
 SELECT *
   FROM a
        CROSS JOIN
-		b,
+        b,
        a
        CROSS JOIN (
-					c
-					CROSS JOIN
-						d
+                    c
+                    CROSS JOIN
+                        d
                   ),
        d,
        (TABLE x),
        (
-		   TABLE e
-		ORDER BY f
+           TABLE e
+        ORDER BY f
        )
 
 20:
@@ -142,15 +142,15 @@ SELECT *
        CROSS JOIN b,
        a
        CROSS JOIN (
-					c
-					CROSS JOIN
-						d
+                    c
+                    CROSS JOIN
+                        d
                   ),
        d,
        (TABLE x),
        (
-		   TABLE e
-		ORDER BY f
+           TABLE e
+        ORDER BY f
        )
 
 26:
@@ -160,14 +160,14 @@ SELECT *
        CROSS JOIN b,
        a
        CROSS JOIN (
-					c
-					CROSS JOIN
-						d
+                    c
+                    CROSS JOIN
+                        d
                   ),
        d,
        (TABLE x),
        (
-		TABLE e ORDER BY f
+        TABLE e ORDER BY f
        )
 
 27:
@@ -177,9 +177,9 @@ SELECT *
        CROSS JOIN b,
        a
        CROSS JOIN (
-					c
-					CROSS JOIN
-						d
+                    c
+                    CROSS JOIN
+                        d
                   ),
        d,
        (TABLE x),
@@ -192,8 +192,8 @@ SELECT *
        CROSS JOIN b,
        a
        CROSS JOIN (
-					c
-					CROSS JOIN d
+                    c
+                    CROSS JOIN d
                   ),
        d,
        (TABLE x),

@@ -1,39 +1,39 @@
 1:
 -
 SELECT
-	*
+    *
 FROM
-	generate_series(
-		a
-	),
-	generate_series(
-		b
-	),
-	ROWS FROM (
-		generate_series(
-			a
-		),
-		generate_series(
-			b
-		)
-	)
+    generate_series(
+        a
+    ),
+    generate_series(
+        b
+    ),
+    ROWS FROM (
+        generate_series(
+            a
+        ),
+        generate_series(
+            b
+        )
+    )
 
 8:
 --------
 SELECT *
   FROM generate_series(
-		a
+        a
        ),
        generate_series(
-		b
+        b
        ),
        ROWS FROM (
-		generate_series(
-			a
-		),
-		generate_series(
-			b
-		)
+        generate_series(
+            a
+        ),
+        generate_series(
+            b
+        )
        )
 
 26:
@@ -42,10 +42,10 @@ SELECT *
   FROM generate_series(a),
        generate_series(b),
        ROWS FROM (
-		generate_series(
-			a
-		),
-		generate_series(b)
+        generate_series(
+            a
+        ),
+        generate_series(b)
        )
 
 27:
@@ -54,8 +54,8 @@ SELECT *
   FROM generate_series(a),
        generate_series(b),
        ROWS FROM (
-		generate_series(a),
-		generate_series(b)
+        generate_series(a),
+        generate_series(b)
        )
 
 57:

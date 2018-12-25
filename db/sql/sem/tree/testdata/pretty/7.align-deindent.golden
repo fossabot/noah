@@ -2,117 +2,117 @@
 -
 INSERT
 INTO
-	mnop
-		(
-			m,
-			n
-		)
+    mnop
+        (
+            m,
+            n
+        )
 SELECT
-	i,
-	(
-		1e9
-		+ i
-			/ 2e4
-	)::FLOAT
+    i,
+    (
+        1e9
+        + i
+            / 2e4
+    )::FLOAT
 FROM
-	generate_series(
-		1,
-		2e4
-	)
-		AS i
-			(
-				i
-			)
+    generate_series(
+        1,
+        2e4
+    )
+        AS i
+            (
+                i
+            )
 RETURNING
-	NOTHING
+    NOTHING
 
 9:
 ---------
    INSERT
      INTO mnop
-			(
-				m,
-				n
-			)
+            (
+                m,
+                n
+            )
    SELECT i,
           (
-			1e9
-			+ i
-				/ 2e4
+            1e9
+            + i
+                / 2e4
           )::FLOAT
      FROM generate_series(
-			1,
-			2e4
+            1,
+            2e4
           )
-			AS i
-				(
-					i
-				)
+            AS i
+                (
+                    i
+                )
 RETURNING NOTHING
 
 16:
 ----------------
    INSERT
      INTO mnop (
-				m,
-				n
+                m,
+                n
                )
    SELECT i,
           (
-			1e9
-			+ i
-				/ 2e4
+            1e9
+            + i
+                / 2e4
           )::FLOAT
      FROM generate_series(
-			1,
-			2e4
+            1,
+            2e4
           )
-			AS i
-				(
-					i
-				)
+            AS i
+                (
+                    i
+                )
 RETURNING NOTHING
 
 18:
 ------------------
    INSERT
      INTO mnop (
-				m,
-				n
+                m,
+                n
                )
    SELECT i,
           (
-			1e9
-			+ i
-				/ 2e4
+            1e9
+            + i
+                / 2e4
           )::FLOAT
      FROM generate_series(
-			1,
-			2e4
+            1,
+            2e4
           )
-			AS i (
-					i
-			     )
+            AS i (
+                    i
+                 )
 RETURNING NOTHING
 
 20:
 --------------------
    INSERT
      INTO mnop (
-				m,
-				n
+                m,
+                n
                )
    SELECT i,
           (
-			1e9
-			+ i
-				/ 2e4
+            1e9
+            + i
+                / 2e4
           )::FLOAT
      FROM generate_series(
-			1,
-			2e4
+            1,
+            2e4
           )
-			AS i (i)
+            AS i (i)
 RETURNING NOTHING
 
 21:
@@ -121,14 +121,14 @@ RETURNING NOTHING
      INTO mnop (m, n)
    SELECT i,
           (
-			1e9
-			+ i / 2e4
+            1e9
+            + i / 2e4
           )::FLOAT
      FROM generate_series(
-			1,
-			2e4
+            1,
+            2e4
           )
-			AS i (i)
+            AS i (i)
 RETURNING NOTHING
 
 25:
@@ -137,13 +137,13 @@ RETURNING NOTHING
      INTO mnop (m, n)
    SELECT i,
           (
-			1e9 + i / 2e4
+            1e9 + i / 2e4
           )::FLOAT
      FROM generate_series(
-			1,
-			2e4
+            1,
+            2e4
           )
-			AS i (i)
+            AS i (i)
 RETURNING NOTHING
 
 26:
@@ -152,11 +152,11 @@ RETURNING NOTHING
      INTO mnop (m, n)
    SELECT i,
           (
-			1e9 + i / 2e4
+            1e9 + i / 2e4
           )::FLOAT
      FROM generate_series(
-			1,
-			2e4
+            1,
+            2e4
           ) AS i (i)
 RETURNING NOTHING
 
@@ -167,8 +167,8 @@ RETURNING NOTHING
    SELECT i,
           (1e9 + i / 2e4)::FLOAT
      FROM generate_series(
-			1,
-			2e4
+            1,
+            2e4
           ) AS i (i)
 RETURNING NOTHING
 
@@ -178,8 +178,8 @@ RETURNING NOTHING
      INTO mnop (m, n)
    SELECT i, (1e9 + i / 2e4)::FLOAT
      FROM generate_series(
-			1,
-			2e4
+            1,
+            2e4
           ) AS i (i)
 RETURNING NOTHING
 
@@ -189,9 +189,9 @@ RETURNING NOTHING
      INTO mnop (m, n)
    SELECT i, (1e9 + i / 2e4)::FLOAT
      FROM generate_series(1, 2e4) AS i
-									(
-										i
-									)
+                                    (
+                                        i
+                                    )
 RETURNING NOTHING
 
 39:
@@ -200,7 +200,7 @@ RETURNING NOTHING
      INTO mnop (m, n)
    SELECT i, (1e9 + i / 2e4)::FLOAT
      FROM generate_series(1, 2e4) AS i
-									(i)
+                                    (i)
 RETURNING NOTHING
 
 40:
@@ -209,7 +209,7 @@ RETURNING NOTHING
      INTO mnop (m, n)
    SELECT i, (1e9 + i / 2e4)::FLOAT
      FROM generate_series(1, 2e4) AS i (
-										i
+                                        i
                                        )
 RETURNING NOTHING
 

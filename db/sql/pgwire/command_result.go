@@ -178,7 +178,7 @@ func (r *commandResult) Close(t sql.TransactionStatusIndicator) {
 	// Send a completion message, specific to the type of result.
 	switch r.typ {
 	case commandComplete:
-		//panic("not handling command complete yet.")
+		// panic("not handling command complete yet.")
 
 		tag := cookTag(
 			r.cmdCompleteTag, r.conn.writerState.tagBuf[:0], r.stmt, r.rowsAffected,

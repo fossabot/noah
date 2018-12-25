@@ -89,4 +89,3 @@ const (
 	NTXInProgress      = NTXStatus(2)
 	NTXPreparedSuccess = NTXStatus(3)
 )
-

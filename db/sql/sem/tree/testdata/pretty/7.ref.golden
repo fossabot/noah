@@ -2,192 +2,192 @@
 -
 INSERT
 INTO
-	mnop
-		(
-			m,
-			n
-		)
+    mnop
+        (
+            m,
+            n
+        )
 SELECT
-	i,
-	(
-		1e9
-		+ i
-			/ 2e4
-	)::FLOAT
+    i,
+    (
+        1e9
+        + i
+            / 2e4
+    )::FLOAT
 FROM
-	generate_series(
-		1,
-		2e4
-	)
-		AS i
-			(
-				i
-			)
+    generate_series(
+        1,
+        2e4
+    )
+        AS i
+            (
+                i
+            )
 RETURNING
-	NOTHING
+    NOTHING
 
 14:
 --------------
 INSERT
 INTO
-	mnop
-		(m, n)
+    mnop
+        (m, n)
 SELECT
-	i,
-	(
-		1e9
-		+ i
-			/ 2e4
-	)::FLOAT
+    i,
+    (
+        1e9
+        + i
+            / 2e4
+    )::FLOAT
 FROM
-	generate_series(
-		1,
-		2e4
-	)
-		AS i
-			(
-				i
-			)
+    generate_series(
+        1,
+        2e4
+    )
+        AS i
+            (
+                i
+            )
 RETURNING
-	NOTHING
+    NOTHING
 
 15:
 ---------------
 INSERT
 INTO
-	mnop (m, n)
+    mnop (m, n)
 SELECT
-	i,
-	(
-		1e9
-		+ i
-			/ 2e4
-	)::FLOAT
+    i,
+    (
+        1e9
+        + i
+            / 2e4
+    )::FLOAT
 FROM
-	generate_series(
-		1,
-		2e4
-	)
-		AS i
-			(i)
+    generate_series(
+        1,
+        2e4
+    )
+        AS i
+            (i)
 RETURNING
-	NOTHING
+    NOTHING
 
 16:
 ----------------
 INSERT
 INTO
-	mnop (m, n)
+    mnop (m, n)
 SELECT
-	i,
-	(
-		1e9
-		+ i
-			/ 2e4
-	)::FLOAT
+    i,
+    (
+        1e9
+        + i
+            / 2e4
+    )::FLOAT
 FROM
-	generate_series(
-		1,
-		2e4
-	)
-		AS i (i)
+    generate_series(
+        1,
+        2e4
+    )
+        AS i (i)
 RETURNING
-	NOTHING
+    NOTHING
 
 17:
 -----------------
 INSERT
 INTO
-	mnop (m, n)
+    mnop (m, n)
 SELECT
-	i,
-	(
-		1e9
-		+ i / 2e4
-	)::FLOAT
+    i,
+    (
+        1e9
+        + i / 2e4
+    )::FLOAT
 FROM
-	generate_series(
-		1,
-		2e4
-	)
-		AS i (i)
+    generate_series(
+        1,
+        2e4
+    )
+        AS i (i)
 RETURNING
-	NOTHING
+    NOTHING
 
 21:
 ---------------------
 INSERT
 INTO
-	mnop (m, n)
+    mnop (m, n)
 SELECT
-	i,
-	(
-		1e9 + i / 2e4
-	)::FLOAT
+    i,
+    (
+        1e9 + i / 2e4
+    )::FLOAT
 FROM
-	generate_series(
-		1,
-		2e4
-	)
-		AS i (i)
+    generate_series(
+        1,
+        2e4
+    )
+        AS i (i)
 RETURNING
-	NOTHING
+    NOTHING
 
 26:
 --------------------------
 INSERT
 INTO
-	mnop (m, n)
+    mnop (m, n)
 SELECT
-	i,
-	(1e9 + i / 2e4)::FLOAT
+    i,
+    (1e9 + i / 2e4)::FLOAT
 FROM
-	generate_series(
-		1,
-		2e4
-	)
-		AS i (i)
+    generate_series(
+        1,
+        2e4
+    )
+        AS i (i)
 RETURNING
-	NOTHING
+    NOTHING
 
 27:
 ---------------------------
 INSERT
 INTO
-	mnop (m, n)
+    mnop (m, n)
 SELECT
-	i,
-	(1e9 + i / 2e4)::FLOAT
+    i,
+    (1e9 + i / 2e4)::FLOAT
 FROM
-	generate_series(1, 2e4)
-		AS i (i)
+    generate_series(1, 2e4)
+        AS i (i)
 RETURNING
-	NOTHING
+    NOTHING
 
 29:
 -----------------------------
 INSERT
 INTO
-	mnop (m, n)
+    mnop (m, n)
 SELECT
-	i, (1e9 + i / 2e4)::FLOAT
+    i, (1e9 + i / 2e4)::FLOAT
 FROM
-	generate_series(1, 2e4)
-		AS i (i)
+    generate_series(1, 2e4)
+        AS i (i)
 RETURNING
-	NOTHING
+    NOTHING
 
 36:
 ------------------------------------
 INSERT
 INTO
-	mnop (m, n)
+    mnop (m, n)
 SELECT
-	i, (1e9 + i / 2e4)::FLOAT
+    i, (1e9 + i / 2e4)::FLOAT
 FROM
-	generate_series(1, 2e4) AS i (i)
+    generate_series(1, 2e4) AS i (i)
 RETURNING
-	NOTHING
+    NOTHING
 
 112:
 ----------------------------------------------------------------------------------------------------------------

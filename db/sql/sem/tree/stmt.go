@@ -61,7 +61,7 @@ package tree
 
 import (
 	"fmt"
-		)
+)
 
 // Instructions for creating new types: If a type needs to satisfy an
 // interface, declare that function along with that interface. This
@@ -108,13 +108,13 @@ const (
 )
 
 // func GetStatementType(stmt pg_query.ParsetreeList) (*StatementType, error) {
-// 	if len(stmt.Statements) == 0 {
-// 		return nil, pgerror.NewErrorf(pgerror.CodeSyntaxError, "no statements provided")
-// 	} else {
-// 		switch stmt.Statements[0].(type) {
+//     if len(stmt.Statements) == 0 {
+//         return nil, pgerror.NewErrorf(pgerror.CodeSyntaxError, "no statements provided")
+//     } else {
+//         switch stmt.Statements[0].(type) {
 //
-// 		}
-// 	}
+//         }
+//     }
 // }
 
 // Statement represents a statement.
@@ -945,21 +945,24 @@ func (n *DropView) String() string                  { return AsString(n) }
 func (n *DropSequence) String() string              { return AsString(n) }
 func (n *DropUser) String() string                  { return AsString(n) }
 func (n *Execute) String() string                   { return AsString(n) }
+
 //func (n *Explain) String() string                   { return AsString(n) }
-func (n *Export) String() string                    { return AsString(n) }
+func (n *Export) String() string { return AsString(n) }
+
 // func (n *Grant) String() string                     { return AsString(n) }
 //func (n *GrantRole) String() string                 { return AsString(n) }
-func (n *Insert) String() string                    { return AsString(n) }
-func (n *Import) String() string                    { return AsString(n) }
-func (n *ParenSelect) String() string               { return AsString(n) }
-func (n *Prepare) String() string                   { return AsString(n) }
-func (n *ReleaseSavepoint) String() string          { return AsString(n) }
-func (n *Relocate) String() string                  { return AsString(n) }
-func (n *RenameColumn) String() string              { return AsString(n) }
-func (n *RenameDatabase) String() string            { return AsString(n) }
-func (n *RenameIndex) String() string               { return AsString(n) }
-func (n *RenameTable) String() string               { return AsString(n) }
-func (n *Restore) String() string                   { return AsString(n) }
+func (n *Insert) String() string           { return AsString(n) }
+func (n *Import) String() string           { return AsString(n) }
+func (n *ParenSelect) String() string      { return AsString(n) }
+func (n *Prepare) String() string          { return AsString(n) }
+func (n *ReleaseSavepoint) String() string { return AsString(n) }
+func (n *Relocate) String() string         { return AsString(n) }
+func (n *RenameColumn) String() string     { return AsString(n) }
+func (n *RenameDatabase) String() string   { return AsString(n) }
+func (n *RenameIndex) String() string      { return AsString(n) }
+func (n *RenameTable) String() string      { return AsString(n) }
+func (n *Restore) String() string          { return AsString(n) }
+
 //func (n *Revoke) String() string                    { return AsString(n) }
 //func (n *RevokeRole) String() string                { return AsString(n) }
 func (n *RollbackToSavepoint) String() string       { return AsString(n) }

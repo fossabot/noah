@@ -61,8 +61,8 @@ package tree
 
 // Grant represents a GRANT statement.
 type Grant struct {
-	Targets    TargetList
-	Grantees   NameList
+	Targets  TargetList
+	Grantees NameList
 }
 
 // TargetList represents a list of targets.
@@ -85,28 +85,28 @@ func (tl *TargetList) Format(ctx *FmtCtx) {
 
 // Format implements the NodeFormatter interface.
 // func (node *Grant) Format(ctx *FmtCtx) {
-// 	ctx.WriteString("GRANT ")
-// 	node.Privileges.Format(ctx.Buffer)
-// 	ctx.WriteString(" ON ")
-// 	ctx.FormatNode(&node.Targets)
-// 	ctx.WriteString(" TO ")
-// 	ctx.FormatNode(&node.Grantees)
+//     ctx.WriteString("GRANT ")
+//     node.Privileges.Format(ctx.Buffer)
+//     ctx.WriteString(" ON ")
+//     ctx.FormatNode(&node.Targets)
+//     ctx.WriteString(" TO ")
+//     ctx.FormatNode(&node.Grantees)
 // }
 
 // // GrantRole represents a GRANT <role> statement.
 // type GrantRole struct {
-// 	Roles       NameList
-// 	Members     NameList
-// 	AdminOption bool
+//     Roles       NameList
+//     Members     NameList
+//     AdminOption bool
 // }
 //
 // // Format implements the NodeFormatter interface.
 // func (node *GrantRole) Format(ctx *FmtCtx) {
-// 	ctx.WriteString("GRANT ")
-// 	ctx.FormatNode(&node.Roles)
-// 	ctx.WriteString(" TO ")
-// 	ctx.FormatNode(&node.Members)
-// 	if node.AdminOption {
-// 		ctx.WriteString(" WITH ADMIN OPTION")
-// 	}
+//     ctx.WriteString("GRANT ")
+//     ctx.FormatNode(&node.Roles)
+//     ctx.WriteString(" TO ")
+//     ctx.FormatNode(&node.Members)
+//     if node.AdminOption {
+//         ctx.WriteString(" WITH ADMIN OPTION")
+//     }
 // }

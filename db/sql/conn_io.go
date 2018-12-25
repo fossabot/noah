@@ -549,12 +549,12 @@ func (buf *StmtBuf) ltrim(ctx context.Context, pos CmdPos) {
 	if pos < buf.mu.startPos {
 		fmt.Printf("invalid ltrim position: %d. buf starting at: %d", pos, buf.mu.startPos)
 		// log.Fatalf(ctx, "invalid ltrim position: %d. buf starting at: %d",
-		// 	pos, buf.mu.startPos)
+		//     pos, buf.mu.startPos)
 	}
 	if buf.mu.curPos < pos {
 		fmt.Printf("invalid ltrim position: %d when cursor is: %d", pos, buf.mu.curPos)
 		// log.Fatalf(ctx, "invalid ltrim position: %d when cursor is: %d",
-		// 	pos, buf.mu.curPos)
+		//     pos, buf.mu.curPos)
 	}
 	// Remove commands one by one.
 	for {
@@ -961,7 +961,7 @@ func (r *bufferedCommandResult) SetColumns(cols []pgproto.FieldDescription) {
 
 // // ResetStmtType is part of the RestrictedCommandResult interface.
 // func (r *bufferedCommandResult) ResetStmtType(stmt tree.Statement) {
-// 	panic("unimplemented")
+//     panic("unimplemented")
 // }
 //
 // // AddRow is part of the RestrictedCommandResult interface.

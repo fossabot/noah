@@ -61,7 +61,7 @@ import (
 	"context"
 	"testing"
 
-    "github.com/opentracing/opentracing-go"
+	"github.com/opentracing/opentracing-go"
 
 	"github.com/cockroachdb/cockroach/pkg/util/tracing"
 )
@@ -108,12 +108,12 @@ func TestAnnotateCtxSpan(t *testing.T) {
 	sp1.Finish()
 
 	if err := tracing.TestingCheckRecordedSpans(tracing.GetRecording(sp1), `
-		span root:
-			event: a
-			event: c
-		span child:
-			event: [ambient] b
-	`); err != nil {
+        span root:
+            event: a
+            event: c
+        span child:
+            event: [ambient] b
+    `); err != nil {
 		t.Fatal(err)
 	}
 
@@ -125,9 +125,9 @@ func TestAnnotateCtxSpan(t *testing.T) {
 	Event(ctx, "a")
 	sp.Finish()
 	if err := tracing.TestingCheckRecordedSpans(tracing.GetRecording(sp), `
-	  span s:
-			event: [ambient] a
-	`); err != nil {
+      span s:
+            event: [ambient] a
+    `); err != nil {
 		t.Fatal(err)
 	}
 }

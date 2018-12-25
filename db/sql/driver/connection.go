@@ -70,11 +70,11 @@ type Connection interface {
 }
 
 type ConnConfig struct {
-	Host              string // host (e.g. localhost) or path to unix domain socket directory (e.g. /private/tmp)
-	Port              uint16 // default: 5432
-	Database          string
-	User              string
-	Password          string
+	Host     string // host (e.g. localhost) or path to unix domain socket directory (e.g. /private/tmp)
+	Port     uint16 // default: 5432
+	Database string
+	User     string
+	Password string
 }
 
 func (cc *ConnConfig) NetworkAddress() (network, address string) {

@@ -74,7 +74,7 @@ import (
 	"github.com/cockroachdb/cockroach/pkg/settings"
 	"github.com/cockroachdb/cockroach/pkg/util/caller"
 	"github.com/cockroachdb/cockroach/pkg/util/envutil"
-    "github.com/opentracing/opentracing-go"
+	"github.com/opentracing/opentracing-go"
 	"github.com/pkg/errors"
 )
 
@@ -690,14 +690,14 @@ func StartSnowballTrace(
 // expected event (i.e. log message).
 //
 // Use with something like:
-// 	 if err := TestingCheckRecordedSpans(tracing.GetRecording(span), `
+//      if err := TestingCheckRecordedSpans(tracing.GetRecording(span), `
 //     span root:
 //       event: a
 //       event: c
 //     span child:
 //       event: [ambient] b
 //   `); err != nil {
-//   	t.Fatal(err)
+//       t.Fatal(err)
 //   }
 //
 // The event lines can (and generally should) omit the file:line part that they

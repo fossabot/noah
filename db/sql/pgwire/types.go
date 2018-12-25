@@ -129,7 +129,7 @@ func (b *writeBuffer) writeTextDatum(
 		b.putInt32(int32(len(s)))
 		b.write(s)
 
-	//case *tree.DDecimal:
+	// case *tree.DDecimal:
 	//    b.writeLengthPrefixedDatum(v)
 
 	case *types.Bytea:
@@ -140,7 +140,7 @@ func (b *writeBuffer) writeTextDatum(
 	case *types.UUID:
 		b.writeLengthPrefixedString(types.EncodeUUID(v.Bytes))
 
-	//case *tree.DIPAddr:
+	// case *tree.DIPAddr:
 	//    b.writeLengthPrefixedString(v.IPAddr.String())
 	case *types.GenericText:
 		b.writeLengthPrefixedString(v.String)

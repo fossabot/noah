@@ -405,7 +405,7 @@ func (rows *Rows) Values() ([]interface{}, error) {
 			default:
 				rows.fatal(errors.New("Unknown format code"))
 			}
-			//rows.fatal(errors.New("Unknown type"))
+			// rows.fatal(errors.New("Unknown type"))
 		}
 
 		if rows.Err() != nil {

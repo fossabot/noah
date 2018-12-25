@@ -929,7 +929,7 @@ func (d *DString) Prev(_ *EvalContext) (Datum, bool) {
 // Next implements the Datum interface.
 func (d *DString) Next(e *EvalContext) (Datum, bool) {
 	return NewDString(d.String()), true
-	//return NewDString(string(roachpb.Key(*d).Next())), true
+	// return NewDString(string(roachpb.Key(*d).Next())), true
 }
 
 // IsMax implements the Datum interface.
@@ -1160,7 +1160,7 @@ func (d *DBytes) Prev(_ *EvalContext) (Datum, bool) {
 func (d *DBytes) Next(_ *EvalContext) (Datum, bool) {
 	dt := *d
 	return NewDBytes(dt), true
-	//return NewDBytes(DBytes(roachpb.Key(*d).Next())), true
+	// return NewDBytes(DBytes(roachpb.Key(*d).Next())), true
 }
 
 // IsMax implements the Datum interface.
@@ -1373,9 +1373,9 @@ func (d DIPAddr) equal(other *DIPAddr) bool {
 // Prev implements the Datum interface.
 func (d *DIPAddr) Prev(_ *EvalContext) (Datum, bool) {
 	// We will do one of the following to get the Prev IPAddr:
-	//	- Decrement IP address if we won't underflow the IP.
-	//	- Decrement mask and set the IP to max in family if we will underflow.
-	//	- Jump down from IPv6 to IPv4 if we will underflow both IP and mask.
+	//    - Decrement IP address if we won't underflow the IP.
+	//    - Decrement mask and set the IP to max in family if we will underflow.
+	//    - Jump down from IPv6 to IPv4 if we will underflow both IP and mask.
 	if d.Family == ipaddr.IPv6family && d.Addr.Equal(dIPv6min) {
 		if d.Mask == 0 {
 			// Jump down IP family.
@@ -1394,9 +1394,9 @@ func (d *DIPAddr) Prev(_ *EvalContext) (Datum, bool) {
 // Next implements the Datum interface.
 func (d *DIPAddr) Next(_ *EvalContext) (Datum, bool) {
 	// We will do one of a few things to get the Next IP address:
-	//	- Increment IP address if we won't overflow the IP.
-	//	- Increment mask and set the IP to min in family if we will overflow.
-	//	- Jump up from IPv4 to IPv6 if we will overflow both IP and mask.
+	//    - Increment IP address if we won't overflow the IP.
+	//    - Increment mask and set the IP to min in family if we will overflow.
+	//    - Jump up from IPv4 to IPv6 if we will overflow both IP and mask.
 	if d.Family == ipaddr.IPv4family && d.Addr.Equal(dIPv4max) {
 		if d.Mask == 32 {
 			// Jump up IP family.
@@ -1848,40 +1848,40 @@ func parseTimestampInLocation(s string, loc *time.Location, typ types.T) (time.T
 	return time.Time{}, makeParseError(origS, typ, nil)
 	// l := len(s)
 	// if loneZeroRMatch.MatchString(s) {
-	// 	// HACK: go doesn't handle offsets that are not zero-padded from psql/jdbc.
-	// 	// Thus, if we see `2015-10-05 3:0:5 +0:0:0` we need to change it to
-	// 	// `... 3:00:50 +00:00:00`.
-	// 	s = loneZeroRMatch.ReplaceAllString(s, ":0${1}")
-	// 	// This must be run twice, since ReplaceAllString doesn't touch overlapping
-	// 	// matches and thus wouldn't fix a string of the form 3:3:3.
-	// 	s = loneZeroRMatch.ReplaceAllString(s, ":0${1}")
+	//     // HACK: go doesn't handle offsets that are not zero-padded from psql/jdbc.
+	//     // Thus, if we see `2015-10-05 3:0:5 +0:0:0` we need to change it to
+	//     // `... 3:00:50 +00:00:00`.
+	//     s = loneZeroRMatch.ReplaceAllString(s, ":0${1}")
+	//     // This must be run twice, since ReplaceAllString doesn't touch overlapping
+	//     // matches and thus wouldn't fix a string of the form 3:3:3.
+	//     s = loneZeroRMatch.ReplaceAllString(s, ":0${1}")
 	// }
 	//
 	// if loc := tzMatch.FindStringIndex(s); loc != nil && l > loc[1] {
-	// 	// Remove `:` characters from timezone specifier and pad to 6 digits. A
-	// 	// leading 0 will be added if there are an odd number of digits in the
-	// 	// specifier, since this is short-hand for an offset with number of hours
-	// 	// equal to the leading digit.
-	// 	// This converts all timezone specifiers to the stdNumSecondsTz format in
-	// 	// time/format.go: `-070000`.
-	// 	tzPos := loc[1]
-	// 	tzSpec := strings.Replace(s[tzPos:], ":", "", -1)
-	// 	if len(tzSpec)%2 == 1 {
-	// 		tzSpec = "0" + tzSpec
-	// 	}
-	// 	if len(tzSpec) < 6 {
-	// 		tzSpec += strings.Repeat("0", 6-len(tzSpec))
-	// 	}
-	// 	s = s[:tzPos] + tzSpec
+	//     // Remove `:` characters from timezone specifier and pad to 6 digits. A
+	//     // leading 0 will be added if there are an odd number of digits in the
+	//     // specifier, since this is short-hand for an offset with number of hours
+	//     // equal to the leading digit.
+	//     // This converts all timezone specifiers to the stdNumSecondsTz format in
+	//     // time/format.go: `-070000`.
+	//     tzPos := loc[1]
+	//     tzSpec := strings.Replace(s[tzPos:], ":", "", -1)
+	//     if len(tzSpec)%2 == 1 {
+	//         tzSpec = "0" + tzSpec
+	//     }
+	//     if len(tzSpec) < 6 {
+	//         tzSpec += strings.Repeat("0", 6-len(tzSpec))
+	//     }
+	//     s = s[:tzPos] + tzSpec
 	// }
 	//
 	// for _, format := range timeFormats {
-	// 	if t, err := time.ParseInLocation(format, s, loc); err == nil {
-	// 		if err := checkForMissingZone(t, loc); err != nil {
-	// 			return time.Time{}, makeParseError(origS, typ, err)
-	// 		}
-	// 		return t, nil
-	// 	}
+	//     if t, err := time.ParseInLocation(format, s, loc); err == nil {
+	//         if err := checkForMissingZone(t, loc); err != nil {
+	//             return time.Time{}, makeParseError(origS, typ, err)
+	//         }
+	//         return t, nil
+	//     }
 	// }
 	// return time.Time{}, makeParseError(origS, typ, nil)
 }

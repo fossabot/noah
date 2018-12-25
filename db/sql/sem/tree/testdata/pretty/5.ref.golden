@@ -1,13 +1,13 @@
 1:
 -
 SELECT
-	"primary",
-	'primary'
+    "primary",
+    'primary'
 
 24:
 ------------------------
 SELECT
-	"primary", 'primary'
+    "primary", 'primary'
 
 27:
 ---------------------------

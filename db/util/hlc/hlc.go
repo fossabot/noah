@@ -263,7 +263,7 @@ func (c *Clock) getPhysicalClockLocked() int64 {
 		interval := c.mu.lastPhysicalTime - newTime
 		if interval > int64(c.maxOffset/10) {
 			c.mu.monotonicityErrorsCount++
-			//log.Warningf(context.TODO(), "backward time jump detected (%f seconds)", float64(-interval)/1e9)
+			// log.Warningf(context.TODO(), "backward time jump detected (%f seconds)", float64(-interval)/1e9)
 		}
 
 		if c.mu.forwardClockJumpCheckEnabled {
@@ -344,7 +344,7 @@ func (c *Clock) Update(rt Timestamp) Timestamp {
 	defer c.mu.Unlock()
 	updateT, err := c.updateLocked(rt, true)
 	if err != nil {
-		//log.Warningf(context.TODO(), "%s - updating anyway", err)
+		// log.Warningf(context.TODO(), "%s - updating anyway", err)
 	}
 	return updateT
 }

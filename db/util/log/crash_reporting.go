@@ -414,9 +414,9 @@ func Redact(r interface{}) string {
 		if cause != nil {
 			reportable += ": caused by " + Redact(c.Cause())
 		}
-    case interface {
-        Cause() error
-    }:
+	case interface {
+		Cause() error
+	}:
 		reportable += ": caused by " + Redact(c.Cause())
 	}
 	return reportable

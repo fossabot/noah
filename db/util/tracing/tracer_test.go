@@ -61,7 +61,7 @@ import (
 	"testing"
 
 	lightstep "github.com/lightstep/lightstep-tracer-go"
-    "github.com/opentracing/opentracing-go"
+	"github.com/opentracing/opentracing-go"
 )
 
 func TestTracerRecording(t *testing.T) {
@@ -105,20 +105,20 @@ func TestTracerRecording(t *testing.T) {
 	s2.LogKV("x", 3)
 
 	if err := TestingCheckRecordedSpans(GetRecording(s1), `
-		span a:
-			x: 2
-		span b:
-			x: 3
-	`); err != nil {
+        span a:
+            x: 2
+        span b:
+            x: 3
+    `); err != nil {
 		t.Fatal(err)
 	}
 
 	if err := TestingCheckRecordedSpans(GetRecording(s2), `
-		span a:
-			x: 2
-		span b:
-			x: 3
-	`); err != nil {
+        span a:
+            x: 2
+        span b:
+            x: 3
+    `); err != nil {
 		t.Fatal(err)
 	}
 
@@ -129,26 +129,26 @@ func TestTracerRecording(t *testing.T) {
 	s2.Finish()
 
 	if err := TestingCheckRecordedSpans(GetRecording(s1), `
-		span a:
-			x: 2
-		span b:
-			x: 3
-		span c:
-			tags: tag=val
-			x: 4
-	`); err != nil {
+        span a:
+            x: 2
+        span b:
+            x: 3
+        span c:
+            tags: tag=val
+            x: 4
+    `); err != nil {
 		t.Fatal(err)
 	}
 	s3.Finish()
 	if err := TestingCheckRecordedSpans(GetRecording(s1), `
-		span a:
-			x: 2
-		span b:
-			x: 3
-		span c:
-			tags: tag=val
-			x: 4
-	`); err != nil {
+        span a:
+            x: 2
+        span b:
+            x: 3
+        span c:
+            tags: tag=val
+            x: 4
+    `); err != nil {
 		t.Fatal(err)
 	}
 	StopRecording(s1)
@@ -160,15 +160,15 @@ func TestTracerRecording(t *testing.T) {
 	// The child span is still recording.
 	s3.LogKV("x", 5)
 	if err := TestingCheckRecordedSpans(GetRecording(s3), `
-		span a:
-			x: 2
-		span b:
-			x: 3
-		span c:
-			tags: tag=val
-			x: 4
-			x: 5
-	`); err != nil {
+        span a:
+            x: 2
+        span b:
+            x: 3
+        span c:
+            tags: tag=val
+            x: 4
+            x: 5
+    `); err != nil {
 		t.Fatal(err)
 	}
 	s1.Finish()
@@ -182,9 +182,9 @@ func TestStartChildSpan(t *testing.T) {
 	sp2.Finish()
 	sp1.Finish()
 	if err := TestingCheckRecordedSpans(GetRecording(sp1), `
-		span parent:
-			span child:
-	`); err != nil {
+        span parent:
+            span child:
+    `); err != nil {
 		t.Fatal(err)
 	}
 
@@ -194,13 +194,13 @@ func TestStartChildSpan(t *testing.T) {
 	sp2.Finish()
 	sp1.Finish()
 	if err := TestingCheckRecordedSpans(GetRecording(sp1), `
-		span parent:
-	`); err != nil {
+        span parent:
+    `); err != nil {
 		t.Fatal(err)
 	}
 	if err := TestingCheckRecordedSpans(GetRecording(sp2), `
-		span child:
-	`); err != nil {
+        span child:
+    `); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -265,17 +265,17 @@ func TestTracerInjectExtract(t *testing.T) {
 	// Verify that recording was started automatically.
 	rec := GetRecording(s2)
 	if err := TestingCheckRecordedSpans(rec, `
-		span remote op:
-			tags: sb=1
-			x: 1
-	`); err != nil {
+        span remote op:
+            tags: sb=1
+            x: 1
+    `); err != nil {
 		t.Fatal(err)
 	}
 
 	if err := TestingCheckRecordedSpans(GetRecording(s1), `
-		span a:
-			tags: sb=1
-	`); err != nil {
+        span a:
+            tags: sb=1
+    `); err != nil {
 		t.Fatal(err)
 	}
 
@@ -284,12 +284,12 @@ func TestTracerInjectExtract(t *testing.T) {
 	}
 
 	if err := TestingCheckRecordedSpans(GetRecording(s1), `
-		span a:
-			tags: sb=1
-		span remote op:
-			tags: sb=1
-			x: 1
-	`); err != nil {
+        span a:
+            tags: sb=1
+        span remote op:
+            tags: sb=1
+            x: 1
+    `); err != nil {
 		t.Fatal(err)
 	}
 }

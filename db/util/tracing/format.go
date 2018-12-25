@@ -64,7 +64,7 @@ import (
 	"strings"
 	"time"
 
-    "github.com/opentracing/opentracing-go"
+	"github.com/opentracing/opentracing-go"
 	otlog "github.com/opentracing/opentracing-go/log"
 )
 

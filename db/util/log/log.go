@@ -64,7 +64,7 @@ import (
 	"strings"
 
 	"github.com/cockroachdb/cockroach/pkg/util/tracing"
-    "github.com/opentracing/opentracing-go"
+	"github.com/opentracing/opentracing-go"
 	"github.com/petermattis/goid"
 )
 

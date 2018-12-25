@@ -66,7 +66,7 @@ import (
 	"golang.org/x/net/trace"
 
 	"github.com/cockroachdb/cockroach/pkg/util/syncutil"
-    "github.com/opentracing/opentracing-go"
+	"github.com/opentracing/opentracing-go"
 	otlog "github.com/opentracing/opentracing-go/log"
 	"github.com/pkg/errors"
 )

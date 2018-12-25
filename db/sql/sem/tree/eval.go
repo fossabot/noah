@@ -1924,56 +1924,56 @@ var CmpOps = map[ComparisonOperator]cmpOpOverload{
 	},
 
 	// Like: {
-	// 	CmpOp{
-	// 		LeftType:  types.String,
-	// 		RightType: types.String,
-	// 		fn: func(ctx *EvalContext, left Datum, right Datum) (Datum, error) {
-	// 			return matchLike(ctx, left, right, false)
-	// 		},
-	// 	},
+	//     CmpOp{
+	//         LeftType:  types.String,
+	//         RightType: types.String,
+	//         fn: func(ctx *EvalContext, left Datum, right Datum) (Datum, error) {
+	//             return matchLike(ctx, left, right, false)
+	//         },
+	//     },
 	// },
 
 	// ILike: {
-	// 	CmpOp{
-	// 		LeftType:  types.String,
-	// 		RightType: types.String,
-	// 		fn: func(ctx *EvalContext, left Datum, right Datum) (Datum, error) {
-	// 			return matchLike(ctx, left, right, true)
-	// 		},
-	// 	},
+	//     CmpOp{
+	//         LeftType:  types.String,
+	//         RightType: types.String,
+	//         fn: func(ctx *EvalContext, left Datum, right Datum) (Datum, error) {
+	//             return matchLike(ctx, left, right, true)
+	//         },
+	//     },
 	// },
 
 	// SimilarTo: {
-	// 	CmpOp{
-	// 		LeftType:  types.String,
-	// 		RightType: types.String,
-	// 		fn: func(ctx *EvalContext, left Datum, right Datum) (Datum, error) {
-	// 			key := similarToKey{s: string(MustBeDString(right)), escape: '\\'}
-	// 			return matchRegexpWithKey(ctx, left, key)
-	// 		},
-	// 	},
+	//     CmpOp{
+	//         LeftType:  types.String,
+	//         RightType: types.String,
+	//         fn: func(ctx *EvalContext, left Datum, right Datum) (Datum, error) {
+	//             key := similarToKey{s: string(MustBeDString(right)), escape: '\\'}
+	//             return matchRegexpWithKey(ctx, left, key)
+	//         },
+	//     },
 	// },
 	//
 	// RegMatch: {
-	// 	CmpOp{
-	// 		LeftType:  types.String,
-	// 		RightType: types.String,
-	// 		fn: func(ctx *EvalContext, left Datum, right Datum) (Datum, error) {
-	// 			key := regexpKey{s: string(MustBeDString(right)), caseInsensitive: false}
-	// 			return matchRegexpWithKey(ctx, left, key)
-	// 		},
-	// 	},
+	//     CmpOp{
+	//         LeftType:  types.String,
+	//         RightType: types.String,
+	//         fn: func(ctx *EvalContext, left Datum, right Datum) (Datum, error) {
+	//             key := regexpKey{s: string(MustBeDString(right)), caseInsensitive: false}
+	//             return matchRegexpWithKey(ctx, left, key)
+	//         },
+	//     },
 	// },
 	//
 	// RegIMatch: {
-	// 	CmpOp{
-	// 		LeftType:  types.String,
-	// 		RightType: types.String,
-	// 		fn: func(ctx *EvalContext, left Datum, right Datum) (Datum, error) {
-	// 			key := regexpKey{s: string(MustBeDString(right)), caseInsensitive: true}
-	// 			return matchRegexpWithKey(ctx, left, key)
-	// 		},
-	// 	},
+	//     CmpOp{
+	//         LeftType:  types.String,
+	//         RightType: types.String,
+	//         fn: func(ctx *EvalContext, left Datum, right Datum) (Datum, error) {
+	//             key := regexpKey{s: string(MustBeDString(right)), caseInsensitive: true}
+	//             return matchRegexpWithKey(ctx, left, key)
+	//         },
+	//     },
 	// },
 
 	JSONExists: {
@@ -2291,61 +2291,61 @@ func evalDatumsCmp(
 // MatchLikeEscape matches 'unescaped' with 'pattern' using custom escape character 'escape' which
 // must be either empty (which disables the escape mechanism) or a single unicode character.
 // func MatchLikeEscape(
-// 	ctx *EvalContext, unescaped, pattern, escape string, caseInsensitive bool,
+//     ctx *EvalContext, unescaped, pattern, escape string, caseInsensitive bool,
 // ) (Datum, error) {
-// 	var escapeRune rune
-// 	if len(escape) > 0 {
-// 		var width int
-// 		escapeRune, width = utf8.DecodeRuneInString(escape)
-// 		if len(escape) > width {
-// 			return DBoolFalse, pgerror.NewErrorf(pgerror.CodeInvalidEscapeSequenceError, "invalid escape string")
-// 		}
-// 	}
+//     var escapeRune rune
+//     if len(escape) > 0 {
+//         var width int
+//         escapeRune, width = utf8.DecodeRuneInString(escape)
+//         if len(escape) > width {
+//             return DBoolFalse, pgerror.NewErrorf(pgerror.CodeInvalidEscapeSequenceError, "invalid escape string")
+//         }
+//     }
 //
-// 	like, err := optimizedLikeFunc(pattern, caseInsensitive, escapeRune)
-// 	if err != nil {
-// 		return DBoolFalse, pgerror.NewErrorf(
-// 			pgerror.CodeInvalidRegularExpressionError, "LIKE regexp compilation failed: %v", err)
-// 	}
+//     like, err := optimizedLikeFunc(pattern, caseInsensitive, escapeRune)
+//     if err != nil {
+//         return DBoolFalse, pgerror.NewErrorf(
+//             pgerror.CodeInvalidRegularExpressionError, "LIKE regexp compilation failed: %v", err)
+//     }
 //
-// 	if like == nil {
-// 		key := likeKey{s: pattern, caseInsensitive: caseInsensitive, escape: escapeRune}
-// 		re, err := ctx.ReCache.GetRegexp(key)
-// 		if err != nil {
-// 			return DBoolFalse, pgerror.NewErrorf(
-// 				pgerror.CodeInvalidRegularExpressionError, "LIKE regexp compilation failed: %v", err)
-// 		}
-// 		like = re.MatchString
-// 	}
-// 	return MakeDBool(DBool(like(unescaped))), nil
+//     if like == nil {
+//         key := likeKey{s: pattern, caseInsensitive: caseInsensitive, escape: escapeRune}
+//         re, err := ctx.ReCache.GetRegexp(key)
+//         if err != nil {
+//             return DBoolFalse, pgerror.NewErrorf(
+//                 pgerror.CodeInvalidRegularExpressionError, "LIKE regexp compilation failed: %v", err)
+//         }
+//         like = re.MatchString
+//     }
+//     return MakeDBool(DBool(like(unescaped))), nil
 // }
 
 // func matchLike(ctx *EvalContext, left, right Datum, caseInsensitive bool) (Datum, error) {
-// 	pattern := string(MustBeDString(right))
-// 	like, err := optimizedLikeFunc(pattern, caseInsensitive, '\\')
-// 	if err != nil {
-// 		return DBoolFalse, pgerror.NewErrorf(
-// 			pgerror.CodeInvalidRegularExpressionError, "LIKE regexp compilation failed: %v", err)
-// 	}
+//     pattern := string(MustBeDString(right))
+//     like, err := optimizedLikeFunc(pattern, caseInsensitive, '\\')
+//     if err != nil {
+//         return DBoolFalse, pgerror.NewErrorf(
+//             pgerror.CodeInvalidRegularExpressionError, "LIKE regexp compilation failed: %v", err)
+//     }
 //
-// 	if like == nil {
-// 		key := likeKey{s: pattern, caseInsensitive: caseInsensitive, escape: '\\'}
-// 		re, err := ctx.ReCache.GetRegexp(key)
-// 		if err != nil {
-// 			return DBoolFalse, pgerror.NewErrorf(
-// 				pgerror.CodeInvalidRegularExpressionError, "LIKE regexp compilation failed: %v", err)
-// 		}
-// 		like = re.MatchString
-// 	}
-// 	return MakeDBool(DBool(like(string(MustBeDString(left))))), nil
+//     if like == nil {
+//         key := likeKey{s: pattern, caseInsensitive: caseInsensitive, escape: '\\'}
+//         re, err := ctx.ReCache.GetRegexp(key)
+//         if err != nil {
+//             return DBoolFalse, pgerror.NewErrorf(
+//                 pgerror.CodeInvalidRegularExpressionError, "LIKE regexp compilation failed: %v", err)
+//         }
+//         like = re.MatchString
+//     }
+//     return MakeDBool(DBool(like(string(MustBeDString(left))))), nil
 // }
 //
 // func matchRegexpWithKey(ctx *EvalContext, str Datum, key RegexpCacheKey) (Datum, error) {
-// 	re, err := ctx.ReCache.GetRegexp(key)
-// 	if err != nil {
-// 		return DBoolFalse, err
-// 	}
-// 	return MakeDBool(DBool(re.MatchString(string(MustBeDString(str))))), nil
+//     re, err := ctx.ReCache.GetRegexp(key)
+//     if err != nil {
+//         return DBoolFalse, err
+//     }
+//     return MakeDBool(DBool(re.MatchString(string(MustBeDString(str))))), nil
 // }
 
 // MultipleResultsError is returned by QueryRow when more than one result is
@@ -2489,9 +2489,9 @@ type EvalContext struct {
 	TxnReadOnly bool
 	TxnImplicit bool
 
-	//Settings  *cluster.Settings
+	// Settings  *cluster.Settings
 	ClusterID uuid.UUID
-	//NodeID    roachpb.NodeID
+	// NodeID    roachpb.NodeID
 	// The statement timestamp. May be different for every statement.
 	// Used for statement_timestamp().
 	StmtTimestamp time.Time
@@ -2550,45 +2550,45 @@ type EvalContext struct {
 
 	TestingKnobs EvalContextTestingKnobs
 
-	//Mon *mon.BytesMonitor
+	// Mon *mon.BytesMonitor
 
 	// ActiveMemAcc is the account to which values are allocated during
 	// evaluation. It can change over the course of evaluation, such as on a
 	// per-row basis.
-	//ActiveMemAcc *mon.BoundAccount
+	// ActiveMemAcc *mon.BoundAccount
 }
 
 // MakeTestingEvalContext returns an EvalContext that includes a MemoryMonitor.
 // func MakeTestingEvalContext(st *cluster.Settings) EvalContext {
-// 	monitor := mon.MakeMonitor(
-// 		"test-monitor",
-// 		mon.MemoryResource,
-// 		nil,           /* curCount */
-// 		nil,           /* maxHist */
-// 		-1,            /* increment */
-// 		math.MaxInt64, /* noteworthy */
-// 		st,
-// 	)
-// 	return MakeTestingEvalContextWithMon(st, &monitor)
+//     monitor := mon.MakeMonitor(
+//         "test-monitor",
+//         mon.MemoryResource,
+//         nil,           /* curCount */
+//         nil,           /* maxHist */
+//         -1,            /* increment */
+//         math.MaxInt64, /* noteworthy */
+//         st,
+//     )
+//     return MakeTestingEvalContextWithMon(st, &monitor)
 // }
 
 // MakeTestingEvalContextWithMon returns an EvalContext with the given
 // MemoryMonitor. Ownership of the memory monitor is transferred to the
 // EvalContext so do not start or close the memory monitor.
 // func MakeTestingEvalContextWithMon(st *cluster.Settings, monitor *mon.BytesMonitor) EvalContext {
-// 	ctx := EvalContext{
-// 		SessionData: &sessiondata.SessionData{},
-// 		Settings:    st,
-// 	}
-// 	monitor.Start(context.Background(), nil /* pool */, mon.MakeStandaloneBudget(math.MaxInt64))
-// 	ctx.Mon = monitor
-// 	ctx.CtxProvider = FixedCtxProvider{context.TODO()}
-// 	acc := monitor.MakeBoundAccount()
-// 	ctx.ActiveMemAcc = &acc
-// 	now := timeutil.Now()
-// 	ctx.SetTxnTimestamp(now)
-// 	ctx.SetStmtTimestamp(now)
-// 	return ctx
+//     ctx := EvalContext{
+//         SessionData: &sessiondata.SessionData{},
+//         Settings:    st,
+//     }
+//     monitor.Start(context.Background(), nil /* pool */, mon.MakeStandaloneBudget(math.MaxInt64))
+//     ctx.Mon = monitor
+//     ctx.CtxProvider = FixedCtxProvider{context.TODO()}
+//     acc := monitor.MakeBoundAccount()
+//     ctx.ActiveMemAcc = &acc
+//     now := timeutil.Now()
+//     ctx.SetTxnTimestamp(now)
+//     ctx.SetStmtTimestamp(now)
+//     return ctx
 // }
 
 // PushIVarContainer replaces the current IVarContainer with a different one -
@@ -2609,13 +2609,13 @@ func (ctx *EvalContext) PopIVarContainer() {
 // NewTestingEvalContext is a convenience version of MakeTestingEvalContext
 // that returns a pointer.
 // func NewTestingEvalContext(st *cluster.Settings) *EvalContext {
-// 	ctx := MakeTestingEvalContext(st)
-// 	return &ctx
+//     ctx := MakeTestingEvalContext(st)
+//     return &ctx
 // }
 
 // Stop closes out the EvalContext and must be called once it is no longer in use.
 // func (ctx *EvalContext) Stop(c context.Context) {
-// 	ctx.Mon.Stop(c)
+//     ctx.Mon.Stop(c)
 // }
 
 // GetStmtTimestamp retrieves the current statement timestamp as per
@@ -2632,11 +2632,11 @@ func (ctx *EvalContext) GetStmtTimestamp() time.Time {
 // GetClusterTimestamp retrieves the current cluster timestamp as per
 // the evaluation context. The timestamp is guaranteed to be nonzero.
 // func (ctx *EvalContext) GetClusterTimestamp() *DDecimal {
-// 	ts := ctx.Txn.CommitTimestamp()
-// 	if ts == (hlc.Timestamp{}) {
-// 		panic("zero cluster timestamp in txn")
-// 	}
-// 	return TimestampToDecimal(ts)
+//     ts := ctx.Txn.CommitTimestamp()
+//     if ts == (hlc.Timestamp{}) {
+//         panic("zero cluster timestamp in txn")
+//     }
+//     return TimestampToDecimal(ts)
 // }
 
 // HasPlaceholders returns true if this EvalContext's placeholders have been
@@ -3589,7 +3589,7 @@ func (expr *FuncExpr) Eval(ctx *EvalContext) (Datum, error) {
 		// by crdb_internal.force_retry(), propagate it unchanged, so that
 		// the executor can see it with the right type.
 		// if _, ok := err.(*roachpb.HandledRetryableTxnError); ok {
-		// 	return nil, err
+		//     return nil, err
 		// }
 		// If we are facing an explicit error, propagate it unchanged.
 		fName := expr.Func.String()
@@ -4580,16 +4580,16 @@ func (k similarToKey) Pattern() (string, error) {
 // SimilarToEscape checks if 'unescaped' is SIMILAR TO 'pattern' using custom escape token 'escape'
 // which must be either empty (which disables the escape mechanism) or a single unicode character.
 // func SimilarToEscape(ctx *EvalContext, unescaped, pattern, escape string) (Datum, error) {
-// 	var escapeRune rune
-// 	if len(escape) > 0 {
-// 		var width int
-// 		escapeRune, width = utf8.DecodeRuneInString(escape)
-// 		if len(escape) > width {
-// 			return DBoolFalse, pgerror.NewErrorf(pgerror.CodeInvalidEscapeSequenceError, "invalid escape string")
-// 		}
-// 	}
-// 	key := similarToKey{s: pattern, escape: escapeRune}
-// 	return matchRegexpWithKey(ctx, NewDString(unescaped), key)
+//     var escapeRune rune
+//     if len(escape) > 0 {
+//         var width int
+//         escapeRune, width = utf8.DecodeRuneInString(escape)
+//         if len(escape) > width {
+//             return DBoolFalse, pgerror.NewErrorf(pgerror.CodeInvalidEscapeSequenceError, "invalid escape string")
+//         }
+//     }
+//     key := similarToKey{s: pattern, escape: escapeRune}
+//     return matchRegexpWithKey(ctx, NewDString(unescaped), key)
 // }
 
 type regexpKey struct {

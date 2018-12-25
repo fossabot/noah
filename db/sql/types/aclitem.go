@@ -66,14 +66,14 @@ import (
 // ACLItem is used for PostgreSQL's aclitem data type. A sample aclitem
 // might look like this:
 //
-//	postgres=arwdDxt/postgres
+//    postgres=arwdDxt/postgres
 //
 // Note, however, that because the user/role name part of an aclitem is
 // an identifier, it follows all the usual formatting rules for SQL
 // identifiers: if it contains spaces and other special characters,
 // it should appear in double-quotes:
 //
-//	postgres=arwdDxt/"role with spaces"
+//    postgres=arwdDxt/"role with spaces"
 //
 type ACLItem struct {
 	String string

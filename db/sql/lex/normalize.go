@@ -80,9 +80,9 @@ var normalize = unicode.SpecialCase{
 			0x49 - 0x130, // Title
 		},
 		// Delta: [unicode.MaxCase]rune{
-		// 	0x49 - 0x130, // Upper
-		// 	0x69 - 0x130, // Lower
-		// 	0x49 - 0x130, // Title
+		//     0x49 - 0x130, // Upper
+		//     0x69 - 0x130, // Lower
+		//     0x49 - 0x130, // Title
 		// },
 	},
 	unicode.CaseRange{

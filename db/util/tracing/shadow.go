@@ -63,7 +63,7 @@ import (
 	"os"
 
 	lightstep "github.com/lightstep/lightstep-tracer-go"
-    "github.com/opentracing/opentracing-go"
+	"github.com/opentracing/opentracing-go"
 	zipkin "github.com/openzipkin/zipkin-go-opentracing"
 )
 

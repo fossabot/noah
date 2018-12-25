@@ -1,22 +1,22 @@
 1:
 -
 SELECT
-	(
-		SELECT
-			1
-	)
+    (
+        SELECT
+            1
+    )
 
 8:
 --------
 SELECT (
-		SELECT
-			1
+        SELECT
+            1
        )
 
 16:
 ----------------
 SELECT (
-		SELECT 1
+        SELECT 1
        )
 
 17:

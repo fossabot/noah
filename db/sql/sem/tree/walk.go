@@ -820,19 +820,19 @@ func (stmt *Delete) WalkStmt(v Visitor) Statement {
 
 // CopyNode makes a copy of this Statement without recursing in any child Statements.
 // func (stmt *Explain) CopyNode() *Explain {
-// 	stmtCopy := *stmt
-// 	stmtCopy.Options = append([]string(nil), stmt.Options...)
-// 	return &stmtCopy
+//     stmtCopy := *stmt
+//     stmtCopy.Options = append([]string(nil), stmt.Options...)
+//     return &stmtCopy
 // }
 //
 // // WalkStmt is part of the WalkableStmt interface.
 // func (stmt *Explain) WalkStmt(v Visitor) Statement {
-// 	s, changed := WalkStmt(v, stmt.Statement)
-// 	if changed {
-// 		stmt = stmt.CopyNode()
-// 		stmt.Statement = s
-// 	}
-// 	return stmt
+//     s, changed := WalkStmt(v, stmt.Statement)
+//     if changed {
+//         stmt = stmt.CopyNode()
+//         stmt.Statement = s
+//     }
+//     return stmt
 // }
 
 // CopyNode makes a copy of this Statement without recursing in any child Statements.

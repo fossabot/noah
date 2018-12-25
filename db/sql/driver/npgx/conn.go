@@ -111,14 +111,14 @@ func (e ProtocolError) Error() string {
 }
 
 // func init() {
-// 	minimalConnInfo = types.NewConnInfo()
-// 	minimalConnInfo.InitializeDataTypes(map[string]types.OID{
-// 		"int4":    types.Int4OID,
-// 		"name":    types.NameOID,
-// 		"oid":     types.OIDOID,
-// 		"text":    types.TextOID,
-// 		"varchar": types.VarcharOID,
-// 	})
+//     minimalConnInfo = types.NewConnInfo()
+//     minimalConnInfo.InitializeDataTypes(map[string]types.OID{
+//         "int4":    types.Int4OID,
+//         "name":    types.NameOID,
+//         "oid":     types.OIDOID,
+//         "text":    types.TextOID,
+//         "varchar": types.VarcharOID,
+//     })
 // }
 
 type DialFunc func(network, addr string) (net.Conn, error)

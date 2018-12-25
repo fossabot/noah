@@ -117,11 +117,11 @@ func formatMsgHintDetail(prefix, msg, hint, detail string) string {
 // NewErrorWithDepthf creates an Error and extracts the context
 // information at the specified depth level.
 func NewErrorWithDepthf(depth int, code string, format string, args ...interface{}) *Error {
-	//srcCtx := makeSrcCtx(depth + 1)
+	// srcCtx := makeSrcCtx(depth + 1)
 	return &Error{
 		Message: fmt.Sprintf(format, args...),
 		Code:    code,
-		//Source:  &srcCtx,
+		// Source:  &srcCtx,
 	}
 }
 

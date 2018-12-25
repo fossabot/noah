@@ -100,10 +100,10 @@ func main() {
 		log.Fatal(err)
 	}
 	rows, err := db.Query(`
-		SELECT typname, oid
-		FROM pg_type WHERE oid < 10000
-		ORDER BY oid;
-	`)
+        SELECT typname, oid
+        FROM pg_type WHERE oid < 10000
+        ORDER BY oid;
+    `)
 	if err != nil {
 		log.Fatal(err)
 	}

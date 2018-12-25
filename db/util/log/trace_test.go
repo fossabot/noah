@@ -65,7 +65,7 @@ import (
 
 	"golang.org/x/net/trace"
 
-    "github.com/opentracing/opentracing-go"
+	"github.com/opentracing/opentracing-go"
 
 	"github.com/cockroachdb/cockroach/pkg/util/tracing"
 )
@@ -133,12 +133,12 @@ func TestTrace(t *testing.T) {
 	sp.Finish()
 
 	if err := tracing.TestingCheckRecordedSpans(tracing.GetRecording(sp), `
-		span s:
-		  event: test1
-		  event: test2
-		  event: testerr
-		  event: log
-	`); err != nil {
+        span s:
+          event: test1
+          event: test2
+          event: testerr
+          event: log
+    `); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -160,12 +160,12 @@ func TestTraceWithTags(t *testing.T) {
 
 	sp.Finish()
 	if err := tracing.TestingCheckRecordedSpans(tracing.GetRecording(sp), `
-		span s:
-		  event: [tag=1] test1
-		  event: [tag=1] test2
-		  event: [tag=1] testerr
-		  event: [tag=1] log
-	`); err != nil {
+        span s:
+          event: [tag=1] test1
+          event: [tag=1] test2
+          event: [tag=1] testerr
+          event: [tag=1] log
+    `); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -251,11 +251,11 @@ func TestEventLogAndTrace(t *testing.T) {
 	el.Finish()
 
 	if err := tracing.TestingCheckRecordedSpans(tracing.GetRecording(sp), `
-		span s:
-		  event: test3
-		  event: test4
-		  event: test5err
-	`); err != nil {
+        span s:
+          event: test3
+          event: test4
+          event: test5err
+    `); err != nil {
 		t.Fatal(err)
 	}
 

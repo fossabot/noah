@@ -81,11 +81,10 @@ func nextID(t *testing.T) uint64 {
 	return id
 }
 
-func Test_SnowflakeParallel(t *testing.T){
+func Test_SnowflakeParallel(t *testing.T) {
 	const numID = 10000
 	const numGenerator = 8
-	consumer := make(chan uint64, numID * numGenerator)
-
+	consumer := make(chan uint64, numID*numGenerator)
 
 	generate := func() {
 		for i := 0; i < numID; i++ {
@@ -93,14 +92,13 @@ func Test_SnowflakeParallel(t *testing.T){
 		}
 	}
 
-
 	for i := 0; i < numGenerator; i++ {
 		go generate()
 	}
 
 	set := mapset.NewSet()
 	for i := 0; i < numID*numGenerator; i++ {
-		id := <- consumer
+		id := <-consumer
 		if set.Contains(id) {
 			t.Fatal("duplicated id")
 		} else {

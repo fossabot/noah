@@ -1,39 +1,39 @@
 1:
 -
 SELECT
-	count(
-		*
-	)
+    count(
+        *
+    )
 FROM
-	[
-		DELETE FROM
-			unindexed
-		LIMIT
-			5
-		RETURNING
-			v
-	]
+    [
+        DELETE FROM
+            unindexed
+        LIMIT
+            5
+        RETURNING
+            v
+    ]
 
 12:
 ------------
 SELECT
-	count(*)
+    count(*)
 FROM
-	[
-		DELETE FROM
-			unindexed
-		LIMIT
-			5
-		RETURNING
-			v
-	]
+    [
+        DELETE FROM
+            unindexed
+        LIMIT
+            5
+        RETURNING
+            v
+    ]
 
 47:
 -----------------------------------------------
 SELECT
-	count(*)
+    count(*)
 FROM
-	[DELETE FROM unindexed LIMIT 5 RETURNING v]
+    [DELETE FROM unindexed LIMIT 5 RETURNING v]
 
 64:
 ----------------------------------------------------------------

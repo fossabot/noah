@@ -102,15 +102,15 @@ func (stmt *InsertStatement) getTargetNodes(ex *connExecutor) ([]system.NNode, e
 		return nil, errors.New("multi account queries are not supported at this time.")
 		// node_ids := make([]uint64, 0)
 		// From(accounts).SelectManyT(func(id uint64) Query {
-		// 	if ids, err := ex.GetNodesForAccountID(&id); err == nil {
-		// 		return From(ids)
-		// 	}
-		// 	return From(make([]uint64, 0))
+		//     if ids, err := ex.GetNodesForAccountID(&id); err == nil {
+		//         return From(ids)
+		//     }
+		//     return From(make([]uint64, 0))
 		// }).Distinct().ToSlice(&node_ids)
 		// if len(node_ids) == 0 {
-		// 	return nil, errors.New("could not find nodes for account IDs")
+		//     return nil, errors.New("could not find nodes for account IDs")
 		// } else {
-		// 	return node_ids, nil
+		//     return node_ids, nil
 		// }
 	} else {
 		return ex.SystemContext.Nodes.GetNodes()

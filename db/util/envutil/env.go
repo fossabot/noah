@@ -94,7 +94,7 @@ func checkVarName(name string) {
 	valid := strings.HasPrefix(name, "COCKROACH_")
 	for i := 0; valid && i < len(name); i++ {
 		c := name[i]
-        valid = (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '_'
+		valid = (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '_'
 	}
 	if !valid {
 		panic("invalid env var name " + name)

@@ -131,7 +131,7 @@ func (b *msgBuf) EmitFloat64(key string, value float64) {
 }
 
 func (b *msgBuf) EmitObject(key string, value interface{}) {
-    hasValue := value != nil
+	hasValue := value != nil
 	b.writeKey(key, hasValue)
 	if hasValue {
 		if s, ok := value.(fmt.Stringer); ok {
@@ -193,6 +193,6 @@ func addStructured(ctx context.Context, s Severity, depth int, format string, ar
 	}
 	// MakeMessage already added the tags when forming msg, we don't want
 	// eventInternal to prepend them again.
-    eventInternal(ctx, s >= Severity_ERROR, false /*withTags*/, "%s:%d %s", file, line, msg)
+	eventInternal(ctx, s >= Severity_ERROR, false /*withTags*/, "%s:%d %s", file, line, msg)
 	logging.outputLogEntry(s, file, line, msg)
 }

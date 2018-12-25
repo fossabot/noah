@@ -107,7 +107,7 @@ func (ex *connExecutor) execStmt(
 	// case nodes.ClosePortalStmt:
 	// case nodes.ClusterStmt:
 	// case nodes.CommentStmt:
-	// 	// return nil, _comment.CreateCommentStatment(stmt, tree).HandleComment(ctx)
+	//     // return nil, _comment.CreateCommentStatment(stmt, tree).HandleComment(ctx)
 	// case nodes.CompositeTypeStmt:
 	// case nodes.ConstraintsSetStmt:
 	// case nodes.CopyStmt:
@@ -132,7 +132,7 @@ func (ex *connExecutor) execStmt(
 	// case nodes.CreateStatsStmt:
 	case nodes.CreateStmt:
 		return CreateCreateStatement(stmt).Execute(ex, res)
-	// 	// return nil, _create.CreateCreateStatment(stmt, tree).HandleCreate(ctx)
+	//     // return nil, _create.CreateCreateStatment(stmt, tree).HandleCreate(ctx)
 	// case nodes.CreateSubscriptionStmt:
 	// case nodes.CreateTableAsStmt:
 	// case nodes.CreateTableSpaceStmt:
@@ -149,7 +149,7 @@ func (ex *connExecutor) execStmt(
 	// case nodes.DropOwnedStmt:
 	// case nodes.DropRoleStmt:
 	// case nodes.DropStmt:
-	// 	// return nil, _drop.CreateDropStatment(stmt, tree).HandleComment(ctx)
+	//     // return nil, _drop.CreateDropStatment(stmt, tree).HandleComment(ctx)
 	// case nodes.DropSubscriptionStmt:
 	// case nodes.DropTableSpaceStmt:
 	// case nodes.DropUserMappingStmt:
@@ -182,7 +182,7 @@ func (ex *connExecutor) execStmt(
 	// case nodes.TruncateStmt:
 	// case nodes.UnlistenStmt:
 	// case nodes.UpdateStmt:
-	// 	// return nil, _update.HandleUpdate(ctx, stmt)
+	//     // return nil, _update.HandleUpdate(ctx, stmt)
 	// case nodes.VacuumStmt:
 	case nodes.VariableSetStmt:
 		return CreateVariableSetStatement(stmt).Execute(ex, res)

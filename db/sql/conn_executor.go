@@ -319,16 +319,16 @@ func (ex *connExecutor) run() (err error) {
 		}
 
 		// if ev != nil {
-		// 	var err error
-		// 	advInfo, err = ex.txnStateTransitionsApplyWrapper(ev, payload, res, pos)
-		// 	if err != nil {
-		// 		return err
-		// 	}
+		//     var err error
+		//     advInfo, err = ex.txnStateTransitionsApplyWrapper(ev, payload, res, pos)
+		//     if err != nil {
+		//         return err
+		//     }
 		// } else {
-		// 	// If no event was generated synthesize an advance code.
-		// 	advInfo = advanceInfo{
-		// 		code: advanceOne,
-		// 	}
+		//     // If no event was generated synthesize an advance code.
+		//     advInfo = advanceInfo{
+		//         code: advanceOne,
+		//     }
 		// }
 
 		if err != nil {

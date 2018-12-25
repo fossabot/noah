@@ -305,7 +305,6 @@ func (tx *Transaction) RollbackEx(ctx context.Context) error {
 	return tx.err
 }
 
-
 func (tx *Transaction) Query(sql string) (*Rows, error) {
 	return tx.QueryEx(context.Background(), sql, nil)
 }

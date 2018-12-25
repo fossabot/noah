@@ -1,8 +1,8 @@
 1:
 -
 SELECT
-	"primary",
-	'primary'
+    "primary",
+    'primary'
 
 17:
 -----------------
