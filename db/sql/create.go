@@ -190,24 +190,30 @@ func (stmt *CreateStatement) handleValidation(ex *connExecutor, table *system.NT
 }
 
 func (stmt *CreateStatement) handleColumns(ex *connExecutor, table *system.NTable) error {
-	primaryKeyFound := false
 	if stmt.Statement.TableElts.Items != nil && len(stmt.Statement.TableElts.Items) > 0 {
 		for i, col := range stmt.Statement.TableElts.Items {
 			columnDefinition := col.(pg_query.ColumnDef)
 			table.Columns[i] = &system.NColumn{ColumnName: *columnDefinition.Colname}
 
+			// Check to see if this column is the primary key, primary keys will be used for tables
+			// like account tables. If someone tries to create a table without a primary key an
+			// error will be returned at this time.
 			if columnDefinition.Constraints.Items != nil && len(columnDefinition.Constraints.Items) > 0 {
 				table.Columns[i].IsPrimaryKey = linq.From(columnDefinition.Constraints.Items).AnyWithT(func(constraint pg_query.Constraint) bool {
 					return constraint.Contype == pg_query.CONSTR_PRIMARY
 				})
+
 				if table.Columns[i].IsPrimaryKey {
-					if primaryKeyFound {
+					if table.HasPrimaryKey {
 						return errors.New("cannot define more than 1 primary key on a single table")
 					}
-					primaryKeyFound = true
+					table.HasPrimaryKey = true
 				}
 			}
 
+			// There are a few types that are handled by noah as a middle man; such as ID generation
+			// because of this we want to replace serial columns with their base types since noah
+			// will rewrite incoming queries to include an ID when performing inserts.
 			if columnDefinition.TypeName != nil &&
 				columnDefinition.TypeName.Names.Items != nil &&
 				len(columnDefinition.TypeName.Names.Items) > 0 {
@@ -234,7 +240,7 @@ func (stmt *CreateStatement) handleColumns(ex *connExecutor, table *system.NTabl
 		}
 	}
 
-	if !primaryKeyFound && table.TableType == system.NTableType_ACCOUNT {
+	if !table.HasPrimaryKey && table.TableType == system.NTableType_ACCOUNT {
 		return errors.New("cannot create an account table without a primary key")
 	}
 
