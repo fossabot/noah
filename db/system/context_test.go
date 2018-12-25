@@ -16,7 +16,7 @@ func Test_CreateContext(t *testing.T) {
 	ctx.Close()
 }
 
-func Test_GetEmptyUnit64(t *testing.T) {
+func Test_InitSetup(t *testing.T) {
 	tempFolder := CreateTempFolder()
 	defer DeleteTempFolder(tempFolder)
 

@@ -117,10 +117,10 @@ func NewSystemContext(dataDirectory, listenAddr, joinAddr string) (*SContext, er
 }
 
 // func (ctx *SContext) InitStore() error {
-// 	 val, err := ctx.Settings.GetSettingUint64(InitialSetupTimestamp)
-// 	 if err != nil {
-// 	 	return err
-// 	 }
+//      val, err := ctx.Settings.GetSettingUint64(InitialSetupTimestamp)
+//      if err != nil {
+//          return err
+//      }
 //
 //
 // }

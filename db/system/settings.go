@@ -68,7 +68,7 @@ var (
 	settingsKeys = map[NoahSetting]interface{}{
 		ConnectionPoolInitConnections: int64(5),
 		QueryReplicationFactor:        int64(2),
-		InitialSetupTimestamp:         uint64(3),
+		InitialSetupTimestamp:         nil,
 	}
 )
 
