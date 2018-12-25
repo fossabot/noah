@@ -58,7 +58,7 @@
 package datums
 
 type Account struct {
-	AccountID int
+	AccountID   int
 	AccountName string
-	NodeIDs []int
+	NodeIDs     []int
 }

@@ -106,7 +106,7 @@ func (s *FastIntSet) largeToSmall() (small uint64, otherValues bool) {
 		panic("set not large")
 	}
 	for x := s.large.LowerBound(0); x < smallCutoff; x = s.large.LowerBound(x + 1) {
-        small |= 1 << uint64(x)
+		small |= 1 << uint64(x)
 	}
 	return small, s.large.Min() < 0 || s.large.Max() >= smallCutoff
 }
@@ -115,7 +115,7 @@ func (s *FastIntSet) largeToSmall() (small uint64, otherValues bool) {
 func (s *FastIntSet) Add(i int) {
 	if i >= 0 && i < smallCutoff && s.large == nil {
 		// Fast path.
-        s.small |= 1 << uint64(i)
+		s.small |= 1 << uint64(i)
 		return
 	}
 	if s.large == nil {

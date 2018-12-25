@@ -23,9 +23,6 @@ FROM ubuntu:16.04
 RUN mkdir /postgres
 COPY --from=builder /postbuild /postgres
 RUN mkdir /db
-#COPY ./pg_hba.conf /db/pg_hba.conf
-#COPY ./postgresql.conf /db/postgresql.conf
-#RUN echo 12 >> /db/PG_VERSION
 EXPOSE 5432
 ENV LD_LIBRARY_PATH=/postgres/lib
 

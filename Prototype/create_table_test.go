@@ -66,14 +66,14 @@ import (
 var (
 	createQueries = [][]string{
 		// {
-		// 	"BEGIN;",
-		// 	"INSERT INTO products (account_id,sku,title) VALUES(1,'test','test');",
-		// 	"ROLLBACK;",
+		//     "BEGIN;",
+		//     "INSERT INTO products (account_id,sku,title) VALUES(1,'test','test');",
+		//     "ROLLBACK;",
 		// },
 		// {
-		// 	"BEGIN;",
-		// 	"INSERT INTO products (account_id,sku,title) VALUES(1,'test','test');",
-		// 	"COMMIT;",
+		//     "BEGIN;",
+		//     "INSERT INTO products (account_id,sku,title) VALUES(1,'test','test');",
+		//     "COMMIT;",
 		// },
 		{
 			"BEGIN;",

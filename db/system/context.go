@@ -78,14 +78,6 @@ type SContext struct {
 	Nodes     *SNode
 	Sequences *SSequence
 	Query     *SQuery
-	Flags     SFlags
-}
-
-type SFlags struct {
-	HTTPPort      int
-	PostgresPort  int
-	DataDirectory string
-	LogLevel      string
 }
 
 func NewSystemContext(dataDirectory, listenAddr, joinAddr string) (*SContext, error) {
@@ -94,18 +86,15 @@ func NewSystemContext(dataDirectory, listenAddr, joinAddr string) (*SContext, er
 	if err != nil {
 		return nil, err
 	}
+	// Wait 5 seconds, this should be enough for the store to elect itself as leader if needed.
 	time.Sleep(5 * time.Second)
+
 	base := baseContext{
 		snowflake: snowflake.NewSnowflake(uint16(db.NodeID())),
 		db:        db,
 	}
+
 	sctx := SContext{
-		Flags: SFlags{
-			HTTPPort:      HttpPort,
-			PostgresPort:  PostgresPort,
-			DataDirectory: DataDirectory,
-			LogLevel:      LogLevel,
-		},
 		baseContext: base,
 	}
 
@@ -116,6 +105,7 @@ func NewSystemContext(dataDirectory, listenAddr, joinAddr string) (*SContext, er
 	nodes := SNode(base)
 	query := SQuery(base)
 	pool := SPool{baseContext: &base}
+
 	sctx.Settings = &settings
 	sctx.Accounts = &accounts
 	sctx.Schema = &schema
@@ -125,6 +115,15 @@ func NewSystemContext(dataDirectory, listenAddr, joinAddr string) (*SContext, er
 	sctx.Query = &query
 	return &sctx, nil
 }
+
+// func (ctx *SContext) InitStore() error {
+// 	 val, err := ctx.Settings.GetSettingUint64(InitialSetupTimestamp)
+// 	 if err != nil {
+// 	 	return err
+// 	 }
+//
+//
+// }
 
 func (ctx *SContext) NewSnowflake() (uint64, error) {
 	return ctx.snowflake.NextID()

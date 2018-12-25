@@ -1,39 +1,39 @@
 1:
 -
 SELECT
-	*
+    *
 FROM
-	a
+    a
 ORDER BY
-	INDEX abc2@ba
-		DESC,
-	INDEX abc2@ba,
-	PRIMARY KEY abc2
-		DESC,
-	"foo.bar"
-		ASC
+    INDEX abc2@ba
+        DESC,
+    INDEX abc2@ba,
+    PRIMARY KEY abc2
+        DESC,
+    "foo.bar"
+        ASC
 
 10:
 ----------
   SELECT *
     FROM a
 ORDER BY INDEX abc2@ba
-			DESC,
+            DESC,
          INDEX abc2@ba,
          PRIMARY KEY abc2
-			DESC,
+            DESC,
          "foo.bar"
-			ASC
+            ASC
 
 22:
 ----------------------
   SELECT *
     FROM a
 ORDER BY INDEX abc2@ba
-			DESC,
+            DESC,
          INDEX abc2@ba,
          PRIMARY KEY abc2
-			DESC,
+            DESC,
          "foo.bar" ASC
 
 28:
@@ -43,7 +43,7 @@ ORDER BY INDEX abc2@ba
 ORDER BY INDEX abc2@ba DESC,
          INDEX abc2@ba,
          PRIMARY KEY abc2
-			DESC,
+            DESC,
          "foo.bar" ASC
 
 31:

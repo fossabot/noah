@@ -6,15 +6,15 @@ import (
 )
 
 func CreateTempFolder() string {
-	file, err := ioutil.TempFile("dir", "prefix")
+	folder, err := ioutil.TempDir("", "prefix")
 	if err != nil {
 		panic(err)
 	}
-	return file.Name()
+	return folder
 }
 
 func DeleteTempFolder(path string) {
-	if err := os.Remove(path); err != nil {
+	if err := os.RemoveAll(path); err != nil {
 		panic(err)
 	}
 }

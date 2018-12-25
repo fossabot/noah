@@ -191,8 +191,8 @@ func serveConn(
 	c := newConn(netConn, sArgs)
 
 	// sendError := func(err error) error {
-	// 	_ /* err */ = writeErr(err, c.msgBuilder, c.conn)
-	// 	return err
+	//     _ /* err */ = writeErr(err, c.msgBuilder, c.conn)
+	//     return err
 	// }
 
 	if err := c.handleAuthentication(insecure); err != nil {
@@ -280,7 +280,7 @@ func (c *conn) serveImpl(sqlServer *sql.Server, sctx *system.SContext) error {
 		// DrainRequest. This will make the processor quit whenever it finds a good
 		// time.
 		// if draining() {
-		// 	_ /* err */ = c.stmtBuf.Push(sql.DrainRequest{})
+		//     _ /* err */ = c.stmtBuf.Push(sql.DrainRequest{})
 		// }
 		return nil
 	})
@@ -397,13 +397,13 @@ Loop:
 	// If we're draining, let the client know by piling on an AdminShutdownError
 	// and flushing the buffer.
 	// if draining() {
-	// 	_ /* err */ = writeErr(
-	// 		newAdminShutdownErr(err), c.msgBuilder, &c.writerState.buf)
-	// 	_ /* n */, _ /* err */ = c.writerState.buf.WriteTo(c.conn)
+	//     _ /* err */ = writeErr(
+	//         newAdminShutdownErr(err), c.msgBuilder, &c.writerState.buf)
+	//     _ /* n */, _ /* err */ = c.writerState.buf.WriteTo(c.conn)
 	//
-	// 	// Swallow whatever error we might have gotten from the writer. If we're
-	// 	// draining, it's probably a canceled context error.
-	// 	return nil
+	//     // Swallow whatever error we might have gotten from the writer. If we're
+	//     // draining, it's probably a canceled context error.
+	//     return nil
 	// }
 	if writerErr != nil {
 		return writerErr
@@ -469,18 +469,18 @@ func (c *conn) handleDescribe(buf *pgwirebase.ReadBuffer) error {
 func (c *conn) handleClose(buf *pgwirebase.ReadBuffer) error {
 	// typ, err := buf.GetPrepareType()
 	// if err != nil {
-	// 	return c.stmtBuf.Push(ctx, sql.SendError{Err: err})
+	//     return c.stmtBuf.Push(ctx, sql.SendError{Err: err})
 	// }
 	// name, err := buf.GetString()
 	// if err != nil {
-	// 	return c.stmtBuf.Push(ctx, sql.SendError{Err: err})
+	//     return c.stmtBuf.Push(ctx, sql.SendError{Err: err})
 	// }
 	// return c.stmtBuf.Push(
-	// 	ctx,
-	// 	sql.DeletePreparedStmt{
-	// 		Name: name,
-	// 		Type: typ,
-	// 	})
+	//     ctx,
+	//     sql.DeletePreparedStmt{
+	//         Name: name,
+	//         Type: typ,
+	//     })
 
 	return nil
 }
@@ -686,12 +686,12 @@ func convertToErrWithPGCode(err error) error {
 	// case *roachpb.HandledRetryableTxnError:
 	//
 	// case *roachpb.AmbiguousResultError:
-	// 	// TODO(andrei): Once DistSQL starts executing writes, we'll need a
-	// 	// different mechanism to marshal AmbiguousResultErrors from the executing
-	// 	// nodes.
-	// 	return sqlbase.NewStatementCompletionUnknownError(tErr)
+	//     // TODO(andrei): Once DistSQL starts executing writes, we'll need a
+	//     // different mechanism to marshal AmbiguousResultErrors from the executing
+	//     // nodes.
+	//     return sqlbase.NewStatementCompletionUnknownError(tErr)
 	// default:
-	// 	return err
+	//     return err
 	// }
 }
 
@@ -699,7 +699,7 @@ func cookTag(tagStr string, buf []byte, stmt nodes.Stmt, rowsAffected int) []byt
 	if tagStr == "INSERT" {
 		// From the postgres docs (49.5. Message Formats):
 		// `INSERT oid rows`... oid is the object ID of the inserted row if
-		// 	rows is 1 and the target table has OIDs; otherwise oid is 0.
+		//     rows is 1 and the target table has OIDs; otherwise oid is 0.
 		tagStr = "INSERT 0"
 	}
 	tag := append(buf, tagStr...)
@@ -1108,10 +1108,10 @@ func (c *conn) handleAuthentication(insecure bool) error { // ctx context.Contex
 	// Check that the requested user exists and retrieve the hashed
 	// password in case password authentication is needed.
 	exists, _ := true, []byte("123") /*sql.GetUserHashedPassword(
-		ctx, c.execCfg, &c.metrics.SQLMemMetrics, c.sessionArgs.User,
+	    ctx, c.execCfg, &c.metrics.SQLMemMetrics, c.sessionArgs.User,
 	)*/
 	// if err != nil {
-	// 	return sendError(err)
+	//     return sendError(err)
 	// }
 	if !exists {
 		return sendError(errors.Errorf("user %s does not exist", c.sessionArgs.User))
@@ -1122,34 +1122,34 @@ func (c *conn) handleAuthentication(insecure bool) error { // ctx context.Contex
 	}
 
 	// if tlsConn, ok := c.conn.(*tls.Conn); ok {
-	// 	var authenticationHook security.UserAuthHook
+	//     var authenticationHook security.UserAuthHook
 	//
-	// 	tlsState := tlsConn.ConnectionState()
-	// 	// If no certificates are provided, default to password
-	// 	// authentication.
-	// 	if len(tlsState.PeerCertificates) == 0 {
-	// 		password, err := c.sendAuthPasswordRequest()
-	// 		if err != nil {
-	// 			return sendError(err)
-	// 		}
-	// 		authenticationHook = security.UserAuthPasswordHook(
-	// 			insecure, password, hashedPassword,
-	// 		)
-	// 	} else {
-	// 		// Normalize the username contained in the certificate.
-	// 		// tlsState.PeerCertificates[0].Subject.CommonName = tree.Name(
-	// 		// 	tlsState.PeerCertificates[0].Subject.CommonName,
-	// 		// ).Normalize()
-	// 		var err error
-	// 		authenticationHook, err = security.UserAuthCertHook(insecure, &tlsState)
-	// 		if err != nil {
-	// 			return sendError(err)
-	// 		}
-	// 	}
+	//     tlsState := tlsConn.ConnectionState()
+	//     // If no certificates are provided, default to password
+	//     // authentication.
+	//     if len(tlsState.PeerCertificates) == 0 {
+	//         password, err := c.sendAuthPasswordRequest()
+	//         if err != nil {
+	//             return sendError(err)
+	//         }
+	//         authenticationHook = security.UserAuthPasswordHook(
+	//             insecure, password, hashedPassword,
+	//         )
+	//     } else {
+	//         // Normalize the username contained in the certificate.
+	//         // tlsState.PeerCertificates[0].Subject.CommonName = tree.Name(
+	//         //     tlsState.PeerCertificates[0].Subject.CommonName,
+	//         // ).Normalize()
+	//         var err error
+	//         authenticationHook, err = security.UserAuthCertHook(insecure, &tlsState)
+	//         if err != nil {
+	//             return sendError(err)
+	//         }
+	//     }
 	//
-	// 	if err := authenticationHook(c.sessionArgs.User, true /* public */); err != nil {
-	// 		return sendError(err)
-	// 	}
+	//     if err := authenticationHook(c.sessionArgs.User, true /* public */); err != nil {
+	//         return sendError(err)
+	//     }
 	// }
 
 	c.msgBuilder.initMsg(pgwirebase.ServerMsgAuth)

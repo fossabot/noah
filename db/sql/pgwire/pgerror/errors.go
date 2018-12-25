@@ -91,12 +91,12 @@ func formatMsgHintDetail(prefix, msg, hint, detail string) string {
 	b[0] = prefix
 	b[1] = msg
 	if hint != "" {
-		b = append(b,"\nHINT: ")
-		b = append(b,hint)
+		b = append(b, "\nHINT: ")
+		b = append(b, hint)
 	}
 	if detail != "" {
-		b = append(b,"\nDETAIL: ")
-		b = append(b,detail)
+		b = append(b, "\nDETAIL: ")
+		b = append(b, detail)
 	}
 	return strings.Join(b, " ")
 
@@ -104,12 +104,12 @@ func formatMsgHintDetail(prefix, msg, hint, detail string) string {
 	// b.WriteString(prefix)
 	// b.WriteString(msg)
 	// if hint != "" {
-	// 	b.WriteString("\nHINT: ")
-	// 	b.WriteString(hint)
+	//     b.WriteString("\nHINT: ")
+	//     b.WriteString(hint)
 	// }
 	// if detail != "" {
-	// 	b.WriteString("\nDETAIL: ")
-	// 	b.WriteString(detail)
+	//     b.WriteString("\nDETAIL: ")
+	//     b.WriteString(detail)
 	// }
 	// return b.String()
 }
@@ -172,9 +172,9 @@ func (pg *Error) SetDetailf(f string, args ...interface{}) *Error {
 // makeSrcCtx creates a Error_Source value with contextual information
 // about the caller at the requested depth.
 // func makeSrcCtx(depth int) Error_Source {
-// 	//panic("test")
-// 	//f, l, fun := caller.Lookup(depth + 1)
-// 	//return Error_Source{File: f, Line: int32(l), Function: fun}
+//     //panic("test")
+//     //f, l, fun := caller.Lookup(depth + 1)
+//     //return Error_Source{File: f, Line: int32(l), Function: fun}
 // }
 
 // GetPGCause returns an unwrapped Error.

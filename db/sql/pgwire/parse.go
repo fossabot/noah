@@ -139,15 +139,15 @@ func (c *conn) handleParse(buf *pgwirebase.ReadBuffer) error {
 	// the type hints received from the client, if any.
 	// sqlTypeHints := make(tree.PlaceholderTypes)
 	// for i, t := range inTypeHints {
-	// 	if t == 0 {
-	// 		continue
-	// 	}
-	// 	v, ok := types.OidToType[t]
-	// 	if !ok {
-	// 		err := pgwirebase.NewProtocolViolationErrorf("unknown oid type: %v", t)
-	// 		return c.stmtBuf.Push(ctx, sql.SendError{Err: err})
-	// 	}
-	// 	sqlTypeHints[strconv.Itoa(i+1)] = v
+	//     if t == 0 {
+	//         continue
+	//     }
+	//     v, ok := types.OidToType[t]
+	//     if !ok {
+	//         err := pgwirebase.NewProtocolViolationErrorf("unknown oid type: %v", t)
+	//         return c.stmtBuf.Push(ctx, sql.SendError{Err: err})
+	//     }
+	//     sqlTypeHints[strconv.Itoa(i+1)] = v
 	// }
 
 }

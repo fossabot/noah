@@ -304,35 +304,35 @@ func (s *Server) ServeConn(sctx *system.SContext, conn net.Conn) error { // ctx 
 	}
 	errSSLRequired := false
 	// if version == versionSSL {
-	// 	if len(buf.Msg) > 0 {
-	// 		return errors.Errorf("unexpected data after SSLRequest: %q", buf.Msg)
-	// 	}
+	//     if len(buf.Msg) > 0 {
+	//         return errors.Errorf("unexpected data after SSLRequest: %q", buf.Msg)
+	//     }
 	//
-	// 	if s.cfg.Insecure {
-	// 		if _, err := conn.Write(sslUnsupported); err != nil {
-	// 			return err
-	// 		}
-	// 	} else {
-	// 		if _, err := conn.Write(sslSupported); err != nil {
-	// 			return err
-	// 		}
-	// 		tlsConfig, err := s.cfg.GetServerTLSConfig()
-	// 		if err != nil {
-	// 			return err
-	// 		}
-	// 		conn = tls.Server(conn, tlsConfig)
-	// 	}
+	//     if s.cfg.Insecure {
+	//         if _, err := conn.Write(sslUnsupported); err != nil {
+	//             return err
+	//         }
+	//     } else {
+	//         if _, err := conn.Write(sslSupported); err != nil {
+	//             return err
+	//         }
+	//         tlsConfig, err := s.cfg.GetServerTLSConfig()
+	//         if err != nil {
+	//             return err
+	//         }
+	//         conn = tls.Server(conn, tlsConfig)
+	//     }
 	//
-	// 	_, err := buf.ReadUntypedMsg(conn)
-	// 	if err != nil {
-	// 		return err
-	// 	}
-	// 	version, err = buf.GetUint32()
-	// 	if err != nil {
-	// 		return err
-	// 	}
+	//     _, err := buf.ReadUntypedMsg(conn)
+	//     if err != nil {
+	//         return err
+	//     }
+	//     version, err = buf.GetUint32()
+	//     if err != nil {
+	//         return err
+	//     }
 	// } else if !s.cfg.Insecure {
-	// 	errSSLRequired = true
+	//     errSSLRequired = true
 	// }
 
 	sendErr := func(err error) error {
@@ -349,7 +349,7 @@ func (s *Server) ServeConn(sctx *system.SContext, conn net.Conn) error { // ctx 
 		return sendErr(pgerror.NewError(pgerror.CodeProtocolViolationError, ErrSSLRequired))
 	}
 	// if draining {
-	// 	return sendErr(newAdminShutdownErr(errors.New(ErrDraining)))
+	//     return sendErr(newAdminShutdownErr(errors.New(ErrDraining)))
 	// }
 
 	var sArgs sql.SessionArgs

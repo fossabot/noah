@@ -58,8 +58,8 @@
 package Prototype
 
 import (
-    "fmt"
-    "testing"
+	"fmt"
+	"testing"
 )
 
 var (
@@ -75,7 +75,7 @@ var (
 		"SELECT products.product_id,variations.variation_id FROM products INNER JOIN variations ON variations.product_id=products.product_id INNER JOIN users ON users.id=products.id INNER JOIN temp ON temp.id=products.product_id WHERE (account_id = '2') LIMIT 10 OFFSET 0;",
 		"SELECT products.product_id,variations.variation_id FROM products INNER JOIN variations ON variations.product_id=products.product_id INNER JOIN users ON users.id=products.id INNER JOIN temp ON temp.id=products.product_id WHERE (product.id = 1 or product.test = true) and (products.account_id = '1') LIMIT 10 OFFSET 0;",
 	}
-	FunctionQueries = []string {
+	FunctionQueries = []string{
 		"SELECT do_test('test');",
 		"SELECT CURRENT_TIMESTAMP;",
 	}
@@ -111,8 +111,6 @@ func Test_SelectFunctions(t *testing.T) {
 		}
 	}
 }
-
-
 
 func Benchmark_Select(b *testing.B) {
 	context := Start()

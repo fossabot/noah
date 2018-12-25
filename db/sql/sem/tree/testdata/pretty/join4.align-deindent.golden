@@ -1,38 +1,38 @@
 1:
 -
 SELECT
-	*
+    *
 FROM
-	a
-	JOIN
-		b
-	USING (c),
-	a
-	NATURAL JOIN
-		b,
-	a
-	JOIN
-		b
-	ON
-		c
+    a
+    JOIN
+        b
+    USING (c),
+    a
+    NATURAL JOIN
+        b,
+    a
+    JOIN
+        b
+    ON
+        c
 WHERE
-	true
+    true
 
 8:
 --------
 SELECT *
   FROM a
        JOIN
-		b
+        b
        USING (c),
        a
        NATURAL JOIN
-		b,
+        b,
        a
        JOIN
-		b
+        b
        ON
-		c
+        c
  WHERE true
 
 11:
@@ -40,14 +40,14 @@ SELECT *
 SELECT *
   FROM a
        JOIN
-		b
+        b
        USING (c),
        a
        NATURAL JOIN
-		b,
+        b,
        a
        JOIN
-		b
+        b
        ON c
  WHERE true
 
@@ -59,7 +59,7 @@ SELECT *
        USING (c),
        a
        NATURAL JOIN
-		b,
+        b,
        a
        JOIN b
        ON c
@@ -73,7 +73,7 @@ SELECT *
        USING (c),
        a
        NATURAL JOIN
-		b,
+        b,
        a
        JOIN b ON c
  WHERE true

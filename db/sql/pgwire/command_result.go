@@ -288,16 +288,16 @@ func (r *commandResult) SetNoDataRowDescription() {
 
 // SetPrepStmtOutput is part of the DescribeResult interface.
 // func (r *commandResult) SetPrepStmtOutput(ctx context.Context, cols sqlbase.ResultColumns) {
-// 	r.conn.writerState.fi.registerCmd(r.pos)
-// 	_ /* err */ = r.conn.writeRowDescription(ctx, cols, nil /* formatCodes */, &r.conn.writerState.buf)
+//     r.conn.writerState.fi.registerCmd(r.pos)
+//     _ /* err */ = r.conn.writeRowDescription(ctx, cols, nil /* formatCodes */, &r.conn.writerState.buf)
 // }
 //
 // // SetPortalOutput is part of the DescribeResult interface.
 // func (r *commandResult) SetPortalOutput(
-// 	ctx context.Context, cols sqlbase.ResultColumns, formatCodes []pgwirebase.FormatCode,
+//     ctx context.Context, cols sqlbase.ResultColumns, formatCodes []pgwirebase.FormatCode,
 // ) {
-// 	r.conn.writerState.fi.registerCmd(r.pos)
-// 	_ /* err */ = r.conn.writeRowDescription(ctx, cols, formatCodes, &r.conn.writerState.buf)
+//     r.conn.writerState.fi.registerCmd(r.pos)
+//     _ /* err */ = r.conn.writeRowDescription(ctx, cols, formatCodes, &r.conn.writerState.buf)
 // }
 
 // IncrementRowsAffected is part of the CommandResult interface.
@@ -317,6 +317,6 @@ func (r *commandResult) SetLimit(n int) {
 
 // // ResetStmtType is part of the CommandResult interface.
 // func (r *commandResult) ResetStmtType(stmt tree.Statement) {
-// 	r.stmtType = stmt.StatementType()
-// 	r.cmdCompleteTag = stmt.StatementTag()
+//     r.stmtType = stmt.StatementType()
+//     r.cmdCompleteTag = stmt.StatementTag()
 // }

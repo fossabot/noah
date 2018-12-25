@@ -97,4 +97,3 @@ func AppendInt64(buf []byte, n int64) []byte {
 func SetInt32(buf []byte, n int32) {
 	binary.BigEndian.PutUint32(buf, uint32(n))
 }
-

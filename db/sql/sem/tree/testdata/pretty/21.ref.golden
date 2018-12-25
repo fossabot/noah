@@ -1,22 +1,22 @@
 1:
 -
 SELECT
-	CAST(
-		'{"a": "b"}'::JSONB
-			AS STRING
-	)
+    CAST(
+        '{"a": "b"}'::JSONB
+            AS STRING
+    )
 
 37:
 -------------------------------------
 SELECT
-	CAST(
-		'{"a": "b"}'::JSONB AS STRING
-	)
+    CAST(
+        '{"a": "b"}'::JSONB AS STRING
+    )
 
 39:
 ---------------------------------------
 SELECT
-	CAST('{"a": "b"}'::JSONB AS STRING)
+    CAST('{"a": "b"}'::JSONB AS STRING)
 
 42:
 ------------------------------------------

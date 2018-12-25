@@ -62,7 +62,10 @@ import (
 )
 
 func TestBaseContext_GetNodes(t *testing.T) {
-	sctx, err := NewSystemContext()
+	tempFolder := CreateTempFolder()
+	defer DeleteTempFolder(tempFolder)
+
+	sctx, err := NewSystemContext(tempFolder, "127.0.0.1:0", "")
 	if err != nil {
 		t.Error(err)
 		t.Fail()

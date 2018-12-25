@@ -58,21 +58,21 @@
 package Prototype
 
 import (
-    "fmt"
-    "testing"
+	"fmt"
+	"testing"
 )
 
 var (
-	InsertQueries = [][]string {
+	InsertQueries = [][]string{
 		// {
-		// 	"BEGIN;",
-		// 	"INSERT INTO products (account_id,sku,title) VALUES(1,'test','test');",
-		// 	"ROLLBACK;",
+		//     "BEGIN;",
+		//     "INSERT INTO products (account_id,sku,title) VALUES(1,'test','test');",
+		//     "ROLLBACK;",
 		// },
 		// {
-		// 	"BEGIN;",
-		// 	"INSERT INTO products (account_id,sku,title) VALUES(1,'test','test');",
-		// 	"COMMIT;",
+		//     "BEGIN;",
+		//     "INSERT INTO products (account_id,sku,title) VALUES(1,'test','test');",
+		//     "COMMIT;",
 		// },
 		{
 			"BEGIN;",
