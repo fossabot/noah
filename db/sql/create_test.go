@@ -90,15 +90,9 @@ func Test_Create_CompilePlan_Account(t *testing.T) {
 		panic(err)
 	}
 
-	// For create statements we want to run the query on ALL nodes that we can, so if the number of
-	// nodes that are passed to compile query does not match the number of plans returned then that
-	// means a node is missing or the plans were not generated completely.
 	assert.Equal(t, len(plans), len(nodes),
 		"the number of plans returned did not match the number of nodes that this query should target.")
 
-	// This is a simple rewrite, we want to make sure that bigserial is being changed to bigint when
-	// it is found in a create statement. We also want to make sure that the text matches a deparsed
-	// query from pg_query_go.
 	assert.Equal(t, plans[0].CompiledQuery, `CREATE TABLE "abc3" (id bigint PRIMARY KEY, email text)`,
 		"the resulting query plan did not equal the expected query plan, did something change with how queries were recompiled?")
 }
@@ -134,15 +128,9 @@ func Test_Create_CompilePlan_ReplacementTypes(t *testing.T) {
 		panic(err)
 	}
 
-	// For create statements we want to run the query on ALL nodes that we can, so if the number of
-	// nodes that are passed to compile query does not match the number of plans returned then that
-	// means a node is missing or the plans were not generated completely.
 	assert.Equal(t, len(plans), len(nodes),
 		"the number of plans returned did not match the number of nodes that this query should target.")
 
-	// This is a simple rewrite, we want to make sure that bigserial is being changed to bigint when
-	// it is found in a create statement. We also want to make sure that the text matches a deparsed
-	// query from pg_query_go.
 	assert.Equal(t, plans[0].CompiledQuery, `CREATE TABLE "abc4" (id bigint, tinyid int, flake bigint)`,
 		"the resulting query plan did not equal the expected query plan, did something change with how queries were recompiled?")
 }
