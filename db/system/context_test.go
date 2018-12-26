@@ -1,14 +1,15 @@
 package system
 
 import (
+	"github.com/readystock/noah/testutils"
 	"testing"
 )
 
 func Test_CreateContext(t *testing.T) {
-	tempFolder := CreateTempFolder()
-	defer DeleteTempFolder(tempFolder)
+	tempFolder := testutils.CreateTempFolder()
+	defer testutils.DeleteTempFolder(tempFolder)
 
-	ctx, err := NewSystemContext(tempFolder, "127.0.0.1:0", "")
+	ctx, err := NewSystemContext(tempFolder, "127.0.0.1:0", "", "")
 	if err != nil {
 		panic(err)
 	}
@@ -17,10 +18,10 @@ func Test_CreateContext(t *testing.T) {
 }
 
 func Test_InitSetup(t *testing.T) {
-	tempFolder := CreateTempFolder()
-	defer DeleteTempFolder(tempFolder)
+	tempFolder := testutils.CreateTempFolder()
+	defer testutils.DeleteTempFolder(tempFolder)
 
-	ctx, err := NewSystemContext(tempFolder, "127.0.0.1:0", "")
+	ctx, err := NewSystemContext(tempFolder, "127.0.0.1:0", "", "")
 	if err != nil {
 		panic(err)
 	}

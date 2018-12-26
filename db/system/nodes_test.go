@@ -58,14 +58,15 @@
 package system
 
 import (
+	"github.com/readystock/noah/testutils"
 	"testing"
 )
 
 func TestBaseContext_GetNodes(t *testing.T) {
-	tempFolder := CreateTempFolder()
-	defer DeleteTempFolder(tempFolder)
+	tempFolder := testutils.CreateTempFolder()
+	defer testutils.DeleteTempFolder(tempFolder)
 
-	sctx, err := NewSystemContext(tempFolder, "127.0.0.1:0", "")
+	sctx, err := NewSystemContext(tempFolder, "127.0.0.1:0", "", "")
 	if err != nil {
 		t.Error(err)
 		t.Fail()
