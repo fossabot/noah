@@ -13,6 +13,20 @@ import (
 var (
 	SystemCtx    *system.SContext
 	ConnExecutor *connExecutor
+	Nodes        = []system.NNode{
+		{
+			NodeId:    1,
+			Address:   "127.0.0.1:0",
+			Port:      5432,
+			Database:  "postgres",
+			User:      "postgres",
+			Password:  "",
+			ReplicaOf: 0,
+			Region:    "",
+			Zone:      "",
+			IsAlive:   true,
+		},
+	}
 )
 
 func TestMain(m *testing.M) {
@@ -25,10 +39,37 @@ func TestMain(m *testing.M) {
 	}
 	defer SystemCtx.Close()
 
+	for _, node := range Nodes {
+		if err := SystemCtx.Nodes.AddNode(node); err != nil {
+			panic(err)
+		}
+	}
+
 	ConnExecutor = CreateConnExecutor(SystemCtx)
 
 	retCode := m.Run()
 	os.Exit(retCode)
+}
+
+func Test_Create_GetTargetNodes(t *testing.T) {
+	sql := `CREATE TABLE abc0 (id bigserial, email text);`
+	parsed, err := pg_query.Parse(sql)
+	if err != nil {
+		panic(err)
+	}
+
+	stmt := CreateCreateStatement(parsed.Statements[0].(pg_query2.RawStmt).Stmt.(pg_query2.CreateStmt))
+
+	nodes, err := stmt.getTargetNodes(ConnExecutor)
+	if err != nil {
+		panic(err)
+	}
+
+	// For create statements we want to run the query on ALL nodes that we can, so if the number of
+	// nodes that are passed to compile query does not match the number of plans returned then that
+	// means a node is missing or the plans were not generated completely.
+	assert.Equal(t, len(nodes), len(nodes),
+		"the number of nodes returned did not match the number of nodes that this query should target.")
 }
 
 func Test_Create_CompilePlan_Default(t *testing.T) {
@@ -40,8 +81,7 @@ func Test_Create_CompilePlan_Default(t *testing.T) {
 
 	stmt := CreateCreateStatement(parsed.Statements[0].(pg_query2.RawStmt).Stmt.(pg_query2.CreateStmt))
 
-	nodes := make([]system.NNode, 1)
-	plans, err := stmt.compilePlan(ConnExecutor, nodes)
+	plans, err := stmt.compilePlan(ConnExecutor, Nodes)
 	if err != nil {
 		panic(err)
 	}
@@ -49,7 +89,7 @@ func Test_Create_CompilePlan_Default(t *testing.T) {
 	// For create statements we want to run the query on ALL nodes that we can, so if the number of
 	// nodes that are passed to compile query does not match the number of plans returned then that
 	// means a node is missing or the plans were not generated completely.
-	assert.Equal(t, len(plans), len(nodes),
+	assert.Equal(t, len(plans), len(Nodes),
 		"the number of plans returned did not match the number of nodes that this query should target.")
 
 	// This is a simple rewrite, we want to make sure that bigserial is being changed to bigint when
@@ -68,8 +108,7 @@ func Test_Create_CompilePlan_AccountNoPrimaryKey(t *testing.T) {
 
 	stmt := CreateCreateStatement(parsed.Statements[0].(pg_query2.RawStmt).Stmt.(pg_query2.CreateStmt))
 
-	nodes := make([]system.NNode, 1)
-	_, err = stmt.compilePlan(ConnExecutor, nodes)
+	_, err = stmt.compilePlan(ConnExecutor, Nodes)
 	if err == nil {
 		panic("plan should have failed to compile, account tables require a primary key.")
 	}
@@ -84,13 +123,12 @@ func Test_Create_CompilePlan_Account(t *testing.T) {
 
 	stmt := CreateCreateStatement(parsed.Statements[0].(pg_query2.RawStmt).Stmt.(pg_query2.CreateStmt))
 
-	nodes := make([]system.NNode, 1)
-	plans, err := stmt.compilePlan(ConnExecutor, nodes)
+	plans, err := stmt.compilePlan(ConnExecutor, Nodes)
 	if err != nil {
 		panic(err)
 	}
 
-	assert.Equal(t, len(plans), len(nodes),
+	assert.Equal(t, len(plans), len(Nodes),
 		"the number of plans returned did not match the number of nodes that this query should target.")
 
 	assert.Equal(t, plans[0].CompiledQuery, `CREATE TABLE "abc3" (id bigint PRIMARY KEY, email text)`,
@@ -106,8 +144,7 @@ func Test_Create_CompilePlan_MultiplePrimaryKeys(t *testing.T) {
 
 	stmt := CreateCreateStatement(parsed.Statements[0].(pg_query2.RawStmt).Stmt.(pg_query2.CreateStmt))
 
-	nodes := make([]system.NNode, 1)
-	_, err = stmt.compilePlan(ConnExecutor, nodes)
+	_, err = stmt.compilePlan(ConnExecutor, Nodes)
 	if err == nil {
 		panic("the compiler should not allow you to create a table with multiple primary keys")
 	}
@@ -122,13 +159,12 @@ func Test_Create_CompilePlan_ReplacementTypes(t *testing.T) {
 
 	stmt := CreateCreateStatement(parsed.Statements[0].(pg_query2.RawStmt).Stmt.(pg_query2.CreateStmt))
 
-	nodes := make([]system.NNode, 1)
-	plans, err := stmt.compilePlan(ConnExecutor, nodes)
+	plans, err := stmt.compilePlan(ConnExecutor, Nodes)
 	if err != nil {
 		panic(err)
 	}
 
-	assert.Equal(t, len(plans), len(nodes),
+	assert.Equal(t, len(plans), len(Nodes),
 		"the number of plans returned did not match the number of nodes that this query should target.")
 
 	assert.Equal(t, plans[0].CompiledQuery, `CREATE TABLE "abc4" (id bigint, tinyid int, flake bigint)`,

@@ -193,23 +193,7 @@ func (stmt *CreateStatement) handleColumns(ex *connExecutor, table *system.NTabl
 	if stmt.Statement.TableElts.Items != nil && len(stmt.Statement.TableElts.Items) > 0 {
 		for i, col := range stmt.Statement.TableElts.Items {
 			columnDefinition := col.(pg_query.ColumnDef)
-			table.Columns[i] = &system.NColumn{ColumnName: *columnDefinition.Colname}
-
-			// Check to see if this column is the primary key, primary keys will be used for tables
-			// like account tables. If someone tries to create a table without a primary key an
-			// error will be returned at this time.
-			if columnDefinition.Constraints.Items != nil && len(columnDefinition.Constraints.Items) > 0 {
-				table.Columns[i].IsPrimaryKey = linq.From(columnDefinition.Constraints.Items).AnyWithT(func(constraint pg_query.Constraint) bool {
-					return constraint.Contype == pg_query.CONSTR_PRIMARY
-				})
-
-				if table.Columns[i].IsPrimaryKey {
-					if table.HasPrimaryKey {
-						return errors.New("cannot define more than 1 primary key on a single table")
-					}
-					table.HasPrimaryKey = true
-				}
-			}
+			noahColumn := &system.NColumn{ColumnName: *columnDefinition.Colname}
 
 			// There are a few types that are handled by noah as a middle man; such as ID generation
 			// because of this we want to replace serial columns with their base types since noah
@@ -223,24 +207,44 @@ func (stmt *CreateStatement) handleColumns(ex *connExecutor, table *system.NTabl
 				switch strings.ToLower(columnType.Str) {
 				case "serial": // Emulate 32 bit sequence
 					columnType.Str = "int"
-					table.Columns[i].IsSequence = true
+					noahColumn.IsSequence = true
 				case "snowflake": // Snowflakes are generated using twitters id system
-					table.Columns[i].IsSnowflake = true
+					noahColumn.IsSnowflake = true
 					fallthrough
 				case "bigserial": // Emulate 64 bit sequence
 					columnType.Str = "bigint"
-					table.Columns[i].IsSequence = true
+					noahColumn.IsSequence = true
 				default:
 					// Other column types wont be handled.
 				}
-				table.Columns[i].ColumnTypeName = strings.ToLower(columnType.Str)
+				noahColumn.ColumnTypeName = strings.ToLower(columnType.Str)
 				columnDefinition.TypeName.Names.Items = []pg_query.Node{columnType}
 				stmt.Statement.TableElts.Items[i] = columnDefinition
 			}
+
+			// Check to see if this column is the primary key, primary keys will be used for tables
+			// like account tables. If someone tries to create a table without a primary key an
+			// error will be returned at this time.
+			if columnDefinition.Constraints.Items != nil && len(columnDefinition.Constraints.Items) > 0 {
+				noahColumn.IsPrimaryKey = linq.From(columnDefinition.Constraints.Items).AnyWithT(func(constraint pg_query.Constraint) bool {
+					return constraint.Contype == pg_query.CONSTR_PRIMARY
+				})
+
+				if noahColumn.IsPrimaryKey {
+					if table.PrimaryKey != nil {
+						return errors.New("cannot define more than 1 primary key on a single table")
+					}
+					table.PrimaryKey = &system.NTable_PKey{
+						PKey: noahColumn,
+					}
+				}
+			}
+
+			table.Columns[i] = noahColumn
 		}
 	}
 
-	if !table.HasPrimaryKey && table.TableType == system.NTableType_ACCOUNT {
+	if table.PrimaryKey == nil && table.TableType == system.NTableType_ACCOUNT {
 		return errors.New("cannot create an account table without a primary key")
 	}
 

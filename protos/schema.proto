@@ -12,8 +12,11 @@ message NTable {
     string TableName = 1;
     string Schema = 2;
     NTableType TableType = 3;
-    bool HasPrimaryKey = 4;
-    repeated NColumn Columns = 5;
+    bool IsCreated = 4;
+    oneof PrimaryKey {
+        NColumn PKey = 5;
+    }
+    repeated NColumn Columns = 6;
 }
 
 message NColumn {
