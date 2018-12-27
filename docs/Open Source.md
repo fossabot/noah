@@ -68,7 +68,7 @@ Copyright 2018 Dgraph Labs, Inc. and Contributors
 License (MIT) https://github.com/dgraph-io/badger/blob/master/LICENSE
 
 > BadgerDB powers noah's internal key-value store. It is controlled by another ready stock library 
-called arctonyx (a bread of badger), which distributes BadgerDB using Hashicorp's implementation of 
+called arctonyx (a breed of badger), which distributes BadgerDB using Hashicorp's implementation of 
 the raft protocol. BadgerDB keeps track of all of the tenants, tables, columns, nodes and sequences 
 in the cluster.
 
@@ -96,7 +96,7 @@ License (MPL-2.0) https://github.com/hashicorp/raft/blob/master/LICENSE
 internal gRPC methods along side the raft interface all over the same wire.
 
 ## pq
-**Project:** github.com/lib/pq
+**Project:** https://github.com/lib/pq
 
 Copyright 2018  'pq' Contributors Portions Copyright (C) 2018 Blake Mizerany
 
@@ -106,7 +106,7 @@ License https://github.com/lib/pq/blob/master/LICENSE.md
 Postgres client libraries.
 
 ## go-linq
-**Project:** github.com/ahmetb/go-linq
+**Project:** https://github.com/ahmetb/go-linq
 
 Copyright 2018 Ahmet Alp Balkan
 
