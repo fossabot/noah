@@ -74,6 +74,7 @@ var (
 
 type CreateStatement struct {
 	Statement pg_query.CreateStmt
+	table     system.NTable
 	IQueryStatement
 }
 
@@ -140,26 +141,26 @@ func (stmt *CreateStatement) getTargetNodes(ex *connExecutor) ([]system.NNode, e
 func (stmt *CreateStatement) compilePlan(ex *connExecutor, nodes []system.NNode) ([]plan.NodeExecutionPlan, error) {
 	plans := make([]plan.NodeExecutionPlan, len(nodes))
 
-	table := system.NTable{
+	stmt.table = system.NTable{
 		TableName: *stmt.Statement.Relation.Relname,
 		Schema:    "default",
 		Columns:   make([]*system.NColumn, len(stmt.Statement.TableElts.Items)),
 	}
 
 	// Determine the distribution of a table in the cluster
-	if err := stmt.handleTableType(ex, &table); err != nil { // Handle sharding
+	if err := stmt.handleTableType(ex, &stmt.table); err != nil { // Handle sharding
 		return nil, err
 	}
 
 	// Add handling here for custom column types.
-	if err := stmt.handleColumns(ex, &table); err != nil { // Handle sharding
+	if err := stmt.handleColumns(ex, &stmt.table); err != nil { // Handle sharding
 		return nil, err
 	}
 
-	// Create the table in the coordinator cluster
-	if err := ex.SystemContext.Schema.CreateTable(table); err != nil {
-		return nil, err
-	}
+	// // Create the table in the coordinator cluster
+	// if err := ex.SystemContext.Schema.CreateTable(table); err != nil {
+	// 	return nil, err
+	// }
 
 	deparsed, err := pg_query.Deparse(stmt.Statement)
 	if err != nil {
@@ -192,55 +193,74 @@ func (stmt *CreateStatement) handleValidation(ex *connExecutor, table *system.NT
 func (stmt *CreateStatement) handleColumns(ex *connExecutor, table *system.NTable) error {
 	if stmt.Statement.TableElts.Items != nil && len(stmt.Statement.TableElts.Items) > 0 {
 		for i, col := range stmt.Statement.TableElts.Items {
-			columnDefinition := col.(pg_query.ColumnDef)
-			noahColumn := &system.NColumn{ColumnName: *columnDefinition.Colname}
+			switch tableItem := col.(type) {
+			case pg_query.ColumnDef:
+				noahColumn := &system.NColumn{ColumnName: *tableItem.Colname}
 
-			// There are a few types that are handled by noah as a middle man; such as ID generation
-			// because of this we want to replace serial columns with their base types since noah
-			// will rewrite incoming queries to include an ID when performing inserts.
-			if columnDefinition.TypeName != nil &&
-				columnDefinition.TypeName.Names.Items != nil &&
-				len(columnDefinition.TypeName.Names.Items) > 0 {
-				columnType := columnDefinition.TypeName.Names.Items[len(columnDefinition.TypeName.Names.Items)-1].(pg_query.String) // The last type name
-				golog.Verbosef("Processing column [%s] type [%s]", *columnDefinition.Colname, strings.ToLower(columnType.Str))
-				// This switch statement will handle any custom column types that we would like.
-				switch strings.ToLower(columnType.Str) {
-				case "serial": // Emulate 32 bit sequence
-					columnType.Str = "int"
-					noahColumn.IsSequence = true
-				case "snowflake": // Snowflakes are generated using twitters id system
-					noahColumn.IsSnowflake = true
-					fallthrough
-				case "bigserial": // Emulate 64 bit sequence
-					columnType.Str = "bigint"
-					noahColumn.IsSequence = true
-				default:
-					// Other column types wont be handled.
-				}
-				noahColumn.ColumnTypeName = strings.ToLower(columnType.Str)
-				columnDefinition.TypeName.Names.Items = []pg_query.Node{columnType}
-				stmt.Statement.TableElts.Items[i] = columnDefinition
-			}
-
-			// Check to see if this column is the primary key, primary keys will be used for tables
-			// like account tables. If someone tries to create a table without a primary key an
-			// error will be returned at this time.
-			if columnDefinition.Constraints.Items != nil && len(columnDefinition.Constraints.Items) > 0 {
-				noahColumn.IsPrimaryKey = linq.From(columnDefinition.Constraints.Items).AnyWithT(func(constraint pg_query.Constraint) bool {
-					return constraint.Contype == pg_query.CONSTR_PRIMARY
-				})
-
-				if noahColumn.IsPrimaryKey {
-					if table.PrimaryKey != nil {
-						return errors.New("cannot define more than 1 primary key on a single table")
+				// There are a few types that are handled by noah as a middle man; such as ID generation
+				// because of this we want to replace serial columns with their base types since noah
+				// will rewrite incoming queries to include an ID when performing inserts.
+				if tableItem.TypeName != nil &&
+					tableItem.TypeName.Names.Items != nil &&
+					len(tableItem.TypeName.Names.Items) > 0 {
+					columnType := tableItem.TypeName.Names.Items[len(tableItem.TypeName.Names.Items)-1].(pg_query.String) // The last type name
+					golog.Verbosef("Processing column [%s] type [%s]", *tableItem.Colname, strings.ToLower(columnType.Str))
+					// This switch statement will handle any custom column types that we would like.
+					switch strings.ToLower(columnType.Str) {
+					case "serial": // Emulate 32 bit sequence
+						columnType.Str = "int"
+						noahColumn.IsSequence = true
+					case "snowflake": // Snowflakes are generated using twitters id system
+						noahColumn.IsSnowflake = true
+						fallthrough
+					case "bigserial": // Emulate 64 bit sequence
+						columnType.Str = "bigint"
+						noahColumn.IsSequence = true
+					default:
+						// Other column types wont be handled.
 					}
-					table.PrimaryKey = &system.NTable_PKey{
-						PKey: noahColumn,
+					noahColumn.ColumnTypeName = strings.ToLower(columnType.Str)
+					tableItem.TypeName.Names.Items = []pg_query.Node{columnType}
+					stmt.Statement.TableElts.Items[i] = tableItem
+				}
+
+				// Check to see if this column is the primary key, primary keys will be used for tables
+				// like account tables. If someone tries to create a table without a primary key an
+				// error will be returned at this time.
+				if tableItem.Constraints.Items != nil && len(tableItem.Constraints.Items) > 0 {
+					noahColumn.IsPrimaryKey = linq.From(tableItem.Constraints.Items).AnyWithT(func(constraint pg_query.Constraint) bool {
+						return constraint.Contype == pg_query.CONSTR_PRIMARY
+					})
+
+					if noahColumn.IsPrimaryKey {
+						if table.PrimaryKey != nil {
+							return errors.New("cannot define more than 1 primary key on a single table")
+						}
+
+						switch noahColumn.ColumnTypeName {
+						case "bigint", "int", "tinyint":
+						default:
+							// At the moment noah only supports integer column sharding.
+							return errors.Errorf("column [%s] cannot be a primary key, a primary key must be an integer column", noahColumn.ColumnName)
+						}
+
+						table.PrimaryKey = &system.NTable_PKey{
+							PKey: noahColumn,
+						}
 					}
 				}
-			}
 
-			table.Columns[i] = noahColumn
+				table.Columns[i] = noahColumn
+			case pg_query.Constraint:
+				// Its possible for primary keys, foreign keys and identities to be defined
+				// somewhere other than the column line itself, if this happens we still want to
+				// handle it gracefully.
+				switch tableItem.Contype {
+				case pg_query.CONSTR_PRIMARY:
+				case pg_query.CONSTR_FOREIGN:
+				case pg_query.CONSTR_IDENTITY:
+				}
+			}
 		}
 	}
 
