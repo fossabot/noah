@@ -66,16 +66,16 @@ import "unsafe"
 const wordSize = int(unsafe.Sizeof(uintptr(0)))
 
 func onesComplement(b []byte) {
-	n := len(b)
-	w := n / wordSize
-	if w > 0 {
-		bw := *(*[]uintptr)(unsafe.Pointer(&b))
-		for i := 0; i < w; i++ {
-			bw[i] = ^bw[i]
-		}
-	}
+    n := len(b)
+    w := n / wordSize
+    if w > 0 {
+        bw := *(*[]uintptr)(unsafe.Pointer(&b))
+        for i := 0; i < w; i++ {
+            bw[i] = ^bw[i]
+        }
+    }
 
-	for i := w * wordSize; i < n; i++ {
-		b[i] = ^b[i]
-	}
+    for i := w * wordSize; i < n; i++ {
+        b[i] = ^b[i]
+    }
 }

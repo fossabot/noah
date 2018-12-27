@@ -58,46 +58,46 @@
 package coltypes
 
 import (
-	"bytes"
-	"fmt"
+    "bytes"
+    "fmt"
 
-	"github.com/readystock/noah/db/sql/lex"
+    "github.com/readystock/noah/db/sql/lex"
 )
 
 // ColTypeFormatter knows how to format a ColType to a bytes.Buffer.
 type ColTypeFormatter interface {
-	fmt.Stringer
+    fmt.Stringer
 
-	// TypeName returns the base name of the type, suitable to generate
-	// column names for cast expressions.
-	TypeName() string
+    // TypeName returns the base name of the type, suitable to generate
+    // column names for cast expressions.
+    TypeName() string
 
-	// Format returns a non-lossy string representation of the coltype.
-	// NOTE: It is important that two coltypes that should be different print out
-	//       different string representations. The optimizer relies on unique
-	//       string representations in order to intern the coltypes during
-	//       memoization.
-	Format(buf *bytes.Buffer, flags lex.EncodeFlags)
+    // Format returns a non-lossy string representation of the coltype.
+    // NOTE: It is important that two coltypes that should be different print out
+    //       different string representations. The optimizer relies on unique
+    //       string representations in order to intern the coltypes during
+    //       memoization.
+    Format(buf *bytes.Buffer, flags lex.EncodeFlags)
 }
 
 // ColTypeAsString print a T to a string.
 func ColTypeAsString(n ColTypeFormatter) string {
-	var buf bytes.Buffer
-	n.Format(&buf, lex.EncNoFlags)
-	return buf.String()
+    var buf bytes.Buffer
+    n.Format(&buf, lex.EncNoFlags)
+    return buf.String()
 }
 
 // CastTargetType represents a type that is a valid cast target.
 type CastTargetType interface {
-	ColTypeFormatter
-	castTargetType()
+    ColTypeFormatter
+    castTargetType()
 }
 
 // T represents a type in a column definition.
 type T interface {
-	CastTargetType
+    CastTargetType
 
-	columnType()
+    columnType()
 }
 
 func (*TBool) columnType()           {}

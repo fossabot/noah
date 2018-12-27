@@ -9,8 +9,8 @@ const _StatementType_name = "AckDDLRowsAffectedRowsCopyInUnknown"
 var _StatementType_index = [...]uint8{0, 3, 6, 18, 22, 28, 35}
 
 func (i StatementType) String() string {
-	if i < 0 || i >= StatementType(len(_StatementType_index)-1) {
-		return "StatementType(" + strconv.FormatInt(int64(i), 10) + ")"
-	}
-	return _StatementType_name[_StatementType_index[i]:_StatementType_index[i+1]]
+    if i < 0 || i >= StatementType(len(_StatementType_index)-1) {
+        return "StatementType(" + strconv.FormatInt(int64(i), 10) + ")"
+    }
+    return _StatementType_name[_StatementType_index[i]:_StatementType_index[i+1]]
 }

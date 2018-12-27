@@ -58,11 +58,11 @@
 package types_test
 
 import (
-	"net"
-	"testing"
+    "net"
+    "testing"
 
-	_ "github.com/lib/pq"
-	_ "github.com/readystock/pgx/stdlib"
+    _ "github.com/lib/pq"
+    _ "github.com/readystock/pgx/stdlib"
 )
 
 // Test for renamed types
@@ -78,19 +78,19 @@ type _float64Slice []float64
 type _byteSlice []byte
 
 func mustParseCIDR(t testing.TB, s string) *net.IPNet {
-	_, ipnet, err := net.ParseCIDR(s)
-	if err != nil {
-		t.Fatal(err)
-	}
+    _, ipnet, err := net.ParseCIDR(s)
+    if err != nil {
+        t.Fatal(err)
+    }
 
-	return ipnet
+    return ipnet
 }
 
 func mustParseMacaddr(t testing.TB, s string) net.HardwareAddr {
-	addr, err := net.ParseMAC(s)
-	if err != nil {
-		t.Fatal(err)
-	}
+    addr, err := net.ParseMAC(s)
+    if err != nil {
+        t.Fatal(err)
+    }
 
-	return addr
+    return addr
 }

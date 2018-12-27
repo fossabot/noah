@@ -58,7 +58,7 @@
 package tree
 
 import (
-	"github.com/readystock/noah/db/sql/sem/types"
+    "github.com/readystock/noah/db/sql/sem/types"
 )
 
 // Table generators, also called "set-generating functions", are
@@ -83,24 +83,24 @@ import (
 // able to produce rows of values in a streaming fashion (like Go
 // iterators or generators in Python).
 type ValueGenerator interface {
-	// ResolvedType returns the type signature of this value generator.
-	ResolvedType() types.TTuple
+    // ResolvedType returns the type signature of this value generator.
+    ResolvedType() types.TTuple
 
-	// Start initializes the generator. Must be called once before
-	// Next() and Values(). It can be called again to restart
-	// the generator after Next() has returned false.
-	Start() error
+    // Start initializes the generator. Must be called once before
+    // Next() and Values(). It can be called again to restart
+    // the generator after Next() has returned false.
+    Start() error
 
-	// Next determines whether there is a row of data available.
-	Next() (bool, error)
+    // Next determines whether there is a row of data available.
+    Next() (bool, error)
 
-	// Values retrieves the current row of data.
-	Values() Datums
+    // Values retrieves the current row of data.
+    Values() Datums
 
-	// Close must be called after Start() before disposing of the
-	// ValueGenerator. It does not need to be called if Start() has not
-	// been called yet. It must not be called in-between restarts.
-	Close()
+    // Close must be called after Start() before disposing of the
+    // ValueGenerator. It does not need to be called if Start() has not
+    // been called yet. It must not be called in-between restarts.
+    Close()
 }
 
 // GeneratorFactory is the type of constructor functions for

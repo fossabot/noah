@@ -58,18 +58,18 @@
 package system
 
 import (
-	"encoding/json"
-	"fmt"
-	"github.com/kataras/go-errors"
-	"strconv"
+    "encoding/json"
+    "fmt"
+    "github.com/kataras/go-errors"
+    "strconv"
 )
 
 var (
-	settingsKeys = map[NoahSetting]interface{}{
-		ConnectionPoolInitConnections: int64(5),
-		QueryReplicationFactor:        int64(2),
-		InitialSetupTimestamp:         nil,
-	}
+    settingsKeys = map[NoahSetting]interface{}{
+        ConnectionPoolInitConnections: int64(5),
+        QueryReplicationFactor:        int64(2),
+        InitialSetupTimestamp:         nil,
+    }
 )
 
 type SSettings baseContext
@@ -77,70 +77,70 @@ type SSettings baseContext
 type NoahSetting string
 
 const (
-	ConnectionPoolInitConnections NoahSetting = "connection_pool_init_connections"
-	QueryReplicationFactor        NoahSetting = "query_replication_factor"
-	InitialSetupTimestamp         NoahSetting = "initial_setup_timestamp"
+    ConnectionPoolInitConnections NoahSetting = "connection_pool_init_connections"
+    QueryReplicationFactor        NoahSetting = "query_replication_factor"
+    InitialSetupTimestamp         NoahSetting = "initial_setup_timestamp"
 )
 
 func (ctx *SSettings) SetSetting(SettingName string, SettingValue interface{}) error {
-	if _, ok := settingsKeys[NoahSetting(SettingName)]; !ok {
-		return errors.New("setting key `%s` is not valid and has not been set.").Format(SettingName)
-	}
-	if j, err := json.Marshal(SettingValue); err != nil {
-		return err
-	} else {
-		return ctx.db.Set([]byte(fmt.Sprintf("%s%s", settingsExternalPath, SettingName)), j)
-	}
+    if _, ok := settingsKeys[NoahSetting(SettingName)]; !ok {
+        return errors.New("setting key `%s` is not valid and has not been set.").Format(SettingName)
+    }
+    if j, err := json.Marshal(SettingValue); err != nil {
+        return err
+    } else {
+        return ctx.db.Set([]byte(fmt.Sprintf("%s%s", settingsExternalPath, SettingName)), j)
+    }
 }
 
 func (ctx *SSettings) GetSetting(SettingName NoahSetting) (*string, error) {
-	if _, ok := settingsKeys[NoahSetting(SettingName)]; !ok {
-		return nil, errors.New("setting key `%s` is not valid and cannot be returned.").Format(SettingName)
-	}
-	value, err := ctx.db.Get([]byte(fmt.Sprintf("%s%s", settingsExternalPath, SettingName)))
-	if err != nil {
-		return nil, err
-	}
-	valueString := string(value)
-	return &valueString, nil
+    if _, ok := settingsKeys[NoahSetting(SettingName)]; !ok {
+        return nil, errors.New("setting key `%s` is not valid and cannot be returned.").Format(SettingName)
+    }
+    value, err := ctx.db.Get([]byte(fmt.Sprintf("%s%s", settingsExternalPath, SettingName)))
+    if err != nil {
+        return nil, err
+    }
+    valueString := string(value)
+    return &valueString, nil
 }
 
 func (ctx *SSettings) GetSettingInt64(SettingName NoahSetting) (*int64, error) {
-	if _, ok := settingsKeys[NoahSetting(SettingName)]; !ok {
-		return nil, errors.New("setting key `%s` is not valid and cannot be returned.").Format(SettingName)
-	}
-	value, err := ctx.db.Get([]byte(fmt.Sprintf("%s%s", settingsExternalPath, SettingName)))
-	if err != nil {
-		return nil, err
-	}
-	number, err := strconv.ParseInt(string(value), 10, 64)
-	if err != nil {
-		return nil, err
-	}
-	return &number, nil
+    if _, ok := settingsKeys[NoahSetting(SettingName)]; !ok {
+        return nil, errors.New("setting key `%s` is not valid and cannot be returned.").Format(SettingName)
+    }
+    value, err := ctx.db.Get([]byte(fmt.Sprintf("%s%s", settingsExternalPath, SettingName)))
+    if err != nil {
+        return nil, err
+    }
+    number, err := strconv.ParseInt(string(value), 10, 64)
+    if err != nil {
+        return nil, err
+    }
+    return &number, nil
 }
 
 func (ctx *SSettings) GetSettingUint64(SettingName NoahSetting) (*uint64, error) {
-	if _, ok := settingsKeys[NoahSetting(SettingName)]; !ok {
-		return nil, errors.New("setting key `%s` is not valid and cannot be returned.").Format(SettingName)
-	}
-	value, err := ctx.db.Get([]byte(fmt.Sprintf("%s%s", settingsExternalPath, SettingName)))
-	if err != nil {
-		return nil, err
-	}
+    if _, ok := settingsKeys[NoahSetting(SettingName)]; !ok {
+        return nil, errors.New("setting key `%s` is not valid and cannot be returned.").Format(SettingName)
+    }
+    value, err := ctx.db.Get([]byte(fmt.Sprintf("%s%s", settingsExternalPath, SettingName)))
+    if err != nil {
+        return nil, err
+    }
 
-	if len(value) == 0 {
-		if def := settingsKeys[SettingName]; def == nil {
-			return nil, nil
-		} else {
-			val := def.(uint64)
-			return &val, nil
-		}
-	}
+    if len(value) == 0 {
+        if def := settingsKeys[SettingName]; def == nil {
+            return nil, nil
+        } else {
+            val := def.(uint64)
+            return &val, nil
+        }
+    }
 
-	number, err := strconv.ParseUint(string(value), 10, 64)
-	if err != nil {
-		return nil, err
-	}
-	return &number, nil
+    number, err := strconv.ParseUint(string(value), 10, 64)
+    if err != nil {
+        return nil, err
+    }
+    return &number, nil
 }

@@ -14,14 +14,14 @@ var _ = math.Inf
 
 // Timestamp represents a state of the hybrid logical clock.
 type Timestamp struct {
-	// Holds a wall time, typically a unix epoch time expressed in
-	// nanoseconds.
-	WallTime int64 `protobuf:"varint,1,opt,name=wall_time,json=wallTime,proto3" json:"wall_time,omitempty"`
-	// The logical component captures causality for events whose wall
-	// times are equal. It is effectively bounded by (maximum clock
-	// skew)/(minimal ns between events) and nearly impossible to
-	// overflow.
-	Logical int32 `protobuf:"varint,2,opt,name=logical,proto3" json:"logical,omitempty"`
+    // Holds a wall time, typically a unix epoch time expressed in
+    // nanoseconds.
+    WallTime int64 `protobuf:"varint,1,opt,name=wall_time,json=wallTime,proto3" json:"wall_time,omitempty"`
+    // The logical component captures causality for events whose wall
+    // times are equal. It is effectively bounded by (maximum clock
+    // skew)/(minimal ns between events) and nearly impossible to
+    // overflow.
+    Logical int32 `protobuf:"varint,2,opt,name=logical,proto3" json:"logical,omitempty"`
 }
 
 // func (m *Timestamp) Reset()                    { *m = Timestamp{} }

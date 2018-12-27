@@ -61,16 +61,16 @@ package tree
 
 // ValuesClause represents a VALUES clause.
 type ValuesClause struct {
-	Tuples []*Tuple
+    Tuples []*Tuple
 }
 
 // Format implements the NodeFormatter interface.
 func (node *ValuesClause) Format(ctx *FmtCtx) {
-	ctx.WriteString("VALUES ")
-	for i, n := range node.Tuples {
-		if i > 0 {
-			ctx.WriteString(", ")
-		}
-		ctx.FormatNode(n)
-	}
+    ctx.WriteString("VALUES ")
+    for i, n := range node.Tuples {
+        if i > 0 {
+            ctx.WriteString(", ")
+        }
+        ctx.FormatNode(n)
+    }
 }

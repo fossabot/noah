@@ -5,17 +5,17 @@ package pgwirebase
 import "strconv"
 
 const (
-	_PrepareType_name_0 = "PreparePortal"
-	_PrepareType_name_1 = "PrepareStatement"
+    _PrepareType_name_0 = "PreparePortal"
+    _PrepareType_name_1 = "PrepareStatement"
 )
 
 func (i PrepareType) String() string {
-	switch {
-	case i == 80:
-		return _PrepareType_name_0
-	case i == 83:
-		return _PrepareType_name_1
-	default:
-		return "PrepareType(" + strconv.FormatInt(int64(i), 10) + ")"
-	}
+    switch {
+    case i == 80:
+        return _PrepareType_name_0
+    case i == 83:
+        return _PrepareType_name_1
+    default:
+        return "PrepareType(" + strconv.FormatInt(int64(i), 10) + ")"
+    }
 }

@@ -58,30 +58,30 @@
 package system
 
 import (
-	"github.com/readystock/noah/testutils"
-	"testing"
+    "github.com/readystock/noah/testutils"
+    "testing"
 )
 
 func TestBaseContext_GetNodes(t *testing.T) {
-	tempFolder := testutils.CreateTempFolder()
-	defer testutils.DeleteTempFolder(tempFolder)
+    tempFolder := testutils.CreateTempFolder()
+    defer testutils.DeleteTempFolder(tempFolder)
 
-	sctx, err := NewSystemContext(tempFolder, "127.0.0.1:0", "", "")
-	if err != nil {
-		t.Error(err)
-		t.Fail()
-		return
-	}
+    sctx, err := NewSystemContext(tempFolder, "127.0.0.1:0", "", "")
+    if err != nil {
+        t.Error(err)
+        t.Fail()
+        return
+    }
 
-	n, err := sctx.Nodes.GetNode(1)
-	if err != nil {
-		t.Error(err)
-		t.Fail()
-		return
-	}
+    n, err := sctx.Nodes.GetNode(1)
+    if err != nil {
+        t.Error(err)
+        t.Fail()
+        return
+    }
 
-	if n == nil {
-		t.Error("could not retrieve node 1")
-		t.Fail()
-	}
+    if n == nil {
+        t.Error("could not retrieve node 1")
+        t.Fail()
+    }
 }

@@ -58,7 +58,7 @@
 package types
 
 import (
-	"database/sql/driver"
+    "database/sql/driver"
 )
 
 // Name is a type used for PostgreSQL's special 63-byte
@@ -77,39 +77,39 @@ import (
 type Name Text
 
 func (dst *Name) Set(src interface{}) error {
-	return (*Text)(dst).Set(src)
+    return (*Text)(dst).Set(src)
 }
 
 func (dst *Name) Get() interface{} {
-	return (*Text)(dst).Get()
+    return (*Text)(dst).Get()
 }
 
 func (src *Name) AssignTo(dst interface{}) error {
-	return (*Text)(src).AssignTo(dst)
+    return (*Text)(src).AssignTo(dst)
 }
 
 func (dst *Name) DecodeText(ci *ConnInfo, src []byte) error {
-	return (*Text)(dst).DecodeText(ci, src)
+    return (*Text)(dst).DecodeText(ci, src)
 }
 
 func (dst *Name) DecodeBinary(ci *ConnInfo, src []byte) error {
-	return (*Text)(dst).DecodeBinary(ci, src)
+    return (*Text)(dst).DecodeBinary(ci, src)
 }
 
 func (src *Name) EncodeText(ci *ConnInfo, buf []byte) ([]byte, error) {
-	return (*Text)(src).EncodeText(ci, buf)
+    return (*Text)(src).EncodeText(ci, buf)
 }
 
 func (src *Name) EncodeBinary(ci *ConnInfo, buf []byte) ([]byte, error) {
-	return (*Text)(src).EncodeBinary(ci, buf)
+    return (*Text)(src).EncodeBinary(ci, buf)
 }
 
 // Scan implements the database/sql Scanner interface.
 func (dst *Name) Scan(src interface{}) error {
-	return (*Text)(dst).Scan(src)
+    return (*Text)(dst).Scan(src)
 }
 
 // Value implements the database/sql/driver Valuer interface.
 func (src *Name) Value() (driver.Value, error) {
-	return (*Text)(src).Value()
+    return (*Text)(src).Value()
 }

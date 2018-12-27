@@ -58,16 +58,16 @@
 package coltypes
 
 import (
-	"bytes"
-	"fmt"
+    "bytes"
+    "fmt"
 
-	"github.com/readystock/noah/db/sql/lex"
+    "github.com/readystock/noah/db/sql/lex"
 )
 
 // TString represents a STRING, CHAR or VARCHAR type.
 type TString struct {
-	Name string
-	N    int
+    Name string
+    N    int
 }
 
 // TypeName implements the ColTypeFormatter interface.
@@ -75,10 +75,10 @@ func (node *TString) TypeName() string { return node.Name }
 
 // Format implements the ColTypeFormatter interface.
 func (node *TString) Format(buf *bytes.Buffer, f lex.EncodeFlags) {
-	buf.WriteString(node.Name)
-	if node.N > 0 {
-		fmt.Fprintf(buf, "(%d)", node.N)
-	}
+    buf.WriteString(node.Name)
+    if node.N > 0 {
+        fmt.Fprintf(buf, "(%d)", node.N)
+    }
 }
 
 // TName represents a a NAME type.
@@ -89,12 +89,12 @@ func (node *TName) TypeName() string { return "NAME" }
 
 // Format implements the ColTypeFormatter interface.
 func (node *TName) Format(buf *bytes.Buffer, f lex.EncodeFlags) {
-	buf.WriteString("NAME")
+    buf.WriteString("NAME")
 }
 
 // TBytes represents a BYTES or BLOB type.
 type TBytes struct {
-	Name string
+    Name string
 }
 
 // TypeName implements the ColTypeFormatter interface.
@@ -102,15 +102,15 @@ func (node *TBytes) TypeName() string { return node.Name }
 
 // Format implements the ColTypeFormatter interface.
 func (node *TBytes) Format(buf *bytes.Buffer, f lex.EncodeFlags) {
-	buf.WriteString(node.Name)
+    buf.WriteString(node.Name)
 }
 
 // TCollatedString represents a STRING, CHAR or VARCHAR type with a
 // collation locale.
 type TCollatedString struct {
-	Name   string
-	N      int
-	Locale string
+    Name   string
+    N      int
+    Locale string
 }
 
 // TypeName implements the ColTypeFormatter interface.
@@ -118,10 +118,10 @@ func (node *TCollatedString) TypeName() string { return node.Name }
 
 // Format implements the ColTypeFormatter interface.
 func (node *TCollatedString) Format(buf *bytes.Buffer, f lex.EncodeFlags) {
-	buf.WriteString(node.Name)
-	if node.N > 0 {
-		fmt.Fprintf(buf, "(%d)", node.N)
-	}
-	buf.WriteString(" COLLATE ")
-	lex.EncodeUnrestrictedSQLIdent(buf, node.Locale, f)
+    buf.WriteString(node.Name)
+    if node.N > 0 {
+        fmt.Fprintf(buf, "(%d)", node.N)
+    }
+    buf.WriteString(" COLLATE ")
+    lex.EncodeUnrestrictedSQLIdent(buf, node.Locale, f)
 }

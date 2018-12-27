@@ -58,7 +58,7 @@
 package tree
 
 import (
-	"github.com/readystock/noah/db/sql/sem/types"
+    "github.com/readystock/noah/db/sql/sem/types"
 )
 
 // VarName occurs inside scalar expressions.
@@ -78,12 +78,12 @@ import (
 // After a ColumnItem is available, it should be further resolved, for this
 // the Resolve() method should be used; see name_resolution.go.
 type VarName interface {
-	TypedExpr
+    TypedExpr
 
-	// NormalizeVarName() guarantees to return a variable name
-	// that is not an UnresolvedName. This converts the UnresolvedName
-	// to an AllColumnsSelector or ColumnItem as necessary.
-	NormalizeVarName() (VarName, error)
+    // NormalizeVarName() guarantees to return a variable name
+    // that is not an UnresolvedName. This converts the UnresolvedName
+    // to an AllColumnsSelector or ColumnItem as necessary.
+    NormalizeVarName() (VarName, error)
 }
 
 var _ VarName = &UnresolvedName{}
@@ -110,7 +110,7 @@ func StarExpr() VarName { return singletonStarName }
 
 // ResolvedType implements the TypedExpr interface.
 func (UnqualifiedStar) ResolvedType() types.T {
-	panic("unqualified stars ought to be replaced before this point")
+    panic("unqualified stars ought to be replaced before this point")
 }
 
 // Variable implements the VariableExpr interface.
@@ -121,7 +121,7 @@ func (UnqualifiedStar) Variable() {}
 
 // ResolvedType implements the TypedExpr interface.
 func (*UnresolvedName) ResolvedType() types.T {
-	panic("unresolved names ought to be replaced before this point")
+    panic("unresolved names ought to be replaced before this point")
 }
 
 // Variable implements the VariableExpr interface.  Although, the
@@ -131,22 +131,22 @@ func (*UnresolvedName) Variable() {}
 
 // NormalizeVarName implements the VarName interface.
 func (n *UnresolvedName) NormalizeVarName() (VarName, error) {
-	return classifyColumnItem(n)
+    return classifyColumnItem(n)
 }
 
 // AllColumnsSelector corresponds to a selection of all
 // columns in a table when used in a SELECT clause.
 // (e.g. `table.*`).
 type AllColumnsSelector struct {
-	// TableName corresponds to the table prefix, before the star. The
-	// UnresolvedName within is guaranteed to not contain a star itself.
-	TableName UnresolvedName
+    // TableName corresponds to the table prefix, before the star. The
+    // UnresolvedName within is guaranteed to not contain a star itself.
+    TableName UnresolvedName
 }
 
 // Format implements the NodeFormatter interface.
 func (a *AllColumnsSelector) Format(ctx *FmtCtx) {
-	ctx.FormatNode(&a.TableName)
-	ctx.WriteString(".*")
+    ctx.FormatNode(&a.TableName)
+    ctx.WriteString(".*")
 }
 func (a *AllColumnsSelector) String() string { return AsString(a) }
 
@@ -160,35 +160,35 @@ func (a *AllColumnsSelector) Variable() {}
 
 // ResolvedType implements the TypedExpr interface.
 func (*AllColumnsSelector) ResolvedType() types.T {
-	panic("all-columns selectors ought to be replaced before this point")
+    panic("all-columns selectors ought to be replaced before this point")
 }
 
 // ColumnItem corresponds to the name of a column in an expression.
 type ColumnItem struct {
-	// TableName holds the table prefix, if the name refers to a column.
-	//
-	// This uses UnresolvedName because we need to preserve the
-	// information about which parts were initially specified in the SQL
-	// text. ColumnItems are intermediate data structures anyway, that
-	// still need to undergo name resolution.
-	TableName UnresolvedName
-	// ColumnName names the designated column.
-	ColumnName Name
+    // TableName holds the table prefix, if the name refers to a column.
+    //
+    // This uses UnresolvedName because we need to preserve the
+    // information about which parts were initially specified in the SQL
+    // text. ColumnItems are intermediate data structures anyway, that
+    // still need to undergo name resolution.
+    TableName UnresolvedName
+    // ColumnName names the designated column.
+    ColumnName Name
 
-	// This column is a selector column expression used in a SELECT
-	// for an UPDATE/DELETE.
-	// TODO(vivek): Do not artificially create such expressions
-	// when scanning columns for an UPDATE/DELETE.
-	ForUpdateOrDelete bool
+    // This column is a selector column expression used in a SELECT
+    // for an UPDATE/DELETE.
+    // TODO(vivek): Do not artificially create such expressions
+    // when scanning columns for an UPDATE/DELETE.
+    ForUpdateOrDelete bool
 }
 
 // Format implements the NodeFormatter interface.
 func (c *ColumnItem) Format(ctx *FmtCtx) {
-	if c.TableName.NumParts > 0 {
-		c.TableName.Format(ctx)
-		ctx.WriteByte('.')
-	}
-	ctx.FormatNode(&c.ColumnName)
+    if c.TableName.NumParts > 0 {
+        c.TableName.Format(ctx)
+        ctx.WriteByte('.')
+    }
+    ctx.FormatNode(&c.ColumnName)
 }
 func (c *ColumnItem) String() string { return AsString(c) }
 
@@ -197,7 +197,7 @@ func (c *ColumnItem) NormalizeVarName() (VarName, error) { return c, nil }
 
 // Column retrieves the unqualified column name.
 func (c *ColumnItem) Column() string {
-	return string(c.ColumnName)
+    return string(c.ColumnName)
 }
 
 // Variable implements the VariableExpr interface.
@@ -208,34 +208,34 @@ func (c *ColumnItem) Variable() {}
 
 // ResolvedType implements the TypedExpr interface.
 func (c *ColumnItem) ResolvedType() types.T {
-	if presetTypesForTesting == nil {
-		return nil
-	}
-	return presetTypesForTesting[c.String()]
+    if presetTypesForTesting == nil {
+        return nil
+    }
+    return presetTypesForTesting[c.String()]
 }
 
 // NewColumnItem constructs a column item from an already valid
 // TableName. This can be used for e.g. pretty-printing.
 func NewColumnItem(tn *TableName, colName Name) *ColumnItem {
-	c := MakeColumnItem(tn, colName)
-	return &c
+    c := MakeColumnItem(tn, colName)
+    return &c
 }
 
 // MakeColumnItem constructs a column item from an already valid
 // TableName. This can be used for e.g. pretty-printing.
 func MakeColumnItem(tn *TableName, colName Name) ColumnItem {
-	c := ColumnItem{
-		TableName: UnresolvedName{
-			Parts: NameParts{tn.Table(), tn.Schema(), tn.Catalog()},
-		},
-		ColumnName: colName,
-	}
-	if tn.ExplicitCatalog {
-		c.TableName.NumParts = 3
-	} else if tn.ExplicitSchema {
-		c.TableName.NumParts = 2
-	} else {
-		c.TableName.NumParts = 1
-	}
-	return c
+    c := ColumnItem{
+        TableName: UnresolvedName{
+            Parts: NameParts{tn.Table(), tn.Schema(), tn.Catalog()},
+        },
+        ColumnName: colName,
+    }
+    if tn.ExplicitCatalog {
+        c.TableName.NumParts = 3
+    } else if tn.ExplicitSchema {
+        c.TableName.NumParts = 2
+    } else {
+        c.TableName.NumParts = 1
+    }
+    return c
 }

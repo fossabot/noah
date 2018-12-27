@@ -58,76 +58,76 @@
 package system
 
 import (
-	"fmt"
-	"github.com/ahmetb/go-linq"
-	"github.com/golang/protobuf/proto"
-	"github.com/kataras/go-errors"
-	"strings"
+    "fmt"
+    "github.com/ahmetb/go-linq"
+    "github.com/golang/protobuf/proto"
+    "github.com/kataras/go-errors"
+    "strings"
 )
 
 var (
-	ErrTableAlreadyExists = errors.New("table with name [%s] already exists")
+    ErrTableAlreadyExists = errors.New("table with name [%s] already exists")
 )
 
 type SSchema baseContext
 
 func (ctx *SSchema) CreateTable(table NTable) error {
-	if existingTable, err := ctx.GetTable(table.TableName); err != nil {
-		return err
-	} else if existingTable != nil {
-		return ErrTableAlreadyExists.Format(table.TableName)
-	}
-	b, err := proto.Marshal(&table)
-	if err != nil {
-		return err
-	}
-	return ctx.db.Set([]byte(fmt.Sprintf("%s%s", tablesPath, strings.ToLower(table.TableName))), b)
+    if existingTable, err := ctx.GetTable(table.TableName); err != nil {
+        return err
+    } else if existingTable != nil {
+        return ErrTableAlreadyExists.Format(table.TableName)
+    }
+    b, err := proto.Marshal(&table)
+    if err != nil {
+        return err
+    }
+    return ctx.db.Set([]byte(fmt.Sprintf("%s%s", tablesPath, strings.ToLower(table.TableName))), b)
 }
 
 func (ctx *SSchema) GetTable(tableName string) (*NTable, error) {
-	bytes, err := ctx.db.Get([]byte(fmt.Sprintf("%s%s", tablesPath, strings.ToLower(tableName))))
-	if err != nil {
-		return nil, err
-	}
-	if len(bytes) == 0 {
-		return nil, nil
-	}
-	table := NTable{}
-	err = proto.Unmarshal(bytes, &table)
-	if err != nil {
-		return nil, err
-	}
-	return &table, nil
+    bytes, err := ctx.db.Get([]byte(fmt.Sprintf("%s%s", tablesPath, strings.ToLower(tableName))))
+    if err != nil {
+        return nil, err
+    }
+    if len(bytes) == 0 {
+        return nil, nil
+    }
+    table := NTable{}
+    err = proto.Unmarshal(bytes, &table)
+    if err != nil {
+        return nil, err
+    }
+    return &table, nil
 }
 
 func (ctx *SSchema) GetTables() ([]NTable, error) {
-	tableBytes, err := ctx.db.GetPrefix([]byte(tablesPath))
-	if err != nil {
-		return nil, err
-	}
-	tables := make([]NTable, len(tableBytes))
-	for i, kv := range tableBytes {
-		table := NTable{}
-		err := proto.Unmarshal(kv.Value, &table)
-		if err != nil {
-			return nil, err
-		}
-		tables[i] = table
-	}
-	return tables, nil
+    tableBytes, err := ctx.db.GetPrefix([]byte(tablesPath))
+    if err != nil {
+        return nil, err
+    }
+    tables := make([]NTable, len(tableBytes))
+    for i, kv := range tableBytes {
+        table := NTable{}
+        err := proto.Unmarshal(kv.Value, &table)
+        if err != nil {
+            return nil, err
+        }
+        tables[i] = table
+    }
+    return tables, nil
 }
 
 func (ctx *SSchema) GetAccountsTable() (*NTable, error) {
-	tables, err := ctx.GetTables()
-	if err != nil {
-		return nil, err
-	}
-	table := linq.From(tables).FirstWithT(func(t NTable) bool {
-		return t.TableType == NTableType_ACCOUNT
-	}).(NTable)
-	return &table, nil
+    tables, err := ctx.GetTables()
+    if err != nil {
+        return nil, err
+    }
+    table := linq.From(tables).FirstWithT(func(t NTable) bool {
+        return t.TableType == NTableType_ACCOUNT
+    }).(NTable)
+    return &table, nil
 }
 
 func (ctx *SSchema) DropTable(tableName string) (*NTable, error) {
-	return nil, nil
+    return nil, nil
 }

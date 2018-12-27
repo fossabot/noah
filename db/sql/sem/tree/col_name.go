@@ -58,9 +58,9 @@
 package tree
 
 import (
-	"strings"
+    "strings"
 
-	"github.com/readystock/noah/db/sql/sessiondata"
+    "github.com/readystock/noah/db/sql/sessiondata"
 )
 
 // GetRenderColName computes a name for a result column.
@@ -73,18 +73,18 @@ import (
 // found in src/backend/parser/parse_target.c. We reuse this algorithm
 // to provide names more compatible with PostgreSQL.
 func GetRenderColName(searchPath sessiondata.SearchPath, target SelectExpr) (string, error) {
-	if target.As != "" {
-		return string(target.As), nil
-	}
+    if target.As != "" {
+        return string(target.As), nil
+    }
 
-	_, s, err := ComputeColNameInternal(searchPath, target.Expr)
-	if err != nil {
-		return s, err
-	}
-	if len(s) == 0 {
-		s = "?column?"
-	}
-	return s, nil
+    _, s, err := ComputeColNameInternal(searchPath, target.Expr)
+    if err != nil {
+        return s, err
+    }
+    if len(s) == 0 {
+        s = "?column?"
+    }
+    return s, nil
 }
 
 // ComputeColNameInternal is the workhorse for GetRenderColName.
@@ -96,149 +96,149 @@ func GetRenderColName(searchPath sessiondata.SearchPath, target SelectExpr) (str
 // The algorithm is borrowed from FigureColnameInternal in PostgreSQL 10,
 // to be found in src/backend/parser/parse_target.c.
 func ComputeColNameInternal(sp sessiondata.SearchPath, target Expr) (int, string, error) {
-	// The order of the type cases below mirrors that of PostgreSQL's
-	// own code, so that code reviews can more easily compare the two
-	// implementations.
-	switch e := target.(type) {
-	case *UnresolvedName:
-		if e.Star {
-			return 0, "", nil
-		}
-		return 2, e.Parts[0], nil
+    // The order of the type cases below mirrors that of PostgreSQL's
+    // own code, so that code reviews can more easily compare the two
+    // implementations.
+    switch e := target.(type) {
+    case *UnresolvedName:
+        if e.Star {
+            return 0, "", nil
+        }
+        return 2, e.Parts[0], nil
 
-	case *ColumnItem:
-		return 2, e.Column(), nil
+    case *ColumnItem:
+        return 2, e.Column(), nil
 
-	case *IndirectionExpr:
-		return ComputeColNameInternal(sp, e.Expr)
+    case *IndirectionExpr:
+        return ComputeColNameInternal(sp, e.Expr)
 
-	case *FuncExpr:
-		fd, err := e.Func.Resolve(sp)
-		if err != nil {
-			return 0, "", err
-		}
-		return 2, fd.Name, nil
+    case *FuncExpr:
+        fd, err := e.Func.Resolve(sp)
+        if err != nil {
+            return 0, "", err
+        }
+        return 2, fd.Name, nil
 
-	case *NullIfExpr:
-		return 2, "nullif", nil
+    case *NullIfExpr:
+        return 2, "nullif", nil
 
-	case *IfExpr:
-		return 2, "if", nil
+    case *IfExpr:
+        return 2, "if", nil
 
-	case *ParenExpr:
-		return ComputeColNameInternal(sp, e.Expr)
+    case *ParenExpr:
+        return ComputeColNameInternal(sp, e.Expr)
 
-	case *CastExpr:
-		strength, s, err := ComputeColNameInternal(sp, e.Expr)
-		if err != nil {
-			return 0, "", err
-		}
-		if strength <= 1 {
-			tname := strings.ToLower(e.Type.TypeName())
-			// TTuple has no short time name, so check this
-			// here. Otherwise we'll want to fall back below.
-			if tname != "" {
-				return 1, tname, nil
-			}
-		}
-		return strength, s, nil
+    case *CastExpr:
+        strength, s, err := ComputeColNameInternal(sp, e.Expr)
+        if err != nil {
+            return 0, "", err
+        }
+        if strength <= 1 {
+            tname := strings.ToLower(e.Type.TypeName())
+            // TTuple has no short time name, so check this
+            // here. Otherwise we'll want to fall back below.
+            if tname != "" {
+                return 1, tname, nil
+            }
+        }
+        return strength, s, nil
 
-	case *AnnotateTypeExpr:
-		// Ditto CastExpr.
-		strength, s, err := ComputeColNameInternal(sp, e.Expr)
-		if err != nil {
-			return 0, "", err
-		}
-		if strength <= 1 {
-			tname := strings.ToLower(e.Type.TypeName())
-			// TTuple has no short time name, so check this
-			// here. Otherwise we'll want to fall back below.
-			if tname != "" {
-				return 1, tname, nil
-			}
-		}
-		return strength, s, nil
+    case *AnnotateTypeExpr:
+        // Ditto CastExpr.
+        strength, s, err := ComputeColNameInternal(sp, e.Expr)
+        if err != nil {
+            return 0, "", err
+        }
+        if strength <= 1 {
+            tname := strings.ToLower(e.Type.TypeName())
+            // TTuple has no short time name, so check this
+            // here. Otherwise we'll want to fall back below.
+            if tname != "" {
+                return 1, tname, nil
+            }
+        }
+        return strength, s, nil
 
-	case *CollateExpr:
-		return ComputeColNameInternal(sp, e.Expr)
+    case *CollateExpr:
+        return ComputeColNameInternal(sp, e.Expr)
 
-	case *ArrayFlatten:
-		return 2, "array", nil
+    case *ArrayFlatten:
+        return 2, "array", nil
 
-	case *Subquery:
-		if e.Exists {
-			return 2, "exists", nil
-		}
-		return computeColNameInternalSubquery(sp, e.Select)
+    case *Subquery:
+        if e.Exists {
+            return 2, "exists", nil
+        }
+        return computeColNameInternalSubquery(sp, e.Select)
 
-	case *CaseExpr:
-		strength, s, err := 0, "", error(nil)
-		if e.Else != nil {
-			strength, s, err = ComputeColNameInternal(sp, e.Else)
-		}
-		if strength <= 1 {
-			s = "case"
-			strength = 1
-		}
-		return strength, s, err
+    case *CaseExpr:
+        strength, s, err := 0, "", error(nil)
+        if e.Else != nil {
+            strength, s, err = ComputeColNameInternal(sp, e.Else)
+        }
+        if strength <= 1 {
+            s = "case"
+            strength = 1
+        }
+        return strength, s, err
 
-	case *Array:
-		return 2, "array", nil
+    case *Array:
+        return 2, "array", nil
 
-	case *Tuple:
-		if e.Row {
-			return 2, "row", nil
-		}
-		if len(e.Exprs) == 1 {
-			if len(e.Labels) > 0 {
-				return 2, e.Labels[0], nil
-			}
-			return ComputeColNameInternal(sp, e.Exprs[0])
-		}
+    case *Tuple:
+        if e.Row {
+            return 2, "row", nil
+        }
+        if len(e.Exprs) == 1 {
+            if len(e.Labels) > 0 {
+                return 2, e.Labels[0], nil
+            }
+            return ComputeColNameInternal(sp, e.Exprs[0])
+        }
 
-	case *CoalesceExpr:
-		return 2, "coalesce", nil
+    case *CoalesceExpr:
+        return 2, "coalesce", nil
 
-		// CockroachDB-specific nodes follow.
-	case *IfErrExpr:
-		if e.Else == nil {
-			return 2, "iserror", nil
-		}
-		return 2, "iferror", nil
+        // CockroachDB-specific nodes follow.
+    case *IfErrExpr:
+        if e.Else == nil {
+            return 2, "iserror", nil
+        }
+        return 2, "iferror", nil
 
-	case *ColumnAccessExpr:
-		return 2, e.ColName, nil
+    case *ColumnAccessExpr:
+        return 2, e.ColName, nil
 
-	case *DBool:
-		// PostgreSQL implements the "true" and "false" literals
-		// by generating the expressions 't'::BOOL and 'f'::BOOL, so
-		// the derived column name is just "bool". Do the same.
-		return 1, "bool", nil
-	}
+    case *DBool:
+        // PostgreSQL implements the "true" and "false" literals
+        // by generating the expressions 't'::BOOL and 'f'::BOOL, so
+        // the derived column name is just "bool". Do the same.
+        return 1, "bool", nil
+    }
 
-	return 0, "", nil
+    return 0, "", nil
 }
 
 // computeColNameInternalSubquery handles the cases of subqueries that
 // cannot be handled by the function above due to the Go typing
 // differences.
 func computeColNameInternalSubquery(
-	sp sessiondata.SearchPath, s SelectStatement,
+    sp sessiondata.SearchPath, s SelectStatement,
 ) (int, string, error) {
-	switch e := s.(type) {
-	case *ParenSelect:
-		return computeColNameInternalSubquery(sp, e.Select.Select)
-	case *ValuesClause:
-		if len(e.Tuples) > 0 && len(e.Tuples[0].Exprs) == 1 {
-			return 2, "column1", nil
-		}
-	case *SelectClause:
-		if len(e.Exprs) == 1 {
-			if len(e.Exprs[0].As) > 0 {
-				return 2, string(e.Exprs[0].As), nil
-			}
-			return ComputeColNameInternal(sp, e.Exprs[0].Expr)
-		}
-	}
-	return 0, "", nil
+    switch e := s.(type) {
+    case *ParenSelect:
+        return computeColNameInternalSubquery(sp, e.Select.Select)
+    case *ValuesClause:
+        if len(e.Tuples) > 0 && len(e.Tuples[0].Exprs) == 1 {
+            return 2, "column1", nil
+        }
+    case *SelectClause:
+        if len(e.Exprs) == 1 {
+            if len(e.Exprs[0].As) > 0 {
+                return 2, string(e.Exprs[0].As), nil
+            }
+            return ComputeColNameInternal(sp, e.Exprs[0].Expr)
+        }
+    }
+    return 0, "", nil
 }

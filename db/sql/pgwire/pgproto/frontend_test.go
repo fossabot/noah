@@ -58,61 +58,61 @@
 package pgproto_test
 
 import (
-	"github.com/readystock/noah/db/sql/pgwire/pgproto"
-	"testing"
+    "github.com/readystock/noah/db/sql/pgwire/pgproto"
+    "testing"
 
-	"github.com/pkg/errors"
+    "github.com/pkg/errors"
 )
 
 type interruptReader struct {
-	chunks [][]byte
+    chunks [][]byte
 }
 
 func (ir *interruptReader) Read(p []byte) (n int, err error) {
-	if len(ir.chunks) == 0 {
-		return 0, errors.New("no data")
-	}
+    if len(ir.chunks) == 0 {
+        return 0, errors.New("no data")
+    }
 
-	n = copy(p, ir.chunks[0])
-	if n != len(ir.chunks[0]) {
-		panic("this test reader doesn't support partial reads of chunks")
-	}
+    n = copy(p, ir.chunks[0])
+    if n != len(ir.chunks[0]) {
+        panic("this test reader doesn't support partial reads of chunks")
+    }
 
-	ir.chunks = ir.chunks[1:]
+    ir.chunks = ir.chunks[1:]
 
-	return n, nil
+    return n, nil
 }
 
 func (ir *interruptReader) push(p []byte) {
-	ir.chunks = append(ir.chunks, p)
+    ir.chunks = append(ir.chunks, p)
 }
 
 func TestFrontendReceiveInterrupted(t *testing.T) {
-	t.Parallel()
+    t.Parallel()
 
-	server := &interruptReader{}
-	server.push([]byte{'Z', 0, 0, 0, 5})
+    server := &interruptReader{}
+    server.push([]byte{'Z', 0, 0, 0, 5})
 
-	frontend, err := pgproto.NewFrontend(server, nil)
-	if err != nil {
-		t.Fatal(err)
-	}
+    frontend, err := pgproto.NewFrontend(server, nil)
+    if err != nil {
+        t.Fatal(err)
+    }
 
-	msg, err := frontend.Receive()
-	if err == nil {
-		t.Fatal("expected err")
-	}
-	if msg != nil {
-		t.Fatalf("did not expect msg, but %v", msg)
-	}
+    msg, err := frontend.Receive()
+    if err == nil {
+        t.Fatal("expected err")
+    }
+    if msg != nil {
+        t.Fatalf("did not expect msg, but %v", msg)
+    }
 
-	server.push([]byte{'I'})
+    server.push([]byte{'I'})
 
-	msg, err = frontend.Receive()
-	if err != nil {
-		t.Fatal(err)
-	}
-	if msg, ok := msg.(*pgproto.ReadyForQuery); !ok || msg.TxStatus != 'I' {
-		t.Fatalf("unexpected msg: %v", msg)
-	}
+    msg, err = frontend.Receive()
+    if err != nil {
+        t.Fatal(err)
+    }
+    if msg, ok := msg.(*pgproto.ReadyForQuery); !ok || msg.TxStatus != 'I' {
+        t.Fatalf("unexpected msg: %v", msg)
+    }
 }

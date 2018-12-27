@@ -59,7 +59,7 @@ package tree
 
 // Discard represents a DISCARD statement.
 type Discard struct {
-	Mode DiscardMode
+    Mode DiscardMode
 }
 
 var _ Statement = &Discard{}
@@ -68,19 +68,19 @@ var _ Statement = &Discard{}
 type DiscardMode int
 
 const (
-	// DiscardModeAll represents a DISCARD ALL statement.
-	DiscardModeAll DiscardMode = iota
+    // DiscardModeAll represents a DISCARD ALL statement.
+    DiscardModeAll DiscardMode = iota
 )
 
 // Format implements the NodeFormatter interface.
 func (node *Discard) Format(ctx *FmtCtx) {
-	switch node.Mode {
-	case DiscardModeAll:
-		ctx.WriteString("DISCARD ALL")
-	}
+    switch node.Mode {
+    case DiscardModeAll:
+        ctx.WriteString("DISCARD ALL")
+    }
 }
 
 // String implements the Statement interface.
 func (node *Discard) String() string {
-	return AsString(node)
+    return AsString(node)
 }

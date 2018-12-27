@@ -58,62 +58,62 @@
 package tree
 
 import (
-	"github.com/readystock/noah/db/sql/coltypes"
+    "github.com/readystock/noah/db/sql/coltypes"
 )
 
 // Prepare represents a PREPARE statement.
 type Prepare struct {
-	Name      Name
-	Types     []coltypes.T
-	Statement Statement
+    Name      Name
+    Types     []coltypes.T
+    Statement Statement
 }
 
 // Format implements the NodeFormatter interface.
 func (node *Prepare) Format(ctx *FmtCtx) {
-	ctx.WriteString("PREPARE ")
-	ctx.FormatNode(&node.Name)
-	if len(node.Types) > 0 {
-		ctx.WriteString(" (")
-		for i, t := range node.Types {
-			if i > 0 {
-				ctx.WriteString(", ")
-			}
-			t.Format(ctx.Buffer, ctx.flags.EncodeFlags())
-		}
-		ctx.WriteRune(')')
-	}
-	ctx.WriteString(" AS ")
-	ctx.FormatNode(node.Statement)
+    ctx.WriteString("PREPARE ")
+    ctx.FormatNode(&node.Name)
+    if len(node.Types) > 0 {
+        ctx.WriteString(" (")
+        for i, t := range node.Types {
+            if i > 0 {
+                ctx.WriteString(", ")
+            }
+            t.Format(ctx.Buffer, ctx.flags.EncodeFlags())
+        }
+        ctx.WriteRune(')')
+    }
+    ctx.WriteString(" AS ")
+    ctx.FormatNode(node.Statement)
 }
 
 // Execute represents an EXECUTE statement.
 type Execute struct {
-	Name   Name
-	Params Exprs
+    Name   Name
+    Params Exprs
 }
 
 // Format implements the NodeFormatter interface.
 func (node *Execute) Format(ctx *FmtCtx) {
-	ctx.WriteString("EXECUTE ")
-	ctx.FormatNode(&node.Name)
-	if len(node.Params) > 0 {
-		ctx.WriteString(" (")
-		ctx.FormatNode(&node.Params)
-		ctx.WriteByte(')')
-	}
+    ctx.WriteString("EXECUTE ")
+    ctx.FormatNode(&node.Name)
+    if len(node.Params) > 0 {
+        ctx.WriteString(" (")
+        ctx.FormatNode(&node.Params)
+        ctx.WriteByte(')')
+    }
 }
 
 // Deallocate represents a DEALLOCATE statement.
 type Deallocate struct {
-	Name Name // empty for ALL
+    Name Name // empty for ALL
 }
 
 // Format implements the NodeFormatter interface.
 func (node *Deallocate) Format(ctx *FmtCtx) {
-	ctx.WriteString("DEALLOCATE ")
-	if node.Name == "" {
-		ctx.WriteString("ALL")
-	} else {
-		ctx.FormatNode(&node.Name)
-	}
+    ctx.WriteString("DEALLOCATE ")
+    if node.Name == "" {
+        ctx.WriteString("ALL")
+    } else {
+        ctx.FormatNode(&node.Name)
+    }
 }

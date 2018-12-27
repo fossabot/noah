@@ -58,7 +58,7 @@
 package sql_test
 
 import (
-	"testing"
+    "testing"
 )
 
 func Test_thing(t *testing.T) {

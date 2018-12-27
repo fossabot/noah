@@ -59,22 +59,22 @@ package tree
 
 // CopyFrom represents a COPY FROM statement.
 type CopyFrom struct {
-	Table   NormalizableTableName
-	Columns NameList
-	Stdin   bool
+    Table   NormalizableTableName
+    Columns NameList
+    Stdin   bool
 }
 
 // Format implements the NodeFormatter interface.
 func (node *CopyFrom) Format(ctx *FmtCtx) {
-	ctx.WriteString("COPY ")
-	ctx.FormatNode(&node.Table)
-	if len(node.Columns) > 0 {
-		ctx.WriteString(" (")
-		ctx.FormatNode(&node.Columns)
-		ctx.WriteString(")")
-	}
-	ctx.WriteString(" FROM ")
-	if node.Stdin {
-		ctx.WriteString("STDIN")
-	}
+    ctx.WriteString("COPY ")
+    ctx.FormatNode(&node.Table)
+    if len(node.Columns) > 0 {
+        ctx.WriteString(" (")
+        ctx.FormatNode(&node.Columns)
+        ctx.WriteString(")")
+    }
+    ctx.WriteString(" FROM ")
+    if node.Stdin {
+        ctx.WriteString("STDIN")
+    }
 }

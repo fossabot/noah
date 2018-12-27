@@ -59,28 +59,28 @@ package tree
 
 // With represents a WITH statement.
 type With struct {
-	CTEList []*CTE
+    CTEList []*CTE
 }
 
 // CTE represents a common table expression inside of a WITH clause.
 type CTE struct {
-	Name AliasClause
-	Stmt Statement
+    Name AliasClause
+    Stmt Statement
 }
 
 // Format implements the NodeFormatter interface.
 func (node *With) Format(ctx *FmtCtx) {
-	if node == nil {
-		return
-	}
-	ctx.WriteString("WITH ")
-	for i, cte := range node.CTEList {
-		if i != 0 {
-			ctx.WriteString(", ")
-		}
-		ctx.FormatNode(&cte.Name)
-		ctx.WriteString(" AS (")
-		ctx.FormatNode(cte.Stmt)
-		ctx.WriteString(") ")
-	}
+    if node == nil {
+        return
+    }
+    ctx.WriteString("WITH ")
+    for i, cte := range node.CTEList {
+        if i != 0 {
+            ctx.WriteString(", ")
+        }
+        ctx.FormatNode(&cte.Name)
+        ctx.WriteString(" AS (")
+        ctx.FormatNode(cte.Stmt)
+        ctx.WriteString(") ")
+    }
 }

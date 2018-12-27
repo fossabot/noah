@@ -58,7 +58,7 @@
 package pgproto
 
 import (
-	"encoding/json"
+    "encoding/json"
 )
 
 type CloseComplete struct{}
@@ -66,21 +66,21 @@ type CloseComplete struct{}
 func (*CloseComplete) Backend() {}
 
 func (dst *CloseComplete) Decode(src []byte) error {
-	if len(src) != 0 {
-		return &invalidMessageLenErr{messageType: "CloseComplete", expectedLen: 0, actualLen: len(src)}
-	}
+    if len(src) != 0 {
+        return &invalidMessageLenErr{messageType: "CloseComplete", expectedLen: 0, actualLen: len(src)}
+    }
 
-	return nil
+    return nil
 }
 
 func (src *CloseComplete) Encode(dst []byte) []byte {
-	return append(dst, '3', 0, 0, 0, 4)
+    return append(dst, '3', 0, 0, 0, 4)
 }
 
 func (src *CloseComplete) MarshalJSON() ([]byte, error) {
-	return json.Marshal(struct {
-		Type string
-	}{
-		Type: "CloseComplete",
-	})
+    return json.Marshal(struct {
+        Type string
+    }{
+        Type: "CloseComplete",
+    })
 }

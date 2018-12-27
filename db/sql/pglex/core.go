@@ -58,14 +58,14 @@
 package pglex
 
 import (
-	"fmt"
-	node "github.com/readystock/pg_query_go/nodes"
+    "fmt"
+    node "github.com/readystock/pg_query_go/nodes"
 )
 
 func HandleRawStmt(stmt node.RawStmt) error {
-	switch tstmt := stmt.Stmt.(type) {
-	case node.VariableSetStmt:
-		fmt.Printf("Changing Setting (%s)\n", *tstmt.Name)
-	}
-	return nil
+    switch tstmt := stmt.Stmt.(type) {
+    case node.VariableSetStmt:
+        fmt.Printf("Changing Setting (%s)\n", *tstmt.Name)
+    }
+    return nil
 }

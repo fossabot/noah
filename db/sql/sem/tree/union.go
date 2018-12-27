@@ -60,14 +60,14 @@
 package tree
 
 import (
-	"fmt"
+    "fmt"
 )
 
 // UnionClause represents a UNION statement.
 type UnionClause struct {
-	Type        UnionType
-	Left, Right *Select
-	All         bool
+    Type        UnionType
+    Left, Right *Select
+    All         bool
 }
 
 // UnionType represents one of the three set operations in sql.
@@ -75,32 +75,32 @@ type UnionType int
 
 // Union.Type
 const (
-	UnionOp UnionType = iota
-	IntersectOp
-	ExceptOp
+    UnionOp UnionType = iota
+    IntersectOp
+    ExceptOp
 )
 
 var unionTypeName = [...]string{
-	UnionOp:     "UNION",
-	IntersectOp: "INTERSECT",
-	ExceptOp:    "EXCEPT",
+    UnionOp:     "UNION",
+    IntersectOp: "INTERSECT",
+    ExceptOp:    "EXCEPT",
 }
 
 func (i UnionType) String() string {
-	if i < 0 || i > UnionType(len(unionTypeName)-1) {
-		return fmt.Sprintf("UnionType(%d)", i)
-	}
-	return unionTypeName[i]
+    if i < 0 || i > UnionType(len(unionTypeName)-1) {
+        return fmt.Sprintf("UnionType(%d)", i)
+    }
+    return unionTypeName[i]
 }
 
 // Format implements the NodeFormatter interface.
 func (node *UnionClause) Format(ctx *FmtCtx) {
-	ctx.FormatNode(node.Left)
-	ctx.WriteByte(' ')
-	ctx.WriteString(node.Type.String())
-	if node.All {
-		ctx.WriteString(" ALL")
-	}
-	ctx.WriteByte(' ')
-	ctx.FormatNode(node.Right)
+    ctx.FormatNode(node.Left)
+    ctx.WriteByte(' ')
+    ctx.WriteString(node.Type.String())
+    if node.All {
+        ctx.WriteString(" ALL")
+    }
+    ctx.WriteByte(' ')
+    ctx.FormatNode(node.Right)
 }

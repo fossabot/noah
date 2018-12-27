@@ -59,23 +59,23 @@ package tree
 
 // CreateChangefeed represents a CREATE CHANGEFEED statement.
 type CreateChangefeed struct {
-	Targets TargetList
-	SinkURI Expr
-	Options KVOptions
+    Targets TargetList
+    SinkURI Expr
+    Options KVOptions
 }
 
 var _ Statement = &CreateChangefeed{}
 
 // Format implements the NodeFormatter interface.
 func (node *CreateChangefeed) Format(ctx *FmtCtx) {
-	ctx.WriteString("CREATE CHANGEFEED FOR ")
-	ctx.FormatNode(&node.Targets)
-	if node.SinkURI != nil {
-		ctx.WriteString(" INTO ")
-		ctx.FormatNode(node.SinkURI)
-	}
-	if node.Options != nil {
-		ctx.WriteString(" WITH ")
-		ctx.FormatNode(&node.Options)
-	}
+    ctx.WriteString("CREATE CHANGEFEED FOR ")
+    ctx.FormatNode(&node.Targets)
+    if node.SinkURI != nil {
+        ctx.WriteString(" INTO ")
+        ctx.FormatNode(node.SinkURI)
+    }
+    if node.Options != nil {
+        ctx.WriteString(" WITH ")
+        ctx.FormatNode(&node.Options)
+    }
 }

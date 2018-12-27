@@ -32,14 +32,14 @@ var _ = math.Inf
 // LegacyTimestamp is convertible to hlc.Timestamp, but uses the
 // legacy encoding as it is encoded "below raft".
 type LegacyTimestamp struct {
-	// Holds a wall time, typically a unix epoch time expressed in
-	// nanoseconds.
-	WallTime int64 `protobuf:"varint,1,opt,name=wall_time,json=wallTime" json:"wall_time"`
-	// The logical component captures causality for events whose wall
-	// times are equal. It is effectively bounded by (maximum clock
-	// skew)/(minimal ns between events) and nearly impossible to
-	// overflow.
-	Logical int32 `protobuf:"varint,2,opt,name=logical" json:"logical"`
+    // Holds a wall time, typically a unix epoch time expressed in
+    // nanoseconds.
+    WallTime int64 `protobuf:"varint,1,opt,name=wall_time,json=wallTime" json:"wall_time"`
+    // The logical component captures causality for events whose wall
+    // times are equal. It is effectively bounded by (maximum clock
+    // skew)/(minimal ns between events) and nearly impossible to
+    // overflow.
+    Logical int32 `protobuf:"varint,2,opt,name=logical" json:"logical"`
 }
 
 //

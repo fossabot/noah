@@ -61,26 +61,26 @@ import "math"
 
 // AddWithOverflow returns a+b. If ok is false, a+b overflowed.
 func AddWithOverflow(a, b int64) (r int64, ok bool) {
-	if b > 0 && a > math.MaxInt64-b {
-		return 0, false
-	}
-	if b < 0 && a < math.MinInt64-b {
-		return 0, false
-	}
-	return a + b, true
+    if b > 0 && a > math.MaxInt64-b {
+        return 0, false
+    }
+    if b < 0 && a < math.MinInt64-b {
+        return 0, false
+    }
+    return a + b, true
 }
 
 // MulHalfPositiveWithOverflow returns a*b. b must be positive. If ok
 // is false, a*b overflowed.
 func MulHalfPositiveWithOverflow(a, b int64) (r int64, ok bool) {
-	if a >= 0 {
-		if a > math.MaxInt64/b {
-			return 0, false
-		}
-	} else {
-		if a < math.MinInt64/b {
-			return 0, false
-		}
-	}
-	return a * b, true
+    if a >= 0 {
+        if a > math.MaxInt64/b {
+            return 0, false
+        }
+    } else {
+        if a < math.MinInt64/b {
+            return 0, false
+        }
+    }
+    return a * b, true
 }

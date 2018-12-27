@@ -61,26 +61,26 @@ package tree
 
 // Grant represents a GRANT statement.
 type Grant struct {
-	Targets  TargetList
-	Grantees NameList
+    Targets  TargetList
+    Grantees NameList
 }
 
 // TargetList represents a list of targets.
 // Only one field may be non-nil.
 type TargetList struct {
-	Databases NameList
-	Tables    TablePatterns
+    Databases NameList
+    Tables    TablePatterns
 }
 
 // Format implements the NodeFormatter interface.
 func (tl *TargetList) Format(ctx *FmtCtx) {
-	if tl.Databases != nil {
-		ctx.WriteString("DATABASE ")
-		ctx.FormatNode(&tl.Databases)
-	} else {
-		ctx.WriteString("TABLE ")
-		ctx.FormatNode(&tl.Tables)
-	}
+    if tl.Databases != nil {
+        ctx.WriteString("DATABASE ")
+        ctx.FormatNode(&tl.Databases)
+    } else {
+        ctx.WriteString("TABLE ")
+        ctx.FormatNode(&tl.Tables)
+    }
 }
 
 // Format implements the NodeFormatter interface.

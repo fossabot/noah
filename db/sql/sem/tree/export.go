@@ -59,24 +59,24 @@ package tree
 
 // Export represents a EXPORT statement.
 type Export struct {
-	Query      *Select
-	FileFormat string
-	File       Expr
-	Options    KVOptions
+    Query      *Select
+    FileFormat string
+    File       Expr
+    Options    KVOptions
 }
 
 var _ Statement = &Export{}
 
 // Format implements the NodeFormatter interface.
 func (node *Export) Format(ctx *FmtCtx) {
-	ctx.WriteString("EXPORT INTO ")
-	ctx.WriteString(node.FileFormat)
-	ctx.WriteString(" ")
-	ctx.FormatNode(node.File)
-	if node.Options != nil {
-		ctx.WriteString(" WITH ")
-		ctx.FormatNode(&node.Options)
-	}
-	ctx.WriteString(" FROM ")
-	ctx.FormatNode(node.Query)
+    ctx.WriteString("EXPORT INTO ")
+    ctx.WriteString(node.FileFormat)
+    ctx.WriteString(" ")
+    ctx.FormatNode(node.File)
+    if node.Options != nil {
+        ctx.WriteString(" WITH ")
+        ctx.FormatNode(&node.Options)
+    }
+    ctx.WriteString(" FROM ")
+    ctx.FormatNode(node.Query)
 }

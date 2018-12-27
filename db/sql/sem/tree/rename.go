@@ -61,83 +61,83 @@ package tree
 
 // RenameDatabase represents a RENAME DATABASE statement.
 type RenameDatabase struct {
-	Name    Name
-	NewName Name
+    Name    Name
+    NewName Name
 }
 
 // Format implements the NodeFormatter interface.
 func (node *RenameDatabase) Format(ctx *FmtCtx) {
-	ctx.WriteString("ALTER DATABASE ")
-	ctx.FormatNode(&node.Name)
-	ctx.WriteString(" RENAME TO ")
-	ctx.FormatNode(&node.NewName)
+    ctx.WriteString("ALTER DATABASE ")
+    ctx.FormatNode(&node.Name)
+    ctx.WriteString(" RENAME TO ")
+    ctx.FormatNode(&node.NewName)
 }
 
 // RenameTable represents a RENAME TABLE or RENAME VIEW statement.
 // Whether the user has asked to rename a table or view is indicated
 // by the IsView field.
 type RenameTable struct {
-	Name       NormalizableTableName
-	NewName    NormalizableTableName
-	IfExists   bool
-	IsView     bool
-	IsSequence bool
+    Name       NormalizableTableName
+    NewName    NormalizableTableName
+    IfExists   bool
+    IsView     bool
+    IsSequence bool
 }
 
 // Format implements the NodeFormatter interface.
 func (node *RenameTable) Format(ctx *FmtCtx) {
-	ctx.WriteString("ALTER ")
-	if node.IsView {
-		ctx.WriteString("VIEW ")
-	} else if node.IsSequence {
-		ctx.WriteString("SEQUENCE ")
-	} else {
-		ctx.WriteString("TABLE ")
-	}
-	if node.IfExists {
-		ctx.WriteString("IF EXISTS ")
-	}
-	ctx.FormatNode(&node.Name)
-	ctx.WriteString(" RENAME TO ")
-	ctx.FormatNode(&node.NewName)
+    ctx.WriteString("ALTER ")
+    if node.IsView {
+        ctx.WriteString("VIEW ")
+    } else if node.IsSequence {
+        ctx.WriteString("SEQUENCE ")
+    } else {
+        ctx.WriteString("TABLE ")
+    }
+    if node.IfExists {
+        ctx.WriteString("IF EXISTS ")
+    }
+    ctx.FormatNode(&node.Name)
+    ctx.WriteString(" RENAME TO ")
+    ctx.FormatNode(&node.NewName)
 }
 
 // RenameIndex represents a RENAME INDEX statement.
 type RenameIndex struct {
-	Index    *TableNameWithIndex
-	NewName  UnrestrictedName
-	IfExists bool
+    Index    *TableNameWithIndex
+    NewName  UnrestrictedName
+    IfExists bool
 }
 
 // Format implements the NodeFormatter interface.
 func (node *RenameIndex) Format(ctx *FmtCtx) {
-	ctx.WriteString("ALTER INDEX ")
-	if node.IfExists {
-		ctx.WriteString("IF EXISTS ")
-	}
-	ctx.FormatNode(node.Index)
-	ctx.WriteString(" RENAME TO ")
-	ctx.FormatNode(&node.NewName)
+    ctx.WriteString("ALTER INDEX ")
+    if node.IfExists {
+        ctx.WriteString("IF EXISTS ")
+    }
+    ctx.FormatNode(node.Index)
+    ctx.WriteString(" RENAME TO ")
+    ctx.FormatNode(&node.NewName)
 }
 
 // RenameColumn represents a RENAME COLUMN statement.
 type RenameColumn struct {
-	Table   NormalizableTableName
-	Name    Name
-	NewName Name
-	// IfExists refers to the table, not the column.
-	IfExists bool
+    Table   NormalizableTableName
+    Name    Name
+    NewName Name
+    // IfExists refers to the table, not the column.
+    IfExists bool
 }
 
 // Format implements the NodeFormatter interface.
 func (node *RenameColumn) Format(ctx *FmtCtx) {
-	ctx.WriteString("ALTER TABLE ")
-	if node.IfExists {
-		ctx.WriteString("IF EXISTS ")
-	}
-	ctx.FormatNode(&node.Table)
-	ctx.WriteString(" RENAME COLUMN ")
-	ctx.FormatNode(&node.Name)
-	ctx.WriteString(" TO ")
-	ctx.FormatNode(&node.NewName)
+    ctx.WriteString("ALTER TABLE ")
+    if node.IfExists {
+        ctx.WriteString("IF EXISTS ")
+    }
+    ctx.FormatNode(&node.Table)
+    ctx.WriteString(" RENAME COLUMN ")
+    ctx.FormatNode(&node.Name)
+    ctx.WriteString(" TO ")
+    ctx.FormatNode(&node.NewName)
 }

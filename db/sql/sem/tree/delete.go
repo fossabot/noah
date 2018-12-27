@@ -61,21 +61,21 @@ package tree
 
 // Delete represents a DELETE statement.
 type Delete struct {
-	With      *With
-	Table     TableExpr
-	Where     *Where
-	OrderBy   OrderBy
-	Limit     *Limit
-	Returning ReturningClause
+    With      *With
+    Table     TableExpr
+    Where     *Where
+    OrderBy   OrderBy
+    Limit     *Limit
+    Returning ReturningClause
 }
 
 // Format implements the NodeFormatter interface.
 func (node *Delete) Format(ctx *FmtCtx) {
-	ctx.FormatNode(node.With)
-	ctx.WriteString("DELETE FROM ")
-	ctx.FormatNode(node.Table)
-	ctx.FormatNode(node.Where)
-	ctx.FormatNode(&node.OrderBy)
-	ctx.FormatNode(node.Limit)
-	ctx.FormatNode(node.Returning)
+    ctx.FormatNode(node.With)
+    ctx.WriteString("DELETE FROM ")
+    ctx.FormatNode(node.Table)
+    ctx.FormatNode(node.Where)
+    ctx.FormatNode(&node.OrderBy)
+    ctx.FormatNode(node.Limit)
+    ctx.FormatNode(node.Returning)
 }

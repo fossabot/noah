@@ -58,7 +58,7 @@
 package types
 
 import (
-	"database/sql/driver"
+    "database/sql/driver"
 )
 
 // OIDValue (Object Identifier Type) is, according to
@@ -72,41 +72,41 @@ type OIDValue pguint32
 // number type Set does not do automatic type conversion as other number
 // types do.
 func (dst *OIDValue) Set(src interface{}) error {
-	return (*pguint32)(dst).Set(src)
+    return (*pguint32)(dst).Set(src)
 }
 
 func (dst *OIDValue) Get() interface{} {
-	return (*pguint32)(dst).Get()
+    return (*pguint32)(dst).Get()
 }
 
 // AssignTo assigns from src to dst. Note that as OIDValue is not a general number
 // type AssignTo does not do automatic type conversion as other number types do.
 func (src *OIDValue) AssignTo(dst interface{}) error {
-	return (*pguint32)(src).AssignTo(dst)
+    return (*pguint32)(src).AssignTo(dst)
 }
 
 func (dst *OIDValue) DecodeText(ci *ConnInfo, src []byte) error {
-	return (*pguint32)(dst).DecodeText(ci, src)
+    return (*pguint32)(dst).DecodeText(ci, src)
 }
 
 func (dst *OIDValue) DecodeBinary(ci *ConnInfo, src []byte) error {
-	return (*pguint32)(dst).DecodeBinary(ci, src)
+    return (*pguint32)(dst).DecodeBinary(ci, src)
 }
 
 func (src *OIDValue) EncodeText(ci *ConnInfo, buf []byte) ([]byte, error) {
-	return (*pguint32)(src).EncodeText(ci, buf)
+    return (*pguint32)(src).EncodeText(ci, buf)
 }
 
 func (src *OIDValue) EncodeBinary(ci *ConnInfo, buf []byte) ([]byte, error) {
-	return (*pguint32)(src).EncodeBinary(ci, buf)
+    return (*pguint32)(src).EncodeBinary(ci, buf)
 }
 
 // Scan implements the database/sql Scanner interface.
 func (dst *OIDValue) Scan(src interface{}) error {
-	return (*pguint32)(dst).Scan(src)
+    return (*pguint32)(dst).Scan(src)
 }
 
 // Value implements the database/sql/driver Valuer interface.
 func (src *OIDValue) Value() (driver.Value, error) {
-	return (*pguint32)(src).Value()
+    return (*pguint32)(src).Value()
 }

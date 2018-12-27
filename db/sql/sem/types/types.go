@@ -58,106 +58,106 @@
 package types
 
 import (
-	"bytes"
-	"fmt"
+    "bytes"
+    "fmt"
 
-	"github.com/lib/pq/oid"
+    "github.com/lib/pq/oid"
 )
 
 // T represents a SQL type.
 type T interface {
-	fmt.Stringer
-	// Equivalent returns whether the receiver and the other type are equivalent.
-	// We say that two type patterns are "equivalent" when they are structurally
-	// equivalent given that a wildcard is equivalent to any type. When neither
-	// Type is ambiguous (see IsAmbiguous), equivalency is the same as type equality.
-	Equivalent(other T) bool
-	// FamilyEqual returns whether the receiver and the other type have the same
-	// constructor.
-	FamilyEqual(other T) bool
+    fmt.Stringer
+    // Equivalent returns whether the receiver and the other type are equivalent.
+    // We say that two type patterns are "equivalent" when they are structurally
+    // equivalent given that a wildcard is equivalent to any type. When neither
+    // Type is ambiguous (see IsAmbiguous), equivalency is the same as type equality.
+    Equivalent(other T) bool
+    // FamilyEqual returns whether the receiver and the other type have the same
+    // constructor.
+    FamilyEqual(other T) bool
 
-	// Oid returns the type's Postgres object ID.
-	Oid() oid.Oid
-	// SQLName returns the type's SQL standard name. This can be looked up for a
-	// type `t` in postgres by running `SELECT format_type(t::regtype, NULL)`.
-	SQLName() string
+    // Oid returns the type's Postgres object ID.
+    Oid() oid.Oid
+    // SQLName returns the type's SQL standard name. This can be looked up for a
+    // type `t` in postgres by running `SELECT format_type(t::regtype, NULL)`.
+    SQLName() string
 
-	// IsAmbiguous returns whether the type is ambiguous or fully defined. This
-	// is important for parameterized types to determine whether they are fully
-	// concrete type specification or not.
-	IsAmbiguous() bool
+    // IsAmbiguous returns whether the type is ambiguous or fully defined. This
+    // is important for parameterized types to determine whether they are fully
+    // concrete type specification or not.
+    IsAmbiguous() bool
 }
 
 var (
-	// Unknown is the type of an expression that statically evaluates to
-	// NULL. Can be compared with ==.
-	Unknown T = tUnknown{}
-	// Bool is the type of a DBool. Can be compared with ==.
-	Bool T = tBool{}
-	// Int is the type of a DInt. Can be compared with ==.
-	Int T = tInt{}
-	// Float is the type of a DFloat. Can be compared with ==.
-	Float T = tFloat{}
-	// Decimal is the type of a DDecimal. Can be compared with ==.
-	Decimal T = tDecimal{}
-	// String is the type of a DString. Can be compared with ==.
-	String T = tString{}
-	// Bytes is the type of a DBytes. Can be compared with ==.
-	Bytes T = tBytes{}
-	// Date is the type of a DDate. Can be compared with ==.
-	Date T = tDate{}
-	// Time is the type of a DTime. Can be compared with ==.
-	Time T = tTime{}
-	// TimeTZ is the type of a DTimeTZ, Can be compared with ==.
-	TimeTZ T = tTimeTZ{}
-	// Timestamp is the type of a DTimestamp. Can be compared with ==.
-	Timestamp T = tTimestamp{}
-	// TimestampTZ is the type of a DTimestampTZ. Can be compared with ==.
-	TimestampTZ T = tTimestampTZ{}
-	// Interval is the type of a DInterval. Can be compared with ==.
-	Interval T = tInterval{}
-	// JSON is the type of a DJSON. Can be compared with ==.
-	JSON T = tJSON{}
-	// UUID is the type of a DUuid. Can be compared with ==.
-	UUID T = tUUID{}
-	// INet is the type of a DIPAddr. Can be compared with ==.
-	INet T = tINet{}
-	// AnyArray is the type of a DArray with a wildcard parameterized type.
-	// Can be compared with ==.
-	AnyArray T = TArray{Any}
-	// Any can be any type. Can be compared with ==.
-	Any T = tAny{}
+    // Unknown is the type of an expression that statically evaluates to
+    // NULL. Can be compared with ==.
+    Unknown T = tUnknown{}
+    // Bool is the type of a DBool. Can be compared with ==.
+    Bool T = tBool{}
+    // Int is the type of a DInt. Can be compared with ==.
+    Int T = tInt{}
+    // Float is the type of a DFloat. Can be compared with ==.
+    Float T = tFloat{}
+    // Decimal is the type of a DDecimal. Can be compared with ==.
+    Decimal T = tDecimal{}
+    // String is the type of a DString. Can be compared with ==.
+    String T = tString{}
+    // Bytes is the type of a DBytes. Can be compared with ==.
+    Bytes T = tBytes{}
+    // Date is the type of a DDate. Can be compared with ==.
+    Date T = tDate{}
+    // Time is the type of a DTime. Can be compared with ==.
+    Time T = tTime{}
+    // TimeTZ is the type of a DTimeTZ, Can be compared with ==.
+    TimeTZ T = tTimeTZ{}
+    // Timestamp is the type of a DTimestamp. Can be compared with ==.
+    Timestamp T = tTimestamp{}
+    // TimestampTZ is the type of a DTimestampTZ. Can be compared with ==.
+    TimestampTZ T = tTimestampTZ{}
+    // Interval is the type of a DInterval. Can be compared with ==.
+    Interval T = tInterval{}
+    // JSON is the type of a DJSON. Can be compared with ==.
+    JSON T = tJSON{}
+    // UUID is the type of a DUuid. Can be compared with ==.
+    UUID T = tUUID{}
+    // INet is the type of a DIPAddr. Can be compared with ==.
+    INet T = tINet{}
+    // AnyArray is the type of a DArray with a wildcard parameterized type.
+    // Can be compared with ==.
+    AnyArray T = TArray{Any}
+    // Any can be any type. Can be compared with ==.
+    Any T = tAny{}
 
-	// AnyNonArray contains all non-array types.
-	AnyNonArray = []T{
-		Bool,
-		Int,
-		Float,
-		Decimal,
-		String,
-		Bytes,
-		Date,
-		Time,
-		TimeTZ,
-		Timestamp,
-		TimestampTZ,
-		Interval,
-		UUID,
-		INet,
-		JSON,
-		Oid,
-	}
+    // AnyNonArray contains all non-array types.
+    AnyNonArray = []T{
+        Bool,
+        Int,
+        Float,
+        Decimal,
+        String,
+        Bytes,
+        Date,
+        Time,
+        TimeTZ,
+        Timestamp,
+        TimestampTZ,
+        Interval,
+        UUID,
+        INet,
+        JSON,
+        Oid,
+    }
 
-	// FamCollatedString is the type family of a DString. CANNOT be
-	// compared with ==.
-	FamCollatedString T = TCollatedString{}
-	// FamTuple is the type family of a DTuple. CANNOT be compared with ==.
-	FamTuple T = TTuple{}
-	// FamArray is the type family of a DArray. CANNOT be compared with ==.
-	FamArray T = TArray{}
-	// FamPlaceholder is the type family of a placeholder. CANNOT be compared
-	// with ==.
-	FamPlaceholder T = TPlaceholder{}
+    // FamCollatedString is the type family of a DString. CANNOT be
+    // compared with ==.
+    FamCollatedString T = TCollatedString{}
+    // FamTuple is the type family of a DTuple. CANNOT be compared with ==.
+    FamTuple T = TTuple{}
+    // FamArray is the type family of a DArray. CANNOT be compared with ==.
+    FamArray T = TArray{}
+    // FamPlaceholder is the type family of a placeholder. CANNOT be compared
+    // with ==.
+    FamPlaceholder T = TPlaceholder{}
 )
 
 // Do not instantiate the tXxx types elsewhere. The variables above are intended
@@ -202,7 +202,7 @@ type tDecimal struct{}
 
 func (tDecimal) String() string { return "decimal" }
 func (tDecimal) Equivalent(other T) bool {
-	return UnwrapType(other) == Decimal || other == Any
+    return UnwrapType(other) == Decimal || other == Any
 }
 
 func (tDecimal) FamilyEqual(other T) bool { return UnwrapType(other) == Decimal }
@@ -221,30 +221,30 @@ func (tString) IsAmbiguous() bool        { return false }
 
 // TCollatedString is the type of strings with a locale.
 type TCollatedString struct {
-	Locale string
+    Locale string
 }
 
 // String implements the fmt.Stringer interface.
 func (t TCollatedString) String() string {
-	return fmt.Sprintf("collatedstring{%s}", t.Locale)
+    return fmt.Sprintf("collatedstring{%s}", t.Locale)
 }
 
 // Equivalent implements the T interface.
 func (t TCollatedString) Equivalent(other T) bool {
-	if other == Any {
-		return true
-	}
-	u, ok := UnwrapType(other).(TCollatedString)
-	if ok {
-		return t.Locale == "" || u.Locale == "" || t.Locale == u.Locale
-	}
-	return false
+    if other == Any {
+        return true
+    }
+    u, ok := UnwrapType(other).(TCollatedString)
+    if ok {
+        return t.Locale == "" || u.Locale == "" || t.Locale == u.Locale
+    }
+    return false
 }
 
 // FamilyEqual implements the T interface.
 func (TCollatedString) FamilyEqual(other T) bool {
-	_, ok := UnwrapType(other).(TCollatedString)
-	return ok
+    _, ok := UnwrapType(other).(TCollatedString)
+    return ok
 }
 
 // Oid implements the T interface.
@@ -255,7 +255,7 @@ func (TCollatedString) SQLName() string { return "text" }
 
 // IsAmbiguous implements the T interface.
 func (t TCollatedString) IsAmbiguous() bool {
-	return t.Locale == ""
+    return t.Locale == ""
 }
 
 type tBytes struct{}
@@ -298,7 +298,7 @@ type tTimestamp struct{}
 
 func (tTimestamp) String() string { return "timestamp" }
 func (tTimestamp) Equivalent(other T) bool {
-	return UnwrapType(other) == Timestamp || other == Any
+    return UnwrapType(other) == Timestamp || other == Any
 }
 
 func (tTimestamp) FamilyEqual(other T) bool { return UnwrapType(other) == Timestamp }
@@ -310,7 +310,7 @@ type tTimestampTZ struct{}
 
 func (tTimestampTZ) String() string { return "timestamptz" }
 func (tTimestampTZ) Equivalent(other T) bool {
-	return UnwrapType(other) == TimestampTZ || other == Any
+    return UnwrapType(other) == TimestampTZ || other == Any
 }
 
 func (tTimestampTZ) FamilyEqual(other T) bool { return UnwrapType(other) == TimestampTZ }
@@ -322,7 +322,7 @@ type tInterval struct{}
 
 func (tInterval) String() string { return "interval" }
 func (tInterval) Equivalent(other T) bool {
-	return UnwrapType(other) == Interval || other == Any
+    return UnwrapType(other) == Interval || other == Any
 }
 
 func (tInterval) FamilyEqual(other T) bool { return UnwrapType(other) == Interval }
@@ -334,7 +334,7 @@ type tJSON struct{}
 
 func (tJSON) String() string { return "jsonb" }
 func (tJSON) Equivalent(other T) bool {
-	return UnwrapType(other) == JSON || other == Any
+    return UnwrapType(other) == JSON || other == Any
 }
 
 func (tJSON) FamilyEqual(other T) bool { return UnwrapType(other) == JSON }
@@ -362,61 +362,61 @@ func (tINet) IsAmbiguous() bool        { return false }
 
 // TTuple is the type of a DTuple.
 type TTuple struct {
-	Types  []T
-	Labels []string
+    Types  []T
+    Labels []string
 }
 
 // String implements the fmt.Stringer interface.
 func (t TTuple) String() string {
-	var buf bytes.Buffer
-	buf.WriteString("tuple")
-	if t.Types != nil {
-		buf.WriteByte('{')
-		for i, typ := range t.Types {
-			if i != 0 {
-				buf.WriteString(", ")
-			}
-			buf.WriteString(typ.String())
-			if t.Labels != nil {
-				buf.WriteString(" AS ")
-				buf.WriteString(t.Labels[i])
-			}
-		}
-		buf.WriteByte('}')
-	}
-	return buf.String()
+    var buf bytes.Buffer
+    buf.WriteString("tuple")
+    if t.Types != nil {
+        buf.WriteByte('{')
+        for i, typ := range t.Types {
+            if i != 0 {
+                buf.WriteString(", ")
+            }
+            buf.WriteString(typ.String())
+            if t.Labels != nil {
+                buf.WriteString(" AS ")
+                buf.WriteString(t.Labels[i])
+            }
+        }
+        buf.WriteByte('}')
+    }
+    return buf.String()
 }
 
 // Equivalent implements the T interface.
 func (t TTuple) Equivalent(other T) bool {
-	if other == Any {
-		return true
-	}
-	u, ok := UnwrapType(other).(TTuple)
-	if !ok {
-		return false
-	}
-	if len(t.Types) == 0 || len(u.Types) == 0 {
-		// Tuples that aren't fully specified (have a nil subtype list) are always
-		// equivalent to other tuples, to allow overloads to specify that they take
-		// an arbitrary tuple type.
-		return true
-	}
-	if len(t.Types) != len(u.Types) {
-		return false
-	}
-	for i, typ := range t.Types {
-		if !typ.Equivalent(u.Types[i]) {
-			return false
-		}
-	}
-	return true
+    if other == Any {
+        return true
+    }
+    u, ok := UnwrapType(other).(TTuple)
+    if !ok {
+        return false
+    }
+    if len(t.Types) == 0 || len(u.Types) == 0 {
+        // Tuples that aren't fully specified (have a nil subtype list) are always
+        // equivalent to other tuples, to allow overloads to specify that they take
+        // an arbitrary tuple type.
+        return true
+    }
+    if len(t.Types) != len(u.Types) {
+        return false
+    }
+    for i, typ := range t.Types {
+        if !typ.Equivalent(u.Types[i]) {
+            return false
+        }
+    }
+    return true
 }
 
 // FamilyEqual implements the T interface.
 func (TTuple) FamilyEqual(other T) bool {
-	_, ok := UnwrapType(other).(TTuple)
-	return ok
+    _, ok := UnwrapType(other).(TTuple)
+    return ok
 }
 
 // Oid implements the T interface.
@@ -427,17 +427,17 @@ func (TTuple) SQLName() string { return "record" }
 
 // IsAmbiguous implements the T interface.
 func (t TTuple) IsAmbiguous() bool {
-	for _, typ := range t.Types {
-		if typ == nil || typ.IsAmbiguous() {
-			return true
-		}
-	}
-	return len(t.Types) == 0
+    for _, typ := range t.Types {
+        if typ == nil || typ.IsAmbiguous() {
+            return true
+        }
+    }
+    return len(t.Types) == 0
 }
 
 // TPlaceholder is the type of a placeholder.
 type TPlaceholder struct {
-	Name string
+    Name string
 }
 
 // String implements the fmt.Stringer interface.
@@ -445,20 +445,20 @@ func (t TPlaceholder) String() string { return fmt.Sprintf("placeholder{%s}", t.
 
 // Equivalent implements the T interface.
 func (t TPlaceholder) Equivalent(other T) bool {
-	if other == Any {
-		return true
-	}
-	if other.IsAmbiguous() {
-		return true
-	}
-	u, ok := UnwrapType(other).(TPlaceholder)
-	return ok && t.Name == u.Name
+    if other == Any {
+        return true
+    }
+    if other.IsAmbiguous() {
+        return true
+    }
+    u, ok := UnwrapType(other).(TPlaceholder)
+    return ok && t.Name == u.Name
 }
 
 // FamilyEqual implements the T interface.
 func (TPlaceholder) FamilyEqual(other T) bool {
-	_, ok := UnwrapType(other).(TPlaceholder)
-	return ok
+    _, ok := UnwrapType(other).(TPlaceholder)
+    return ok
 }
 
 // Oid implements the T interface.
@@ -477,19 +477,19 @@ func (a TArray) String() string { return a.Typ.String() + "[]" }
 
 // Equivalent implements the T interface.
 func (a TArray) Equivalent(other T) bool {
-	if other == Any {
-		return true
-	}
-	if u, ok := UnwrapType(other).(TArray); ok {
-		return a.Typ.Equivalent(u.Typ)
-	}
-	return false
+    if other == Any {
+        return true
+    }
+    if u, ok := UnwrapType(other).(TArray); ok {
+        return a.Typ.Equivalent(u.Typ)
+    }
+    return false
 }
 
 // FamilyEqual implements the T interface.
 func (TArray) FamilyEqual(other T) bool {
-	_, ok := UnwrapType(other).(TArray)
-	return ok
+    _, ok := UnwrapType(other).(TArray)
+    return ok
 }
 
 const noArrayType = 0
@@ -498,27 +498,27 @@ const noArrayType = 0
 var ArrayOids = map[oid.Oid]struct{}{}
 
 func init() {
-	for _, v := range oidToArrayOid {
-		ArrayOids[v] = struct{}{}
-	}
+    for _, v := range oidToArrayOid {
+        ArrayOids[v] = struct{}{}
+    }
 }
 
 // Oid implements the T interface.
 func (a TArray) Oid() oid.Oid {
-	if o, ok := oidToArrayOid[a.Typ.Oid()]; ok {
-		return o
-	}
-	return noArrayType
+    if o, ok := oidToArrayOid[a.Typ.Oid()]; ok {
+        return o
+    }
+    return noArrayType
 }
 
 // SQLName implements the T interface.
 func (a TArray) SQLName() string {
-	return a.Typ.SQLName() + "[]"
+    return a.Typ.SQLName() + "[]"
 }
 
 // IsAmbiguous implements the T interface.
 func (a TArray) IsAmbiguous() bool {
-	return a.Typ == nil || a.Typ.IsAmbiguous()
+    return a.Typ == nil || a.Typ.IsAmbiguous()
 }
 
 type tAny struct{}
@@ -533,21 +533,21 @@ func (tAny) IsAmbiguous() bool        { return true }
 // IsStringType returns true iff t is String
 // or a collated string type.
 func IsStringType(t T) bool {
-	switch t.(type) {
-	case tString, TCollatedString:
-		return true
-	default:
-		return false
-	}
+    switch t.(type) {
+    case tString, TCollatedString:
+        return true
+    default:
+        return false
+    }
 }
 
 // IsValidArrayElementType returns true if the T
 // can be used in TArray.
 func IsValidArrayElementType(t T) bool {
-	switch t {
-	case JSON:
-		return false
-	default:
-		return true
-	}
+    switch t {
+    case JSON:
+        return false
+    default:
+        return true
+    }
 }

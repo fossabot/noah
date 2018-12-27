@@ -58,8 +58,8 @@
 package npgx
 
 import (
-	"database/sql/driver"
-	"reflect"
+    "database/sql/driver"
+    "reflect"
 )
 
 var valuerReflectType = reflect.TypeOf((*driver.Valuer)(nil)).Elem()
@@ -76,10 +76,10 @@ var valuerReflectType = reflect.TypeOf((*driver.Valuer)(nil)).Elem()
 //
 // This function is mirrored in the database/sql/driver package.
 func callValuerValue(vr driver.Valuer) (v driver.Value, err error) {
-	if rv := reflect.ValueOf(vr); rv.Kind() == reflect.Ptr &&
-		rv.IsNil() &&
-		rv.Type().Elem().Implements(valuerReflectType) {
-		return nil, nil
-	}
-	return vr.Value()
+    if rv := reflect.ValueOf(vr); rv.Kind() == reflect.Ptr &&
+        rv.IsNil() &&
+        rv.Type().Elem().Implements(valuerReflectType) {
+        return nil, nil
+    }
+    return vr.Value()
 }

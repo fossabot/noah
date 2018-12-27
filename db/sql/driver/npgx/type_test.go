@@ -58,42 +58,42 @@
 package npgx_test
 
 import (
-	"github.com/readystock/noah/db/sql/driver/npgx"
-	"testing"
+    "github.com/readystock/noah/db/sql/driver/npgx"
+    "testing"
 )
 
 func Test_CITEXT_InvalidType(t *testing.T) {
-	d, err := npgx.Connect(ConnectionConfig)
-	if err != nil {
-		t.Error(err)
-		t.Fail()
-	}
-	r, err := d.Query("SELECT 123::CITEXT;")
-	if err != nil {
-		t.Error(err)
-		t.Fail()
-	}
-	for r.Next() {
-		fields, err := r.Values()
-		if err != nil {
-			t.Error(err)
-			t.Fail()
-		}
-		if len(fields) == 1 {
-			if fields[0].(string) != "123" {
-				t.Error("Unexpected result!")
-				t.Fail()
-			}
-		}
-	}
-	if err := r.Err(); err != nil {
-		t.Error(err)
-		t.Fail()
-	}
+    d, err := npgx.Connect(ConnectionConfig)
+    if err != nil {
+        t.Error(err)
+        t.Fail()
+    }
+    r, err := d.Query("SELECT 123::CITEXT;")
+    if err != nil {
+        t.Error(err)
+        t.Fail()
+    }
+    for r.Next() {
+        fields, err := r.Values()
+        if err != nil {
+            t.Error(err)
+            t.Fail()
+        }
+        if len(fields) == 1 {
+            if fields[0].(string) != "123" {
+                t.Error("Unexpected result!")
+                t.Fail()
+            }
+        }
+    }
+    if err := r.Err(); err != nil {
+        t.Error(err)
+        t.Fail()
+    }
 
-	err = d.Close()
-	if err != nil {
-		t.Error(err)
-		t.Fail()
-	}
+    err = d.Close()
+    if err != nil {
+        t.Error(err)
+        t.Fail()
+    }
 }

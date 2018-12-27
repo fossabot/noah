@@ -69,34 +69,34 @@ type ServerMessageType byte
 
 // http://www.postgresql.org/docs/9.4/static/protocol-message-formats.html
 const (
-	ClientMsgBind        ClientMessageType = 'B'
-	ClientMsgClose       ClientMessageType = 'C'
-	ClientMsgCopyData    ClientMessageType = 'd'
-	ClientMsgCopyDone    ClientMessageType = 'c'
-	ClientMsgCopyFail    ClientMessageType = 'f'
-	ClientMsgDescribe    ClientMessageType = 'D'
-	ClientMsgExecute     ClientMessageType = 'E'
-	ClientMsgFlush       ClientMessageType = 'H'
-	ClientMsgParse       ClientMessageType = 'P'
-	ClientMsgPassword    ClientMessageType = 'p'
-	ClientMsgSimpleQuery ClientMessageType = 'Q'
-	ClientMsgSync        ClientMessageType = 'S'
-	ClientMsgTerminate   ClientMessageType = 'X'
+    ClientMsgBind        ClientMessageType = 'B'
+    ClientMsgClose       ClientMessageType = 'C'
+    ClientMsgCopyData    ClientMessageType = 'd'
+    ClientMsgCopyDone    ClientMessageType = 'c'
+    ClientMsgCopyFail    ClientMessageType = 'f'
+    ClientMsgDescribe    ClientMessageType = 'D'
+    ClientMsgExecute     ClientMessageType = 'E'
+    ClientMsgFlush       ClientMessageType = 'H'
+    ClientMsgParse       ClientMessageType = 'P'
+    ClientMsgPassword    ClientMessageType = 'p'
+    ClientMsgSimpleQuery ClientMessageType = 'Q'
+    ClientMsgSync        ClientMessageType = 'S'
+    ClientMsgTerminate   ClientMessageType = 'X'
 
-	ServerMsgAuth                 ServerMessageType = 'R'
-	ServerMsgBindComplete         ServerMessageType = '2'
-	ServerMsgCommandComplete      ServerMessageType = 'C'
-	ServerMsgCloseComplete        ServerMessageType = '3'
-	ServerMsgCopyInResponse       ServerMessageType = 'G'
-	ServerMsgDataRow              ServerMessageType = 'D'
-	ServerMsgEmptyQuery           ServerMessageType = 'I'
-	ServerMsgErrorResponse        ServerMessageType = 'E'
-	ServerMsgNoData               ServerMessageType = 'n'
-	ServerMsgParameterDescription ServerMessageType = 't'
-	ServerMsgParameterStatus      ServerMessageType = 'S'
-	ServerMsgParseComplete        ServerMessageType = '1'
-	ServerMsgReady                ServerMessageType = 'Z'
-	ServerMsgRowDescription       ServerMessageType = 'T'
+    ServerMsgAuth                 ServerMessageType = 'R'
+    ServerMsgBindComplete         ServerMessageType = '2'
+    ServerMsgCommandComplete      ServerMessageType = 'C'
+    ServerMsgCloseComplete        ServerMessageType = '3'
+    ServerMsgCopyInResponse       ServerMessageType = 'G'
+    ServerMsgDataRow              ServerMessageType = 'D'
+    ServerMsgEmptyQuery           ServerMessageType = 'I'
+    ServerMsgErrorResponse        ServerMessageType = 'E'
+    ServerMsgNoData               ServerMessageType = 'n'
+    ServerMsgParameterDescription ServerMessageType = 't'
+    ServerMsgParameterStatus      ServerMessageType = 'S'
+    ServerMsgParseComplete        ServerMessageType = '1'
+    ServerMsgReady                ServerMessageType = 'Z'
+    ServerMsgRowDescription       ServerMessageType = 'T'
 )
 
 // ServerErrFieldType represents the error fields.
@@ -105,14 +105,14 @@ type ServerErrFieldType byte
 
 // http://www.postgresql.org/docs/current/static/protocol-error-fields.html
 const (
-	ServerErrFieldSeverity    ServerErrFieldType = 'S'
-	ServerErrFieldSQLState    ServerErrFieldType = 'C'
-	ServerErrFieldMsgPrimary  ServerErrFieldType = 'M'
-	ServerErrFileldDetail     ServerErrFieldType = 'D'
-	ServerErrFileldHint       ServerErrFieldType = 'H'
-	ServerErrFieldSrcFile     ServerErrFieldType = 'F'
-	ServerErrFieldSrcLine     ServerErrFieldType = 'L'
-	ServerErrFieldSrcFunction ServerErrFieldType = 'R'
+    ServerErrFieldSeverity    ServerErrFieldType = 'S'
+    ServerErrFieldSQLState    ServerErrFieldType = 'C'
+    ServerErrFieldMsgPrimary  ServerErrFieldType = 'M'
+    ServerErrFileldDetail     ServerErrFieldType = 'D'
+    ServerErrFileldHint       ServerErrFieldType = 'H'
+    ServerErrFieldSrcFile     ServerErrFieldType = 'F'
+    ServerErrFieldSrcLine     ServerErrFieldType = 'L'
+    ServerErrFieldSrcFunction ServerErrFieldType = 'R'
 )
 
 // PrepareType represents a subtype for prepare messages.
@@ -120,10 +120,10 @@ const (
 type PrepareType byte
 
 const (
-	// PrepareStatement represents a prepared statement.
-	PrepareStatement PrepareType = 'S'
-	// PreparePortal represents a portal.
-	PreparePortal PrepareType = 'P'
+    // PrepareStatement represents a prepared statement.
+    PrepareStatement PrepareType = 'S'
+    // PreparePortal represents a portal.
+    PreparePortal PrepareType = 'P'
 )
 
 // MaxPreparedStatementArgs is the maximum number of arguments a prepared

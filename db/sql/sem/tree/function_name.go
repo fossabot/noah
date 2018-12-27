@@ -58,10 +58,10 @@
 package tree
 
 import (
-	"fmt"
+    "fmt"
 
-	"github.com/readystock/noah/db/sql/pgwire/pgerror"
-	"github.com/readystock/noah/db/sql/sessiondata"
+    "github.com/readystock/noah/db/sql/pgwire/pgerror"
+    "github.com/readystock/noah/db/sql/sessiondata"
 )
 
 // Function names are used in expressions in the FuncExpr node.
@@ -77,53 +77,53 @@ import (
 // of a FuncExpr. The FunctionRerence is updated by the Normalize()
 // method.
 type ResolvableFunctionReference struct {
-	FunctionReference
+    FunctionReference
 }
 
 // Format implements the NodeFormatter interface.
 func (fn *ResolvableFunctionReference) Format(ctx *FmtCtx) {
-	ctx.FormatNode(fn.FunctionReference)
+    ctx.FormatNode(fn.FunctionReference)
 }
 func (fn *ResolvableFunctionReference) String() string { return AsString(fn) }
 
 // Resolve checks if the function name is already resolved and
 // resolves it as necessary.
 func (fn *ResolvableFunctionReference) Resolve(
-	searchPath sessiondata.SearchPath,
+    searchPath sessiondata.SearchPath,
 ) (*FunctionDefinition, error) {
-	switch t := fn.FunctionReference.(type) {
-	case *FunctionDefinition:
-		return t, nil
-	case *UnresolvedName:
-		fd, err := t.ResolveFunction(searchPath)
-		if err != nil {
-			return nil, err
-		}
-		fn.FunctionReference = fd
-		return fd, nil
-	default:
-		return nil, pgerror.NewErrorf(pgerror.CodeInternalError,
-			"programming error: unknown function name type: %+v (%T)",
-			fn.FunctionReference, fn.FunctionReference,
-		)
-	}
+    switch t := fn.FunctionReference.(type) {
+    case *FunctionDefinition:
+        return t, nil
+    case *UnresolvedName:
+        fd, err := t.ResolveFunction(searchPath)
+        if err != nil {
+            return nil, err
+        }
+        fn.FunctionReference = fd
+        return fd, nil
+    default:
+        return nil, pgerror.NewErrorf(pgerror.CodeInternalError,
+            "programming error: unknown function name type: %+v (%T)",
+            fn.FunctionReference, fn.FunctionReference,
+        )
+    }
 }
 
 // WrapFunction creates a new ResolvableFunctionReference
 // holding a pre-resolved function. Helper for grammar rules.
 func WrapFunction(n string) ResolvableFunctionReference {
-	fd, ok := FunDefs[n]
-	if !ok {
-		panic(fmt.Sprintf("function %s() not defined", n))
-	}
-	return ResolvableFunctionReference{fd}
+    fd, ok := FunDefs[n]
+    if !ok {
+        panic(fmt.Sprintf("function %s() not defined", n))
+    }
+    return ResolvableFunctionReference{fd}
 }
 
 // FunctionReference is the common interface to UnresolvedName and QualifiedFunctionName.
 type FunctionReference interface {
-	fmt.Stringer
-	NodeFormatter
-	functionReference()
+    fmt.Stringer
+    NodeFormatter
+    functionReference()
 }
 
 func (*UnresolvedName) functionReference()     {}

@@ -58,8 +58,8 @@
 package timeutil
 
 import (
-	"math"
-	"time"
+    "math"
+    "time"
 )
 
 // ClocklessMaxOffset is a special-cased value that is used when the cluster
@@ -70,7 +70,7 @@ const ClocklessMaxOffset = math.MaxInt64
 // Since returns the time elapsed since t.
 // It is shorthand for Now().Sub(t).
 func Since(t time.Time) time.Duration {
-	return Now().Sub(t)
+    return Now().Sub(t)
 }
 
 // UnixEpoch represents the Unix epoch, January 1, 1970 UTC.
@@ -80,7 +80,7 @@ var UnixEpoch = time.Unix(0, 0).UTC()
 // time, usec microseconds since UnixEpoch. In Go's current time.Time
 // implementation, all possible values for us can be represented as a time.Time.
 func FromUnixMicros(us int64) time.Time {
-	return time.Unix(us/1e6, (us%1e6)*1e3).UTC()
+    return time.Unix(us/1e6, (us%1e6)*1e3).UTC()
 }
 
 // ToUnixMicros returns t as the number of microseconds elapsed since UnixEpoch.
@@ -88,12 +88,12 @@ func FromUnixMicros(us int64) time.Time {
 // time.Time.UnixNano, the result is undefined if the Unix time in microseconds
 // cannot be represented by an int64.
 func ToUnixMicros(t time.Time) int64 {
-	return t.Unix()*1e6 + int64(t.Round(time.Microsecond).Nanosecond())/1e3
+    return t.Unix()*1e6 + int64(t.Round(time.Microsecond).Nanosecond())/1e3
 }
 
 // Unix wraps time.Unix ensuring that the result is in UTC instead of Local.
 func Unix(sec, nsec int64) time.Time {
-	return time.Unix(sec, nsec).UTC()
+    return time.Unix(sec, nsec).UTC()
 }
 
 // SleepUntil sleeps until the given time. The current time is
@@ -102,14 +102,14 @@ func Unix(sec, nsec int64) time.Time {
 // untilNanos is the target time to sleep till in epoch nanoseconds
 // currentTimeNanos is a function returning current time in epoch nanoseconds
 func SleepUntil(untilNanos int64, currentTimeNanos func() int64) {
-	for {
-		d := time.Duration(untilNanos - currentTimeNanos())
-		if d <= 0 {
-			break
-		}
-		if d > time.Second {
-			d = time.Second
-		}
-		time.Sleep(d)
-	}
+    for {
+        d := time.Duration(untilNanos - currentTimeNanos())
+        if d <= 0 {
+            break
+        }
+        if d > time.Second {
+            d = time.Second
+        }
+        time.Sleep(d)
+    }
 }

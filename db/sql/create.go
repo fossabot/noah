@@ -159,7 +159,7 @@ func (stmt *CreateStatement) compilePlan(ex *connExecutor, nodes []system.NNode)
 
     // // Create the table in the coordinator cluster
     // if err := ex.SystemContext.Schema.CreateTable(table); err != nil {
-    // 	return nil, err
+    //     return nil, err
     // }
 
     deparsed, err := pg_query.Deparse(stmt.Statement)

@@ -58,10 +58,10 @@
 package timeutil
 
 import (
-	"fmt"
-	"strconv"
-	"strings"
-	"time"
+    "fmt"
+    "strconv"
+    "strings"
+    "time"
 )
 
 const fixedOffsetPrefix string = "fixed offset:"
@@ -69,20 +69,20 @@ const fixedOffsetPrefix string = "fixed offset:"
 // FixedOffsetTimeZoneToLocation creates a time.Location with a set offset and
 // with a name that can be marshaled by crdb between nodes.
 func FixedOffsetTimeZoneToLocation(offset int, origRepr string) *time.Location {
-	return time.FixedZone(
-		fmt.Sprintf("%s%d (%s)", fixedOffsetPrefix, offset, origRepr),
-		offset)
+    return time.FixedZone(
+        fmt.Sprintf("%s%d (%s)", fixedOffsetPrefix, offset, origRepr),
+        offset)
 }
 
 // TimeZoneStringToLocation transforms a string into a time.Location. It
 // supports the usual locations and also time zones with fixed offsets created
 // by FixedOffsetTimeZoneToLocation().
 func TimeZoneStringToLocation(location string) (*time.Location, error) {
-	offset, origRepr, parsed := ParseFixedOffsetTimeZone(location)
-	if parsed {
-		return FixedOffsetTimeZoneToLocation(offset, origRepr), nil
-	}
-	return LoadLocation(location)
+    offset, origRepr, parsed := ParseFixedOffsetTimeZone(location)
+    if parsed {
+        return FixedOffsetTimeZoneToLocation(offset, origRepr), nil
+    }
+    return LoadLocation(location)
 }
 
 // ParseFixedOffsetTimeZone takes the string representation of a time.Location
@@ -93,23 +93,23 @@ func TimeZoneStringToLocation(location string) (*time.Location, error) {
 // The strings produced by FixedOffsetTimeZoneToLocation look like
 // "<fixedOffsetPrefix><offset> (<origRepr>)".
 func ParseFixedOffsetTimeZone(location string) (offset int, origRepr string, success bool) {
-	if !strings.HasPrefix(location, fixedOffsetPrefix) {
-		return 0, "", false
-	}
-	location = strings.TrimPrefix(location, fixedOffsetPrefix)
-	parts := strings.Split(location, " ")
-	if len(parts) < 2 {
-		return 0, "", false
-	}
+    if !strings.HasPrefix(location, fixedOffsetPrefix) {
+        return 0, "", false
+    }
+    location = strings.TrimPrefix(location, fixedOffsetPrefix)
+    parts := strings.Split(location, " ")
+    if len(parts) < 2 {
+        return 0, "", false
+    }
 
-	offset, err := strconv.Atoi(parts[0])
-	if err != nil {
-		return 0, "", false
-	}
+    offset, err := strconv.Atoi(parts[0])
+    if err != nil {
+        return 0, "", false
+    }
 
-	origRepr = parts[1]
-	if !strings.HasPrefix(origRepr, "(") || !strings.HasSuffix(origRepr, ")") {
-		return 0, "", false
-	}
-	return offset, strings.TrimSuffix(strings.TrimPrefix(origRepr, "("), ")"), true
+    origRepr = parts[1]
+    if !strings.HasPrefix(origRepr, "(") || !strings.HasSuffix(origRepr, ")") {
+        return 0, "", false
+    }
+    return offset, strings.TrimSuffix(strings.TrimPrefix(origRepr, "("), ")"), true
 }

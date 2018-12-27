@@ -61,17 +61,17 @@ package tree
 // ALTER SEQUENCE <seqName> RENAME TO <newSeqName>, which is represented by a
 // RenameTable node.
 type AlterSequence struct {
-	IfExists bool
-	Name     NormalizableTableName
-	Options  SequenceOptions
+    IfExists bool
+    Name     NormalizableTableName
+    Options  SequenceOptions
 }
 
 // Format implements the NodeFormatter interface.
 func (node *AlterSequence) Format(ctx *FmtCtx) {
-	ctx.WriteString("ALTER SEQUENCE ")
-	if node.IfExists {
-		ctx.WriteString("IF EXISTS ")
-	}
-	ctx.FormatNode(&node.Name)
-	ctx.FormatNode(&node.Options)
+    ctx.WriteString("ALTER SEQUENCE ")
+    if node.IfExists {
+        ctx.WriteString("IF EXISTS ")
+    }
+    ctx.FormatNode(&node.Name)
+    ctx.FormatNode(&node.Options)
 }

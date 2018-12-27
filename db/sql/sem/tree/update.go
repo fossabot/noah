@@ -61,26 +61,26 @@ package tree
 
 // Update represents an UPDATE statement.
 type Update struct {
-	With      *With
-	Table     TableExpr
-	Exprs     UpdateExprs
-	Where     *Where
-	OrderBy   OrderBy
-	Limit     *Limit
-	Returning ReturningClause
+    With      *With
+    Table     TableExpr
+    Exprs     UpdateExprs
+    Where     *Where
+    OrderBy   OrderBy
+    Limit     *Limit
+    Returning ReturningClause
 }
 
 // Format implements the NodeFormatter interface.
 func (node *Update) Format(ctx *FmtCtx) {
-	ctx.FormatNode(node.With)
-	ctx.WriteString("UPDATE ")
-	ctx.FormatNode(node.Table)
-	ctx.WriteString(" SET ")
-	ctx.FormatNode(&node.Exprs)
-	ctx.FormatNode(node.Where)
-	ctx.FormatNode(&node.OrderBy)
-	ctx.FormatNode(node.Limit)
-	ctx.FormatNode(node.Returning)
+    ctx.FormatNode(node.With)
+    ctx.WriteString("UPDATE ")
+    ctx.FormatNode(node.Table)
+    ctx.WriteString(" SET ")
+    ctx.FormatNode(&node.Exprs)
+    ctx.FormatNode(node.Where)
+    ctx.FormatNode(&node.OrderBy)
+    ctx.FormatNode(node.Limit)
+    ctx.FormatNode(node.Returning)
 }
 
 // UpdateExprs represents a list of update expressions.
@@ -88,30 +88,30 @@ type UpdateExprs []*UpdateExpr
 
 // Format implements the NodeFormatter interface.
 func (node *UpdateExprs) Format(ctx *FmtCtx) {
-	for i, n := range *node {
-		if i > 0 {
-			ctx.WriteString(", ")
-		}
-		ctx.FormatNode(n)
-	}
+    for i, n := range *node {
+        if i > 0 {
+            ctx.WriteString(", ")
+        }
+        ctx.FormatNode(n)
+    }
 }
 
 // UpdateExpr represents an update expression.
 type UpdateExpr struct {
-	Tuple bool
-	Names NameList
-	Expr  Expr
+    Tuple bool
+    Names NameList
+    Expr  Expr
 }
 
 // Format implements the NodeFormatter interface.
 func (node *UpdateExpr) Format(ctx *FmtCtx) {
-	open, close := "", ""
-	if node.Tuple {
-		open, close = "(", ")"
-	}
-	ctx.WriteString(open)
-	ctx.FormatNode(&node.Names)
-	ctx.WriteString(close)
-	ctx.WriteString(" = ")
-	ctx.FormatNode(node.Expr)
+    open, close := "", ""
+    if node.Tuple {
+        open, close = "(", ")"
+    }
+    ctx.WriteString(open)
+    ctx.FormatNode(&node.Names)
+    ctx.WriteString(close)
+    ctx.WriteString(" = ")
+    ctx.FormatNode(node.Expr)
 }

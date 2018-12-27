@@ -58,8 +58,8 @@
 package tree
 
 import (
-	"fmt"
-	"github.com/readystock/noah/db/sql/pgwire/pgerror"
+    "fmt"
+    "github.com/readystock/noah/db/sql/pgwire/pgerror"
 )
 
 // Table names are used in statements like CREATE TABLE,
@@ -74,16 +74,16 @@ import (
 
 // NormalizableTableName implements an editable table name.
 type NormalizableTableName struct {
-	TableNameReference
+    TableNameReference
 }
 
 // Format implements the NodeFormatter interface.
 func (nt *NormalizableTableName) Format(ctx *FmtCtx) {
-	if ctx.tableNameFormatter != nil {
-		ctx.tableNameFormatter(ctx, nt)
-	} else {
-		ctx.FormatNode(nt.TableNameReference)
-	}
+    if ctx.tableNameFormatter != nil {
+        ctx.tableNameFormatter(ctx, nt)
+    } else {
+        ctx.FormatNode(nt.TableNameReference)
+    }
 }
 func (nt *NormalizableTableName) String() string { return AsString(nt) }
 
@@ -91,26 +91,26 @@ func (nt *NormalizableTableName) String() string { return AsString(nt) }
 // normalizes it as necessary. It stores the result of normalization
 // so that it does not need to occur the next time around.
 func (nt *NormalizableTableName) Normalize() (*TableName, error) {
-	switch t := nt.TableNameReference.(type) {
-	case *TableName:
-		return t, nil
-	case *UnresolvedName:
-		tn, err := NormalizeTableName(t)
-		if err != nil {
-			return nil, err
-		}
-		nt.TableNameReference = &tn
-		return &tn, nil
-	default:
-		return nil, pgerror.NewErrorWithDepthf(1, pgerror.CodeInternalError,
-			"programming error: unsupported table name reference: %+v (%T)",
-			nt.TableNameReference, nt.TableNameReference)
-	}
+    switch t := nt.TableNameReference.(type) {
+    case *TableName:
+        return t, nil
+    case *UnresolvedName:
+        tn, err := NormalizeTableName(t)
+        if err != nil {
+            return nil, err
+        }
+        nt.TableNameReference = &tn
+        return &tn, nil
+    default:
+        return nil, pgerror.NewErrorWithDepthf(1, pgerror.CodeInternalError,
+            "programming error: unsupported table name reference: %+v (%T)",
+            nt.TableNameReference, nt.TableNameReference)
+    }
 }
 
 // TableName asserts that the table name has been previously normalized.
 func (nt *NormalizableTableName) TableName() *TableName {
-	return nt.TableNameReference.(*TableName)
+    return nt.TableNameReference.(*TableName)
 }
 
 // tableExpr implements the TableExpr interface.
@@ -119,10 +119,10 @@ func (*NormalizableTableName) tableExpr() {}
 // TableNameReference implements the editable cell of a TableExpr that
 // refers to a single table.
 type TableNameReference interface {
-	fmt.Stringer
-	NodeFormatter
+    fmt.Stringer
+    NodeFormatter
 
-	tblNameReference()
+    tblNameReference()
 }
 
 func (t *TableName) tblNameReference()      {}
@@ -134,35 +134,35 @@ type NormalizableTableNames []NormalizableTableName
 
 // Format implements the NodeFormatter interface.
 func (t *NormalizableTableNames) Format(ctx *FmtCtx) {
-	sep := ""
-	for i := range *t {
-		ctx.WriteString(sep)
-		ctx.FormatNode(&(*t)[i])
-		sep = ", "
-	}
+    sep := ""
+    for i := range *t {
+        ctx.WriteString(sep)
+        ctx.FormatNode(&(*t)[i])
+        sep = ", "
+    }
 }
 
 // TableNameWithIndex represents a "table@index", used in statements that
 // specifically refer to an index.
 type TableNameWithIndex struct {
-	Table NormalizableTableName
-	Index UnrestrictedName
+    Table NormalizableTableName
+    Index UnrestrictedName
 
-	// SearchTable indicates that we have just an index (no table name); we will
-	// need to search for a table that has an index with the given name.
-	//
-	// To allow schema-qualified index names in this case, the index is actually
-	// specified in Table as the table name, and Index is empty.
-	SearchTable bool
+    // SearchTable indicates that we have just an index (no table name); we will
+    // need to search for a table that has an index with the given name.
+    //
+    // To allow schema-qualified index names in this case, the index is actually
+    // specified in Table as the table name, and Index is empty.
+    SearchTable bool
 }
 
 // Format implements the NodeFormatter interface.
 func (n *TableNameWithIndex) Format(ctx *FmtCtx) {
-	ctx.FormatNode(&n.Table)
-	if n.Index != "" {
-		ctx.WriteByte('@')
-		ctx.FormatNode(&n.Index)
-	}
+    ctx.FormatNode(&n.Table)
+    if n.Index != "" {
+        ctx.WriteByte('@')
+        ctx.FormatNode(&n.Index)
+    }
 }
 func (n *TableNameWithIndex) String() string { return AsString(n) }
 
@@ -171,10 +171,10 @@ type TableNameWithIndexList []*TableNameWithIndex
 
 // Format implements the NodeFormatter interface.
 func (n *TableNameWithIndexList) Format(ctx *FmtCtx) {
-	sep := ""
-	for _, tni := range *n {
-		ctx.WriteString(sep)
-		ctx.FormatNode(tni)
-		sep = ", "
-	}
+    sep := ""
+    for _, tni := range *n {
+        ctx.WriteString(sep)
+        ctx.FormatNode(tni)
+        sep = ", "
+    }
 }

@@ -59,47 +59,47 @@ package tree
 
 // ZoneSpecifier represents a reference to a configurable zone of the keyspace.
 type ZoneSpecifier struct {
-	// Only one of NamedZone, Database or TableOrIndex may be set.
-	NamedZone    UnrestrictedName
-	Database     Name
-	TableOrIndex TableNameWithIndex
+    // Only one of NamedZone, Database or TableOrIndex may be set.
+    NamedZone    UnrestrictedName
+    Database     Name
+    TableOrIndex TableNameWithIndex
 
-	// Partition is only respected when Table is set.
-	Partition Name
+    // Partition is only respected when Table is set.
+    Partition Name
 }
 
 // TargetsTable returns whether the zone specifier targets a table or a subzone
 // within a table.
 func (node ZoneSpecifier) TargetsTable() bool {
-	return node.NamedZone == "" && node.Database == ""
+    return node.NamedZone == "" && node.Database == ""
 }
 
 // TargetsIndex returns whether the zone specifier targets an index.
 func (node ZoneSpecifier) TargetsIndex() bool {
-	return node.TargetsTable() && (node.TableOrIndex.Index != "" || node.TableOrIndex.SearchTable)
+    return node.TargetsTable() && (node.TableOrIndex.Index != "" || node.TableOrIndex.SearchTable)
 }
 
 // Format implements the NodeFormatter interface.
 func (node *ZoneSpecifier) Format(ctx *FmtCtx) {
-	if node.Partition != "" {
-		ctx.WriteString("PARTITION ")
-		ctx.FormatNode(&node.Partition)
-		ctx.WriteString(" OF ")
-	}
-	if node.NamedZone != "" {
-		ctx.WriteString("RANGE ")
-		ctx.FormatNode(&node.NamedZone)
-	} else if node.Database != "" {
-		ctx.WriteString("DATABASE ")
-		ctx.FormatNode(&node.Database)
-	} else {
-		if node.TargetsIndex() {
-			ctx.WriteString("INDEX ")
-		} else {
-			ctx.WriteString("TABLE ")
-		}
-		ctx.FormatNode(&node.TableOrIndex)
-	}
+    if node.Partition != "" {
+        ctx.WriteString("PARTITION ")
+        ctx.FormatNode(&node.Partition)
+        ctx.WriteString(" OF ")
+    }
+    if node.NamedZone != "" {
+        ctx.WriteString("RANGE ")
+        ctx.FormatNode(&node.NamedZone)
+    } else if node.Database != "" {
+        ctx.WriteString("DATABASE ")
+        ctx.FormatNode(&node.Database)
+    } else {
+        if node.TargetsIndex() {
+            ctx.WriteString("INDEX ")
+        } else {
+            ctx.WriteString("TABLE ")
+        }
+        ctx.FormatNode(&node.TableOrIndex)
+    }
 }
 
 func (node *ZoneSpecifier) String() string { return AsString(node) }
@@ -107,30 +107,30 @@ func (node *ZoneSpecifier) String() string { return AsString(node) }
 // ShowZoneConfig represents an EXPERIMENTAL SHOW ZONE CONFIGURATION...
 // statement.
 type ShowZoneConfig struct {
-	ZoneSpecifier
+    ZoneSpecifier
 }
 
 // Format implements the NodeFormatter interface.
 func (node *ShowZoneConfig) Format(ctx *FmtCtx) {
-	if node.ZoneSpecifier == (ZoneSpecifier{}) {
-		ctx.WriteString("EXPERIMENTAL SHOW ZONE CONFIGURATIONS")
-	} else {
-		ctx.WriteString("EXPERIMENTAL SHOW ZONE CONFIGURATION FOR ")
-		ctx.FormatNode(&node.ZoneSpecifier)
-	}
+    if node.ZoneSpecifier == (ZoneSpecifier{}) {
+        ctx.WriteString("EXPERIMENTAL SHOW ZONE CONFIGURATIONS")
+    } else {
+        ctx.WriteString("EXPERIMENTAL SHOW ZONE CONFIGURATION FOR ")
+        ctx.FormatNode(&node.ZoneSpecifier)
+    }
 }
 
 // SetZoneConfig represents an ALTER DATABASE/TABLE... EXPERIMENTAL CONFIGURE
 // ZONE statement.
 type SetZoneConfig struct {
-	ZoneSpecifier
-	YAMLConfig Expr
+    ZoneSpecifier
+    YAMLConfig Expr
 }
 
 // Format implements the NodeFormatter interface.
 func (node *SetZoneConfig) Format(ctx *FmtCtx) {
-	ctx.WriteString("ALTER ")
-	ctx.FormatNode(&node.ZoneSpecifier)
-	ctx.WriteString(" EXPERIMENTAL CONFIGURE ZONE ")
-	ctx.FormatNode(node.YAMLConfig)
+    ctx.WriteString("ALTER ")
+    ctx.FormatNode(&node.ZoneSpecifier)
+    ctx.WriteString(" EXPERIMENTAL CONFIGURE ZONE ")
+    ctx.FormatNode(node.YAMLConfig)
 }

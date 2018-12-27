@@ -58,15 +58,15 @@
 package plan
 
 import (
-	"github.com/readystock/noah/db/system"
+    "github.com/readystock/noah/db/system"
 )
 
 type NodeExecutionPlan struct {
-	CompiledQuery string
-	ReadOnly      bool
-	Node          system.NNode
+    CompiledQuery string
+    ReadOnly      bool
+    Node          system.NNode
 }
 
 type NodeBeginTransaction struct {
-	Node system.NNode
+    Node system.NNode
 }

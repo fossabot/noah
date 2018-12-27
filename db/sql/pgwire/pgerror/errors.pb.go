@@ -32,13 +32,13 @@ var _ = math.Inf
 // for a list of all Postgres error fields, most of which are optional and can
 // be used to provide auxiliary error information.
 type Error struct {
-	Code    string        `protobuf:"bytes,1,opt,name=code,proto3" json:"code,omitempty"`
-	Message string        `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
-	Detail  string        `protobuf:"bytes,3,opt,name=detail,proto3" json:"detail,omitempty"`
-	Hint    string        `protobuf:"bytes,4,opt,name=hint,proto3" json:"hint,omitempty"`
-	Source  *Error_Source `protobuf:"bytes,5,opt,name=source" json:"source,omitempty"`
-	// "Internal query: the text of a failed internally-generated command."
-	InternalCommand string `protobuf:"bytes,6,opt,name=internalCommand,proto3" json:"internalCommand,omitempty"`
+    Code    string        `protobuf:"bytes,1,opt,name=code,proto3" json:"code,omitempty"`
+    Message string        `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
+    Detail  string        `protobuf:"bytes,3,opt,name=detail,proto3" json:"detail,omitempty"`
+    Hint    string        `protobuf:"bytes,4,opt,name=hint,proto3" json:"hint,omitempty"`
+    Source  *Error_Source `protobuf:"bytes,5,opt,name=source" json:"source,omitempty"`
+    // "Internal query: the text of a failed internally-generated command."
+    InternalCommand string `protobuf:"bytes,6,opt,name=internalCommand,proto3" json:"internalCommand,omitempty"`
 }
 
 //func (m *Error) Reset()                    { *m = Error{} }
@@ -47,9 +47,9 @@ type Error struct {
 //func (*Error) Descriptor() ([]byte, []int) { return fileDescriptorErrors, []int{0} }
 
 type Error_Source struct {
-	File     string `protobuf:"bytes,1,opt,name=file,proto3" json:"file,omitempty"`
-	Line     int32  `protobuf:"varint,2,opt,name=line,proto3" json:"line,omitempty"`
-	Function string `protobuf:"bytes,3,opt,name=function,proto3" json:"function,omitempty"`
+    File     string `protobuf:"bytes,1,opt,name=file,proto3" json:"file,omitempty"`
+    Line     int32  `protobuf:"varint,2,opt,name=line,proto3" json:"line,omitempty"`
+    Function string `protobuf:"bytes,3,opt,name=function,proto3" json:"function,omitempty"`
 }
 
 //func (m *Error_Source) Reset()                    { *m = Error_Source{} }

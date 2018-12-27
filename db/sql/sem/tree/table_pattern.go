@@ -58,7 +58,7 @@
 package tree
 
 import (
-	"fmt"
+    "fmt"
 )
 
 // Table patterns are used by e.g. GRANT statements, to designate
@@ -76,13 +76,13 @@ import (
 // TablePattern is the common interface to UnresolvedName, TableName
 // and AllTablesSelector.
 type TablePattern interface {
-	fmt.Stringer
-	NodeFormatter
+    fmt.Stringer
+    NodeFormatter
 
-	// NormalizeTablePattern() guarantees to return a pattern that is
-	// not an UnresolvedName. This converts the UnresolvedName to an
-	// AllTablesSelector or TableName as necessary.
-	NormalizeTablePattern() (TablePattern, error)
+    // NormalizeTablePattern() guarantees to return a pattern that is
+    // not an UnresolvedName. This converts the UnresolvedName to an
+    // AllTablesSelector or TableName as necessary.
+    NormalizeTablePattern() (TablePattern, error)
 }
 
 var _ TablePattern = &UnresolvedName{}
@@ -92,7 +92,7 @@ var _ TablePattern = &AllTablesSelector{}
 // NormalizeTablePattern resolves an UnresolvedName to either a
 // TableName or AllTablesSelector.
 func (n *UnresolvedName) NormalizeTablePattern() (TablePattern, error) {
-	return classifyTablePattern(n)
+    return classifyTablePattern(n)
 }
 
 // NormalizeTablePattern implements the TablePattern interface.
@@ -101,16 +101,16 @@ func (t *TableName) NormalizeTablePattern() (TablePattern, error) { return t, ni
 // AllTablesSelector corresponds to a selection of all
 // tables in a database, e.g. when used with GRANT.
 type AllTablesSelector struct {
-	TableNamePrefix
+    TableNamePrefix
 }
 
 // Format implements the NodeFormatter interface.
 func (at *AllTablesSelector) Format(ctx *FmtCtx) {
-	at.TableNamePrefix.Format(ctx)
-	if at.ExplicitSchema || ctx.alwaysFormatTablePrefix() {
-		ctx.WriteByte('.')
-	}
-	ctx.WriteByte('*')
+    at.TableNamePrefix.Format(ctx)
+    if at.ExplicitSchema || ctx.alwaysFormatTablePrefix() {
+        ctx.WriteByte('.')
+    }
+    ctx.WriteByte('*')
 }
 func (at *AllTablesSelector) String() string { return AsString(at) }
 
@@ -123,10 +123,10 @@ type TablePatterns []TablePattern
 
 // Format implements the NodeFormatter interface.
 func (tt *TablePatterns) Format(ctx *FmtCtx) {
-	for i, t := range *tt {
-		if i > 0 {
-			ctx.WriteString(", ")
-		}
-		ctx.FormatNode(t)
-	}
+    for i, t := range *tt {
+        if i > 0 {
+            ctx.WriteString(", ")
+        }
+        ctx.FormatNode(t)
+    }
 }

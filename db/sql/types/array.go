@@ -58,14 +58,14 @@
 package types
 
 import (
-	"bytes"
-	"encoding/binary"
-	"github.com/pkg/errors"
-	"github.com/readystock/noah/db/sql/pgio"
-	"io"
-	"strconv"
-	"strings"
-	"unicode"
+    "bytes"
+    "encoding/binary"
+    "github.com/pkg/errors"
+    "github.com/readystock/noah/db/sql/pgio"
+    "io"
+    "strconv"
+    "strings"
+    "unicode"
 )
 
 // Information on the internals of PostgreSQL arrays can be found in
@@ -73,336 +73,336 @@ import (
 // particular interest is the array_send function.
 
 type ArrayHeader struct {
-	ContainsNull bool
-	ElementOID   int32
-	Dimensions   []ArrayDimension
+    ContainsNull bool
+    ElementOID   int32
+    Dimensions   []ArrayDimension
 }
 
 type ArrayDimension struct {
-	Length     int32
-	LowerBound int32
+    Length     int32
+    LowerBound int32
 }
 
 func (dst *ArrayHeader) DecodeBinary(ci *ConnInfo, src []byte) (int, error) {
-	if len(src) < 12 {
-		return 0, errors.Errorf("array header too short: %d", len(src))
-	}
+    if len(src) < 12 {
+        return 0, errors.Errorf("array header too short: %d", len(src))
+    }
 
-	rp := 0
+    rp := 0
 
-	numDims := int(binary.BigEndian.Uint32(src[rp:]))
-	rp += 4
+    numDims := int(binary.BigEndian.Uint32(src[rp:]))
+    rp += 4
 
-	dst.ContainsNull = binary.BigEndian.Uint32(src[rp:]) == 1
-	rp += 4
+    dst.ContainsNull = binary.BigEndian.Uint32(src[rp:]) == 1
+    rp += 4
 
-	dst.ElementOID = int32(binary.BigEndian.Uint32(src[rp:]))
-	rp += 4
+    dst.ElementOID = int32(binary.BigEndian.Uint32(src[rp:]))
+    rp += 4
 
-	if numDims > 0 {
-		dst.Dimensions = make([]ArrayDimension, numDims)
-	}
-	if len(src) < 12+numDims*8 {
-		return 0, errors.Errorf("array header too short for %d dimensions: %d", numDims, len(src))
-	}
-	for i := range dst.Dimensions {
-		dst.Dimensions[i].Length = int32(binary.BigEndian.Uint32(src[rp:]))
-		rp += 4
+    if numDims > 0 {
+        dst.Dimensions = make([]ArrayDimension, numDims)
+    }
+    if len(src) < 12+numDims*8 {
+        return 0, errors.Errorf("array header too short for %d dimensions: %d", numDims, len(src))
+    }
+    for i := range dst.Dimensions {
+        dst.Dimensions[i].Length = int32(binary.BigEndian.Uint32(src[rp:]))
+        rp += 4
 
-		dst.Dimensions[i].LowerBound = int32(binary.BigEndian.Uint32(src[rp:]))
-		rp += 4
-	}
+        dst.Dimensions[i].LowerBound = int32(binary.BigEndian.Uint32(src[rp:]))
+        rp += 4
+    }
 
-	return rp, nil
+    return rp, nil
 }
 
 func (src *ArrayHeader) EncodeBinary(ci *ConnInfo, buf []byte) []byte {
-	buf = pgio.AppendInt32(buf, int32(len(src.Dimensions)))
+    buf = pgio.AppendInt32(buf, int32(len(src.Dimensions)))
 
-	var containsNull int32
-	if src.ContainsNull {
-		containsNull = 1
-	}
-	buf = pgio.AppendInt32(buf, containsNull)
+    var containsNull int32
+    if src.ContainsNull {
+        containsNull = 1
+    }
+    buf = pgio.AppendInt32(buf, containsNull)
 
-	buf = pgio.AppendInt32(buf, src.ElementOID)
+    buf = pgio.AppendInt32(buf, src.ElementOID)
 
-	for i := range src.Dimensions {
-		buf = pgio.AppendInt32(buf, src.Dimensions[i].Length)
-		buf = pgio.AppendInt32(buf, src.Dimensions[i].LowerBound)
-	}
+    for i := range src.Dimensions {
+        buf = pgio.AppendInt32(buf, src.Dimensions[i].Length)
+        buf = pgio.AppendInt32(buf, src.Dimensions[i].LowerBound)
+    }
 
-	return buf
+    return buf
 }
 
 type UntypedTextArray struct {
-	Elements   []string
-	Dimensions []ArrayDimension
+    Elements   []string
+    Dimensions []ArrayDimension
 }
 
 func ParseUntypedTextArray(src string) (*UntypedTextArray, error) {
-	dst := &UntypedTextArray{}
+    dst := &UntypedTextArray{}
 
-	buf := bytes.NewBufferString(src)
+    buf := bytes.NewBufferString(src)
 
-	skipWhitespace(buf)
+    skipWhitespace(buf)
 
-	r, _, err := buf.ReadRune()
-	if err != nil {
-		return nil, errors.Errorf("invalid array: %v", err)
-	}
+    r, _, err := buf.ReadRune()
+    if err != nil {
+        return nil, errors.Errorf("invalid array: %v", err)
+    }
 
-	var explicitDimensions []ArrayDimension
+    var explicitDimensions []ArrayDimension
 
-	// Array has explicit dimensions
-	if r == '[' {
-		buf.UnreadRune()
+    // Array has explicit dimensions
+    if r == '[' {
+        buf.UnreadRune()
 
-		for {
-			r, _, err = buf.ReadRune()
-			if err != nil {
-				return nil, errors.Errorf("invalid array: %v", err)
-			}
+        for {
+            r, _, err = buf.ReadRune()
+            if err != nil {
+                return nil, errors.Errorf("invalid array: %v", err)
+            }
 
-			if r == '=' {
-				break
-			} else if r != '[' {
-				return nil, errors.Errorf("invalid array, expected '[' or '=' got %v", r)
-			}
+            if r == '=' {
+                break
+            } else if r != '[' {
+                return nil, errors.Errorf("invalid array, expected '[' or '=' got %v", r)
+            }
 
-			lower, err := arrayParseInteger(buf)
-			if err != nil {
-				return nil, errors.Errorf("invalid array: %v", err)
-			}
+            lower, err := arrayParseInteger(buf)
+            if err != nil {
+                return nil, errors.Errorf("invalid array: %v", err)
+            }
 
-			r, _, err = buf.ReadRune()
-			if err != nil {
-				return nil, errors.Errorf("invalid array: %v", err)
-			}
+            r, _, err = buf.ReadRune()
+            if err != nil {
+                return nil, errors.Errorf("invalid array: %v", err)
+            }
 
-			if r != ':' {
-				return nil, errors.Errorf("invalid array, expected ':' got %v", r)
-			}
+            if r != ':' {
+                return nil, errors.Errorf("invalid array, expected ':' got %v", r)
+            }
 
-			upper, err := arrayParseInteger(buf)
-			if err != nil {
-				return nil, errors.Errorf("invalid array: %v", err)
-			}
+            upper, err := arrayParseInteger(buf)
+            if err != nil {
+                return nil, errors.Errorf("invalid array: %v", err)
+            }
 
-			r, _, err = buf.ReadRune()
-			if err != nil {
-				return nil, errors.Errorf("invalid array: %v", err)
-			}
+            r, _, err = buf.ReadRune()
+            if err != nil {
+                return nil, errors.Errorf("invalid array: %v", err)
+            }
 
-			if r != ']' {
-				return nil, errors.Errorf("invalid array, expected ']' got %v", r)
-			}
+            if r != ']' {
+                return nil, errors.Errorf("invalid array, expected ']' got %v", r)
+            }
 
-			explicitDimensions = append(explicitDimensions, ArrayDimension{LowerBound: lower, Length: upper - lower + 1})
-		}
+            explicitDimensions = append(explicitDimensions, ArrayDimension{LowerBound: lower, Length: upper - lower + 1})
+        }
 
-		r, _, err = buf.ReadRune()
-		if err != nil {
-			return nil, errors.Errorf("invalid array: %v", err)
-		}
-	}
+        r, _, err = buf.ReadRune()
+        if err != nil {
+            return nil, errors.Errorf("invalid array: %v", err)
+        }
+    }
 
-	if r != '{' {
-		return nil, errors.Errorf("invalid array, expected '{': %v", err)
-	}
+    if r != '{' {
+        return nil, errors.Errorf("invalid array, expected '{': %v", err)
+    }
 
-	implicitDimensions := []ArrayDimension{{LowerBound: 1, Length: 0}}
+    implicitDimensions := []ArrayDimension{{LowerBound: 1, Length: 0}}
 
-	// Consume all initial opening brackets. This provides number of dimensions.
-	for {
-		r, _, err = buf.ReadRune()
-		if err != nil {
-			return nil, errors.Errorf("invalid array: %v", err)
-		}
+    // Consume all initial opening brackets. This provides number of dimensions.
+    for {
+        r, _, err = buf.ReadRune()
+        if err != nil {
+            return nil, errors.Errorf("invalid array: %v", err)
+        }
 
-		if r == '{' {
-			implicitDimensions[len(implicitDimensions)-1].Length = 1
-			implicitDimensions = append(implicitDimensions, ArrayDimension{LowerBound: 1})
-		} else {
-			buf.UnreadRune()
-			break
-		}
-	}
-	currentDim := len(implicitDimensions) - 1
-	counterDim := currentDim
+        if r == '{' {
+            implicitDimensions[len(implicitDimensions)-1].Length = 1
+            implicitDimensions = append(implicitDimensions, ArrayDimension{LowerBound: 1})
+        } else {
+            buf.UnreadRune()
+            break
+        }
+    }
+    currentDim := len(implicitDimensions) - 1
+    counterDim := currentDim
 
-	for {
-		r, _, err = buf.ReadRune()
-		if err != nil {
-			return nil, errors.Errorf("invalid array: %v", err)
-		}
+    for {
+        r, _, err = buf.ReadRune()
+        if err != nil {
+            return nil, errors.Errorf("invalid array: %v", err)
+        }
 
-		switch r {
-		case '{':
-			if currentDim == counterDim {
-				implicitDimensions[currentDim].Length++
-			}
-			currentDim++
-		case ',':
-		case '}':
-			currentDim--
-			if currentDim < counterDim {
-				counterDim = currentDim
-			}
-		default:
-			buf.UnreadRune()
-			value, err := arrayParseValue(buf)
-			if err != nil {
-				return nil, errors.Errorf("invalid array value: %v", err)
-			}
-			if currentDim == counterDim {
-				implicitDimensions[currentDim].Length++
-			}
-			dst.Elements = append(dst.Elements, value)
-		}
+        switch r {
+        case '{':
+            if currentDim == counterDim {
+                implicitDimensions[currentDim].Length++
+            }
+            currentDim++
+        case ',':
+        case '}':
+            currentDim--
+            if currentDim < counterDim {
+                counterDim = currentDim
+            }
+        default:
+            buf.UnreadRune()
+            value, err := arrayParseValue(buf)
+            if err != nil {
+                return nil, errors.Errorf("invalid array value: %v", err)
+            }
+            if currentDim == counterDim {
+                implicitDimensions[currentDim].Length++
+            }
+            dst.Elements = append(dst.Elements, value)
+        }
 
-		if currentDim < 0 {
-			break
-		}
-	}
+        if currentDim < 0 {
+            break
+        }
+    }
 
-	skipWhitespace(buf)
+    skipWhitespace(buf)
 
-	if buf.Len() > 0 {
-		return nil, errors.Errorf("unexpected trailing data: %v", buf.String())
-	}
+    if buf.Len() > 0 {
+        return nil, errors.Errorf("unexpected trailing data: %v", buf.String())
+    }
 
-	if len(dst.Elements) == 0 {
-		dst.Dimensions = nil
-	} else if len(explicitDimensions) > 0 {
-		dst.Dimensions = explicitDimensions
-	} else {
-		dst.Dimensions = implicitDimensions
-	}
+    if len(dst.Elements) == 0 {
+        dst.Dimensions = nil
+    } else if len(explicitDimensions) > 0 {
+        dst.Dimensions = explicitDimensions
+    } else {
+        dst.Dimensions = implicitDimensions
+    }
 
-	return dst, nil
+    return dst, nil
 }
 
 func skipWhitespace(buf *bytes.Buffer) {
-	var r rune
-	var err error
-	for r, _, _ = buf.ReadRune(); unicode.IsSpace(r); r, _, _ = buf.ReadRune() {
-	}
+    var r rune
+    var err error
+    for r, _, _ = buf.ReadRune(); unicode.IsSpace(r); r, _, _ = buf.ReadRune() {
+    }
 
-	if err != io.EOF {
-		buf.UnreadRune()
-	}
+    if err != io.EOF {
+        buf.UnreadRune()
+    }
 }
 
 func arrayParseValue(buf *bytes.Buffer) (string, error) {
-	r, _, err := buf.ReadRune()
-	if err != nil {
-		return "", err
-	}
-	if r == '"' {
-		return arrayParseQuotedValue(buf)
-	}
-	buf.UnreadRune()
+    r, _, err := buf.ReadRune()
+    if err != nil {
+        return "", err
+    }
+    if r == '"' {
+        return arrayParseQuotedValue(buf)
+    }
+    buf.UnreadRune()
 
-	s := &bytes.Buffer{}
+    s := &bytes.Buffer{}
 
-	for {
-		r, _, err := buf.ReadRune()
-		if err != nil {
-			return "", err
-		}
+    for {
+        r, _, err := buf.ReadRune()
+        if err != nil {
+            return "", err
+        }
 
-		switch r {
-		case ',', '}':
-			buf.UnreadRune()
-			return s.String(), nil
-		}
+        switch r {
+        case ',', '}':
+            buf.UnreadRune()
+            return s.String(), nil
+        }
 
-		s.WriteRune(r)
-	}
+        s.WriteRune(r)
+    }
 }
 
 func arrayParseQuotedValue(buf *bytes.Buffer) (string, error) {
-	s := &bytes.Buffer{}
+    s := &bytes.Buffer{}
 
-	for {
-		r, _, err := buf.ReadRune()
-		if err != nil {
-			return "", err
-		}
+    for {
+        r, _, err := buf.ReadRune()
+        if err != nil {
+            return "", err
+        }
 
-		switch r {
-		case '\\':
-			r, _, err = buf.ReadRune()
-			if err != nil {
-				return "", err
-			}
-		case '"':
-			r, _, err = buf.ReadRune()
-			if err != nil {
-				return "", err
-			}
-			buf.UnreadRune()
-			return s.String(), nil
-		}
-		s.WriteRune(r)
-	}
+        switch r {
+        case '\\':
+            r, _, err = buf.ReadRune()
+            if err != nil {
+                return "", err
+            }
+        case '"':
+            r, _, err = buf.ReadRune()
+            if err != nil {
+                return "", err
+            }
+            buf.UnreadRune()
+            return s.String(), nil
+        }
+        s.WriteRune(r)
+    }
 }
 
 func arrayParseInteger(buf *bytes.Buffer) (int32, error) {
-	s := &bytes.Buffer{}
+    s := &bytes.Buffer{}
 
-	for {
-		r, _, err := buf.ReadRune()
-		if err != nil {
-			return 0, err
-		}
+    for {
+        r, _, err := buf.ReadRune()
+        if err != nil {
+            return 0, err
+        }
 
-		if '0' <= r && r <= '9' {
-			s.WriteRune(r)
-		} else {
-			buf.UnreadRune()
-			n, err := strconv.ParseInt(s.String(), 10, 32)
-			if err != nil {
-				return 0, err
-			}
-			return int32(n), nil
-		}
-	}
+        if '0' <= r && r <= '9' {
+            s.WriteRune(r)
+        } else {
+            buf.UnreadRune()
+            n, err := strconv.ParseInt(s.String(), 10, 32)
+            if err != nil {
+                return 0, err
+            }
+            return int32(n), nil
+        }
+    }
 }
 
 func EncodeTextArrayDimensions(buf []byte, dimensions []ArrayDimension) []byte {
-	var customDimensions bool
-	for _, dim := range dimensions {
-		if dim.LowerBound != 1 {
-			customDimensions = true
-		}
-	}
+    var customDimensions bool
+    for _, dim := range dimensions {
+        if dim.LowerBound != 1 {
+            customDimensions = true
+        }
+    }
 
-	if !customDimensions {
-		return buf
-	}
+    if !customDimensions {
+        return buf
+    }
 
-	for _, dim := range dimensions {
-		buf = append(buf, '[')
-		buf = append(buf, strconv.FormatInt(int64(dim.LowerBound), 10)...)
-		buf = append(buf, ':')
-		buf = append(buf, strconv.FormatInt(int64(dim.LowerBound+dim.Length-1), 10)...)
-		buf = append(buf, ']')
-	}
+    for _, dim := range dimensions {
+        buf = append(buf, '[')
+        buf = append(buf, strconv.FormatInt(int64(dim.LowerBound), 10)...)
+        buf = append(buf, ':')
+        buf = append(buf, strconv.FormatInt(int64(dim.LowerBound+dim.Length-1), 10)...)
+        buf = append(buf, ']')
+    }
 
-	return append(buf, '=')
+    return append(buf, '=')
 }
 
 var quoteArrayReplacer = strings.NewReplacer(`\`, `\\`, `"`, `\"`)
 
 func quoteArrayElement(src string) string {
-	return `"` + quoteArrayReplacer.Replace(src) + `"`
+    return `"` + quoteArrayReplacer.Replace(src) + `"`
 }
 
 func QuoteArrayElementIfNeeded(src string) string {
-	if src == "" || (len(src) == 4 && strings.ToLower(src) == "null") || src[0] == ' ' || src[len(src)-1] == ' ' || strings.ContainsAny(src, `{},"\`) {
-		return quoteArrayElement(src)
-	}
-	return src
+    if src == "" || (len(src) == 4 && strings.ToLower(src) == "null") || src[0] == ' ' || src[len(src)-1] == ' ' || strings.ContainsAny(src, `{},"\`) {
+        return quoteArrayElement(src)
+    }
+    return src
 }

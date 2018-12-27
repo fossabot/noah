@@ -64,147 +64,147 @@ type DropBehavior int
 
 // DropBehavior values.
 const (
-	DropDefault DropBehavior = iota
-	DropRestrict
-	DropCascade
+    DropDefault DropBehavior = iota
+    DropRestrict
+    DropCascade
 )
 
 var dropBehaviorName = [...]string{
-	DropDefault:  "",
-	DropRestrict: "RESTRICT",
-	DropCascade:  "CASCADE",
+    DropDefault:  "",
+    DropRestrict: "RESTRICT",
+    DropCascade:  "CASCADE",
 }
 
 func (d DropBehavior) String() string {
-	return dropBehaviorName[d]
+    return dropBehaviorName[d]
 }
 
 // DropDatabase represents a DROP DATABASE statement.
 type DropDatabase struct {
-	Name         Name
-	IfExists     bool
-	DropBehavior DropBehavior
+    Name         Name
+    IfExists     bool
+    DropBehavior DropBehavior
 }
 
 // Format implements the NodeFormatter interface.
 func (node *DropDatabase) Format(ctx *FmtCtx) {
-	ctx.WriteString("DROP DATABASE ")
-	if node.IfExists {
-		ctx.WriteString("IF EXISTS ")
-	}
-	ctx.FormatNode(&node.Name)
-	if node.DropBehavior != DropDefault {
-		ctx.WriteByte(' ')
-		ctx.WriteString(node.DropBehavior.String())
-	}
+    ctx.WriteString("DROP DATABASE ")
+    if node.IfExists {
+        ctx.WriteString("IF EXISTS ")
+    }
+    ctx.FormatNode(&node.Name)
+    if node.DropBehavior != DropDefault {
+        ctx.WriteByte(' ')
+        ctx.WriteString(node.DropBehavior.String())
+    }
 }
 
 // DropIndex represents a DROP INDEX statement.
 type DropIndex struct {
-	IndexList    TableNameWithIndexList
-	IfExists     bool
-	DropBehavior DropBehavior
+    IndexList    TableNameWithIndexList
+    IfExists     bool
+    DropBehavior DropBehavior
 }
 
 // Format implements the NodeFormatter interface.
 func (node *DropIndex) Format(ctx *FmtCtx) {
-	ctx.WriteString("DROP INDEX ")
-	if node.IfExists {
-		ctx.WriteString("IF EXISTS ")
-	}
-	ctx.FormatNode(&node.IndexList)
-	if node.DropBehavior != DropDefault {
-		ctx.WriteByte(' ')
-		ctx.WriteString(node.DropBehavior.String())
-	}
+    ctx.WriteString("DROP INDEX ")
+    if node.IfExists {
+        ctx.WriteString("IF EXISTS ")
+    }
+    ctx.FormatNode(&node.IndexList)
+    if node.DropBehavior != DropDefault {
+        ctx.WriteByte(' ')
+        ctx.WriteString(node.DropBehavior.String())
+    }
 }
 
 // DropTable represents a DROP TABLE statement.
 type DropTable struct {
-	Names        NormalizableTableNames
-	IfExists     bool
-	DropBehavior DropBehavior
+    Names        NormalizableTableNames
+    IfExists     bool
+    DropBehavior DropBehavior
 }
 
 // Format implements the NodeFormatter interface.
 func (node *DropTable) Format(ctx *FmtCtx) {
-	ctx.WriteString("DROP TABLE ")
-	if node.IfExists {
-		ctx.WriteString("IF EXISTS ")
-	}
-	ctx.FormatNode(&node.Names)
-	if node.DropBehavior != DropDefault {
-		ctx.WriteByte(' ')
-		ctx.WriteString(node.DropBehavior.String())
-	}
+    ctx.WriteString("DROP TABLE ")
+    if node.IfExists {
+        ctx.WriteString("IF EXISTS ")
+    }
+    ctx.FormatNode(&node.Names)
+    if node.DropBehavior != DropDefault {
+        ctx.WriteByte(' ')
+        ctx.WriteString(node.DropBehavior.String())
+    }
 }
 
 // DropView represents a DROP VIEW statement.
 type DropView struct {
-	Names        NormalizableTableNames
-	IfExists     bool
-	DropBehavior DropBehavior
+    Names        NormalizableTableNames
+    IfExists     bool
+    DropBehavior DropBehavior
 }
 
 // Format implements the NodeFormatter interface.
 func (node *DropView) Format(ctx *FmtCtx) {
-	ctx.WriteString("DROP VIEW ")
-	if node.IfExists {
-		ctx.WriteString("IF EXISTS ")
-	}
-	ctx.FormatNode(&node.Names)
-	if node.DropBehavior != DropDefault {
-		ctx.WriteByte(' ')
-		ctx.WriteString(node.DropBehavior.String())
-	}
+    ctx.WriteString("DROP VIEW ")
+    if node.IfExists {
+        ctx.WriteString("IF EXISTS ")
+    }
+    ctx.FormatNode(&node.Names)
+    if node.DropBehavior != DropDefault {
+        ctx.WriteByte(' ')
+        ctx.WriteString(node.DropBehavior.String())
+    }
 }
 
 // DropSequence represents a DROP SEQUENCE statement.
 type DropSequence struct {
-	Names        NormalizableTableNames
-	IfExists     bool
-	DropBehavior DropBehavior
+    Names        NormalizableTableNames
+    IfExists     bool
+    DropBehavior DropBehavior
 }
 
 // Format implements the NodeFormatter interface.
 func (node *DropSequence) Format(ctx *FmtCtx) {
-	ctx.WriteString("DROP SEQUENCE ")
-	if node.IfExists {
-		ctx.WriteString("IF EXISTS ")
-	}
-	ctx.FormatNode(&node.Names)
-	if node.DropBehavior != DropDefault {
-		ctx.WriteByte(' ')
-		ctx.WriteString(node.DropBehavior.String())
-	}
+    ctx.WriteString("DROP SEQUENCE ")
+    if node.IfExists {
+        ctx.WriteString("IF EXISTS ")
+    }
+    ctx.FormatNode(&node.Names)
+    if node.DropBehavior != DropDefault {
+        ctx.WriteByte(' ')
+        ctx.WriteString(node.DropBehavior.String())
+    }
 }
 
 // DropUser represents a DROP USER statement
 type DropUser struct {
-	Names    Exprs
-	IfExists bool
+    Names    Exprs
+    IfExists bool
 }
 
 // Format implements the NodeFormatter interface.
 func (node *DropUser) Format(ctx *FmtCtx) {
-	ctx.WriteString("DROP USER ")
-	if node.IfExists {
-		ctx.WriteString("IF EXISTS ")
-	}
-	ctx.FormatNode(&node.Names)
+    ctx.WriteString("DROP USER ")
+    if node.IfExists {
+        ctx.WriteString("IF EXISTS ")
+    }
+    ctx.FormatNode(&node.Names)
 }
 
 // DropRole represents a DROP ROLE statement
 type DropRole struct {
-	Names    Exprs
-	IfExists bool
+    Names    Exprs
+    IfExists bool
 }
 
 // Format implements the NodeFormatter interface.
 func (node *DropRole) Format(ctx *FmtCtx) {
-	ctx.WriteString("DROP ROLE ")
-	if node.IfExists {
-		ctx.WriteString("IF EXISTS ")
-	}
-	ctx.FormatNode(&node.Names)
+    ctx.WriteString("DROP ROLE ")
+    if node.IfExists {
+        ctx.WriteString("IF EXISTS ")
+    }
+    ctx.FormatNode(&node.Names)
 }

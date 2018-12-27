@@ -58,11 +58,11 @@
 package npgx
 
 import (
-	"bytes"
-	"context"
-	"fmt"
-	"github.com/kataras/go-errors"
-	"time"
+    "bytes"
+    "context"
+    "fmt"
+    "github.com/kataras/go-errors"
+    "time"
 )
 
 // ErrTxCommitRollback occurs when an error has occurred in a transaction and
@@ -76,41 +76,41 @@ type TransactionIsoLevel string
 
 // Transaction isolation levels
 const (
-	Serializable    = TransactionIsoLevel("serializable")
-	RepeatableRead  = TransactionIsoLevel("repeatable read")
-	ReadCommitted   = TransactionIsoLevel("read committed")
-	ReadUncommitted = TransactionIsoLevel("read uncommitted")
+    Serializable    = TransactionIsoLevel("serializable")
+    RepeatableRead  = TransactionIsoLevel("repeatable read")
+    ReadCommitted   = TransactionIsoLevel("read committed")
+    ReadUncommitted = TransactionIsoLevel("read uncommitted")
 )
 
 type TransactionAccessMode string
 
 // Transaction access modes
 const (
-	ReadWrite = TransactionAccessMode("read write")
-	ReadOnly  = TransactionAccessMode("read only")
+    ReadWrite = TransactionAccessMode("read write")
+    ReadOnly  = TransactionAccessMode("read only")
 )
 
 type TransactionDeferrableMode string
 
 // Transaction deferrable modes
 const (
-	Deferrable    = TransactionDeferrableMode("deferrable")
-	NotDeferrable = TransactionDeferrableMode("not deferrable")
+    Deferrable    = TransactionDeferrableMode("deferrable")
+    NotDeferrable = TransactionDeferrableMode("not deferrable")
 )
 
 const (
-	TransactionStatusInProgress              = 0
-	TransactionStatusCommitFailure           = -1
-	TransactionStatusRollbackFailure         = -2
-	TransactionStatusInFailure               = -3
-	TransactionStatusCommitSuccess           = 1
-	TransactionStatusRollbackSuccess         = 2
-	TransactionStatusTwoPhasePrepared        = 3
-	TransactionStatusTwoPhasePreparedFailure = 4
-	TransactionStatusTwoPhaseCommitSuccess   = 5
-	TransactionStatusTwoPhaseCommitFailure   = 6
-	TransactionStatusTwoPhaseRollbackSuccess = 7
-	TransactionStatusTwoPhaseRollbackFailure = 8
+    TransactionStatusInProgress              = 0
+    TransactionStatusCommitFailure           = -1
+    TransactionStatusRollbackFailure         = -2
+    TransactionStatusInFailure               = -3
+    TransactionStatusCommitSuccess           = 1
+    TransactionStatusRollbackSuccess         = 2
+    TransactionStatusTwoPhasePrepared        = 3
+    TransactionStatusTwoPhasePreparedFailure = 4
+    TransactionStatusTwoPhaseCommitSuccess   = 5
+    TransactionStatusTwoPhaseCommitFailure   = 6
+    TransactionStatusTwoPhaseRollbackSuccess = 7
+    TransactionStatusTwoPhaseRollbackFailure = 8
 )
 
 // Tx represents a database transaction.
@@ -118,160 +118,160 @@ const (
 // All Tx methods return ErrTxClosed if Commit or Rollback has already been
 // called on the Tx.
 type Transaction struct {
-	conn                  *Conn
-	connPool              *ConnPool
-	err                   error
-	status                int8
-	twoPhaseTransactionId *uint64
+    conn                  *Conn
+    connPool              *ConnPool
+    err                   error
+    status                int8
+    twoPhaseTransactionId *uint64
 }
 
 type TransactionOptions struct {
-	IsoLevel       TransactionIsoLevel
-	AccessMode     TransactionAccessMode
-	DeferrableMode TransactionDeferrableMode
+    IsoLevel       TransactionIsoLevel
+    AccessMode     TransactionAccessMode
+    DeferrableMode TransactionDeferrableMode
 }
 
 // Begin starts a transaction with the default transaction mode for the
 // current connection. To use a specific transaction mode see BeginEx.
 func (c *Conn) Begin() (*Transaction, error) {
-	return c.BeginEx(context.Background(), nil)
+    return c.BeginEx(context.Background(), nil)
 }
 
 // BeginEx starts a transaction with txOptions determining the transaction
 // mode. Unlike database/sql, the context only affects the begin command. i.e.
 // there is no auto-rollback on context cancelation.
 func (c *Conn) BeginEx(ctx context.Context, txOptions *TransactionOptions) (*Transaction, error) {
-	_, err := c.ExecEx(ctx, txOptions.beginSQL(), nil)
-	if err != nil {
-		// begin should never fail unless there is an underlying connection issue or
-		// a context timeout. In either case, the connection is possibly broken.
-		c.die(errors.New("failed to begin transaction"))
-		return nil, err
-	}
+    _, err := c.ExecEx(ctx, txOptions.beginSQL(), nil)
+    if err != nil {
+        // begin should never fail unless there is an underlying connection issue or
+        // a context timeout. In either case, the connection is possibly broken.
+        c.die(errors.New("failed to begin transaction"))
+        return nil, err
+    }
 
-	return &Transaction{conn: c}, nil
+    return &Transaction{conn: c}, nil
 }
 
 func (txOptions *TransactionOptions) beginSQL() string {
-	if txOptions == nil {
-		return "begin"
-	}
+    if txOptions == nil {
+        return "begin"
+    }
 
-	buf := &bytes.Buffer{}
-	buf.WriteString("begin")
-	if txOptions.IsoLevel != "" {
-		fmt.Fprintf(buf, " isolation level %s", txOptions.IsoLevel)
-	}
-	if txOptions.AccessMode != "" {
-		fmt.Fprintf(buf, " %s", txOptions.AccessMode)
-	}
-	if txOptions.DeferrableMode != "" {
-		fmt.Fprintf(buf, " %s", txOptions.DeferrableMode)
-	}
+    buf := &bytes.Buffer{}
+    buf.WriteString("begin")
+    if txOptions.IsoLevel != "" {
+        fmt.Fprintf(buf, " isolation level %s", txOptions.IsoLevel)
+    }
+    if txOptions.AccessMode != "" {
+        fmt.Fprintf(buf, " %s", txOptions.AccessMode)
+    }
+    if txOptions.DeferrableMode != "" {
+        fmt.Fprintf(buf, " %s", txOptions.DeferrableMode)
+    }
 
-	return buf.String()
+    return buf.String()
 }
 
 func (tx *Transaction) PrepareTwoPhase(transactionId uint64) error {
-	return tx.PrepareTwoPhaseEx(context.Background(), transactionId)
+    return tx.PrepareTwoPhaseEx(context.Background(), transactionId)
 }
 
 func (tx *Transaction) PrepareTwoPhaseEx(ctx context.Context, transactionId uint64) error {
-	if tx.status != TransactionStatusInProgress {
-		return ErrTxClosed
-	}
-	commandTag, err := tx.conn.ExecEx(ctx, fmt.Sprintf("prepare transaction '%d';", transactionId), nil)
-	if err == nil && commandTag == "" { // I don't know yet what the command tag will be for this query.
-		tx.status = TransactionStatusTwoPhasePrepared
-		tx.twoPhaseTransactionId = &transactionId
-	} else {
-		tx.status = TransactionStatusTwoPhasePreparedFailure
-		tx.err = err
-		tx.conn.die(errors.New("prepare two-phase commit failed"))
-	}
+    if tx.status != TransactionStatusInProgress {
+        return ErrTxClosed
+    }
+    commandTag, err := tx.conn.ExecEx(ctx, fmt.Sprintf("prepare transaction '%d';", transactionId), nil)
+    if err == nil && commandTag == "" { // I don't know yet what the command tag will be for this query.
+        tx.status = TransactionStatusTwoPhasePrepared
+        tx.twoPhaseTransactionId = &transactionId
+    } else {
+        tx.status = TransactionStatusTwoPhasePreparedFailure
+        tx.err = err
+        tx.conn.die(errors.New("prepare two-phase commit failed"))
+    }
 
-	return tx.err
+    return tx.err
 }
 
 // If there is a two-phase transaction ID associated with this transaction, commit that.
 // If there is not, throw an error.
 func (tx *Transaction) CommitTwoPhase() error {
-	if tx.twoPhaseTransactionId == nil {
-		return errors.New("not in two-phase transaction")
-	}
-	return tx.CommitTwoPhaseEx(context.Background(), *tx.twoPhaseTransactionId)
+    if tx.twoPhaseTransactionId == nil {
+        return errors.New("not in two-phase transaction")
+    }
+    return tx.CommitTwoPhaseEx(context.Background(), *tx.twoPhaseTransactionId)
 }
 
 // If there is not a two-phase transaction ID associated with this transaction ->
 // you can specify a transaction ID and if it exists on the target server, it will be committed.
 func (tx *Transaction) CommitTwoPhaseEx(ctx context.Context, transactionId uint64) error {
-	commandTag, err := tx.conn.ExecEx(ctx, fmt.Sprintf("commit prepared '%d';", transactionId), nil)
-	if err == nil && commandTag == "" { // I don't know yet what the command tag will be for this query.
+    commandTag, err := tx.conn.ExecEx(ctx, fmt.Sprintf("commit prepared '%d';", transactionId), nil)
+    if err == nil && commandTag == "" { // I don't know yet what the command tag will be for this query.
 
-	} else {
-		tx.err = err
-		tx.conn.die(errors.New("prepare two-phase commit failed"))
-	}
+    } else {
+        tx.err = err
+        tx.conn.die(errors.New("prepare two-phase commit failed"))
+    }
 
-	if tx.connPool != nil {
-		tx.connPool.Release(tx.conn)
-	}
+    if tx.connPool != nil {
+        tx.connPool.Release(tx.conn)
+    }
 
-	return tx.err
+    return tx.err
 }
 
 func (tx *Transaction) RollbackTwoPhase() error {
-	if tx.twoPhaseTransactionId == nil {
-		return errors.New("not in two-phase transaction")
-	}
-	return tx.CommitTwoPhaseEx(context.Background(), *tx.twoPhaseTransactionId)
+    if tx.twoPhaseTransactionId == nil {
+        return errors.New("not in two-phase transaction")
+    }
+    return tx.CommitTwoPhaseEx(context.Background(), *tx.twoPhaseTransactionId)
 }
 
 func (tx *Transaction) RollbackTwoPhaseEx(ctx context.Context, transactionId uint64) error {
-	commandTag, err := tx.conn.ExecEx(ctx, fmt.Sprintf("rollback prepared '%d';", transactionId), nil)
-	if err == nil && commandTag == "" { // I don't know yet what the command tag will be for this query.
-		tx.twoPhaseTransactionId = &transactionId
-	} else {
-		tx.err = err
-		tx.conn.die(errors.New("prepare two-phase rollback failed"))
-	}
+    commandTag, err := tx.conn.ExecEx(ctx, fmt.Sprintf("rollback prepared '%d';", transactionId), nil)
+    if err == nil && commandTag == "" { // I don't know yet what the command tag will be for this query.
+        tx.twoPhaseTransactionId = &transactionId
+    } else {
+        tx.err = err
+        tx.conn.die(errors.New("prepare two-phase rollback failed"))
+    }
 
-	if tx.connPool != nil {
-		tx.connPool.Release(tx.conn)
-	}
+    if tx.connPool != nil {
+        tx.connPool.Release(tx.conn)
+    }
 
-	return tx.err
+    return tx.err
 }
 
 // Commit commits the transaction
 func (tx *Transaction) Commit() error {
-	return tx.CommitEx(context.Background())
+    return tx.CommitEx(context.Background())
 }
 
 // CommitEx commits the transaction with a context.
 func (tx *Transaction) CommitEx(ctx context.Context) error {
-	if tx.status != TransactionStatusInProgress {
-		return ErrTxClosed
-	}
+    if tx.status != TransactionStatusInProgress {
+        return ErrTxClosed
+    }
 
-	commandTag, err := tx.conn.ExecEx(ctx, "commit", nil)
-	if err == nil && commandTag == "COMMIT" {
-		tx.status = TransactionStatusCommitSuccess
-	} else if err == nil && commandTag == "ROLLBACK" {
-		tx.status = TransactionStatusCommitFailure
-		tx.err = ErrTxCommitRollback
-	} else {
-		tx.status = TransactionStatusCommitFailure
-		tx.err = err
-		// A commit failure leaves the connection in an undefined state
-		tx.conn.die(errors.New("commit failed"))
-	}
+    commandTag, err := tx.conn.ExecEx(ctx, "commit", nil)
+    if err == nil && commandTag == "COMMIT" {
+        tx.status = TransactionStatusCommitSuccess
+    } else if err == nil && commandTag == "ROLLBACK" {
+        tx.status = TransactionStatusCommitFailure
+        tx.err = ErrTxCommitRollback
+    } else {
+        tx.status = TransactionStatusCommitFailure
+        tx.err = err
+        // A commit failure leaves the connection in an undefined state
+        tx.conn.die(errors.New("commit failed"))
+    }
 
-	if tx.connPool != nil {
-		tx.connPool.Release(tx.conn)
-	}
+    if tx.connPool != nil {
+        tx.connPool.Release(tx.conn)
+    }
 
-	return tx.err
+    return tx.err
 }
 
 // Rollback rolls back the transaction. Rollback will return ErrTxClosed if the
@@ -279,43 +279,43 @@ func (tx *Transaction) CommitEx(ctx context.Context) error {
 // defer tx.Rollback() is safe even if tx.Commit() will be called first in a
 // non-error condition.
 func (tx *Transaction) Rollback() error {
-	ctx, _ := context.WithTimeout(context.Background(), 15*time.Second)
-	return tx.RollbackEx(ctx)
+    ctx, _ := context.WithTimeout(context.Background(), 15*time.Second)
+    return tx.RollbackEx(ctx)
 }
 
 // RollbackEx is the context version of Rollback
 func (tx *Transaction) RollbackEx(ctx context.Context) error {
-	if tx.status != TransactionStatusInProgress {
-		return ErrTxClosed
-	}
+    if tx.status != TransactionStatusInProgress {
+        return ErrTxClosed
+    }
 
-	_, tx.err = tx.conn.ExecEx(ctx, "rollback", nil)
-	if tx.err == nil {
-		tx.status = TransactionStatusRollbackSuccess
-	} else {
-		tx.status = TransactionStatusRollbackFailure
-		// A rollback failure leaves the connection in an undefined state
-		tx.conn.die(errors.New("rollback failed"))
-	}
+    _, tx.err = tx.conn.ExecEx(ctx, "rollback", nil)
+    if tx.err == nil {
+        tx.status = TransactionStatusRollbackSuccess
+    } else {
+        tx.status = TransactionStatusRollbackFailure
+        // A rollback failure leaves the connection in an undefined state
+        tx.conn.die(errors.New("rollback failed"))
+    }
 
-	if tx.connPool != nil {
-		tx.connPool.Release(tx.conn)
-	}
+    if tx.connPool != nil {
+        tx.connPool.Release(tx.conn)
+    }
 
-	return tx.err
+    return tx.err
 }
 
 func (tx *Transaction) Query(sql string) (*Rows, error) {
-	return tx.QueryEx(context.Background(), sql, nil)
+    return tx.QueryEx(context.Background(), sql, nil)
 }
 
 // QueryEx delegates to the underlying *Conn
 func (tx *Transaction) QueryEx(ctx context.Context, sql string, options *QueryExOptions) (*Rows, error) {
-	if tx.status != TransactionStatusInProgress {
-		// Because checking for errors can be deferred to the *Rows, build one with the error
-		err := ErrTxClosed
-		return &Rows{closed: true, err: err}, err
-	}
+    if tx.status != TransactionStatusInProgress {
+        // Because checking for errors can be deferred to the *Rows, build one with the error
+        err := ErrTxClosed
+        return &Rows{closed: true, err: err}, err
+    }
 
-	return tx.conn.QueryEx(ctx, sql, options)
+    return tx.conn.QueryEx(ctx, sql, options)
 }

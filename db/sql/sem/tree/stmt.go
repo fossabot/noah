@@ -60,7 +60,7 @@
 package tree
 
 import (
-	"fmt"
+    "fmt"
 )
 
 // Instructions for creating new types: If a type needs to satisfy an
@@ -78,33 +78,33 @@ type StatementType int
 
 //go:generate stringer -type=StatementType
 const (
-	// Ack indicates that the statement does not have a meaningful
-	// return. Examples include SET, BEGIN, COMMIT.
-	Ack StatementType = iota
-	// DDL indicates that the statement mutates the database schema.
-	//
-	// Note: this is the type indicated back to the client; it is not a
-	// sufficient test for schema mutation for planning purposes. There
-	// are schema-modifying statements (e.g. CREATE TABLE AS) which
-	// report RowsAffected to the client, not DDL.
-	// Use CanModifySchema() below instead.
-	DDL
-	// RowsAffected indicates that the statement returns the count of
-	// affected rows.
-	RowsAffected
-	// Rows indicates that the statement returns the affected rows after
-	// the statement was applied.
-	Rows
-	// CopyIn indicates a COPY FROM statement.
-	CopyIn
-	// Unknown indicates that the statement does not have a known
-	// return style at the time of parsing. This is not first in the
-	// enumeration because it is more convenient to have Ack as a zero
-	// value, and because the use of Unknown should be an explicit choice.
-	// The primary example of this statement type is EXECUTE, where the
-	// statement type depends on the statement type of the prepared statement
-	// being executed.
-	Unknown
+    // Ack indicates that the statement does not have a meaningful
+    // return. Examples include SET, BEGIN, COMMIT.
+    Ack StatementType = iota
+    // DDL indicates that the statement mutates the database schema.
+    //
+    // Note: this is the type indicated back to the client; it is not a
+    // sufficient test for schema mutation for planning purposes. There
+    // are schema-modifying statements (e.g. CREATE TABLE AS) which
+    // report RowsAffected to the client, not DDL.
+    // Use CanModifySchema() below instead.
+    DDL
+    // RowsAffected indicates that the statement returns the count of
+    // affected rows.
+    RowsAffected
+    // Rows indicates that the statement returns the affected rows after
+    // the statement was applied.
+    Rows
+    // CopyIn indicates a COPY FROM statement.
+    CopyIn
+    // Unknown indicates that the statement does not have a known
+    // return style at the time of parsing. This is not first in the
+    // enumeration because it is more convenient to have Ack as a zero
+    // value, and because the use of Unknown should be an explicit choice.
+    // The primary example of this statement type is EXECUTE, where the
+    // statement type depends on the statement type of the prepared statement
+    // being executed.
+    Unknown
 )
 
 // func GetStatementType(stmt pg_query.ParsetreeList) (*StatementType, error) {
@@ -119,54 +119,54 @@ const (
 
 // Statement represents a statement.
 type Statement interface {
-	fmt.Stringer
-	NodeFormatter
-	StatementType() StatementType
-	// StatementTag is a short string identifying the type of statement
-	// (usually a single verb). This is different than the Stringer output,
-	// which is the actual statement (including args).
-	// TODO(dt): Currently tags are always pg-compatible in the future it
-	// might make sense to pass a tag format specifier.
-	StatementTag() string
+    fmt.Stringer
+    NodeFormatter
+    StatementType() StatementType
+    // StatementTag is a short string identifying the type of statement
+    // (usually a single verb). This is different than the Stringer output,
+    // which is the actual statement (including args).
+    // TODO(dt): Currently tags are always pg-compatible in the future it
+    // might make sense to pass a tag format specifier.
+    StatementTag() string
 }
 
 // canModifySchema is to be implemented by statements that can modify
 // the database schema but may have StatementType() != DDL.
 // See CanModifySchema() below.
 type canModifySchema interface {
-	modifiesSchema() bool
+    modifiesSchema() bool
 }
 
 // CanModifySchema returns true if the statement can modify
 // the database schema.
 func CanModifySchema(stmt Statement) bool {
-	if stmt.StatementType() == DDL {
-		return true
-	}
-	scm, ok := stmt.(canModifySchema)
-	return ok && scm.modifiesSchema()
+    if stmt.StatementType() == DDL {
+        return true
+    }
+    scm, ok := stmt.(canModifySchema)
+    return ok && scm.modifiesSchema()
 }
 
 // CanWriteData returns true if the statement can modify data.
 func CanWriteData(stmt Statement) bool {
-	switch stmt.(type) {
-	// Normal write operations.
-	case *Insert, *Delete, *Update, *Truncate:
-		return true
-	// Import operations.
-	case *CopyFrom, *Import, *Restore:
-		return true
-	// CockroachDB extensions.
-	case *Split, *Relocate, *Scatter:
-		return true
-	}
-	return false
+    switch stmt.(type) {
+    // Normal write operations.
+    case *Insert, *Delete, *Update, *Truncate:
+        return true
+    // Import operations.
+    case *CopyFrom, *Import, *Restore:
+        return true
+    // CockroachDB extensions.
+    case *Split, *Relocate, *Scatter:
+        return true
+    }
+    return false
 }
 
 // HiddenFromStats is a pseudo-interface to be implemented
 // by statements that should not show up in per-app statistics.
 type HiddenFromStats interface {
-	hiddenFromStats()
+    hiddenFromStats()
 }
 
 // HiddenFromShowQueries is a pseudo-interface to be implemented
@@ -174,7 +174,7 @@ type HiddenFromStats interface {
 // not cancellable using CANCEL QUERIES either). Usually implemented by
 // statements that spawn jobs.
 type HiddenFromShowQueries interface {
-	hiddenFromShowQueries()
+    hiddenFromShowQueries()
 }
 
 // IndependentFromParallelizedPriors is a pseudo-interface to be implemented
@@ -184,7 +184,7 @@ type HiddenFromShowQueries interface {
 // transaction can implement this. Otherwise, the statement will fail if any of
 // the parallel statements has encoutered a KV error (which toasts the txn).
 type IndependentFromParallelizedPriors interface {
-	independentFromParallelizedPriors()
+    independentFromParallelizedPriors()
 }
 
 // StatementList is a list of statements.
@@ -192,12 +192,12 @@ type StatementList []Statement
 
 // Format implements the NodeFormatter interface.
 func (l *StatementList) Format(ctx *FmtCtx) {
-	for i, s := range *l {
-		if i > 0 {
-			ctx.WriteString("; ")
-		}
-		ctx.FormatNode(s)
-	}
+    for i, s := range *l {
+        if i > 0 {
+            ctx.WriteString("; ")
+        }
+        ctx.FormatNode(s)
+    }
 }
 
 // ObserverStatement is a marker interface for statements which are allowed to
@@ -212,7 +212,7 @@ func (l *StatementList) Format(ctx *FmtCtx) {
 // (there are no corresponding planNodes). The connExecutor recognizes them and
 // handles them.
 type ObserverStatement interface {
-	observerStatement()
+    observerStatement()
 }
 
 // StatementType implements the Statement interface.
@@ -266,7 +266,7 @@ func (*ControlJobs) StatementType() StatementType { return RowsAffected }
 
 // StatementTag returns a short string identifying the type of statement.
 func (n *ControlJobs) StatementTag() string {
-	return fmt.Sprintf("%s JOBS", JobCommandToStatement[n.Command])
+    return fmt.Sprintf("%s JOBS", JobCommandToStatement[n.Command])
 }
 
 func (*ControlJobs) independentFromParallelizedPriors() {}
@@ -321,18 +321,18 @@ func (*CreateIndex) StatementTag() string { return "CREATE INDEX" }
 
 // StatementType implements the Statement interface.
 func (n *CreateTable) StatementType() StatementType {
-	if n.As() {
-		return RowsAffected
-	}
-	return DDL
+    if n.As() {
+        return RowsAffected
+    }
+    return DDL
 }
 
 // StatementTag returns a short string identifying the type of statement.
 func (n *CreateTable) StatementTag() string {
-	if n.As() {
-		return "SELECT"
-	}
-	return "CREATE TABLE"
+    if n.As() {
+        return "SELECT"
+    }
+    return "CREATE TABLE"
 }
 
 // modifiesSchema implements the canModifySchema interface.
@@ -377,11 +377,11 @@ func (*Deallocate) StatementType() StatementType { return Ack }
 
 // StatementTag returns a short string identifying the type of statement.
 func (n *Deallocate) StatementTag() string {
-	// Postgres distinguishes the command tags for these two cases of Deallocate statements.
-	if n.Name == "" {
-		return "DEALLOCATE ALL"
-	}
-	return "DEALLOCATE"
+    // Postgres distinguishes the command tags for these two cases of Deallocate statements.
+    if n.Name == "" {
+        return "DEALLOCATE ALL"
+    }
+    return "DEALLOCATE"
 }
 
 func (*Deallocate) hiddenFromStats() {}
@@ -535,12 +535,12 @@ func (*RenameTable) StatementType() StatementType { return DDL }
 
 // StatementTag returns a short string identifying the type of statement.
 func (n *RenameTable) StatementTag() string {
-	if n.IsView {
-		return "RENAME VIEW"
-	} else if n.IsSequence {
-		return "RENAME SEQUENCE"
-	}
-	return "RENAME TABLE"
+    if n.IsView {
+        return "RENAME VIEW"
+    } else if n.IsSequence {
+        return "RENAME SEQUENCE"
+    }
+    return "RENAME TABLE"
 }
 
 // StatementType implements the Statement interface.
@@ -548,10 +548,10 @@ func (*Relocate) StatementType() StatementType { return Rows }
 
 // StatementTag returns a short string identifying the type of statement.
 func (n *Relocate) StatementTag() string {
-	if n.RelocateLease {
-		return "EXPERIMENTAL_RELOCATE LEASE"
-	}
-	return "EXPERIMENTAL_RELOCATE"
+    if n.RelocateLease {
+        return "EXPERIMENTAL_RELOCATE LEASE"
+    }
+    return "EXPERIMENTAL_RELOCATE"
 }
 
 // StatementType implements the Statement interface.

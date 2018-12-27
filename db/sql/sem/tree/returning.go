@@ -59,11 +59,11 @@ package tree
 
 // ReturningClause represents the returning clause on a statement.
 type ReturningClause interface {
-	NodeFormatter
-	// statementType returns the StatementType of statements that include
-	// the implementors variant of a RETURNING clause.
-	statementType() StatementType
-	returningClause()
+    NodeFormatter
+    // statementType returns the StatementType of statements that include
+    // the implementors variant of a RETURNING clause.
+    statementType() StatementType
+    returningClause()
 }
 
 var _ ReturningClause = &ReturningExprs{}
@@ -75,8 +75,8 @@ type ReturningExprs SelectExprs
 
 // Format implements the NodeFormatter interface.
 func (r *ReturningExprs) Format(ctx *FmtCtx) {
-	ctx.WriteString(" RETURNING ")
-	ctx.FormatNode((*SelectExprs)(r))
+    ctx.WriteString(" RETURNING ")
+    ctx.FormatNode((*SelectExprs)(r))
 }
 
 // ReturningNothingClause is a shared instance to avoid unnecessary allocations.
@@ -87,7 +87,7 @@ type ReturningNothing struct{}
 
 // Format implements the NodeFormatter interface.
 func (*ReturningNothing) Format(ctx *FmtCtx) {
-	ctx.WriteString(" RETURNING NOTHING")
+    ctx.WriteString(" RETURNING NOTHING")
 }
 
 // AbsentReturningClause is a ReturningClause variant representing the absence of
@@ -112,6 +112,6 @@ func (*NoReturningClause) returningClause() {}
 // HasReturningClause determines if a ReturningClause is present, given a
 // variant of the ReturningClause interface.
 func HasReturningClause(clause ReturningClause) bool {
-	_, ok := clause.(*NoReturningClause)
-	return !ok
+    _, ok := clause.(*NoReturningClause)
+    return !ok
 }

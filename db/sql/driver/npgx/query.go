@@ -58,175 +58,175 @@
 package npgx
 
 import (
-	"context"
-	"database/sql"
-	"fmt"
-	"github.com/pkg/errors"
-	"github.com/readystock/noah/db/sql/pgwire/pgproto"
-	"github.com/readystock/noah/db/sql/types"
-	"reflect"
-	"time"
+    "context"
+    "database/sql"
+    "fmt"
+    "github.com/pkg/errors"
+    "github.com/readystock/noah/db/sql/pgwire/pgproto"
+    "github.com/readystock/noah/db/sql/types"
+    "reflect"
+    "time"
 )
 
 type Row Rows
 
 type Rows struct {
-	conn       *Conn
-	connPool   *ConnPool
-	values     [][]byte
-	fields     []FieldDescription
-	pgFields   []pgproto.FieldDescription
-	rowCount   int
-	columnIdx  int
-	err        error
-	startTime  time.Time
-	sql        string
-	args       []interface{}
-	unlockConn bool
-	closed     bool
+    conn       *Conn
+    connPool   *ConnPool
+    values     [][]byte
+    fields     []FieldDescription
+    pgFields   []pgproto.FieldDescription
+    rowCount   int
+    columnIdx  int
+    err        error
+    startTime  time.Time
+    sql        string
+    args       []interface{}
+    unlockConn bool
+    closed     bool
 }
 
 func (rows *Rows) FieldDescriptions() []FieldDescription {
-	return rows.fields
+    return rows.fields
 }
 
 func (rows *Rows) PgFieldDescriptions() []pgproto.FieldDescription {
-	return rows.pgFields
+    return rows.pgFields
 }
 
 // Close closes the rows, making the connection ready for use again. It is safe
 // to call Close after rows is already closed.
 func (rows *Rows) Close() {
-	if rows.closed {
-		return
-	}
+    if rows.closed {
+        return
+    }
 
-	if rows.unlockConn {
-		rows.conn.unlock()
-		rows.unlockConn = false
-	}
+    if rows.unlockConn {
+        rows.conn.unlock()
+        rows.unlockConn = false
+    }
 
-	rows.closed = true
+    rows.closed = true
 
-	rows.err = rows.conn.termContext(rows.err)
+    rows.err = rows.conn.termContext(rows.err)
 
-	if rows.connPool != nil {
-		rows.connPool.Release(rows.conn)
-	}
+    if rows.connPool != nil {
+        rows.connPool.Release(rows.conn)
+    }
 }
 
 func (rows *Rows) Err() error {
-	return rows.err
+    return rows.err
 }
 
 // fatal signals an error occurred after the query was sent to the server. It
 // closes the rows automatically.
 func (rows *Rows) fatal(err error) {
-	if rows.err != nil {
-		return
-	}
+    if rows.err != nil {
+        return
+    }
 
-	rows.err = err
-	rows.Close()
+    rows.err = err
+    rows.Close()
 }
 
 // Next prepares the next row for reading. It returns true if there is another
 // row and false if no more rows are available. It automatically closes rows
 // when all rows are read.
 func (rows *Rows) Next() bool {
-	if rows.closed {
-		return false
-	}
+    if rows.closed {
+        return false
+    }
 
-	rows.rowCount++
-	rows.columnIdx = 0
+    rows.rowCount++
+    rows.columnIdx = 0
 
-	for {
-		msg, err := rows.conn.rxMsg()
-		if err != nil {
-			rows.fatal(err)
-			return false
-		}
+    for {
+        msg, err := rows.conn.rxMsg()
+        if err != nil {
+            rows.fatal(err)
+            return false
+        }
 
-		switch msg := msg.(type) {
-		case *pgproto.RowDescription:
-			rows.fields = rows.conn.rxRowDescription(msg)
-			rows.pgFields = msg.Fields
-			for i := range rows.fields {
-				if dt, ok := rows.conn.ConnInfo.DataTypeForOID(rows.fields[i].DataType); ok {
-					rows.fields[i].DataTypeName = dt.Name
-					rows.fields[i].FormatCode = TextFormatCode
-				} else {
-					rows.fields[i].DataTypeName = "text"
-					rows.fields[i].FormatCode = TextFormatCode
-				}
-			}
-		case *pgproto.DataRow:
-			if len(msg.Values) != len(rows.fields) {
-				rows.fatal(ProtocolError(fmt.Sprintf("Row description field count (%v) and data row field count (%v) do not match", len(rows.fields), len(msg.Values))))
-				return false
-			}
+        switch msg := msg.(type) {
+        case *pgproto.RowDescription:
+            rows.fields = rows.conn.rxRowDescription(msg)
+            rows.pgFields = msg.Fields
+            for i := range rows.fields {
+                if dt, ok := rows.conn.ConnInfo.DataTypeForOID(rows.fields[i].DataType); ok {
+                    rows.fields[i].DataTypeName = dt.Name
+                    rows.fields[i].FormatCode = TextFormatCode
+                } else {
+                    rows.fields[i].DataTypeName = "text"
+                    rows.fields[i].FormatCode = TextFormatCode
+                }
+            }
+        case *pgproto.DataRow:
+            if len(msg.Values) != len(rows.fields) {
+                rows.fatal(ProtocolError(fmt.Sprintf("Row description field count (%v) and data row field count (%v) do not match", len(rows.fields), len(msg.Values))))
+                return false
+            }
 
-			rows.values = msg.Values
-			return true
-		case *pgproto.CommandComplete:
-			rows.Close()
-			return false
+            rows.values = msg.Values
+            return true
+        case *pgproto.CommandComplete:
+            rows.Close()
+            return false
 
-		default:
-			err = rows.conn.processContextFreeMsg(msg)
-			if err != nil {
-				rows.fatal(err)
-				return false
-			}
-		}
-	}
+        default:
+            err = rows.conn.processContextFreeMsg(msg)
+            if err != nil {
+                rows.fatal(err)
+                return false
+            }
+        }
+    }
 }
 
 func (rows *Rows) nextColumn() ([]byte, *FieldDescription, bool) {
-	if rows.closed {
-		return nil, nil, false
-	}
-	if len(rows.fields) <= rows.columnIdx {
-		rows.fatal(ProtocolError("No next column available"))
-		return nil, nil, false
-	}
+    if rows.closed {
+        return nil, nil, false
+    }
+    if len(rows.fields) <= rows.columnIdx {
+        rows.fatal(ProtocolError("No next column available"))
+        return nil, nil, false
+    }
 
-	buf := rows.values[rows.columnIdx]
-	fd := &rows.fields[rows.columnIdx]
-	rows.columnIdx++
-	return buf, fd, true
+    buf := rows.values[rows.columnIdx]
+    fd := &rows.fields[rows.columnIdx]
+    rows.columnIdx++
+    return buf, fd, true
 }
 
 type scanArgError struct {
-	col int
-	err error
+    col int
+    err error
 }
 
 func (e scanArgError) Error() string {
-	return fmt.Sprintf("can't scan into dest[%d]: %v", e.col, e.err)
+    return fmt.Sprintf("can't scan into dest[%d]: %v", e.col, e.err)
 }
 
 // Scan works the same as (*Rows Scan) with the following exceptions. If no
 // rows were found it returns ErrNoRows. If multiple rows are returned it
 // ignores all but the first.
 func (r *Row) Scan(dest ...interface{}) (err error) {
-	rows := (*Rows)(r)
+    rows := (*Rows)(r)
 
-	if rows.Err() != nil {
-		return rows.Err()
-	}
+    if rows.Err() != nil {
+        return rows.Err()
+    }
 
-	if !rows.Next() {
-		if rows.Err() == nil {
-			return ErrNoRows
-		}
-		return rows.Err()
-	}
+    if !rows.Next() {
+        if rows.Err() == nil {
+            return ErrNoRows
+        }
+        return rows.Err()
+    }
 
-	rows.Scan(dest...)
-	rows.Close()
-	return rows.Err()
+    rows.Scan(dest...)
+    rows.Close()
+    return rows.Err()
 }
 
 // Scan reads the values from the current row into dest values positionally.
@@ -234,269 +234,269 @@ func (r *Row) Scan(dest ...interface{}) (err error) {
 // interface, []byte, and nil. []byte will skip the decoding process and directly
 // copy the raw bytes received from PostgreSQL. nil will skip the value entirely.
 func (rows *Rows) Scan(dest ...interface{}) (err error) {
-	if len(rows.fields) != len(dest) {
-		err = errors.Errorf("Scan received wrong number of arguments, got %d but expected %d", len(dest), len(rows.fields))
-		rows.fatal(err)
-		return err
-	}
+    if len(rows.fields) != len(dest) {
+        err = errors.Errorf("Scan received wrong number of arguments, got %d but expected %d", len(dest), len(rows.fields))
+        rows.fatal(err)
+        return err
+    }
 
-	for i, d := range dest {
-		buf, fd, _ := rows.nextColumn()
+    for i, d := range dest {
+        buf, fd, _ := rows.nextColumn()
 
-		if d == nil {
-			continue
-		}
+        if d == nil {
+            continue
+        }
 
-		if s, ok := d.(types.BinaryDecoder); ok && fd.FormatCode == BinaryFormatCode {
-			err = s.DecodeBinary(rows.conn.ConnInfo, buf)
-			if err != nil {
-				rows.fatal(scanArgError{col: i, err: err})
-			}
-		} else if s, ok := d.(types.TextDecoder); ok && fd.FormatCode == TextFormatCode {
-			err = s.DecodeText(rows.conn.ConnInfo, buf)
-			if err != nil {
-				rows.fatal(scanArgError{col: i, err: err})
-			}
-		} else {
-			if dt, ok := rows.conn.ConnInfo.DataTypeForOID(fd.DataType); ok {
-				value := dt.Value
-				switch fd.FormatCode {
-				case TextFormatCode:
-					if textDecoder, ok := value.(types.TextDecoder); ok {
-						err = textDecoder.DecodeText(rows.conn.ConnInfo, buf)
-						if err != nil {
-							rows.fatal(scanArgError{col: i, err: err})
-						}
-					} else {
-						rows.fatal(scanArgError{col: i, err: errors.Errorf("%T is not a pgtype.TextDecoder", value)})
-					}
-				case BinaryFormatCode:
-					if binaryDecoder, ok := value.(types.BinaryDecoder); ok {
-						err = binaryDecoder.DecodeBinary(rows.conn.ConnInfo, buf)
-						if err != nil {
-							rows.fatal(scanArgError{col: i, err: err})
-						}
-					} else {
-						rows.fatal(scanArgError{col: i, err: errors.Errorf("%T is not a pgtype.BinaryDecoder", value)})
-					}
-				default:
-					rows.fatal(scanArgError{col: i, err: errors.Errorf("unknown format code: %v", fd.FormatCode)})
-				}
+        if s, ok := d.(types.BinaryDecoder); ok && fd.FormatCode == BinaryFormatCode {
+            err = s.DecodeBinary(rows.conn.ConnInfo, buf)
+            if err != nil {
+                rows.fatal(scanArgError{col: i, err: err})
+            }
+        } else if s, ok := d.(types.TextDecoder); ok && fd.FormatCode == TextFormatCode {
+            err = s.DecodeText(rows.conn.ConnInfo, buf)
+            if err != nil {
+                rows.fatal(scanArgError{col: i, err: err})
+            }
+        } else {
+            if dt, ok := rows.conn.ConnInfo.DataTypeForOID(fd.DataType); ok {
+                value := dt.Value
+                switch fd.FormatCode {
+                case TextFormatCode:
+                    if textDecoder, ok := value.(types.TextDecoder); ok {
+                        err = textDecoder.DecodeText(rows.conn.ConnInfo, buf)
+                        if err != nil {
+                            rows.fatal(scanArgError{col: i, err: err})
+                        }
+                    } else {
+                        rows.fatal(scanArgError{col: i, err: errors.Errorf("%T is not a pgtype.TextDecoder", value)})
+                    }
+                case BinaryFormatCode:
+                    if binaryDecoder, ok := value.(types.BinaryDecoder); ok {
+                        err = binaryDecoder.DecodeBinary(rows.conn.ConnInfo, buf)
+                        if err != nil {
+                            rows.fatal(scanArgError{col: i, err: err})
+                        }
+                    } else {
+                        rows.fatal(scanArgError{col: i, err: errors.Errorf("%T is not a pgtype.BinaryDecoder", value)})
+                    }
+                default:
+                    rows.fatal(scanArgError{col: i, err: errors.Errorf("unknown format code: %v", fd.FormatCode)})
+                }
 
-				if rows.Err() == nil {
-					if scanner, ok := d.(sql.Scanner); ok {
-						sqlSrc, err := types.DatabaseSQLValue(rows.conn.ConnInfo, value)
-						if err != nil {
-							rows.fatal(err)
-						}
-						err = scanner.Scan(sqlSrc)
-						if err != nil {
-							rows.fatal(scanArgError{col: i, err: err})
-						}
-					} else if err := value.AssignTo(d); err != nil {
-						rows.fatal(scanArgError{col: i, err: err})
-					}
-				}
-			} else {
-				rows.fatal(scanArgError{col: i, err: errors.Errorf("unknown oid: %v", fd.DataType)})
-			}
-		}
+                if rows.Err() == nil {
+                    if scanner, ok := d.(sql.Scanner); ok {
+                        sqlSrc, err := types.DatabaseSQLValue(rows.conn.ConnInfo, value)
+                        if err != nil {
+                            rows.fatal(err)
+                        }
+                        err = scanner.Scan(sqlSrc)
+                        if err != nil {
+                            rows.fatal(scanArgError{col: i, err: err})
+                        }
+                    } else if err := value.AssignTo(d); err != nil {
+                        rows.fatal(scanArgError{col: i, err: err})
+                    }
+                }
+            } else {
+                rows.fatal(scanArgError{col: i, err: errors.Errorf("unknown oid: %v", fd.DataType)})
+            }
+        }
 
-		if rows.Err() != nil {
-			return rows.Err()
-		}
-	}
+        if rows.Err() != nil {
+            return rows.Err()
+        }
+    }
 
-	return nil
+    return nil
 }
 
 func (c *Conn) QueryEx(ctx context.Context, sql string, options *QueryExOptions) (rows *Rows, err error) {
-	c.lastActivityTime = time.Now()
-	rows = c.getRows(sql)
+    c.lastActivityTime = time.Now()
+    rows = c.getRows(sql)
 
-	err = c.waitForPreviousCancelQuery(ctx)
-	if err != nil {
-		rows.fatal(err)
-		return rows, err
-	}
+    err = c.waitForPreviousCancelQuery(ctx)
+    if err != nil {
+        rows.fatal(err)
+        return rows, err
+    }
 
-	if err := c.ensureConnectionReadyForQuery(); err != nil {
-		rows.fatal(err)
-		return rows, err
-	}
+    if err := c.ensureConnectionReadyForQuery(); err != nil {
+        rows.fatal(err)
+        return rows, err
+    }
 
-	if err := c.lock(); err != nil {
-		rows.fatal(err)
-		return rows, err
-	}
-	rows.unlockConn = true
+    if err := c.lock(); err != nil {
+        rows.fatal(err)
+        return rows, err
+    }
+    rows.unlockConn = true
 
-	err = c.initContext(ctx)
-	if err != nil {
-		rows.fatal(err)
-		return rows, rows.err
-	}
+    err = c.initContext(ctx)
+    if err != nil {
+        rows.fatal(err)
+        return rows, rows.err
+    }
 
-	err = c.sendSimpleQuery(sql)
-	if err != nil {
-		rows.fatal(err)
-		return rows, err
-	}
-	return rows, nil
+    err = c.sendSimpleQuery(sql)
+    if err != nil {
+        rows.fatal(err)
+        return rows, err
+    }
+    return rows, nil
 }
 
 // Values returns an array of the row values
 func (rows *Rows) Values() ([]interface{}, error) {
-	if rows.closed {
-		return nil, errors.New("rows is closed")
-	}
+    if rows.closed {
+        return nil, errors.New("rows is closed")
+    }
 
-	values := make([]interface{}, 0, len(rows.fields))
+    values := make([]interface{}, 0, len(rows.fields))
 
-	for range rows.fields {
-		buf, fd, _ := rows.nextColumn()
+    for range rows.fields {
+        buf, fd, _ := rows.nextColumn()
 
-		if buf == nil {
-			values = append(values, nil)
-			continue
-		}
+        if buf == nil {
+            values = append(values, nil)
+            continue
+        }
 
-		if dt, ok := rows.conn.ConnInfo.DataTypeForOID(fd.DataType); ok {
-			value := reflect.New(reflect.ValueOf(dt.Value).Elem().Type()).Interface().(types.Value)
-			switch fd.FormatCode {
-			case TextFormatCode:
-				decoder := value.(types.TextDecoder)
-				if decoder == nil {
-					decoder = &types.GenericText{}
-				}
-				err := decoder.DecodeText(rows.conn.ConnInfo, buf)
-				if err != nil {
-					rows.fatal(err)
-				}
-				values = append(values, decoder.(types.Value).Get())
-			case BinaryFormatCode:
-				decoder := value.(types.BinaryDecoder)
-				if decoder == nil {
-					decoder = &types.GenericBinary{}
-				}
-				err := decoder.DecodeBinary(rows.conn.ConnInfo, buf)
-				if err != nil {
-					rows.fatal(err)
-				}
-				values = append(values, value.Get())
-			default:
-				rows.fatal(errors.New("Unknown format code"))
-			}
-		} else {
-			value := types.Text{}
-			switch fd.FormatCode {
-			case TextFormatCode:
-				err := value.DecodeText(rows.conn.ConnInfo, buf)
-				if err != nil {
-					rows.fatal(err)
-				}
-				values = append(values, value.Get())
-			case BinaryFormatCode:
-				err := value.DecodeBinary(rows.conn.ConnInfo, buf)
-				if err != nil {
-					rows.fatal(err)
-				}
-				values = append(values, value.Get())
-			default:
-				rows.fatal(errors.New("Unknown format code"))
-			}
-			// rows.fatal(errors.New("Unknown type"))
-		}
+        if dt, ok := rows.conn.ConnInfo.DataTypeForOID(fd.DataType); ok {
+            value := reflect.New(reflect.ValueOf(dt.Value).Elem().Type()).Interface().(types.Value)
+            switch fd.FormatCode {
+            case TextFormatCode:
+                decoder := value.(types.TextDecoder)
+                if decoder == nil {
+                    decoder = &types.GenericText{}
+                }
+                err := decoder.DecodeText(rows.conn.ConnInfo, buf)
+                if err != nil {
+                    rows.fatal(err)
+                }
+                values = append(values, decoder.(types.Value).Get())
+            case BinaryFormatCode:
+                decoder := value.(types.BinaryDecoder)
+                if decoder == nil {
+                    decoder = &types.GenericBinary{}
+                }
+                err := decoder.DecodeBinary(rows.conn.ConnInfo, buf)
+                if err != nil {
+                    rows.fatal(err)
+                }
+                values = append(values, value.Get())
+            default:
+                rows.fatal(errors.New("Unknown format code"))
+            }
+        } else {
+            value := types.Text{}
+            switch fd.FormatCode {
+            case TextFormatCode:
+                err := value.DecodeText(rows.conn.ConnInfo, buf)
+                if err != nil {
+                    rows.fatal(err)
+                }
+                values = append(values, value.Get())
+            case BinaryFormatCode:
+                err := value.DecodeBinary(rows.conn.ConnInfo, buf)
+                if err != nil {
+                    rows.fatal(err)
+                }
+                values = append(values, value.Get())
+            default:
+                rows.fatal(errors.New("Unknown format code"))
+            }
+            // rows.fatal(errors.New("Unknown type"))
+        }
 
-		if rows.Err() != nil {
-			return nil, rows.Err()
-		}
-	}
+        if rows.Err() != nil {
+            return nil, rows.Err()
+        }
+    }
 
-	return values, rows.Err()
+    return values, rows.Err()
 }
 
 func (rows *Rows) PgValues() ([]types.Value, error) {
-	if rows.closed {
-		return nil, errors.New("rows is closed")
-	}
+    if rows.closed {
+        return nil, errors.New("rows is closed")
+    }
 
-	values := make([]types.Value, 0, len(rows.fields))
+    values := make([]types.Value, 0, len(rows.fields))
 
-	for range rows.fields {
-		buf, fd, _ := rows.nextColumn()
+    for range rows.fields {
+        buf, fd, _ := rows.nextColumn()
 
-		if buf == nil {
-			values = append(values, nil)
-			continue
-		}
+        if buf == nil {
+            values = append(values, nil)
+            continue
+        }
 
-		if dt, ok := rows.conn.ConnInfo.DataTypeForOID(fd.DataType); ok {
-			value := reflect.New(reflect.ValueOf(dt.Value).Elem().Type()).Interface().(types.Value)
-			switch fd.FormatCode {
-			case TextFormatCode:
-				decoder := value.(types.TextDecoder)
-				if decoder == nil {
-					decoder = &types.GenericText{}
-				}
-				err := decoder.DecodeText(rows.conn.ConnInfo, buf)
-				if err != nil {
-					rows.fatal(err)
-				}
-				values = append(values, decoder.(types.Value))
-			case BinaryFormatCode:
-				decoder := value.(types.BinaryDecoder)
-				if decoder == nil {
-					decoder = &types.GenericBinary{}
-				}
-				err := decoder.DecodeBinary(rows.conn.ConnInfo, buf)
-				if err != nil {
-					rows.fatal(err)
-				}
-				values = append(values, value)
-			default:
-				rows.fatal(errors.New("Unknown format code"))
-			}
-		} else {
-			value := &types.Text{}
-			switch fd.FormatCode {
-			case TextFormatCode:
-				err := value.DecodeText(rows.conn.ConnInfo, buf)
-				if err != nil {
-					rows.fatal(err)
-				}
-				values = append(values, value)
-			case BinaryFormatCode:
-				err := value.DecodeBinary(rows.conn.ConnInfo, buf)
-				if err != nil {
-					rows.fatal(err)
-				}
-				values = append(values, value)
-			default:
-				rows.fatal(errors.New("Unknown format code"))
-			}
-		}
+        if dt, ok := rows.conn.ConnInfo.DataTypeForOID(fd.DataType); ok {
+            value := reflect.New(reflect.ValueOf(dt.Value).Elem().Type()).Interface().(types.Value)
+            switch fd.FormatCode {
+            case TextFormatCode:
+                decoder := value.(types.TextDecoder)
+                if decoder == nil {
+                    decoder = &types.GenericText{}
+                }
+                err := decoder.DecodeText(rows.conn.ConnInfo, buf)
+                if err != nil {
+                    rows.fatal(err)
+                }
+                values = append(values, decoder.(types.Value))
+            case BinaryFormatCode:
+                decoder := value.(types.BinaryDecoder)
+                if decoder == nil {
+                    decoder = &types.GenericBinary{}
+                }
+                err := decoder.DecodeBinary(rows.conn.ConnInfo, buf)
+                if err != nil {
+                    rows.fatal(err)
+                }
+                values = append(values, value)
+            default:
+                rows.fatal(errors.New("Unknown format code"))
+            }
+        } else {
+            value := &types.Text{}
+            switch fd.FormatCode {
+            case TextFormatCode:
+                err := value.DecodeText(rows.conn.ConnInfo, buf)
+                if err != nil {
+                    rows.fatal(err)
+                }
+                values = append(values, value)
+            case BinaryFormatCode:
+                err := value.DecodeBinary(rows.conn.ConnInfo, buf)
+                if err != nil {
+                    rows.fatal(err)
+                }
+                values = append(values, value)
+            default:
+                rows.fatal(errors.New("Unknown format code"))
+            }
+        }
 
-		if rows.Err() != nil {
-			return nil, rows.Err()
-		}
-	}
+        if rows.Err() != nil {
+            return nil, rows.Err()
+        }
+    }
 
-	return values, rows.Err()
+    return values, rows.Err()
 }
 
 func (c *Conn) getRows(sql string) *Rows {
-	if len(c.preallocatedRows) == 0 {
-		c.preallocatedRows = make([]Rows, 64)
-	}
+    if len(c.preallocatedRows) == 0 {
+        c.preallocatedRows = make([]Rows, 64)
+    }
 
-	r := &c.preallocatedRows[len(c.preallocatedRows)-1]
-	c.preallocatedRows = c.preallocatedRows[0 : len(c.preallocatedRows)-1]
+    r := &c.preallocatedRows[len(c.preallocatedRows)-1]
+    c.preallocatedRows = c.preallocatedRows[0 : len(c.preallocatedRows)-1]
 
-	r.conn = c
-	r.startTime = c.lastActivityTime
-	r.sql = sql
-	r.args = make([]interface{}, 0)
+    r.conn = c
+    r.startTime = c.lastActivityTime
+    r.sql = sql
+    r.args = make([]interface{}, 0)
 
-	return r
+    return r
 }

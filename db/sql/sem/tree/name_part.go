@@ -58,7 +58,7 @@
 package tree
 
 import (
-	"github.com/readystock/noah/db/sql/lex"
+    "github.com/readystock/noah/db/sql/lex"
 )
 
 // A Name is an SQL identifier.
@@ -75,37 +75,37 @@ type Name string
 
 // Format implements the NodeFormatter interface.
 func (n *Name) Format(ctx *FmtCtx) {
-	f := ctx.flags
-	if f.HasFlags(FmtAnonymize) {
-		ctx.WriteByte('_')
-	} else {
-		lex.EncodeRestrictedSQLIdent(ctx.Buffer, string(*n), f.EncodeFlags())
-	}
+    f := ctx.flags
+    if f.HasFlags(FmtAnonymize) {
+        ctx.WriteByte('_')
+    } else {
+        lex.EncodeRestrictedSQLIdent(ctx.Buffer, string(*n), f.EncodeFlags())
+    }
 }
 
 // NameStringP escapes an identifier stored in a heap string to a SQL
 // identifier, avoiding a heap allocation.
 func NameStringP(s *string) string {
-	return ((*Name)(s)).String()
+    return ((*Name)(s)).String()
 }
 
 // NameString escapes an identifier stored in a string to a SQL
 // identifier.
 func NameString(s string) string {
-	return ((*Name)(&s)).String()
+    return ((*Name)(&s)).String()
 }
 
 // ErrNameString escapes an identifier stored a string to a SQL
 // identifier suitable for printing in error messages, avoiding a heap
 // allocation.
 func ErrNameString(s *string) string {
-	return ErrString((*Name)(s))
+    return ErrString((*Name)(s))
 }
 
 // Normalize normalizes to lowercase and Unicode Normalization Form C
 // (NFC).
 func (n Name) Normalize() string {
-	return lex.NormalizeName(string(n))
+    return lex.NormalizeName(string(n))
 }
 
 // An UnrestrictedName is a Name that does not need to be escaped when it
@@ -124,24 +124,24 @@ type UnrestrictedName string
 
 // Format implements the NodeFormatter interface.
 func (u *UnrestrictedName) Format(ctx *FmtCtx) {
-	f := ctx.flags
-	if f.HasFlags(FmtAnonymize) {
-		ctx.WriteByte('_')
-	} else {
-		lex.EncodeUnrestrictedSQLIdent(ctx.Buffer, string(*u), f.EncodeFlags())
-	}
+    f := ctx.flags
+    if f.HasFlags(FmtAnonymize) {
+        ctx.WriteByte('_')
+    } else {
+        lex.EncodeUnrestrictedSQLIdent(ctx.Buffer, string(*u), f.EncodeFlags())
+    }
 }
 
 // ToStrings converts the name list to an array of regular strings.
 func (l NameList) ToStrings() []string {
-	if l == nil {
-		return nil
-	}
-	names := make([]string, len(l))
-	for i, n := range l {
-		names[i] = string(n)
-	}
-	return names
+    if l == nil {
+        return nil
+    }
+    names := make([]string, len(l))
+    for i, n := range l {
+        names[i] = string(n)
+    }
+    return names
 }
 
 // A NameList is a list of identifiers.
@@ -149,55 +149,55 @@ type NameList []Name
 
 // Format implements the NodeFormatter interface.
 func (l *NameList) Format(ctx *FmtCtx) {
-	for i := range *l {
-		if i > 0 {
-			ctx.WriteString(", ")
-		}
-		ctx.FormatNode(&(*l)[i])
-	}
+    for i := range *l {
+        if i > 0 {
+            ctx.WriteString(", ")
+        }
+        ctx.FormatNode(&(*l)[i])
+    }
 }
 
 // ArraySubscript corresponds to the syntax `<name>[ ... ]`.
 type ArraySubscript struct {
-	Begin Expr
-	End   Expr
-	Slice bool
+    Begin Expr
+    End   Expr
+    Slice bool
 }
 
 // Format implements the NodeFormatter interface.
 func (a *ArraySubscript) Format(ctx *FmtCtx) {
-	ctx.WriteByte('[')
-	if a.Begin != nil {
-		ctx.FormatNode(a.Begin)
-	}
-	if a.Slice {
-		ctx.WriteByte(':')
-		if a.End != nil {
-			ctx.FormatNode(a.End)
-		}
-	}
-	ctx.WriteByte(']')
+    ctx.WriteByte('[')
+    if a.Begin != nil {
+        ctx.FormatNode(a.Begin)
+    }
+    if a.Slice {
+        ctx.WriteByte(':')
+        if a.End != nil {
+            ctx.FormatNode(a.End)
+        }
+    }
+    ctx.WriteByte(']')
 }
 
 // UnresolvedName corresponds to an unresolved qualified name.
 type UnresolvedName struct {
-	// NumParts indicates the number of name parts specified, including
-	// the star. Always 1 or greater.
-	NumParts int
+    // NumParts indicates the number of name parts specified, including
+    // the star. Always 1 or greater.
+    NumParts int
 
-	// Star indicates the name ends with a star.
-	// In that case, Parts below is empty in the first position.
-	Star bool
+    // Star indicates the name ends with a star.
+    // In that case, Parts below is empty in the first position.
+    Star bool
 
-	// Parts are the name components, in reverse order.
-	// There are at most 4: column, table, schema, catalog/db.
-	//
-	// Note: NameParts has a fixed size so that we avoid a heap
-	// allocation for the slice every time we construct an
-	// UnresolvedName. It does imply however that Parts does not have
-	// a meaningful "length"; its actual length (the number of parts
-	// specified) is populated in NumParts above.
-	Parts NameParts
+    // Parts are the name components, in reverse order.
+    // There are at most 4: column, table, schema, catalog/db.
+    //
+    // Note: NameParts has a fixed size so that we avoid a heap
+    // allocation for the slice every time we construct an
+    // UnresolvedName. It does imply however that Parts does not have
+    // a meaningful "length"; its actual length (the number of parts
+    // specified) is populated in NumParts above.
+    Parts NameParts
 }
 
 // NameParts is the array of strings that composes the path in an
@@ -206,41 +206,41 @@ type NameParts = [4]string
 
 // Format implements the NodeFormatter interface.
 func (u *UnresolvedName) Format(ctx *FmtCtx) {
-	stopAt := 1
-	if u.Star {
-		stopAt = 2
-	}
-	// Every part after that is necessarily an unrestricted name.
-	for i := u.NumParts; i >= stopAt; i-- {
-		// The first part to print is the last item in u.Parts.  It is also
-		// a potentially restricted name to disambiguate from keywords in
-		// the grammar, so print it out as a "Name".
-		if i == u.NumParts {
-			ctx.FormatNode((*Name)(&u.Parts[i-1]))
-		} else {
-			ctx.FormatNode((*UnrestrictedName)(&u.Parts[i-1]))
-		}
-		if i > 1 {
-			ctx.WriteByte('.')
-		}
-	}
-	if u.Star {
-		ctx.WriteByte('*')
-	}
+    stopAt := 1
+    if u.Star {
+        stopAt = 2
+    }
+    // Every part after that is necessarily an unrestricted name.
+    for i := u.NumParts; i >= stopAt; i-- {
+        // The first part to print is the last item in u.Parts.  It is also
+        // a potentially restricted name to disambiguate from keywords in
+        // the grammar, so print it out as a "Name".
+        if i == u.NumParts {
+            ctx.FormatNode((*Name)(&u.Parts[i-1]))
+        } else {
+            ctx.FormatNode((*UnrestrictedName)(&u.Parts[i-1]))
+        }
+        if i > 1 {
+            ctx.WriteByte('.')
+        }
+    }
+    if u.Star {
+        ctx.WriteByte('*')
+    }
 }
 func (u *UnresolvedName) String() string { return AsString(u) }
 
 // NewUnresolvedName constructs an UnresolvedName from some strings.
 func NewUnresolvedName(args ...string) *UnresolvedName {
-	n := MakeUnresolvedName(args...)
-	return &n
+    n := MakeUnresolvedName(args...)
+    return &n
 }
 
 // MakeUnresolvedName constructs an UnresolvedName from some strings.
 func MakeUnresolvedName(args ...string) UnresolvedName {
-	n := UnresolvedName{NumParts: len(args)}
-	for i := 0; i < len(args); i++ {
-		n.Parts[i] = args[len(args)-1-i]
-	}
-	return n
+    n := UnresolvedName{NumParts: len(args)}
+    for i := 0; i < len(args); i++ {
+        n.Parts[i] = args[len(args)-1-i]
+    }
+    return n
 }

@@ -58,84 +58,84 @@
 package sql
 
 import (
-	"github.com/readystock/noah/db/sql/pgwire/pgproto"
-	"github.com/readystock/noah/db/sql/plan"
-	"github.com/readystock/noah/db/sql/types"
-	"github.com/readystock/noah/db/system"
-	"github.com/readystock/pg_query_go/nodes"
-	"strings"
+    "github.com/readystock/noah/db/sql/pgwire/pgproto"
+    "github.com/readystock/noah/db/sql/plan"
+    "github.com/readystock/noah/db/sql/types"
+    "github.com/readystock/noah/db/system"
+    "github.com/readystock/pg_query_go/nodes"
+    "strings"
 )
 
 type VariableShowStatement struct {
-	Statement pg_query.VariableShowStmt
-	IQueryStatement
+    Statement pg_query.VariableShowStmt
+    IQueryStatement
 }
 
 func CreateVariableShowStatement(stmt pg_query.VariableShowStmt) *VariableShowStatement {
-	return &VariableShowStatement{
-		Statement: stmt,
-	}
+    return &VariableShowStatement{
+        Statement: stmt,
+    }
 }
 
 func (stmt *VariableShowStatement) Execute(ex *connExecutor, res RestrictedCommandResult) error {
-	if strings.HasPrefix(strings.ToLower(*stmt.Statement.Name), "noah") {
-		settingName := strings.Replace(strings.ToLower(*stmt.Statement.Name), "noah.", "", 1)
-		value, err := ex.SystemContext.Settings.GetSetting(system.NoahSetting(settingName))
-		if err != nil {
-			return err
-		}
-		columns := []pgproto.FieldDescription{
-			{
-				Name:                 settingName,
-				TableOID:             0,
-				TableAttributeNumber: 0,
-				DataTypeOID:          25,
-				DataTypeSize:         int16(len(*value)),
-				TypeModifier:         0,
-				Format:               0,
-			},
-		}
-		res.SetColumns(columns)
-		values := []types.Value{
-			&types.Text{
-				String: *value,
-				Status: types.Present,
-			},
-		}
-		res.AddRow(values)
-		return nil
-	}
+    if strings.HasPrefix(strings.ToLower(*stmt.Statement.Name), "noah") {
+        settingName := strings.Replace(strings.ToLower(*stmt.Statement.Name), "noah.", "", 1)
+        value, err := ex.SystemContext.Settings.GetSetting(system.NoahSetting(settingName))
+        if err != nil {
+            return err
+        }
+        columns := []pgproto.FieldDescription{
+            {
+                Name:                 settingName,
+                TableOID:             0,
+                TableAttributeNumber: 0,
+                DataTypeOID:          25,
+                DataTypeSize:         int16(len(*value)),
+                TypeModifier:         0,
+                Format:               0,
+            },
+        }
+        res.SetColumns(columns)
+        values := []types.Value{
+            &types.Text{
+                String: *value,
+                Status: types.Present,
+            },
+        }
+        res.AddRow(values)
+        return nil
+    }
 
-	targetNodes, err := stmt.getTargetNodes(ex)
-	if err != nil {
-		return err
-	}
+    targetNodes, err := stmt.getTargetNodes(ex)
+    if err != nil {
+        return err
+    }
 
-	plans, err := stmt.compilePlan(ex, targetNodes)
-	if err != nil {
-		return err
-	}
+    plans, err := stmt.compilePlan(ex, targetNodes)
+    if err != nil {
+        return err
+    }
 
-	return ex.ExecutePlans(plans, res)
+    return ex.ExecutePlans(plans, res)
 }
 
 func (stmt *VariableShowStatement) getTargetNodes(ex *connExecutor) ([]system.NNode, error) {
-	return nil, nil
-	// return ex.GetNodesForAccountID(nil)
+    return nil, nil
+    // return ex.GetNodesForAccountID(nil)
 }
 
 func (stmt *VariableShowStatement) compilePlan(ex *connExecutor, nodes []system.NNode) ([]plan.NodeExecutionPlan, error) {
-	plans := make([]plan.NodeExecutionPlan, len(nodes))
-	deparsed, err := pg_query.Deparse(stmt.Statement)
-	if err != nil {
-		return nil, err
-	}
-	for i := 0; i < len(plans); i++ {
-		plans[i] = plan.NodeExecutionPlan{
-			CompiledQuery: *deparsed,
-			Node:          nodes[i],
-			ReadOnly:      true,
-		}
-	}
-	return plans, nil
+    plans := make([]plan.NodeExecutionPlan, len(nodes))
+    deparsed, err := pg_query.Deparse(stmt.Statement)
+    if err != nil {
+        return nil, err
+    }
+    for i := 0; i < len(plans); i++ {
+        plans[i] = plan.NodeExecutionPlan{
+            CompiledQuery: *deparsed,
+            Node:          nodes[i],
+            ReadOnly:      true,
+        }
+    }
+    return plans, nil
 }
