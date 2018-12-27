@@ -1,8 +1,6 @@
 package sql
 
 import (
-    "encoding/json"
-    "fmt"
     "github.com/magiconair/properties/assert"
     "github.com/readystock/noah/db/system"
     "github.com/readystock/noah/testutils"
@@ -153,13 +151,11 @@ func Test_Create_CompilePlan_Account(t *testing.T) {
 }
 
 func Test_Create_CompilePlan_AccountNamedPrimaryKey(t *testing.T) {
-    sql := `CREATE TABLE test (id bigserial, email text, CONSTRAINT pk_test PRIMARY KEY (id)) TABLESPACE "noah.account";`
+    sql := `CREATE TABLE test (temp text, id bigserial, email text, CONSTRAINT pk_test PRIMARY KEY (id)) TABLESPACE "noah.account";`
     parsed, err := pg_query.Parse(sql)
     if err != nil {
         panic(err)
     }
-    j, _ := json.Marshal(parsed)
-    fmt.Println(string(j))
 
     stmt := CreateCreateStatement(parsed.Statements[0].(pg_query2.RawStmt).Stmt.(pg_query2.CreateStmt))
 
@@ -171,7 +167,7 @@ func Test_Create_CompilePlan_AccountNamedPrimaryKey(t *testing.T) {
     assert.Equal(t, len(plans), len(Nodes),
         "the number of plans returned did not match the number of nodes that this query should target.")
 
-    assert.Equal(t, plans[0].CompiledQuery, `CREATE TABLE "test" (id bigint PRIMARY KEY, email text)`,
+    assert.Equal(t, plans[0].CompiledQuery, `CREATE TABLE "test" (temp text, id bigint, email text, CONSTRAINT pk_test PRIMARY KEY ("id"))`,
         "the resulting query plan did not equal the expected query plan, did something change with how queries were recompiled?")
 }
 

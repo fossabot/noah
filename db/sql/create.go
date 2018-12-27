@@ -58,7 +58,7 @@
 package sql
 
 import (
-    "github.com/ahmetb/go-linq"
+    "github.com/readystock/golinq"
     "github.com/juju/errors"
     "github.com/readystock/golog"
     "github.com/readystock/noah/db/sql/plan"
@@ -257,6 +257,24 @@ func (stmt *CreateStatement) handleColumns(ex *connExecutor, table *system.NTabl
                 // handle it gracefully.
                 switch tableItem.Contype {
                 case pg_query.CONSTR_PRIMARY:
+                    if len(tableItem.Keys.Items) != 1 {
+                        return errors.Errorf("currently noah only supports single column primary keys")
+                    }
+
+                    // We want to search columns based on the column name.
+                    key := tableItem.Keys.Items[0].(pg_query.String).Str
+                    colIndex := linq.From(table.Columns).IndexOfT(func(column *system.NColumn) bool {
+                        return strings.ToLower(column.ColumnName) == strings.ToLower(key)
+                    })
+
+                    if colIndex < 0 {
+                        return errors.Errorf("could not use column [%s] as primary key, it is not defined in the create statement", key)
+                    }
+
+                    table.Columns[colIndex].IsPrimaryKey = true
+                    table.PrimaryKey = &system.NTable_PKey{
+                        PKey: table.Columns[colIndex],
+                    }
                 case pg_query.CONSTR_FOREIGN:
                 case pg_query.CONSTR_IDENTITY:
                 }
