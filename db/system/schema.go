@@ -53,6 +53,14 @@ func (ctx *SSchema) GetTable(tableName string) (*NTable, error) {
     return ctx.convertBytesToTable(bytes)
 }
 
+func (ctx *SSchema) UpdateTable(table NTable) error {
+    if bytes, err := ctx.convertTableToBytes(table); err != nil {
+        return err
+    } else {
+        return ctx.db.Set(getTablePath(table.TableName), bytes)
+    }
+}
+
 func (ctx *SSchema) GetTables() ([]NTable, error) {
     tableBytes, err := ctx.db.GetPrefix(getTablesPath())
     if err != nil {
@@ -82,6 +90,10 @@ func (ctx *SSchema) GetAccountsTable() (*NTable, error) {
 
 func (ctx *SSchema) DropTable(tableName string) (error) {
     return ctx.db.Delete(getTablePath(tableName))
+}
+
+func (ctx *SSchema) convertTableToBytes(table NTable) ([]byte, error) {
+    return proto.Marshal(&table)
 }
 
 func (ctx *SSchema) convertBytesToTable(bytes []byte) (*NTable, error) {

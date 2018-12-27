@@ -59,14 +59,18 @@ func (stmt *CreateStatement) Execute(ex *connExecutor, res RestrictedCommandResu
         return err
     }
 
-    // if ex.TransactionState == NTXNoTransaction { // When creating a table try to create a new transaction if we are not in one
-    //     if err := ex.execStmt(pg_query.TransactionStmt{Kind: pg_query.TRANS_STMT_BEGIN}, nil, 0); err != nil {
-    //         return err
-    //     }
-    //     ex.TransactionStatus = NTXInProgress
-    // }
+    // Create the table in the coordinator cluster
+    if err := ex.SystemContext.Schema.CreateTable(stmt.table); err != nil {
+        return err
+    }
 
-    return ex.ExecutePlans(plans, res)
+    if err := ex.ExecutePlans(plans, res); err != nil {
+        ex.SystemContext.Schema.DropTable(stmt.table.TableName)
+        return err
+    } else {
+        stmt.table.IsCommitted = true
+        return ex.SystemContext.Schema.UpdateTable(stmt.table)
+    }
 }
 
 func (stmt *CreateStatement) getTargetNodes(ex *connExecutor) ([]system.NNode, error) {
@@ -119,11 +123,6 @@ func (stmt *CreateStatement) compilePlan(ex *connExecutor, nodes []system.NNode)
     if err := stmt.handleColumns(ex, &stmt.table); err != nil { // Handle sharding
         return nil, err
     }
-
-    // // Create the table in the coordinator cluster
-    // if err := ex.SystemContext.Schema.CreateTable(table); err != nil {
-    //     return nil, err
-    // }
 
     compiled, err := pg_query.Deparse(stmt.Statement)
     if err != nil {
