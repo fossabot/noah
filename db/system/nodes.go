@@ -121,27 +121,26 @@ func (ctx *SNode) GetNode(nodeId uint64) (node *NNode, e error) {
     return node, err
 }
 
-func (ctx *SNode) AddNode(node NNode) error {
+func (ctx *SNode) AddNode(node NNode) (*NNode, error) {
     existingNodes, err := ctx.GetNodes()
     if err != nil {
-        return err
+        return nil, err
     }
     if linq.From(existingNodes).AnyWithT(func(existing NNode) bool {
         return node.Database == existing.Database && node.Address == existing.Address && node.Port == existing.Port
     }) {
-        return errors.New("a node already exists with the same connection string.")
+        return nil, errors.New("a node already exists with the same connection string.")
     }
     id, err := ctx.db.NextSequenceValueById("_noah.nodes_")
     if err != nil {
-        return err
+        return nil, err
     }
     node.NodeId = *id
-    node.IsAlive = true
     b, err := proto.Marshal(&node)
     if err != nil {
-        return err
+        return nil, err
     }
-    return ctx.db.Set([]byte(fmt.Sprintf("%s%d", nodesPath, node.NodeId)), b)
+    return &node, ctx.db.Set([]byte(fmt.Sprintf("%s%d", nodesPath, node.NodeId)), b)
 }
 
 func (ctx *SNode) SetNodeLive(nodeId uint64, isAlive bool) (err error) {

@@ -62,60 +62,45 @@
 package system
 
 import (
-    "github.com/gogo/protobuf/proto"
-    "github.com/stretchr/testify/assert"
+    "github.com/readystock/noah/testutils"
+    "os"
     "testing"
 )
 
-func Test_Nodes_AddNodes(t *testing.T) {
-    addNodes := []NNode{
+var (
+    SystemCtx *SContext
+    Nodes     = []NNode{
         {
-            Database: "postgres",
-        },
-        {
-            Database: "postgres1",
+            Address:   "127.0.0.1:0",
+            Port:      5432,
+            Database:  "postgres",
+            User:      "postgres",
+            Password:  "",
+            ReplicaOf: 0,
+            Region:    "",
+            Zone:      "",
+            IsAlive:   true,
         },
     }
+)
 
-    for _, node := range addNodes {
-        newNode, err := SystemCtx.Nodes.AddNode(node)
-        if err != nil {
-            t.Error(err)
-            t.FailNow()
+func TestMain(m *testing.M) {
+    tempFolder := testutils.CreateTempFolder()
+    defer testutils.DeleteTempFolder(tempFolder)
+
+    sctx, err := NewSystemContext(tempFolder, "127.0.0.1:0", "", "")
+    if err != nil {
+        panic(err)
+    }
+    SystemCtx = sctx
+    defer SystemCtx.Close()
+
+    for _, node := range Nodes {
+        if _, err := SystemCtx.Nodes.AddNode(node); err != nil {
+            panic(err)
         }
-
-        node.NodeId = newNode.NodeId
-        assert.True(t, proto.Equal(&node, newNode), "returned node does not equal the expected result")
     }
 
-
-    n, err := SystemCtx.Nodes.GetNodes()
-    if err != nil {
-        t.Error(err)
-        t.Fail()
-    }
-
-    assert.NotNil(t, n, "nodes should not be null")
-
-    assert.NotEmpty(t, n, "no nodes found, there should be at least 1")
-
-    for _, node := range n {
-        assert.True(t, node.NodeId > 0, "node ID is not greater than 0, this means that its possible that the node wasn't created")
-    }
-}
-
-func Test_Nodes_GetNodes(t *testing.T) {
-    n, err := SystemCtx.Nodes.GetNodes()
-    if err != nil {
-        t.Error(err)
-        t.Fail()
-    }
-
-    assert.NotNil(t, n, "nodes should not be null")
-
-    assert.NotEmpty(t, n, "no nodes found, there should be at least 1")
-
-    for _, node := range n {
-        assert.True(t, node.NodeId > 0, "node ID is not greater than 0, this means that its possible that the node wasn't created")
-    }
+    retCode := m.Run()
+    os.Exit(retCode)
 }
