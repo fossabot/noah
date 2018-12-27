@@ -62,8 +62,8 @@
 package sql
 
 import (
-    "github.com/readystock/golinq"
     "github.com/juju/errors"
+    "github.com/readystock/golinq"
     "github.com/readystock/golog"
     "github.com/readystock/noah/db/sql/plan"
     "github.com/readystock/noah/db/system"
@@ -153,6 +153,10 @@ func (stmt *CreateStatement) compilePlan(ex *connExecutor, nodes []system.NNode)
 
     // Determine the distribution of a table in the cluster
     if err := stmt.handleTableType(ex, &stmt.table); err != nil { // Handle sharding
+        return nil, err
+    }
+
+    if err := stmt.handleValidation(ex, &stmt.table); err != nil {
         return nil, err
     }
 
