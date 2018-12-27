@@ -62,11 +62,10 @@
 package system
 
 import (
-    "fmt"
     "github.com/golang/protobuf/proto"
     "github.com/kataras/go-errors"
+    "github.com/readystock/arctonyx"
     "github.com/readystock/golinq"
-    "strings"
 )
 
 var (
@@ -85,38 +84,28 @@ func (ctx *SSchema) CreateTable(table NTable) error {
     if err != nil {
         return err
     }
-    return ctx.db.Set([]byte(fmt.Sprintf("%s%s", tablesPath, strings.ToLower(table.TableName))), b)
+    return ctx.db.Set(getTablePath(table.TableName), b)
 }
 
 func (ctx *SSchema) GetTable(tableName string) (*NTable, error) {
-    bytes, err := ctx.db.Get([]byte(fmt.Sprintf("%s%s", tablesPath, strings.ToLower(tableName))))
+    bytes, err := ctx.db.Get(getTablePath(tableName))
     if err != nil {
         return nil, err
     }
     if len(bytes) == 0 {
         return nil, nil
     }
-    table := NTable{}
-    err = proto.Unmarshal(bytes, &table)
-    if err != nil {
-        return nil, err
-    }
-    return &table, nil
+    return ctx.convertBytesToTable(bytes)
 }
 
 func (ctx *SSchema) GetTables() ([]NTable, error) {
-    tableBytes, err := ctx.db.GetPrefix([]byte(tablesPath))
+    tableBytes, err := ctx.db.GetPrefix(getTablesPath())
     if err != nil {
         return nil, err
     }
-    tables := make([]NTable, len(tableBytes))
-    for i, kv := range tableBytes {
-        table := NTable{}
-        err := proto.Unmarshal(kv.Value, &table)
-        if err != nil {
-            return nil, err
-        }
-        tables[i] = table
+    tables, err := ctx.convertBytesToTables(tableBytes...)
+    if err != nil {
+        return nil, err
     }
     return tables, nil
 }
@@ -138,4 +127,25 @@ func (ctx *SSchema) GetAccountsTable() (*NTable, error) {
 
 func (ctx *SSchema) DropTable(tableName string) (*NTable, error) {
     return nil, nil
+}
+
+func (ctx *SSchema) convertBytesToTable(bytes []byte) (*NTable, error) {
+    table := NTable{}
+    err := proto.Unmarshal(bytes, &table)
+    if err != nil {
+        return nil, err
+    }
+    return &table, err
+}
+
+func (ctx *SSchema) convertBytesToTables(tableBytes ...arctonyx.KeyValue) ([]NTable, error) {
+    tables := make([]NTable, len(tableBytes))
+    for i, kv := range tableBytes {
+        table, err := ctx.convertBytesToTable(kv.Value)
+        if err != nil {
+            return nil, err
+        }
+        tables[i] = *table
+    }
+    return tables, nil
 }

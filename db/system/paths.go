@@ -63,6 +63,7 @@ package system
 
 import (
     "fmt"
+    "strings"
 )
 
 const (
@@ -93,4 +94,12 @@ func getAccountsNodesAccountPath(accountId uint64) []byte {
 
 func getAccountsNodesAccountNodePath(accountId, nodeId uint64) []byte {
     return []byte(fmt.Sprintf("%s%d/%d", accountsNodesPath, accountId, nodeId))
+}
+
+func getTablesPath() []byte {
+    return []byte(tablesPath)
+}
+
+func getTablePath(tableName string) []byte {
+    return []byte(fmt.Sprintf("%s%s", tablesPath, strings.ToLower(tableName)))
 }
