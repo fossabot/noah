@@ -196,11 +196,7 @@ func (stmt *CreateStatement) handleColumns(ex *connExecutor, table *system.NTabl
         foreignKey := system.NForeignKey{
             TableName:  tableName,
             ColumnName: key,
-            IsShardKey: false,
-        }
-
-        if tbl.TableType == system.NTableType_ACCOUNT {
-            foreignKey.IsShardKey = true
+            IsShardKey: tbl.TableType == system.NTableType_ACCOUNT,
         }
 
         column.ForeignKey = &system.NColumn_FKey{
