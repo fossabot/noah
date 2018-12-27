@@ -25,10 +25,37 @@ import (
 func Test_Nodes_AddNodes(t *testing.T) {
     addNodes := []NNode{
         {
-            Database: "postgres",
+            Address:   "127.0.0.1:0",
+            Port:      5432,
+            Database:  "postgres0",
+            User:      "postgres",
+            Password:  "",
+            ReplicaOf: 0,
+            Region:    "",
+            Zone:      "",
+            IsAlive:   true,
         },
         {
-            Database: "postgres1",
+            Address:   "127.0.0.1:0",
+            Port:      5432,
+            Database:  "postgres1",
+            User:      "postgres",
+            Password:  "",
+            ReplicaOf: 0,
+            Region:    "",
+            Zone:      "",
+            IsAlive:   true,
+        },
+        {
+            Address:   "127.0.0.1:0",
+            Port:      5432,
+            Database:  "postgres2",
+            User:      "postgres",
+            Password:  "",
+            ReplicaOf: 0,
+            Region:    "",
+            Zone:      "",
+            IsAlive:   true,
         },
     }
 
@@ -41,6 +68,14 @@ func Test_Nodes_AddNodes(t *testing.T) {
 
         node.NodeId = newNode.NodeId
         assert.True(t, proto.Equal(&node, newNode), "returned node does not equal the expected result")
+
+        getNode, err := SystemCtx.Nodes.GetNode(node.NodeId)
+        if err != nil {
+            t.Error(err)
+            t.FailNow()
+        }
+
+        assert.True(t, proto.Equal(newNode, getNode), "retrieved node does not match created node")
     }
 
 

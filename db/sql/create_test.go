@@ -31,7 +31,6 @@ var (
     ConnExecutor *connExecutor
     Nodes        = []system.NNode{
         {
-            NodeId:    1,
             Address:   "127.0.0.1:0",
             Port:      5432,
             Database:  "postgres",
@@ -56,7 +55,7 @@ func TestMain(m *testing.M) {
     defer SystemCtx.Close()
 
     for _, node := range Nodes {
-        if err := SystemCtx.Nodes.AddNode(node); err != nil {
+        if _, err := SystemCtx.Nodes.AddNode(node); err != nil {
             panic(err)
         }
     }
