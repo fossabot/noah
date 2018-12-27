@@ -114,6 +114,57 @@ func Test_Create_CompilePlan_AccountNoPrimaryKey(t *testing.T) {
     }
 }
 
+func Test_Create_CompilePlan_AccountMultiColumnNamedPrimaryKey(t *testing.T) {
+    sql := `CREATE TABLE test (temp text, id bigserial, email text, CONSTRAINT pk_test PRIMARY KEY (temp, id)) TABLESPACE "noah.account";`
+    parsed, err := pg_query.Parse(sql)
+    if err != nil {
+        panic(err)
+    }
+
+    stmt := CreateCreateStatement(parsed.Statements[0].(pg_query2.RawStmt).Stmt.(pg_query2.CreateStmt))
+
+    _, err = stmt.compilePlan(ConnExecutor, Nodes)
+    if err == nil {
+        panic("multi column primary keys should produce an error")
+    }
+}
+
+func Test_Create_CompilePlan_AccountMissingNamedPrimaryKey(t *testing.T) {
+    sql := `CREATE TABLE test (temp text, id bigserial, email text, CONSTRAINT pk_test PRIMARY KEY (account_id)) TABLESPACE "noah.account";`
+    parsed, err := pg_query.Parse(sql)
+    if err != nil {
+        panic(err)
+    }
+
+    stmt := CreateCreateStatement(parsed.Statements[0].(pg_query2.RawStmt).Stmt.(pg_query2.CreateStmt))
+
+    _, err = stmt.compilePlan(ConnExecutor, Nodes)
+    if err == nil {
+        panic("named primary key columns that do not exist should produce an error")
+    }
+}
+
+func Test_Create_CompilePlan_AccountNamedPrimaryKey(t *testing.T) {
+    sql := `CREATE TABLE test (temp text, id bigserial, email text, CONSTRAINT pk_test PRIMARY KEY (id)) TABLESPACE "noah.account";`
+    parsed, err := pg_query.Parse(sql)
+    if err != nil {
+        panic(err)
+    }
+
+    stmt := CreateCreateStatement(parsed.Statements[0].(pg_query2.RawStmt).Stmt.(pg_query2.CreateStmt))
+
+    plans, err := stmt.compilePlan(ConnExecutor, Nodes)
+    if err != nil {
+        panic(err)
+    }
+
+    assert.Equal(t, len(plans), len(Nodes),
+        "the number of plans returned did not match the number of nodes that this query should target.")
+
+    assert.Equal(t, plans[0].CompiledQuery, `CREATE TABLE "test" (temp text, id bigint, email text, CONSTRAINT pk_test PRIMARY KEY ("id"))`,
+        "the resulting query plan did not equal the expected query plan, did something change with how queries were recompiled?")
+}
+
 func Test_Create_CompilePlan_AccountUUIDPrimaryKey(t *testing.T) {
     sql := `CREATE TABLE test (id uuid PRIMARY KEY, email text) TABLESPACE "noah.account";`
     parsed, err := pg_query.Parse(sql)
@@ -147,27 +198,6 @@ func Test_Create_CompilePlan_Account(t *testing.T) {
         "the number of plans returned did not match the number of nodes that this query should target.")
 
     assert.Equal(t, plans[0].CompiledQuery, `CREATE TABLE "test" (id bigint PRIMARY KEY, email text)`,
-        "the resulting query plan did not equal the expected query plan, did something change with how queries were recompiled?")
-}
-
-func Test_Create_CompilePlan_AccountNamedPrimaryKey(t *testing.T) {
-    sql := `CREATE TABLE test (temp text, id bigserial, email text, CONSTRAINT pk_test PRIMARY KEY (id)) TABLESPACE "noah.account";`
-    parsed, err := pg_query.Parse(sql)
-    if err != nil {
-        panic(err)
-    }
-
-    stmt := CreateCreateStatement(parsed.Statements[0].(pg_query2.RawStmt).Stmt.(pg_query2.CreateStmt))
-
-    plans, err := stmt.compilePlan(ConnExecutor, Nodes)
-    if err != nil {
-        panic(err)
-    }
-
-    assert.Equal(t, len(plans), len(Nodes),
-        "the number of plans returned did not match the number of nodes that this query should target.")
-
-    assert.Equal(t, plans[0].CompiledQuery, `CREATE TABLE "test" (temp text, id bigint, email text, CONSTRAINT pk_test PRIMARY KEY ("id"))`,
         "the resulting query plan did not equal the expected query plan, did something change with how queries were recompiled?")
 }
 

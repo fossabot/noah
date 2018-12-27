@@ -144,7 +144,7 @@ func (stmt *CreateStatement) compilePlan(ex *connExecutor, nodes []system.NNode)
     stmt.table = system.NTable{
         TableName: *stmt.Statement.Relation.Relname,
         Schema:    "default",
-        Columns:   make([]*system.NColumn, len(stmt.Statement.TableElts.Items)),
+        Columns:   make([]*system.NColumn, 0),
     }
 
     // Determine the distribution of a table in the cluster
@@ -196,7 +196,7 @@ func (stmt *CreateStatement) handleColumns(ex *connExecutor, table *system.NTabl
             switch tableItem := col.(type) {
             case pg_query.ColumnDef:
                 noahColumn := &system.NColumn{ColumnName: *tableItem.Colname}
-
+                table.Columns = append(table.Columns, noahColumn) // This will make it so we can assign to the index later
                 // There are a few types that are handled by noah as a middle man; such as ID generation
                 // because of this we want to replace serial columns with their base types since noah
                 // will rewrite incoming queries to include an ID when performing inserts.
