@@ -12,18 +12,29 @@ message NTable {
     string TableName = 1;
     string Schema = 2;
     NTableType TableType = 3;
-    bool IsCreated = 4;
+    bool IsCommitted = 4;
     oneof PrimaryKey {
         NColumn PKey = 5;
     }
-    repeated NColumn Columns = 6;
+    oneof ShardKey {
+        NColumn SKey = 6;
+    }
+    repeated NColumn Columns = 7;
 }
 
 message NColumn {
     string ColumnName = 1;
     string ColumnTypeName = 2;
-    bool AccountIDColumn = 3;
     bool IsSequence = 4;
     bool IsSnowflake = 5;
     bool IsPrimaryKey = 6;
+    oneof ForeignKey {
+        NForeignKey FKey = 7;
+    }
+}
+
+message NForeignKey {
+    string TableName = 1;
+    string ColumnName = 2;
+    bool IsShardKey = 3;
 }

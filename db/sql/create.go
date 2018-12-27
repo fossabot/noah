@@ -125,15 +125,15 @@ func (stmt *CreateStatement) compilePlan(ex *connExecutor, nodes []system.NNode)
     //     return nil, err
     // }
 
-    deparsed, err := pg_query.Deparse(stmt.Statement)
+    compiled, err := pg_query.Deparse(stmt.Statement)
     if err != nil {
-        ex.Error(err.Error())
+        golog.Error(err.Error())
         return nil, err
     }
-    ex.Debug("Recompiled query: %s", *deparsed)
+    golog.Debugf("Recompiled query: %s", *compiled)
     for i := 0; i < len(plans); i++ {
         plans[i] = plan.NodeExecutionPlan{
-            CompiledQuery: *deparsed,
+            CompiledQuery: *compiled,
             Node:          nodes[i],
             ReadOnly:      false,
         }
@@ -154,6 +154,68 @@ func (stmt *CreateStatement) handleValidation(ex *connExecutor, table *system.NT
 }
 
 func (stmt *CreateStatement) handleColumns(ex *connExecutor, table *system.NTable) error {
+    verifyPrimaryKeyColumnType := func(column system.NColumn) error {
+        switch column.ColumnTypeName {
+        case "bigint", "int", "int8", "int4":
+            // We only allow for these two types to be primary keys at this time.
+            return nil
+        default:
+            // At the moment noah only supports integer column sharding.
+            return errors.Errorf("column [%s] cannot be a primary key, a primary key must be an integer column", column.ColumnName)
+        }
+    }
+
+    verifyForeignKeyColumn := func(table *system.NTable, column *system.NColumn, constraint pg_query.Constraint) error {
+        if len(constraint.PkAttrs.Items) != 1 {
+            return errors.Errorf("currently noah only supports single column foreign keys")
+        }
+
+        tableName := strings.ToLower(*constraint.Pktable.Relname)
+        key := strings.ToLower(constraint.PkAttrs.Items[0].(pg_query.String).Str)
+
+        // make sure table exists
+        tbl, err := ex.SystemContext.Schema.GetTable(tableName)
+        if err != nil {
+            return err
+        }
+
+        if tbl == nil {
+            return errors.Errorf("table with name [%s] does not exist", tableName)
+        }
+
+        if tbl.PrimaryKey == nil {
+            return errors.Errorf("table [%s] does not have a primary key and cannot be used as a foreign key", tableName)
+        }
+
+        primaryKey := tbl.PrimaryKey.(*system.NTable_PKey).PKey
+
+        if primaryKey.ColumnName != key {
+            return errors.Errorf("table [%s] has primary key [%s] not [%s], foreign keys must be against a primary key", tableName, primaryKey.ColumnName, key)
+        }
+
+        foreignKey := system.NForeignKey{
+            TableName:  tableName,
+            ColumnName: key,
+            IsShardKey: false,
+        }
+
+        if tbl.TableType == system.NTableType_ACCOUNT {
+            foreignKey.IsShardKey = true
+        }
+
+        column.ForeignKey = &system.NColumn_FKey{
+            FKey: &foreignKey,
+        }
+
+        if tbl.TableType == system.NTableType_ACCOUNT {
+            table.ShardKey = &system.NTable_SKey{
+                SKey: column,
+            }
+        }
+
+        return nil
+    }
+
     if stmt.Statement.TableElts.Items != nil && len(stmt.Statement.TableElts.Items) > 0 {
         for i, col := range stmt.Statement.TableElts.Items {
             switch tableItem := col.(type) {
@@ -191,24 +253,27 @@ func (stmt *CreateStatement) handleColumns(ex *connExecutor, table *system.NTabl
                 // like account tables. If someone tries to create a table without a primary key an
                 // error will be returned at this time.
                 if tableItem.Constraints.Items != nil && len(tableItem.Constraints.Items) > 0 {
-                    noahColumn.IsPrimaryKey = linq.From(tableItem.Constraints.Items).AnyWithT(func(constraint pg_query.Constraint) bool {
-                        return constraint.Contype == pg_query.CONSTR_PRIMARY
-                    })
+                    for _, c := range tableItem.Constraints.Items {
+                        constraint := c.(pg_query.Constraint)
+                        switch constraint.Contype {
+                        case pg_query.CONSTR_PRIMARY:
+                            if table.PrimaryKey != nil {
+                                return errors.New("cannot define more than 1 primary key on a single table")
+                            }
 
-                    if noahColumn.IsPrimaryKey {
-                        if table.PrimaryKey != nil {
-                            return errors.New("cannot define more than 1 primary key on a single table")
-                        }
+                            if err := verifyPrimaryKeyColumnType(*noahColumn); err != nil {
+                                return err
+                            }
 
-                        switch noahColumn.ColumnTypeName {
-                        case "bigint", "int", "tinyint":
-                        default:
-                            // At the moment noah only supports integer column sharding.
-                            return errors.Errorf("column [%s] cannot be a primary key, a primary key must be an integer column", noahColumn.ColumnName)
-                        }
+                            table.PrimaryKey = &system.NTable_PKey{
+                                PKey: noahColumn,
+                            }
 
-                        table.PrimaryKey = &system.NTable_PKey{
-                            PKey: noahColumn,
+                            noahColumn.IsPrimaryKey = true
+                        case pg_query.CONSTR_FOREIGN:
+                            if err := verifyForeignKeyColumn(table, noahColumn, constraint); err != nil {
+                                return err
+                            }
                         }
                     }
                 }
@@ -226,6 +291,7 @@ func (stmt *CreateStatement) handleColumns(ex *connExecutor, table *system.NTabl
 
                     // We want to search columns based on the column name.
                     key := tableItem.Keys.Items[0].(pg_query.String).Str
+
                     colIndex := linq.From(table.Columns).IndexOfT(func(column *system.NColumn) bool {
                         return strings.ToLower(column.ColumnName) == strings.ToLower(key)
                     })
@@ -234,11 +300,25 @@ func (stmt *CreateStatement) handleColumns(ex *connExecutor, table *system.NTabl
                         return errors.Errorf("could not use column [%s] as primary key, it is not defined in the create statement", key)
                     }
 
+                    if err := verifyPrimaryKeyColumnType(*table.Columns[colIndex]); err != nil {
+                        return err
+                    }
+
                     table.Columns[colIndex].IsPrimaryKey = true
                     table.PrimaryKey = &system.NTable_PKey{
                         PKey: table.Columns[colIndex],
                     }
                 case pg_query.CONSTR_FOREIGN:
+                    // if err := verifyForeignKeyColumn(noahColumn, tableItem); err != nil {
+                    //     return err
+                    // }
+                    // if len(tableItem.PkAttrs.Items) != 1 {
+                    //     return errors.Errorf("currently noah only supports single column foreign keys")
+                    // }
+
+                    // table := strings.ToLower(*tableItem.Pktable.Relname)
+                    // key := tableItem.PkAttrs.Items[0].(pg_query.String).Str
+                    // golog.Warnf("table has foreign key for table [%s] column [%s]", table, key)
                 case pg_query.CONSTR_IDENTITY:
                 }
             }

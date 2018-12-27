@@ -80,8 +80,8 @@ func (ctx *SSchema) GetAccountsTable() (*NTable, error) {
     return nil, nil
 }
 
-func (ctx *SSchema) DropTable(tableName string) (*NTable, error) {
-    return nil, nil
+func (ctx *SSchema) DropTable(tableName string) (error) {
+    return ctx.db.Delete(getTablePath(tableName))
 }
 
 func (ctx *SSchema) convertBytesToTable(bytes []byte) (*NTable, error) {

@@ -17,54 +17,14 @@
 package sql
 
 import (
-    "github.com/magiconair/properties/assert"
+    "encoding/json"
+    "fmt"
     "github.com/readystock/noah/db/system"
-    "github.com/readystock/noah/testutils"
     "github.com/readystock/pg_query_go"
     pg_query2 "github.com/readystock/pg_query_go/nodes"
-    "os"
+    "github.com/stretchr/testify/assert"
     "testing"
 )
-
-var (
-    SystemCtx    *system.SContext
-    ConnExecutor *connExecutor
-    Nodes        = []system.NNode{
-        {
-            Address:   "127.0.0.1:0",
-            Port:      5432,
-            Database:  "postgres",
-            User:      "postgres",
-            Password:  "",
-            ReplicaOf: 0,
-            Region:    "",
-            Zone:      "",
-            IsAlive:   true,
-        },
-    }
-)
-
-func TestMain(m *testing.M) {
-    tempFolder := testutils.CreateTempFolder()
-    defer testutils.DeleteTempFolder(tempFolder)
-
-    SystemCtx, err := system.NewSystemContext(tempFolder, "127.0.0.1:0", "", "")
-    if err != nil {
-        panic(err)
-    }
-    defer SystemCtx.Close()
-
-    for _, node := range Nodes {
-        if _, err := SystemCtx.Nodes.AddNode(node); err != nil {
-            panic(err)
-        }
-    }
-
-    ConnExecutor = CreateConnExecutor(SystemCtx)
-
-    retCode := m.Run()
-    os.Exit(retCode)
-}
 
 func Test_Create_GetTargetNodes(t *testing.T) {
     sql := `CREATE TABLE test (id bigserial, email text);`
@@ -110,7 +70,7 @@ func Test_Create_CompilePlan_Default(t *testing.T) {
     // This is a simple rewrite, we want to make sure that bigserial is being changed to bigint when
     // it is found in a create statement. We also want to make sure that the text matches a deparsed
     // query from pg_query_go.
-    assert.Equal(t, plans[0].CompiledQuery, `CREATE TABLE "test" (id bigint, email text)`,
+    assert.Equal(t,`CREATE TABLE "test" (id bigint, email text)`, plans[0].CompiledQuery,
         "the resulting query plan did not equal the expected query plan, did something change with how queries were recompiled?")
 }
 
@@ -176,7 +136,7 @@ func Test_Create_CompilePlan_AccountNamedPrimaryKey(t *testing.T) {
     assert.Equal(t, len(plans), len(Nodes),
         "the number of plans returned did not match the number of nodes that this query should target.")
 
-    assert.Equal(t, plans[0].CompiledQuery, `CREATE TABLE "test" (temp text, id bigint, email text, CONSTRAINT pk_test PRIMARY KEY ("id"))`,
+    assert.Equal(t,`CREATE TABLE "test" (temp text, id bigint, email text, CONSTRAINT pk_test PRIMARY KEY ("id"))`, plans[0].CompiledQuery,
         "the resulting query plan did not equal the expected query plan, did something change with how queries were recompiled?")
 }
 
@@ -212,7 +172,7 @@ func Test_Create_CompilePlan_Account(t *testing.T) {
     assert.Equal(t, len(plans), len(Nodes),
         "the number of plans returned did not match the number of nodes that this query should target.")
 
-    assert.Equal(t, plans[0].CompiledQuery, `CREATE TABLE "test" (id bigint PRIMARY KEY, email text)`,
+    assert.Equal(t,`CREATE TABLE "test" (id bigint PRIMARY KEY, email text)`, plans[0].CompiledQuery,
         "the resulting query plan did not equal the expected query plan, did something change with how queries were recompiled?")
 }
 
@@ -248,6 +208,94 @@ func Test_Create_CompilePlan_ReplacementTypes(t *testing.T) {
     assert.Equal(t, len(plans), len(Nodes),
         "the number of plans returned did not match the number of nodes that this query should target.")
 
-    assert.Equal(t, plans[0].CompiledQuery, `CREATE TABLE "test" (id bigint, tinyid int, flake bigint)`,
+    assert.Equal(t,`CREATE TABLE "test" (id bigint, tinyid int, flake bigint)`, plans[0].CompiledQuery,
         "the resulting query plan did not equal the expected query plan, did something change with how queries were recompiled?")
+}
+
+func Test_Create_CompilePlan_Sharded_ReferencedForeignKey(t *testing.T) {
+    accountSql := `CREATE TABLE accounts (account_id BIGSERIAL PRIMARY KEY, name TEXT) TABLESPACE "noah.account";`
+    parsedAccount, err := pg_query.Parse(accountSql)
+    if err != nil {
+        panic(err)
+    }
+
+    accountStmt := CreateCreateStatement(parsedAccount.Statements[0].(pg_query2.RawStmt).Stmt.(pg_query2.CreateStmt))
+
+    _, err = accountStmt.compilePlan(ConnExecutor, Nodes)
+    if err != nil {
+        panic(err)
+    }
+
+    if err := SystemCtx.Schema.CreateTable(accountStmt.table); err != nil {
+        panic(err)
+    }
+    defer SystemCtx.Schema.DropTable(accountStmt.table.TableName)
+
+    sql := `CREATE TABLE products (id BIGSERIAL PRIMARY KEY, account_id BIGINT NOT NULL REFERENCES accounts (account_id)) TABLESPACE "noah.shard";`
+    parsed, err := pg_query.Parse(sql)
+    if err != nil {
+        panic(err)
+    }
+
+    stmt := CreateCreateStatement(parsed.Statements[0].(pg_query2.RawStmt).Stmt.(pg_query2.CreateStmt))
+
+    plans, err := stmt.compilePlan(ConnExecutor, Nodes)
+    if err != nil {
+        panic(err)
+    }
+
+    assert.Equal(t, len(plans), len(Nodes),
+        "the number of plans returned did not match the number of nodes that this query should target.")
+
+    assert.Equal(t,`CREATE TABLE "products" (id bigint PRIMARY KEY, account_id int8 NOT NULL FOREIGN KEY REFERENCES "accounts" ("account_id"))`, plans[0].CompiledQuery,
+        "the resulting query plan did not equal the expected query plan, did something change with how queries were recompiled?")
+
+    assert.NotNil(t, stmt.table.ShardKey, "table's shard key should not be null")
+
+    assert.Equal(t, accountStmt.table.TableName, stmt.table.ShardKey.(*system.NTable_SKey).SKey.ForeignKey.(*system.NColumn_FKey).FKey.TableName, "the table name from the accounts table does not match the table name of the shard column foreign key")
+
+    assert.Equal(t, accountStmt.table.PrimaryKey.(*system.NTable_PKey).PKey.ColumnName, stmt.table.ShardKey.(*system.NTable_SKey).SKey.ForeignKey.(*system.NColumn_FKey).FKey.ColumnName, "the column name of the referenced column does not match the accounts table's primary key column name")
+}
+
+func Test_Create_CompilePlan_Sharded_NamedForeignKey(t *testing.T) {
+    accountSql := `CREATE TABLE accounts (account_id BIGSERIAL PRIMARY KEY, name TEXT) TABLESPACE "noah.account";`
+    parsedAccount, err := pg_query.Parse(accountSql)
+    if err != nil {
+        panic(err)
+    }
+
+    accountStmt := CreateCreateStatement(parsedAccount.Statements[0].(pg_query2.RawStmt).Stmt.(pg_query2.CreateStmt))
+
+    _, err = accountStmt.compilePlan(ConnExecutor, Nodes)
+    if err != nil {
+        panic(err)
+    }
+
+    if err := SystemCtx.Schema.CreateTable(accountStmt.table); err != nil {
+        panic(err)
+    }
+    defer SystemCtx.Schema.DropTable(accountStmt.table.TableName)
+
+    sql := `CREATE TABLE products (id BIGSERIAL PRIMARY KEY, account_id BIGINT NOT NULL, CONSTRAINT fk_products_account FOREIGN KEY (account_id) REFERENCES accounts (account_id)) TABLESPACE "noah.shard";`
+    parsed, err := pg_query.Parse(sql)
+    if err != nil {
+        panic(err)
+    }
+    j, _ := json.Marshal(parsed)
+    fmt.Println(string(j))
+
+    stmt := CreateCreateStatement(parsed.Statements[0].(pg_query2.RawStmt).Stmt.(pg_query2.CreateStmt))
+
+    plans, err := stmt.compilePlan(ConnExecutor, Nodes)
+    if err != nil {
+        panic(err)
+    }
+
+    assert.Equal(t, len(plans), len(Nodes),
+        "the number of plans returned did not match the number of nodes that this query should target.")
+
+    assert.Equal(t, `CREATE TABLE "products" (id bigint PRIMARY KEY, account_id int8 NOT NULL, CONSTRAINT fk_products_account FOREIGN KEY ("account_id") REFERENCES "accounts" ("account_id"))`, plans[0].CompiledQuery,
+        "the resulting query plan did not equal the expected query plan, did something change with how queries were recompiled?")
+
+    assert.NotNil(t, stmt.table.ShardKey, "table's shard key should not be null")
 }
