@@ -318,7 +318,6 @@ func (stmt *CreateStatement) handleColumns(ex *connExecutor, table *system.NTabl
                     if err := verifyForeignKeyColumn(table, table.Columns[colIndex], tableItem); err != nil {
                         return err
                     }
-                case pg_query.CONSTR_IDENTITY:
                 }
             }
         }
