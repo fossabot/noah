@@ -6,16 +6,16 @@
  * You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
- *     
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express 
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
  * or implied. See the License for the specific language governing
  * permissions and limitations under the License.
  *
- * This application uses Open Source components. You can find the 
- * source code of their open source projects along with license 
- * information below. We acknowledge and are grateful to these 
+ * This application uses Open Source components. You can find the
+ * source code of their open source projects along with license
+ * information below. We acknowledge and are grateful to these
  * developers for their contributions to open source.
  *
  * Project: CockroachDB https://github.com/cockroachdb/cockroach
@@ -51,8 +51,12 @@
  * License (MPL-2.0) https://github.com/hashicorp/raft/blob/master/LICENSE
  *
  * Project: pq github.com/lib/pq
- * Copyright 2018  'pq' Contributors Portions Copyright (C) 2011 Blake Mizerany
+ * Copyright 2018  'pq' Contributors Portions Copyright (C) 2018 Blake Mizerany
  * License https://github.com/lib/pq/blob/master/LICENSE.md
+ *
+ * Project: go-linq github.com/ahmetb/go-linq
+ * Copyright 2018 Ahmet Alp Balkan
+ * License https://github.com/ahmetb/go-linq/blob/master/LICENSE
  */
 
 package helpers

@@ -51,8 +51,12 @@
  * License (MPL-2.0) https://github.com/hashicorp/raft/blob/master/LICENSE
  *
  * Project: pq github.com/lib/pq
- * Copyright 2018  'pq' Contributors Portions Copyright (C) 2011 Blake Mizerany
+ * Copyright 2018  'pq' Contributors Portions Copyright (C) 2018 Blake Mizerany
  * License https://github.com/lib/pq/blob/master/LICENSE.md
+ *
+ * Project: go-linq github.com/ahmetb/go-linq
+ * Copyright 2018 Ahmet Alp Balkan
+ * License https://github.com/ahmetb/go-linq/blob/master/LICENSE
  */
 
 // See doc.go for a description.
