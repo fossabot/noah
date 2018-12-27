@@ -17,8 +17,6 @@
 package sql
 
 import (
-    "encoding/json"
-    "fmt"
     "github.com/readystock/noah/db/system"
     "github.com/readystock/pg_query_go"
     pg_query2 "github.com/readystock/pg_query_go/nodes"
@@ -74,7 +72,7 @@ func Test_Create_CompilePlan_Default(t *testing.T) {
         "the resulting query plan did not equal the expected query plan, did something change with how queries were recompiled?")
 }
 
-func Test_Create_CompilePlan_AccountNoPrimaryKey(t *testing.T) {
+func Test_Create_CompilePlan_Account_NoPrimaryKey(t *testing.T) {
     sql := `CREATE TABLE test (id bigserial, email text) TABLESPACE "noah.account";`
     parsed, err := pg_query.Parse(sql)
     if err != nil {
@@ -89,7 +87,7 @@ func Test_Create_CompilePlan_AccountNoPrimaryKey(t *testing.T) {
     }
 }
 
-func Test_Create_CompilePlan_AccountMultiColumnNamedPrimaryKey(t *testing.T) {
+func Test_Create_CompilePlan_Account_MultiColumnNamedPrimaryKey(t *testing.T) {
     sql := `CREATE TABLE test (temp text, id bigserial, email text, CONSTRAINT pk_test PRIMARY KEY (temp, id)) TABLESPACE "noah.account";`
     parsed, err := pg_query.Parse(sql)
     if err != nil {
@@ -104,7 +102,7 @@ func Test_Create_CompilePlan_AccountMultiColumnNamedPrimaryKey(t *testing.T) {
     }
 }
 
-func Test_Create_CompilePlan_AccountMissingNamedPrimaryKey(t *testing.T) {
+func Test_Create_CompilePlan_Account_MissingNamedPrimaryKey(t *testing.T) {
     sql := `CREATE TABLE test (temp text, id bigserial, email text, CONSTRAINT pk_test PRIMARY KEY (account_id)) TABLESPACE "noah.account";`
     parsed, err := pg_query.Parse(sql)
     if err != nil {
@@ -119,7 +117,7 @@ func Test_Create_CompilePlan_AccountMissingNamedPrimaryKey(t *testing.T) {
     }
 }
 
-func Test_Create_CompilePlan_AccountNamedPrimaryKey(t *testing.T) {
+func Test_Create_CompilePlan_Account_NamedPrimaryKey(t *testing.T) {
     sql := `CREATE TABLE test (temp text, id bigserial, email text, CONSTRAINT pk_test PRIMARY KEY (id)) TABLESPACE "noah.account";`
     parsed, err := pg_query.Parse(sql)
     if err != nil {
@@ -140,7 +138,7 @@ func Test_Create_CompilePlan_AccountNamedPrimaryKey(t *testing.T) {
         "the resulting query plan did not equal the expected query plan, did something change with how queries were recompiled?")
 }
 
-func Test_Create_CompilePlan_AccountUUIDPrimaryKey(t *testing.T) {
+func Test_Create_CompilePlan_Account_UUIDPrimaryKey(t *testing.T) {
     sql := `CREATE TABLE test (id uuid PRIMARY KEY, email text) TABLESPACE "noah.account";`
     parsed, err := pg_query.Parse(sql)
     if err != nil {
@@ -176,7 +174,7 @@ func Test_Create_CompilePlan_Account(t *testing.T) {
         "the resulting query plan did not equal the expected query plan, did something change with how queries were recompiled?")
 }
 
-func Test_Create_CompilePlan_MultiplePrimaryKeys(t *testing.T) {
+func Test_Create_CompilePlan_Default_MultiplePrimaryKeys(t *testing.T) {
     sql := `CREATE TABLE test (id bigserial PRIMARY KEY, email text PRIMARY KEY);`
     parsed, err := pg_query.Parse(sql)
     if err != nil {
@@ -191,7 +189,7 @@ func Test_Create_CompilePlan_MultiplePrimaryKeys(t *testing.T) {
     }
 }
 
-func Test_Create_CompilePlan_ReplacementTypes(t *testing.T) {
+func Test_Create_CompilePlan_Default_ReplacementTypes(t *testing.T) {
     sql := `CREATE TABLE test (id bigserial, tinyid serial, flake snowflake);`
     parsed, err := pg_query.Parse(sql)
     if err != nil {
@@ -281,8 +279,6 @@ func Test_Create_CompilePlan_Sharded_NamedForeignKey(t *testing.T) {
     if err != nil {
         panic(err)
     }
-    j, _ := json.Marshal(parsed)
-    fmt.Println(string(j))
 
     stmt := CreateCreateStatement(parsed.Statements[0].(pg_query2.RawStmt).Stmt.(pg_query2.CreateStmt))
 
@@ -298,4 +294,155 @@ func Test_Create_CompilePlan_Sharded_NamedForeignKey(t *testing.T) {
         "the resulting query plan did not equal the expected query plan, did something change with how queries were recompiled?")
 
     assert.NotNil(t, stmt.table.ShardKey, "table's shard key should not be null")
+
+    assert.Equal(t, accountStmt.table.TableName, stmt.table.ShardKey.(*system.NTable_SKey).SKey.ForeignKey.(*system.NColumn_FKey).FKey.TableName, "the table name from the accounts table does not match the table name of the shard column foreign key")
+
+    assert.Equal(t, accountStmt.table.PrimaryKey.(*system.NTable_PKey).PKey.ColumnName, stmt.table.ShardKey.(*system.NTable_SKey).SKey.ForeignKey.(*system.NColumn_FKey).FKey.ColumnName, "the column name of the referenced column does not match the accounts table's primary key column name")
+}
+
+func Test_Create_CompilePlan_Sharded_NamedMultiColumnForeignKey(t *testing.T) {
+    accountSql := `CREATE TABLE accounts (account_id BIGSERIAL PRIMARY KEY, name TEXT) TABLESPACE "noah.account";`
+    parsedAccount, err := pg_query.Parse(accountSql)
+    if err != nil {
+        panic(err)
+    }
+
+    accountStmt := CreateCreateStatement(parsedAccount.Statements[0].(pg_query2.RawStmt).Stmt.(pg_query2.CreateStmt))
+
+    _, err = accountStmt.compilePlan(ConnExecutor, Nodes)
+    if err != nil {
+        panic(err)
+    }
+
+    if err := SystemCtx.Schema.CreateTable(accountStmt.table); err != nil {
+        panic(err)
+    }
+    defer SystemCtx.Schema.DropTable(accountStmt.table.TableName)
+
+    sql := `CREATE TABLE products (id BIGSERIAL PRIMARY KEY, account_id BIGINT NOT NULL, CONSTRAINT fk_products_account FOREIGN KEY (id, account_id) REFERENCES accounts (account_id)) TABLESPACE "noah.shard";`
+    parsed, err := pg_query.Parse(sql)
+    if err != nil {
+        panic(err)
+    }
+
+    stmt := CreateCreateStatement(parsed.Statements[0].(pg_query2.RawStmt).Stmt.(pg_query2.CreateStmt))
+
+    _, err = stmt.compilePlan(ConnExecutor, Nodes)
+    if err == nil {
+        panic("create statement should have failed with multi column foreign key")
+    }
+}
+
+func Test_Create_CompilePlan_Sharded_NamedMultiReferenceForeignKey(t *testing.T) {
+    accountSql := `CREATE TABLE accounts (account_id BIGSERIAL PRIMARY KEY, name TEXT) TABLESPACE "noah.account";`
+    parsedAccount, err := pg_query.Parse(accountSql)
+    if err != nil {
+        panic(err)
+    }
+
+    accountStmt := CreateCreateStatement(parsedAccount.Statements[0].(pg_query2.RawStmt).Stmt.(pg_query2.CreateStmt))
+
+    _, err = accountStmt.compilePlan(ConnExecutor, Nodes)
+    if err != nil {
+        panic(err)
+    }
+
+    if err := SystemCtx.Schema.CreateTable(accountStmt.table); err != nil {
+        panic(err)
+    }
+    defer SystemCtx.Schema.DropTable(accountStmt.table.TableName)
+
+    sql := `CREATE TABLE products (id BIGSERIAL PRIMARY KEY, account_id BIGINT NOT NULL, CONSTRAINT fk_products_account FOREIGN KEY (account_id) REFERENCES accounts (account_id, text)) TABLESPACE "noah.shard";`
+    parsed, err := pg_query.Parse(sql)
+    if err != nil {
+        panic(err)
+    }
+
+    stmt := CreateCreateStatement(parsed.Statements[0].(pg_query2.RawStmt).Stmt.(pg_query2.CreateStmt))
+
+    _, err = stmt.compilePlan(ConnExecutor, Nodes)
+    if err == nil {
+        panic("create statement should have failed with multi reference foreign key")
+    }
+}
+
+func Test_Create_CompilePlan_Sharded_MissingTableForeignKey(t *testing.T) {
+    sql := `CREATE TABLE products (id BIGSERIAL PRIMARY KEY, account_id BIGINT NOT NULL, CONSTRAINT fk_products_account FOREIGN KEY (account_id) REFERENCES accounts (account_id)) TABLESPACE "noah.shard";`
+    parsed, err := pg_query.Parse(sql)
+    if err != nil {
+        panic(err)
+    }
+
+    stmt := CreateCreateStatement(parsed.Statements[0].(pg_query2.RawStmt).Stmt.(pg_query2.CreateStmt))
+
+    _, err = stmt.compilePlan(ConnExecutor, Nodes)
+    if err == nil {
+        panic("create statement should have failed with multi reference foreign key")
+    }
+}
+
+func Test_Create_CompilePlan_Sharded_NamedForeignKeyNonPrimary1(t *testing.T) {
+    accountSql := `CREATE TABLE accounts (account_id BIGSERIAL, name TEXT);`
+    parsedAccount, err := pg_query.Parse(accountSql)
+    if err != nil {
+        panic(err)
+    }
+
+    accountStmt := CreateCreateStatement(parsedAccount.Statements[0].(pg_query2.RawStmt).Stmt.(pg_query2.CreateStmt))
+
+    _, err = accountStmt.compilePlan(ConnExecutor, Nodes)
+    if err != nil {
+        panic(err)
+    }
+
+    if err := SystemCtx.Schema.CreateTable(accountStmt.table); err != nil {
+        panic(err)
+    }
+    defer SystemCtx.Schema.DropTable(accountStmt.table.TableName)
+
+    sql := `CREATE TABLE products (id BIGSERIAL PRIMARY KEY, account_id BIGINT NOT NULL, CONSTRAINT fk_products_account FOREIGN KEY (account_id) REFERENCES accounts (account_id)) TABLESPACE "noah.shard";`
+    parsed, err := pg_query.Parse(sql)
+    if err != nil {
+        panic(err)
+    }
+
+    stmt := CreateCreateStatement(parsed.Statements[0].(pg_query2.RawStmt).Stmt.(pg_query2.CreateStmt))
+
+    _, err = stmt.compilePlan(ConnExecutor, Nodes)
+    if err == nil {
+        panic("create statement should have failed with multi reference foreign key")
+    }
+}
+
+func Test_Create_CompilePlan_Sharded_NamedForeignKeyNonPrimary2(t *testing.T) {
+    accountSql := `CREATE TABLE accounts (account_id BIGSERIAL PRIMARY KEY, name TEXT);`
+    parsedAccount, err := pg_query.Parse(accountSql)
+    if err != nil {
+        panic(err)
+    }
+
+    accountStmt := CreateCreateStatement(parsedAccount.Statements[0].(pg_query2.RawStmt).Stmt.(pg_query2.CreateStmt))
+
+    _, err = accountStmt.compilePlan(ConnExecutor, Nodes)
+    if err != nil {
+        panic(err)
+    }
+
+    if err := SystemCtx.Schema.CreateTable(accountStmt.table); err != nil {
+        panic(err)
+    }
+    defer SystemCtx.Schema.DropTable(accountStmt.table.TableName)
+
+    sql := `CREATE TABLE products (id BIGSERIAL PRIMARY KEY, account_id BIGINT NOT NULL, CONSTRAINT fk_products_account FOREIGN KEY (account_id) REFERENCES accounts (name)) TABLESPACE "noah.shard";`
+    parsed, err := pg_query.Parse(sql)
+    if err != nil {
+        panic(err)
+    }
+
+    stmt := CreateCreateStatement(parsed.Statements[0].(pg_query2.RawStmt).Stmt.(pg_query2.CreateStmt))
+
+    _, err = stmt.compilePlan(ConnExecutor, Nodes)
+    if err == nil {
+        panic("create statement should have failed with multi reference foreign key")
+    }
 }

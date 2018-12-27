@@ -305,16 +305,19 @@ func (stmt *CreateStatement) handleColumns(ex *connExecutor, table *system.NTabl
                         PKey: table.Columns[colIndex],
                     }
                 case pg_query.CONSTR_FOREIGN:
-                    // if err := verifyForeignKeyColumn(noahColumn, tableItem); err != nil {
-                    //     return err
-                    // }
-                    // if len(tableItem.PkAttrs.Items) != 1 {
-                    //     return errors.Errorf("currently noah only supports single column foreign keys")
-                    // }
+                    if len(tableItem.FkAttrs.Items) != 1 {
+                        return errors.Errorf("only 1 column can be used in a foreign key constraint")
+                    }
 
-                    // table := strings.ToLower(*tableItem.Pktable.Relname)
-                    // key := tableItem.PkAttrs.Items[0].(pg_query.String).Str
-                    // golog.Warnf("table has foreign key for table [%s] column [%s]", table, key)
+                    key := tableItem.FkAttrs.Items[0].(pg_query.String).Str
+
+                    colIndex := linq.From(table.Columns).IndexOfT(func(column *system.NColumn) bool {
+                        return strings.ToLower(column.ColumnName) == strings.ToLower(key)
+                    })
+
+                    if err := verifyForeignKeyColumn(table, table.Columns[colIndex], tableItem); err != nil {
+                        return err
+                    }
                 case pg_query.CONSTR_IDENTITY:
                 }
             }
