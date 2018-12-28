@@ -17,13 +17,12 @@
 package api
 
 import (
-	"fmt"
 	"github.com/kataras/iris"
 	"github.com/readystock/noah/db/system"
 	"net/http"
 )
 
-func StartApp(sctx *system.SContext) {
+func StartApp(sctx *system.SContext, addr string) {
 	app := iris.Default()
 
 	app.Get("/nodes", func(ctx iris.Context) {
@@ -48,7 +47,7 @@ func StartApp(sctx *system.SContext) {
 			}{
 				Error: err.Error(),
 			})
-		} else if err := sctx.Nodes.AddNode(node); err != nil {
+		} else if _, err := sctx.Nodes.AddNode(node); err != nil {
 			ctx.StatusCode(500)
 			ctx.JSON(struct {
 				Error string
@@ -77,11 +76,11 @@ func StartApp(sctx *system.SContext) {
 	// })
 
 	app.Build()
-	srv := &http.Server{Handler: app, Addr: ":8080"} // you have to set Handler:app and Addr, see "iris-way" which does this automatically.
+	srv := &http.Server{Handler: app, Addr: addr} // you have to set Handler:app and Addr, see "iris-way" which does this automatically.
 	// http://localhost:8080/
 	// http://localhost:8080/mypath
 	srv.ListenAndServe() // same as app.Run(iris.Addr(":8080"))
 
 	// listen and serve on http://0.0.0.0:8080.
-	app.Run(iris.Addr(fmt.Sprintf(":%d", sctx.Flags.HTTPPort)))
+	app.Run(iris.Addr(addr))
 }

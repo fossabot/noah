@@ -19,7 +19,9 @@ package cmd
 import (
 	"fmt"
 	"github.com/readystock/golog"
+	"github.com/readystock/noah/api"
 	"github.com/readystock/noah/db/coordinator"
+	"github.com/readystock/noah/db/health"
 	"github.com/readystock/noah/db/system"
 	"github.com/spf13/cobra"
 	"os"
@@ -81,13 +83,21 @@ with almost all typical Postgres drivers and IDEs.`,
 			}()
 
 			wg := sync.WaitGroup{}
-			wg.Add(1)
+			wg.Add(3)
 
 			go func() {
+				defer wg.Done()
 				if err := coordinator.Start(sctx); err != nil {
-					panic(err)
+					golog.Error(err)
 				}
-				wg.Done()
+			}()
+			go func() {
+				defer wg.Done()
+				api.StartApp(sctx, WebAddr)
+			}()
+			go func() {
+				defer wg.Done()
+				health.StartHealthChecker(sctx)
 			}()
 			golog.Infof("Noah is now running.")
 			wg.Wait()

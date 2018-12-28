@@ -71,6 +71,7 @@ func (ex *connExecutor) ExecutePlans(plans []plan.NodeExecutionPlan, res Restric
             exResponse.Rows = rows
         }(ex, p)
     }
+
     columns := make([]pgproto.FieldDescription, 0)
     result := make([][]types.Value, 0)
     errs := make([]error, 0)
@@ -90,6 +91,7 @@ func (ex *connExecutor) ExecutePlans(plans []plan.NodeExecutionPlan, res Restric
                     ex.Debug("retrieved %d column(s)", len(columns))
                     res.SetColumns(columns)
                 }
+
                 row := make([]types.Value, len(columns))
                 if values, err := response.Rows.PgValues(); err != nil {
                     ex.Error(err.Error())
@@ -100,6 +102,7 @@ func (ex *connExecutor) ExecutePlans(plans []plan.NodeExecutionPlan, res Restric
                         row[c] = v
                     }
                 }
+
                 fmt.Printf("Row: %+v\n", row)
                 res.AddRow(row)
                 result = append(result, row)
