@@ -17,10 +17,8 @@
 package arguments
 
 import (
-    "fmt"
     "github.com/readystock/pg_query_go/nodes"
     "reflect"
-    "strings"
 )
 
 func GetArguments(stmt interface{}) (numArgs int) {
@@ -30,7 +28,7 @@ func GetArguments(stmt interface{}) (numArgs int) {
 func examine(value interface{}, depth int) int {
     args := 0
     print := func(msg string, args ...interface{}) {
-        fmt.Printf("%s%s\n", strings.Repeat("\t", depth), fmt.Sprintf(msg, args...))
+        // fmt.Printf("%s%s\n", strings.Repeat("\t", depth), fmt.Sprintf(msg, args...))
     }
 
     if value == nil {
