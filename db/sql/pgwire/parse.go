@@ -17,8 +17,8 @@
 package pgwire
 
 import (
-    "github.com/kataras/golog"
     "github.com/pkg/errors"
+    "github.com/readystock/golog"
     "github.com/readystock/noah/db/sql"
     "github.com/readystock/noah/db/sql/oid"
     "github.com/readystock/noah/db/sql/pgwire/arguments"
@@ -76,9 +76,11 @@ func (c *conn) handleParse(buf *pgwirebase.ReadBuffer) error {
         } else {
             // If the number of arguments so far is 0, we want to check with our own function
             // to double check.
+            golog.Infof("found %d numQArgTypes in query", numQArgTypes)
             if numQArgTypes == 0 {
-                if arguments.GetArguments(stmt) > 0 {
-
+                args := arguments.GetArguments(stmt)
+                if args > 0 {
+                    golog.Infof("found %d arguments in query", args)
                 }
             }
 
