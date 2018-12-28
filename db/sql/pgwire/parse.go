@@ -20,13 +20,15 @@ import (
     "github.com/pkg/errors"
     "github.com/readystock/golog"
     "github.com/readystock/noah/db/sql"
-    "github.com/readystock/noah/db/sql/oid"
-    "github.com/readystock/noah/db/sql/pgwire/arguments"
+    "github.com/readystock/noah/db/sql/driver/npgx"
     "github.com/readystock/noah/db/sql/pgwire/pgerror"
     "github.com/readystock/noah/db/sql/pgwire/pgwirebase"
+    "github.com/readystock/noah/db/sql/types"
+    "github.com/readystock/noah/db/util/queryutil"
     "github.com/readystock/pg_query_go"
     nodes "github.com/readystock/pg_query_go/nodes"
     "reflect"
+    "strconv"
     "time"
 )
 
@@ -52,14 +54,33 @@ func (c *conn) handleParse(buf *pgwirebase.ReadBuffer) error {
     if err != nil {
         return err
     }
-    inTypeHints := make([]oid.Oid, numQArgTypes)
+    inTypeHints := make([]types.OID, numQArgTypes)
     for i := range inTypeHints {
         typ, err := buf.GetUint32()
         if err != nil {
             return c.stmtBuf.Push(sql.SendError{Err: err})
         }
-        inTypeHints[i] = oid.Oid(typ)
+        inTypeHints[i] = types.OID(typ)
     }
+
+    info := types.NewConnInfo()
+
+    info.InitializeDataTypes(npgx.NameOIDs)
+    // Prepare the mapping of SQL placeholder names to types. Pre-populate it with
+    // the type hints received from the client, if any.
+    sqlTypeHints := make(types.PlaceholderTypes)
+    for i, t := range inTypeHints {
+        if t == 0 {
+            continue
+        }
+        v, ok := info.DataTypeForOID(t)
+        if !ok {
+            err := pgwirebase.NewProtocolViolationErrorf("unknown oid type: %v", t)
+            return c.stmtBuf.Push(sql.SendError{Err: err})
+        }
+        sqlTypeHints[strconv.Itoa(i+1)] = v
+    }
+
     golog.Infof("[%s] Query: `%s`", c.conn.RemoteAddr().String(), query)
     p, err := pg_query.Parse(query)
     endParse := time.Now().UTC()
@@ -76,17 +97,19 @@ func (c *conn) handleParse(buf *pgwirebase.ReadBuffer) error {
         } else {
             // If the number of arguments so far is 0, we want to check with our own function
             // to double check.
-            golog.Infof("found %d numQArgTypes in query", numQArgTypes)
             if numQArgTypes == 0 {
-                args := arguments.GetArguments(stmt)
+                args := queryutil.GetArguments(stmt)
                 if args > 0 {
                     golog.Infof("found %d arguments in query", args)
                 }
+            } else {
+                golog.Infof("found %d numQArgTypes in query", numQArgTypes)
             }
 
             return c.stmtBuf.Push(sql.PrepareStmt{
                 Name:         name,
                 RawTypeHints: inTypeHints,
+                TypeHints:    sqlTypeHints,
                 ParseStart:   startParse,
                 ParseEnd:     endParse,
                 PGQuery:      stmt,

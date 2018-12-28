@@ -19,6 +19,7 @@ package sql
 import (
     "fmt"
     "github.com/readystock/noah/db/sql/pgwire/pgerror"
+    "github.com/readystock/noah/db/sql/types"
     nodes "github.com/readystock/pg_query_go/nodes"
 )
 
@@ -36,7 +37,7 @@ func (ex *connExecutor) execPrepare(parseCmd PrepareStmt) error {
         ex.deletePreparedStmt("")
     }
 
-    _, err := ex.addPreparedStmt(parseCmd.Name, parseCmd.PGQuery)
+    _, err := ex.addPreparedStmt(parseCmd.Name, parseCmd.PGQuery, parseCmd.RawTypeHints)
     if err != nil {
         return err
     }
@@ -80,7 +81,7 @@ func (ex *connExecutor) addPortal(portalName string, psName string, stmt *Prepar
     return nil
 }
 
-func (ex *connExecutor) addPreparedStmt(name string, stmt nodes.Stmt) (*PreparedStatement, error) {
+func (ex *connExecutor) addPreparedStmt(name string, stmt nodes.Stmt, parseTypeHints []types.OID) (*PreparedStatement, error) {
     if _, ok := ex.prepStmtsNamespace.prepStmts[name]; ok {
         panic(fmt.Sprintf("prepared statement already exists: %q", name))
     }

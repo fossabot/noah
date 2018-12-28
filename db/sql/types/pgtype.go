@@ -161,10 +161,28 @@ type Float interface {
 var errUndefined = errors.New("cannot encode status undefined")
 var errBadStatus = errors.New("invalid status")
 
+type T interface {
+    GetValue() Value
+    GetName() string
+    GetOID() OID
+}
+
 type DataType struct {
     Value Value
     Name  string
     OID   OID
+}
+
+func (dt DataType) GetValue() Value {
+    return dt.Value
+}
+
+func (dt DataType) GetName() string {
+    return dt.Name
+}
+
+func (dt DataType) GetOID() OID {
+    return dt.OID
 }
 
 type ConnInfo struct {

@@ -19,7 +19,6 @@ package sql
 import (
     "context"
     "github.com/readystock/noah/db/sql/pgwire/pgwirebase"
-    "github.com/readystock/noah/db/sql/sem/tree"
     nodes "github.com/readystock/pg_query_go/nodes"
 )
 
@@ -62,7 +61,7 @@ type preparedStatementsAccessor interface {
 // PreparedPortal is a PreparedStatement that has been bound with query arguments.
 type PreparedPortal struct {
     Stmt  *PreparedStatement
-    Qargs tree.QueryArguments
+    // Qargs types.QueryArguments
 
     // OutFormats contains the requested formats for the output columns.
     OutFormats []pgwirebase.FormatCode

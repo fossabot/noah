@@ -20,7 +20,6 @@ import (
     "fmt"
     "github.com/kataras/golog"
     "github.com/readystock/noah/db/sql"
-    "github.com/readystock/noah/db/sql/oid"
     "github.com/readystock/noah/db/sql/pgwire/pgproto"
     "github.com/readystock/noah/db/sql/pgwire/pgwirebase"
     "github.com/readystock/noah/db/sql/sessiondata"
@@ -234,7 +233,7 @@ func (r *commandResult) SetColumns(cols []pgproto.FieldDescription) {
 }
 
 // SetInTypes is part of the DescribeResult interface.
-func (r *commandResult) SetInTypes(types []oid.Oid) {
+func (r *commandResult) SetInTypes(types []types.OID) {
     r.conn.writerState.fi.registerCmd(r.pos)
     r.conn.bufferParamDesc(types)
 }

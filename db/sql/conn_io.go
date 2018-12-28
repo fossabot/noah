@@ -20,7 +20,6 @@ import (
     "context"
     "fmt"
     "github.com/pkg/errors"
-    "github.com/readystock/noah/db/sql/oid"
     "github.com/readystock/noah/db/sql/pgwire/pgproto"
     "github.com/readystock/noah/db/sql/types"
     "io"
@@ -200,10 +199,10 @@ type PrepareStmt struct {
     // Stmt can be nil, in which case executing it should produce an "empty query
     // response" message.
     // Stmt      tree.Statement
-    // TypeHints tree.PlaceholderTypes
+    TypeHints types.PlaceholderTypes
     // RawTypeHints is the representation of type hints exactly as specified by
     // the client.
-    RawTypeHints []oid.Oid
+    RawTypeHints []types.OID
     ParseStart   time.Time
     ParseEnd     time.Time
     PGQuery      nodes.Stmt
@@ -774,7 +773,7 @@ type DescribeResult interface {
     ResultBase
 
     // SetInTypes tells the client about the inferred placeholder types.
-    SetInTypes([]oid.Oid)
+    SetInTypes([]types.OID)
     // SetNoDataDescription is used to tell the client that the prepared statement
     // or portal produces no rows.
     SetNoDataRowDescription()

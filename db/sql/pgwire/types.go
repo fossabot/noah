@@ -22,7 +22,6 @@ import (
     "github.com/pkg/errors"
     "github.com/readystock/noah/db/sql/lex"
     "github.com/readystock/noah/db/sql/pgwire/pgwirebase"
-    "github.com/readystock/noah/db/sql/sem/tree"
     "github.com/readystock/noah/db/sql/sessiondata"
     "github.com/readystock/noah/db/sql/types"
     "github.com/readystock/noah/db/util/duration"
@@ -472,10 +471,10 @@ func timeToPgBinary(t time.Time, offset *time.Location) int64 {
     return duration.DiffMicros(t, pgwirebase.PGEpochJDate)
 }
 
-//
-// // dateToPgBinary calculates the Postgres binary format for a date. The date is
-// // represented as the number of days between the given date and Jan 1, 2000
-// // (dubbed the PGEpochJDate), stored within an int32.
-func dateToPgBinary(d *tree.DDate) int32 {
-    return int32(*d) - pgwirebase.PGEpochJDateFromUnix
-}
+// //
+// // // dateToPgBinary calculates the Postgres binary format for a date. The date is
+// // // represented as the number of days between the given date and Jan 1, 2000
+// // // (dubbed the PGEpochJDate), stored within an int32.
+// func dateToPgBinary(d *tree.DDate) int32 {
+//     return int32(*d) - pgwirebase.PGEpochJDateFromUnix
+// }

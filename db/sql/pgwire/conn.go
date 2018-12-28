@@ -22,7 +22,6 @@ import (
     "context"
     "fmt"
     "github.com/kataras/golog"
-    "github.com/readystock/noah/db/sql/oid"
     "github.com/readystock/noah/db/sql/pgwire/pgproto"
     "github.com/readystock/noah/db/sql/types"
     "github.com/readystock/noah/db/system"
@@ -819,7 +818,7 @@ func writeErr(err error, msgBuilder *writeBuffer, w io.Writer) error {
     return msgBuilder.finishMsg(w)
 }
 
-func (c *conn) bufferParamDesc(types []oid.Oid) {
+func (c *conn) bufferParamDesc(types []types.OID) {
     c.msgBuilder.initMsg(pgwirebase.ServerMsgParameterDescription)
     c.msgBuilder.putInt16(int16(len(types)))
     for _, t := range types {
