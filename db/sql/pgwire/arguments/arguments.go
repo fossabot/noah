@@ -18,12 +18,56 @@ package arguments
 
 import (
     "github.com/readystock/pg_query_go/nodes"
+    "reflect"
 )
 
-func GetArguments(stmt pg_query.Stmt) (numArgs int) {
-    switch query := stmt.(type) {
-    case pg_query.SelectStmt:
-        return getArgumentsFromSelect(query)
+func GetArguments(stmt interface{}) (numArgs int) {
+    return examine(stmt, 0)
+}
+
+func examine(value interface{}, depth int) int {
+    args := 0 
+    print := func (msg string, args ...interface{}) {
+        //fmt.Printf("%s%s\n", strings.Repeat("\t", depth), fmt.Sprintf(msg, args...))
     }
-    return 0
+
+    if value == nil || depth > 10 {
+        return 0
+    }
+
+    t := reflect.TypeOf(value)
+    v := reflect.ValueOf(value)
+
+
+
+    if v.Type() == reflect.TypeOf(pg_query.ParamRef{}) {
+        args++
+    }
+
+    switch t.Kind() {
+    case reflect.Ptr:
+
+    case reflect.Array, reflect.Chan, reflect.Map, reflect.Slice:
+        depth -= 1
+        if v.Len() > 0 {
+            print("[")
+            for i := 0; i < v.Len(); i++ {
+                depth += 1
+                print("[%d] Type {%s} {", i, v.Index(i).Type().String())
+                args += examine(v.Index(i).Interface(), depth+1)
+                print("},")
+                depth -= 1
+            }
+            print("]")
+        } else {
+            print("[]")
+        }
+    case reflect.Struct:
+        for i := 0; i < t.NumField(); i++ {
+            f := t.Field(i)
+            print("[%d] Field {%s} Type {%s} Kind {%s}", i, f.Name, f.Type.String(), reflect.ValueOf(value).Field(i).Kind().String())
+            args += examine( reflect.ValueOf(value).Field(i).Interface(), depth+1)
+        }
+    }
+    return args
 }
