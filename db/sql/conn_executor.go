@@ -21,6 +21,7 @@ import (
     "github.com/kataras/golog"
     "github.com/readystock/noah/db/sql/driver/npgx"
     "github.com/readystock/noah/db/sql/pgwire/pgerror"
+    "github.com/readystock/noah/db/sql/plan"
     "github.com/readystock/noah/db/system"
     "github.com/readystock/noah/db/util/fsm"
     nodes "github.com/readystock/pg_query_go/nodes"
@@ -230,6 +231,12 @@ func (ex *connExecutor) run() (err error) {
             }
             // fmt.Printf("portal resolved to: %s", portal.Stmt.Str)
             ex.curStmt = portal.Stmt.Statement
+
+            pinfo := &plan.PlaceholderInfo{
+                TypeHints: portal.Stmt.TypeHints,
+                Types:     portal.Stmt.Types,
+                Values:    portal.Qargs,
+            }
 
             if portal.Stmt.Statement == nil {
                 res = ex.clientComm.CreateEmptyQueryResult(pos)

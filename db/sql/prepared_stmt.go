@@ -41,6 +41,8 @@ type PreparedStatement struct {
     // This is used later to modify the query on the fly.
     Statement *nodes.Stmt
 
+    Types plan.PlaceholderTypes
+
     // TODO(andrei): The connExecutor doesn't use this. Delete it once the
     // Executor is gone.
     portalNames map[string]struct{}
@@ -67,7 +69,7 @@ type preparedStatementsAccessor interface {
 // PreparedPortal is a PreparedStatement that has been bound with query arguments.
 type PreparedPortal struct {
     Stmt  *PreparedStatement
-    // Qargs types.QueryArguments
+    Qargs plan.QueryArguments
 
     // OutFormats contains the requested formats for the output columns.
     OutFormats []pgwirebase.FormatCode
