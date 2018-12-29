@@ -216,7 +216,7 @@ func (ex *connExecutor) run() (err error) {
             // ex.phaseTimes[sessionStartParse] = tcmd.ParseStart
             // ex.phaseTimes[sessionEndParse] = tcmd.ParseEnd
 
-            err = ex.execStmt(*ex.curStmt, stmtRes, pos)
+            err = ex.execStmt(*ex.curStmt, stmtRes, pos, nil)
             if err != nil {
                 return err
             }
@@ -249,7 +249,7 @@ func (ex *connExecutor) run() (err error) {
                 // needed.
                 NeedRowDesc, pos, portal.OutFormats)
             res = stmtRes
-            err = ex.execStmt(*ex.curStmt, stmtRes, pos)
+            err = ex.execStmt(*ex.curStmt, stmtRes, pos, pinfo)
             golog.Debugf("done executing statement")
         case PrepareStmt:
             res = ex.clientComm.CreatePrepareResult(pos)

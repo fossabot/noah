@@ -18,6 +18,7 @@ package sql
 
 import (
     "errors"
+    "github.com/readystock/noah/db/sql/plan"
     nodes "github.com/readystock/pg_query_go/nodes"
 )
 
@@ -25,6 +26,7 @@ func (ex *connExecutor) execStmt(
     tree nodes.Stmt,
     res RestrictedCommandResult,
     pos CmdPos,
+    pinfo *plan.PlaceholderInfo,
 ) error {
     switch tree.StatementType() {
     case nodes.DDL, nodes.RowsAffected:
@@ -36,7 +38,7 @@ func (ex *connExecutor) execStmt(
         return err
     }
 
-    return handler.Execute(ex, res)
+    return handler.Execute(ex, res, pinfo)
 }
 
 func (ex *connExecutor) getStatementHandler(tree nodes.Stmt) (IQueryStatement, error) {

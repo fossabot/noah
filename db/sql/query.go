@@ -22,7 +22,7 @@ import (
 )
 
 type IQueryStatement interface {
-    Execute(ex *connExecutor, res RestrictedCommandResult) error
+    Execute(ex *connExecutor, res RestrictedCommandResult, pinfo *plan.PlaceholderInfo) error
     compilePlan(ex *connExecutor, nodes []system.NNode) ([]plan.NodeExecutionPlan, error)
     getTargetNodes(ex *connExecutor) ([]system.NNode, error)
 }

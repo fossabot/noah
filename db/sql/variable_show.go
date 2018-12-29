@@ -36,7 +36,7 @@ func CreateVariableShowStatement(stmt pg_query.VariableShowStmt) *VariableShowSt
     }
 }
 
-func (stmt *VariableShowStatement) Execute(ex *connExecutor, res RestrictedCommandResult) error {
+func (stmt *VariableShowStatement) Execute(ex *connExecutor, res RestrictedCommandResult, pinfo *plan.PlaceholderInfo) error {
     if strings.HasPrefix(strings.ToLower(*stmt.Statement.Name), "noah") {
         settingName := strings.Replace(strings.ToLower(*stmt.Statement.Name), "noah.", "", 1)
         value, err := ex.SystemContext.Settings.GetSetting(system.NoahSetting(settingName))

@@ -34,7 +34,7 @@ func CreateInsertStatement(stmt pg_query.InsertStmt) *InsertStatement {
     }
 }
 
-func (stmt *InsertStatement) Execute(ex *connExecutor, res RestrictedCommandResult) error {
+func (stmt *InsertStatement) Execute(ex *connExecutor, res RestrictedCommandResult, pinfo *plan.PlaceholderInfo) error {
     targetNodes, err := stmt.getTargetNodes(ex)
     if err != nil {
         return err

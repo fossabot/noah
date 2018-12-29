@@ -34,7 +34,7 @@ func CreateTransactionStatement(stmt pq.TransactionStmt) *TransactionStatement {
     }
 }
 
-func (stmt *TransactionStatement) Execute(ex *connExecutor, res RestrictedCommandResult) error {
+func (stmt *TransactionStatement) Execute(ex *connExecutor, res RestrictedCommandResult, pinfo *plan.PlaceholderInfo) error {
     switch stmt.Statement.Kind {
     case pq.TRANS_STMT_BEGIN, pq.TRANS_STMT_START:
         return ex.BeginTransaction()

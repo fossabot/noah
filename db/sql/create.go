@@ -43,7 +43,7 @@ func CreateCreateStatement(stmt pg_query.CreateStmt) *CreateStatement {
     }
 }
 
-func (stmt *CreateStatement) Execute(ex *connExecutor, res RestrictedCommandResult) error {
+func (stmt *CreateStatement) Execute(ex *connExecutor, res RestrictedCommandResult, pinfo *plan.PlaceholderInfo) error {
     existingTable, _ := ex.SystemContext.Schema.GetTable(*stmt.Statement.Relation.Relname)
     if existingTable != nil {
         return errors.Errorf("table with name [%s] already exists in the cluster", *stmt.Statement.Relation.Relname)

@@ -35,7 +35,7 @@ func CreateVariableSetStatement(stmt pg_query.VariableSetStmt) *VariableSetState
     }
 }
 
-func (stmt *VariableSetStatement) Execute(ex *connExecutor, res RestrictedCommandResult) error {
+func (stmt *VariableSetStatement) Execute(ex *connExecutor, res RestrictedCommandResult, pinfo *plan.PlaceholderInfo) error {
     if strings.HasPrefix(strings.ToLower(*stmt.Statement.Name), "noah") {
         settingName := strings.Replace(strings.ToLower(*stmt.Statement.Name), "noah.", "", 1)
         settingValue, err := pg_query2.DeparseValue(stmt.Statement.Args.Items[0].(pg_query.A_Const))
