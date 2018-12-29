@@ -54,7 +54,7 @@ func (stmt *SelectStatement) Execute(ex *connExecutor, res RestrictedCommandResu
 }
 
 func (stmt *SelectStatement) replaceParameters(ex *connExecutor, pinfo *plan.PlaceholderInfo) error {
-
+    return nil
 }
 
 func (stmt *SelectStatement) getTargetNodes(ex *connExecutor) ([]system.NNode, error) {

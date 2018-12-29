@@ -49,8 +49,8 @@ func StartHealthChecker(sctx *system.SContext) error {
                     Password: node.Password,
                 })
                 if err != nil {
-                    golog.Warnf("could not connect to node [%d]; %s", node.NodeId, err.Error())
                     if node.IsAlive {
+                        golog.Warnf("could not connect to node [%d]; %s", node.NodeId, err.Error())
                         setNodeLive(node.NodeId, false)
                     }
                     return
@@ -59,8 +59,8 @@ func StartHealthChecker(sctx *system.SContext) error {
 
                 rows, err := conn.Query("SELECT 1;")
                 if err != nil {
-                    golog.Warnf("could not query node [%d]; %s", node.NodeId, err.Error())
                     if node.IsAlive {
+                        golog.Warnf("could not query node [%d]; %s", node.NodeId, err.Error())
                         setNodeLive(node.NodeId, false)
                     }
                     return
@@ -68,9 +68,16 @@ func StartHealthChecker(sctx *system.SContext) error {
                 defer rows.Close()
 
                 if rows.Next() {
-                    if !node.IsAlive {
-                        golog.Infof("node [%d] is now alive", node.NodeId)
-                        setNodeLive(node.NodeId, true)
+                    if rows.Err() != nil {
+                        if node.IsAlive {
+                            golog.Warnf("could not query node [%d]; %s", node.NodeId, err.Error())
+                            setNodeLive(node.NodeId, false)
+                        }
+                    } else {
+                        if !node.IsAlive {
+                            golog.Infof("node [%d] is now alive", node.NodeId)
+                            setNodeLive(node.NodeId, true)
+                        }
                     }
                     return
                 }

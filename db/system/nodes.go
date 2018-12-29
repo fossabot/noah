@@ -87,11 +87,15 @@ func (ctx *SNode) AddNode(node NNode) (*NNode, error) {
     }) {
         return nil, errors.New("a node already exists with the same connection string.")
     }
+
     id, err := ctx.db.NextSequenceValueById("_noah.nodes_")
     if err != nil {
         return nil, err
     }
+
     node.NodeId = *id
+    node.IsAlive = false
+
     b, err := proto.Marshal(&node)
     if err != nil {
         return nil, err

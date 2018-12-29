@@ -47,7 +47,7 @@ func StartApp(sctx *system.SContext, addr string) {
 			}{
 				Error: err.Error(),
 			})
-		} else if _, err := sctx.Nodes.AddNode(node); err != nil {
+		} else if newNode, err := sctx.Nodes.AddNode(node); err != nil {
 			ctx.StatusCode(500)
 			ctx.JSON(struct {
 				Error string
@@ -57,6 +57,7 @@ func StartApp(sctx *system.SContext, addr string) {
 		} else {
 			ctx.StatusCode(200)
 			ctx.JSON(iris.Map{
+				"Node": newNode,
 				"Message": "Node has been created.",
 			})
 		}

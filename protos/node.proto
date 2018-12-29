@@ -12,7 +12,6 @@ message EmptyResponse {
 
 enum NNodeStatus {
     NONE = 0;
-
     STABLE = 10;
 }
 
