@@ -17,6 +17,8 @@
 package queryutil
 
 import (
+    "encoding/json"
+    "fmt"
     "github.com/readystock/noah/db/sql/plan"
     "github.com/readystock/noah/db/sql/types"
     "github.com/readystock/pg_query_go"
@@ -92,6 +94,9 @@ func Test_ReplaceArguments(t *testing.T) {
             t.FailNow()
         }
 
+        j, _ := json.Marshal(parsed)
+        fmt.Println(string(j))
+
         stmt := parsed.Statements[0].(pg_query2.RawStmt).Stmt
 
         argCount := GetArguments(stmt)
@@ -99,7 +104,7 @@ func Test_ReplaceArguments(t *testing.T) {
         assert.Equal(t, item.ArgCount, len(argCount), "number of arguments does not match expected")
 
         // Now we will replace the arguments, and there should be 0 after
-        ReplaceArguments(stmt, item.Arguments)
+        ReplaceArguments(&stmt, item.Arguments)
 
         argCount = GetArguments(stmt)
         assert.Equal(t, 0, argCount, "number of arguments should now be 0")
