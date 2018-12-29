@@ -195,17 +195,23 @@ func (ex *connExecutor) execBind(bindCmd BindStmt) error {
     // }
 
     // Create the new PreparedPortal.
-    if err := ex.addPortal(portalName, bindCmd.PreparedStatementName, ps.PreparedStatement); err != nil {
+    if err := ex.addPortal(portalName, bindCmd.PreparedStatementName, ps.PreparedStatement, qargs, qArgFormatCodes); err != nil {
         return err
     }
     return nil
 }
 
-func (ex *connExecutor) addPortal(portalName string, psName string, stmt *PreparedStatement) error {
+func (ex *connExecutor) addPortal(
+    portalName string,
+    psName string,
+    stmt *PreparedStatement,
+    qargs plan.QueryArguments,
+    outFormats []pgwirebase.FormatCode,
+) error {
     if _, ok := ex.prepStmtsNamespace.portals[portalName]; ok {
         panic(fmt.Sprintf("portal already exists: %q", portalName))
     }
-    portal := ex.newPreparedPortal(stmt)
+    portal := ex.newPreparedPortal(stmt, qargs, outFormats)
     ex.prepStmtsNamespace.portals[portalName] = portalEntry{
         PreparedPortal: &portal,
         psName:         psName,

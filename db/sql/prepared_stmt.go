@@ -81,9 +81,15 @@ type PreparedPortal struct {
 // newPreparedPortal creates a new PreparedPortal.
 //
 // When no longer in use, the PreparedPortal needs to be close()d.
-func (ex *connExecutor) newPreparedPortal(stmt *PreparedStatement) PreparedPortal {
+func (ex *connExecutor) newPreparedPortal(
+    stmt *PreparedStatement,
+    qargs plan.QueryArguments,
+    outFormats []pgwirebase.FormatCode,
+) PreparedPortal {
     portal := PreparedPortal{
-        Stmt: stmt,
+        Stmt:       stmt,
+        Qargs:      qargs,
+        OutFormats: outFormats,
     }
     return portal
 }

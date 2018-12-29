@@ -699,7 +699,7 @@ func (c *conn) bufferRow(
     c.msgBuilder.putInt16(int16(len(row)))
     for i, col := range row {
         fmtCode := pgwirebase.FormatText
-        if formatCodes != nil {
+        if formatCodes != nil && len(formatCodes) > 0 {
             fmtCode = formatCodes[i]
         }
         switch fmtCode {
@@ -857,7 +857,7 @@ func (c *conn) writeRowDescription(
         c.msgBuilder.putInt16(int16(column.DataTypeSize))
 
         c.msgBuilder.putInt32(-1)
-        if formatCodes == nil {
+        if formatCodes == nil || len(formatCodes) == 0 {
             c.msgBuilder.putInt16(int16(pgwirebase.FormatText))
         } else {
             c.msgBuilder.putInt16(int16(formatCodes[i]))
