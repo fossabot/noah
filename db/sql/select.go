@@ -41,12 +41,20 @@ func (stmt *SelectStatement) Execute(ex *connExecutor, res RestrictedCommandResu
     }
     ex.Debug("Preparing to send query to %d node(s)", len(targetNodes))
 
+    if err := stmt.replaceParameters(ex, pinfo); err != nil {
+        return err
+    }
+
     plans, err := stmt.compilePlan(ex, targetNodes)
     if err != nil {
         return err
     }
 
     return ex.ExecutePlans(plans, res)
+}
+
+func (stmt *SelectStatement) replaceParameters(ex *connExecutor, pinfo *plan.PlaceholderInfo) error {
+
 }
 
 func (stmt *SelectStatement) getTargetNodes(ex *connExecutor) ([]system.NNode, error) {
