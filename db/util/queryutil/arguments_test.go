@@ -40,6 +40,10 @@ var (
             Query:    "SELECT e.typdelim FROM pg_catalog.pg_type t, pg_catalog.pg_type e WHERE t.oid = $1 and t.typelem = e.oid AND $2=$3",
             ArgCount: 3,
         },
+        {
+            Query:    "SELECT e.typdelim FROM pg_catalog.pg_type t, pg_catalog.pg_type e WHERE t.oid = $1 and t.typelem = e.oid AND $2=$1",
+            ArgCount: 2,
+        },
     }
 )
 

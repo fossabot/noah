@@ -17,39 +17,41 @@
 package queryutil
 
 import (
+    "github.com/readystock/golinq"
     "github.com/readystock/pg_query_go/nodes"
     "reflect"
 )
 
 func GetArguments(stmt interface{}) (numArgs int) {
-    return examineArguments(stmt, 0)
+    return linq.From(examineArguments(stmt, 0)).Distinct().Count()
 }
 
-func ReplaceArguments(stmt pg_query.Node) (pg_query.Node) {
+func ReplaceArguments(stmt interface{}) (pg_query.Node) {
     return nil
 }
 
-func examineArguments(value interface{}, depth int) int {
-    args := 0
+func examineArguments(value interface{}, depth int) []int {
+    args := make([]int, 0)
     print := func(msg string, args ...interface{}) {
         // fmt.Printf("%s%s\n", strings.Repeat("\t", depth), fmt.Sprintf(msg, args...))
     }
 
     if value == nil {
-        return 0
+        return args
     }
 
     t := reflect.TypeOf(value)
     v := reflect.ValueOf(value)
 
     if v.Type() == reflect.TypeOf(pg_query.ParamRef{}) {
-        args++
+        param := value.(pg_query.ParamRef)
+        args = append(args, param.Number)
     }
 
     switch t.Kind() {
     case reflect.Ptr:
         if v.Elem().IsValid() {
-            args += examineArguments(v.Elem().Interface(), depth+1)
+            args = append(args, examineArguments(v.Elem().Interface(), depth+1)...)
         }
     case reflect.Array, reflect.Chan, reflect.Map, reflect.Slice:
         depth--
@@ -58,7 +60,7 @@ func examineArguments(value interface{}, depth int) int {
             for i := 0; i < v.Len(); i++ {
                 depth++
                 print("[%d] Type {%s} {", i, v.Index(i).Type().String())
-                args += examineArguments(v.Index(i).Interface(), depth+1)
+                args = append(args, examineArguments(v.Index(i).Interface(), depth+1)...)
                 print("},")
                 depth--
             }
@@ -70,7 +72,7 @@ func examineArguments(value interface{}, depth int) int {
         for i := 0; i < t.NumField(); i++ {
             f := t.Field(i)
             print("[%d] Field {%s} Type {%s} Kind {%s}", i, f.Name, f.Type.String(), reflect.ValueOf(value).Field(i).Kind().String())
-            args += examineArguments(reflect.ValueOf(value).Field(i).Interface(), depth+1)
+            args = append(args, examineArguments(reflect.ValueOf(value).Field(i).Interface(), depth+1)...)
         }
     }
     return args
