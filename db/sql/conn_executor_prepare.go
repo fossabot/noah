@@ -18,6 +18,7 @@ package sql
 
 import (
     "fmt"
+    "github.com/kataras/go-errors"
     "github.com/readystock/noah/db/sql/pgwire/pgerror"
     "github.com/readystock/noah/db/sql/pgwire/pgwirebase"
     "github.com/readystock/noah/db/sql/plan"
@@ -49,8 +50,8 @@ func (ex *connExecutor) execPrepare(parseCmd PrepareStmt) error {
     inTypes := make([]types.OID, 0, len(ps.TypeHints))
     if len(ps.TypeHints) > pgwirebase.MaxPreparedStatementArgs {
         return pgwirebase.NewProtocolViolationErrorf(
-                "more than %d arguments to prepared statement: %d",
-                pgwirebase.MaxPreparedStatementArgs, len(ps.TypeHints))
+            "more than %d arguments to prepared statement: %d",
+            pgwirebase.MaxPreparedStatementArgs, len(ps.TypeHints))
     }
     for k, t := range ps.TypeHints {
         i, err := strconv.Atoi(k)
@@ -127,6 +128,71 @@ func (ex *connExecutor) execBind(bindCmd BindStmt) error {
     if len(bindCmd.Args) != int(numQArgs) {
         return pgwirebase.NewProtocolViolationErrorf("expected %d arguments, got %d", numQArgs, len(bindCmd.Args))
     }
+
+    qargs := plan.QueryArguments{}
+    for i, arg := range bindCmd.Args {
+        k := strconv.Itoa(i + 1)
+        t := ps.InTypes[i]
+        if arg == nil {
+            // nil indicates a NULL argument value.
+            qargs[k] = &types.Unknown{
+                Status: types.Null,
+            }
+        } else {
+            dt, ok := ex.typeInfo.DataTypeForOID(t)
+            if !ok {
+                return errors.New("invalid thing")
+            }
+            switch qArgFormatCodes[i] {
+            case pgwirebase.FormatBinary:
+                binaryDecode, ok := dt.Value.(types.BinaryDecoder)
+                if !ok {
+                    return errors.New("type is not a text decoder")
+                }
+                if err := binaryDecode.DecodeBinary(ex.typeInfo, arg); err != nil {
+                    return err
+                }
+                qargs[k] = binaryDecode.(types.Value)
+            case pgwirebase.FormatText:
+                textDecode, ok := dt.Value.(types.TextDecoder)
+                if !ok {
+                    return errors.New("type is not a text decoder")
+                }
+                if err := textDecode.DecodeText(ex.typeInfo, arg); err != nil {
+                    return err
+                }
+                qargs[k] = textDecode.(types.Value)
+            default:
+                return errors.New("invalid format code")
+            }
+            // d, err := pgwirebase.DecodeOidDatum(t, qArgFormatCodes[i], arg)
+            // if err != nil {
+            //     if _, ok := err.(*pgerror.Error); ok {
+            //         return err
+            //     }
+            //     return pgwirebase.NewProtocolViolationErrorf(
+            //         "error in argument for $%d: %s", i+1, err.Error())
+            //
+            // }
+            // qargs[k] = d
+        }
+    }
+
+    // numCols := len(ps.Columns)
+    // if (len(bindCmd.OutFormats) > 1) && (len(bindCmd.OutFormats) != numCols) {
+    //     return pgwirebase.NewProtocolViolationErrorf(
+    //         "expected 1 or %d for number of format codes, got %d",
+    //         numCols, len(bindCmd.OutFormats))
+    // }
+    //
+    // columnFormatCodes := bindCmd.OutFormats
+    // if len(bindCmd.OutFormats) == 1 {
+    //     // Apply the format code to every column.
+    //     columnFormatCodes = make([]pgwirebase.FormatCode, numCols)
+    //     for i := 0; i < numCols; i++ {
+    //         columnFormatCodes[i] = bindCmd.OutFormats[0]
+    //     }
+    // }
 
     // Create the new PreparedPortal.
     if err := ex.addPortal(portalName, bindCmd.PreparedStatementName, ps.PreparedStatement); err != nil {

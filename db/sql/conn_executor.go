@@ -22,6 +22,7 @@ import (
     "github.com/readystock/noah/db/sql/driver/npgx"
     "github.com/readystock/noah/db/sql/pgwire/pgerror"
     "github.com/readystock/noah/db/sql/plan"
+    "github.com/readystock/noah/db/sql/types"
     "github.com/readystock/noah/db/system"
     "github.com/readystock/noah/db/util/fsm"
     nodes "github.com/readystock/pg_query_go/nodes"
@@ -49,6 +50,8 @@ type connExecutor struct {
     TransactionState TransactionState
     TransactionMode  TransactionMode
     TransactionID    uint64
+
+    typeInfo *types.ConnInfo
 }
 
 func (ex *connExecutor) GetNodesForAccountID(id *uint64) ([]uint64, error) {
@@ -179,7 +182,9 @@ func (s *Server) newConnExecutor(stmtBuf *StmtBuf, clientComm ClientComm) *connE
         },
         TransactionState: TransactionState_None,
         TransactionMode:  TransactionMode_AutoCommit,
+        typeInfo:         types.NewConnInfo(),
     }
+    ex.typeInfo.InitializeDataTypes(npgx.NameOIDs)
     return ex
 }
 
