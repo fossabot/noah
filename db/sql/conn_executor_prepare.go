@@ -19,8 +19,11 @@ package sql
 import (
     "fmt"
     "github.com/readystock/noah/db/sql/pgwire/pgerror"
+    "github.com/readystock/noah/db/sql/pgwire/pgwirebase"
     "github.com/readystock/noah/db/sql/plan"
+    "github.com/readystock/noah/db/sql/types"
     nodes "github.com/readystock/pg_query_go/nodes"
+    "strconv"
 )
 
 func (ex *connExecutor) execPrepare(parseCmd PrepareStmt) error {
@@ -37,10 +40,54 @@ func (ex *connExecutor) execPrepare(parseCmd PrepareStmt) error {
         ex.deletePreparedStmt("")
     }
 
-    _, err := ex.addPreparedStmt(parseCmd.Name, parseCmd.PGQuery, parseCmd.TypeHints)
+    ps, err := ex.addPreparedStmt(parseCmd.Name, parseCmd.PGQuery, parseCmd.TypeHints)
     if err != nil {
         return err
     }
+
+    // Convert the inferred SQL types back to an array of pgwire Oids.
+    inTypes := make([]types.OID, 0, len(ps.TypeHints))
+    if len(ps.TypeHints) > pgwirebase.MaxPreparedStatementArgs {
+        return pgwirebase.NewProtocolViolationErrorf(
+                "more than %d arguments to prepared statement: %d",
+                pgwirebase.MaxPreparedStatementArgs, len(ps.TypeHints))
+    }
+    for k, t := range ps.TypeHints {
+        i, err := strconv.Atoi(k)
+        if err != nil || i < 1 {
+            return pgerror.NewErrorf(
+                pgerror.CodeUndefinedParameterError, "invalid placeholder name: $%s", k)
+        }
+        // Placeholder names are 1-indexed; the arrays in the protocol are
+        // 0-indexed.
+        i--
+        // Grow inTypes to be at least as large as i. Prepopulate all
+        // slots with the hints provided, if any.
+        for j := len(inTypes); j <= i; j++ {
+            inTypes = append(inTypes, 0)
+            if j < len(parseCmd.RawTypeHints) {
+                inTypes[j] = parseCmd.RawTypeHints[j]
+            }
+        }
+        // OID to Datum is not a 1-1 mapping (for example, int4 and int8
+        // both map to TypeInt), so we need to maintain the types sent by
+        // the client.
+        if inTypes[i] != 0 {
+            continue
+        }
+        inTypes[i] = t.GetOID()
+    }
+    for i, t := range inTypes {
+        if t == 0 {
+            return pgerror.NewErrorf(
+                pgerror.CodeIndeterminateDatatypeError,
+                "could not determine data type of placeholder $%d", i+1)
+        }
+    }
+    // Remember the inferred placeholder types so they can be reported on
+    // Describe.
+    ps.InTypes = inTypes
+
     return nil
 }
 
@@ -59,6 +106,26 @@ func (ex *connExecutor) execBind(bindCmd BindStmt) error {
     ps, ok := ex.prepStmtsNamespace.prepStmts[bindCmd.PreparedStatementName]
     if !ok {
         return pgerror.NewErrorf(pgerror.CodeInvalidSQLStatementNameError, "unknown prepared statement %q", bindCmd.PreparedStatementName)
+    }
+
+    numQArgs := uint16(len(ps.InTypes))
+    qArgFormatCodes := bindCmd.ArgFormatCodes
+
+    // If a single code is specified, it is applied to all arguments.
+    if len(qArgFormatCodes) != 1 && len(qArgFormatCodes) != int(numQArgs) {
+        return pgwirebase.NewProtocolViolationErrorf("wrong number of format codes specified: %d for %d arguments", len(qArgFormatCodes), numQArgs)
+    }
+    // If a single format code was specified, it applies to all the arguments.
+    if len(qArgFormatCodes) == 1 {
+        fmtCode := qArgFormatCodes[0]
+        qArgFormatCodes = make([]pgwirebase.FormatCode, numQArgs)
+        for i := range qArgFormatCodes {
+            qArgFormatCodes[i] = fmtCode
+        }
+    }
+
+    if len(bindCmd.Args) != int(numQArgs) {
+        return pgwirebase.NewProtocolViolationErrorf("expected %d arguments, got %d", numQArgs, len(bindCmd.Args))
     }
 
     // Create the new PreparedPortal.

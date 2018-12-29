@@ -20,6 +20,7 @@ import (
     "context"
     "github.com/readystock/noah/db/sql/pgwire/pgwirebase"
     "github.com/readystock/noah/db/sql/plan"
+    "github.com/readystock/noah/db/sql/types"
     nodes "github.com/readystock/pg_query_go/nodes"
 )
 
@@ -42,6 +43,8 @@ type PreparedStatement struct {
     Statement *nodes.Stmt
 
     Types plan.PlaceholderTypes
+
+    InTypes []types.OID
 
     // TODO(andrei): The connExecutor doesn't use this. Delete it once the
     // Executor is gone.
