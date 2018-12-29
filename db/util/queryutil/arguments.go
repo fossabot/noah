@@ -22,8 +22,10 @@ import (
     "reflect"
 )
 
-func GetArguments(stmt interface{}) (numArgs int) {
-    return linq.From(examineArguments(stmt, 0)).Distinct().Count()
+func GetArguments(stmt interface{}) []int {
+    args := make([]int, 0)
+    linq.From(examineArguments(stmt, 0)).Distinct().ToSlice(&args)
+    return args
 }
 
 func examineArguments(value interface{}, depth int) []int {

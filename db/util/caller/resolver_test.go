@@ -55,7 +55,7 @@ func TestDefaultCallResolver(t *testing.T) {
 		}
 
 		// NB: runtime.Caller always returns unix paths.
-		if expected := path.Join("util", "caller", "resolver_test.go"); file != expected {
+		if expected := path.Join("db", "util", "caller", "resolver_test.go"); file != expected {
 			t.Fatalf("expected '%s' got '%s'", expected, file)
 		}
 	}

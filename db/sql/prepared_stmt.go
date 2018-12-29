@@ -19,6 +19,7 @@ package sql
 import (
     "context"
     "github.com/readystock/noah/db/sql/pgwire/pgwirebase"
+    "github.com/readystock/noah/db/sql/plan"
     nodes "github.com/readystock/pg_query_go/nodes"
 )
 
@@ -30,6 +31,11 @@ type PreparedStatement struct {
     // the future to present a contextual error message based on location
     // information.
     Str string
+
+    // TypeHints contains the types of the placeholders set by the client. It
+    // dictates how input parameters for those placeholders will be parsed. If a
+    // placeholder has no type hint, it will be populated during type checking.
+    TypeHints plan.PlaceholderTypes
 
     // Statement is the parse tree from pg_query.
     // This is used later to modify the query on the fly.

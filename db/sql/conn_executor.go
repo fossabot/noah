@@ -220,6 +220,7 @@ func (ex *connExecutor) run() (err error) {
                 return err
             }
         case ExecPortal:
+            golog.Warnf("executing portal")
             portal, ok := ex.prepStmtsNamespace.portals[tcmd.Name]
             if !ok {
                 err = pgerror.NewErrorf(pgerror.CodeInvalidCursorNameError, "unknown portal %q", tcmd.Name)

@@ -19,7 +19,7 @@ package sql
 import (
     "fmt"
     "github.com/readystock/noah/db/sql/pgwire/pgerror"
-    "github.com/readystock/noah/db/sql/types"
+    "github.com/readystock/noah/db/sql/plan"
     nodes "github.com/readystock/pg_query_go/nodes"
 )
 
@@ -37,7 +37,7 @@ func (ex *connExecutor) execPrepare(parseCmd PrepareStmt) error {
         ex.deletePreparedStmt("")
     }
 
-    _, err := ex.addPreparedStmt(parseCmd.Name, parseCmd.PGQuery, parseCmd.RawTypeHints)
+    _, err := ex.addPreparedStmt(parseCmd.Name, parseCmd.PGQuery, parseCmd.TypeHints)
     if err != nil {
         return err
     }
@@ -81,12 +81,12 @@ func (ex *connExecutor) addPortal(portalName string, psName string, stmt *Prepar
     return nil
 }
 
-func (ex *connExecutor) addPreparedStmt(name string, stmt nodes.Stmt, parseTypeHints []types.OID) (*PreparedStatement, error) {
+func (ex *connExecutor) addPreparedStmt(name string, stmt nodes.Stmt, parseTypeHints plan.PlaceholderTypes) (*PreparedStatement, error) {
     if _, ok := ex.prepStmtsNamespace.prepStmts[name]; ok {
         panic(fmt.Sprintf("prepared statement already exists: %q", name))
     }
     // Prepare the query. This completes the typing of placeholders.
-    prepared, err := ex.prepare(stmt)
+    prepared, err := ex.prepare(stmt, parseTypeHints)
     if err != nil {
         return nil, err
     }
@@ -97,8 +97,9 @@ func (ex *connExecutor) addPreparedStmt(name string, stmt nodes.Stmt, parseTypeH
     return prepared, nil
 }
 
-func (ex *connExecutor) prepare(stmt nodes.Stmt) (*PreparedStatement, error) {
+func (ex *connExecutor) prepare(stmt nodes.Stmt, parseTypeHints plan.PlaceholderTypes) (*PreparedStatement, error) {
     prepared := &PreparedStatement{
+        TypeHints: parseTypeHints,
         Statement: &stmt,
     }
     return prepared, nil

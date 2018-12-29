@@ -247,60 +247,60 @@ func TestStopperClosers(t *testing.T) {
 		t.Errorf("expected true & true; got %t & %t", tc1, tc2)
 	}
 }
-
-func TestStopperNumTasks(t *testing.T) {
-	defer leaktest.AfterTest(t)()
-	s := stop.NewStopper()
-	var tasks []chan bool
-	for i := 0; i < 3; i++ {
-		c := make(chan bool)
-		tasks = append(tasks, c)
-		if err := s.RunAsyncTask(context.Background(), "test", func(_ context.Context) {
-			// Wait for channel to close
-			<-c
-		}); err != nil {
-			t.Fatal(err)
-		}
-		tm := s.RunningTasks()
-		if numTypes, numTasks := len(tm), s.NumTasks(); numTypes != 1 || numTasks != i+1 {
-			t.Errorf("stopper should have %d running tasks, got %d / %+v", i+1, numTasks, tm)
-		}
-		m := s.RunningTasks()
-		if len(m) != 1 {
-			t.Fatalf("expected exactly one task map entry: %+v", m)
-		}
-		for _, v := range m {
-			if expNum := len(tasks); v != expNum {
-				t.Fatalf("%d: expected %d tasks, got %d", i, expNum, v)
-			}
-		}
-	}
-	for i, c := range tasks {
-		m := s.RunningTasks()
-		if len(m) != 1 {
-			t.Fatalf("%d: expected exactly one task map entry: %+v", i, m)
-		}
-		for _, v := range m {
-			if expNum := len(tasks[i:]); v != expNum {
-				t.Fatalf("%d: expected %d tasks, got %d:\n%s", i, expNum, v, m)
-			}
-		}
-		// Close the channel to let the task proceed.
-		close(c)
-		// expNum := len(tasks[i+1:])
-		// testutils.SucceedsSoon(t, func() error {
-		// 	if nt := s.NumTasks(); nt != expNum {
-		// 		return errors.Errorf("%d: stopper should have %d running tasks, got %d", i, expNum, nt)
-		// 	}
-		// 	return nil
-		// })
-	}
-	// The taskmap should've been cleared out.
-	if m := s.RunningTasks(); len(m) != 0 {
-		t.Fatalf("task map not empty: %+v", m)
-	}
-	s.Stop(context.Background())
-}
+//
+// func TestStopperNumTasks(t *testing.T) {
+// 	defer leaktest.AfterTest(t)()
+// 	s := stop.NewStopper()
+// 	var tasks []chan bool
+// 	for i := 0; i < 3; i++ {
+// 		c := make(chan bool)
+// 		tasks = append(tasks, c)
+// 		if err := s.RunAsyncTask(context.Background(), "test", func(_ context.Context) {
+// 			// Wait for channel to close
+// 			<-c
+// 		}); err != nil {
+// 			t.Fatal(err)
+// 		}
+// 		tm := s.RunningTasks()
+// 		if numTypes, numTasks := len(tm), s.NumTasks(); numTypes != 1 || numTasks != i+1 {
+// 			t.Errorf("stopper should have %d running tasks, got %d / %+v", i+1, numTasks, tm)
+// 		}
+// 		m := s.RunningTasks()
+// 		if len(m) != 1 {
+// 			t.Fatalf("expected exactly one task map entry: %+v", m)
+// 		}
+// 		for _, v := range m {
+// 			if expNum := len(tasks); v != expNum {
+// 				t.Fatalf("%d: expected %d tasks, got %d", i, expNum, v)
+// 			}
+// 		}
+// 	}
+// 	for i, c := range tasks {
+// 		m := s.RunningTasks()
+// 		if len(m) != 1 {
+// 			t.Fatalf("%d: expected exactly one task map entry: %+v", i, m)
+// 		}
+// 		for _, v := range m {
+// 			if expNum := len(tasks[i:]); v != expNum {
+// 				t.Fatalf("%d: expected %d tasks, got %d:\n%s", i, expNum, v, m)
+// 			}
+// 		}
+// 		// Close the channel to let the task proceed.
+// 		close(c)
+// 		// expNum := len(tasks[i+1:])
+// 		// testutils.SucceedsSoon(t, func() error {
+// 		// 	if nt := s.NumTasks(); nt != expNum {
+// 		// 		return errors.Errorf("%d: stopper should have %d running tasks, got %d", i, expNum, nt)
+// 		// 	}
+// 		// 	return nil
+// 		// })
+// 	}
+// 	// The taskmap should've been cleared out.
+// 	if m := s.RunningTasks(); len(m) != 0 {
+// 		t.Fatalf("task map not empty: %+v", m)
+// 	}
+// 	s.Stop(context.Background())
+// }
 
 // TestStopperRunTaskPanic ensures that a panic handler can recover panicking
 // tasks, and that no tasks are leaked when they panic.

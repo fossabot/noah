@@ -23,6 +23,7 @@ import (
     "github.com/readystock/noah/db/sql/driver/npgx"
     "github.com/readystock/noah/db/sql/pgwire/pgerror"
     "github.com/readystock/noah/db/sql/pgwire/pgwirebase"
+    "github.com/readystock/noah/db/sql/plan"
     "github.com/readystock/noah/db/sql/types"
     "github.com/readystock/noah/db/util/queryutil"
     "github.com/readystock/pg_query_go"
@@ -68,7 +69,7 @@ func (c *conn) handleParse(buf *pgwirebase.ReadBuffer) error {
     info.InitializeDataTypes(npgx.NameOIDs)
     // Prepare the mapping of SQL placeholder names to types. Pre-populate it with
     // the type hints received from the client, if any.
-    sqlTypeHints := make(types.PlaceholderTypes)
+    sqlTypeHints := make(plan.PlaceholderTypes)
     for i, t := range inTypeHints {
         if t == 0 {
             continue
@@ -99,7 +100,7 @@ func (c *conn) handleParse(buf *pgwirebase.ReadBuffer) error {
             // to double check.
             if numQArgTypes == 0 {
                 args := queryutil.GetArguments(stmt)
-                if args > 0 {
+                if len(args) > 0 {
                     golog.Infof("found %d arguments in query", args)
                 }
             } else {

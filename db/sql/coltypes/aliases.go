@@ -18,7 +18,6 @@ package coltypes
 
 import (
     "github.com/readystock/noah/db/sql/pgwire/pgerror"
-    "github.com/readystock/noah/db/sql/sem/types"
 )
 
 var (
@@ -173,16 +172,16 @@ var typNameLiterals map[string]T
 
 func init() {
     typNameLiterals = make(map[string]T)
-    for _, t := range types.OidToType {
-        name := types.PGDisplayName(t)
-        if _, ok := typNameLiterals[name]; !ok {
-            colTyp, err := DatumTypeToColumnType(t)
-            if err != nil {
-                continue
-            }
-            typNameLiterals[name] = colTyp
-        }
-    }
+    // for _, t := range types.OidToType {
+    //     name := types.PGDisplayName(t)
+    //     if _, ok := typNameLiterals[name]; !ok {
+    //         colTyp, err := DatumTypeToColumnType(t)
+    //         if err != nil {
+    //             continue
+    //         }
+    //         typNameLiterals[name] = colTyp
+    //     }
+    // }
 }
 
 // TypeForNonKeywordTypeName returns the column type for the string name of a

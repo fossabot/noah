@@ -18,10 +18,8 @@ package opt
 
 import (
     "bytes"
-    "context"
     "fmt"
-    "github.com/readystock/noah/db/sql/sem/tree"
-    "github.com/readystock/noah/db/sql/sem/types"
+    "github.com/readystock/noah/db/sql/types"
     "github.com/readystock/noah/db/util/treeprinter"
     "time"
 )
@@ -220,7 +218,7 @@ type Table interface {
 type Catalog interface {
     // FindTable returns a Table interface for the database table matching the
     // given table name.  Returns an error if the table does not exist.
-    FindTable(ctx context.Context, name *tree.TableName) (Table, error)
+    // FindTable(ctx context.Context, name *tree.TableName) (Table, error)
 }
 
 // FormatCatalogTable nicely formats a catalog table using a treeprinter for

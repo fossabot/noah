@@ -18,10 +18,10 @@ package pgwire
 
 import (
     "context"
+    "github.com/readystock/noah/db/base"
     "github.com/readystock/noah/db/sql"
     "github.com/readystock/noah/db/sql/pgwire/pgerror"
     "github.com/readystock/noah/db/sql/pgwire/pgwirebase"
-    "github.com/readystock/noah/db/sql/sem/tree"
     "github.com/readystock/noah/db/util"
     "github.com/readystock/noah/db/util/leaktest"
     "github.com/readystock/noah/testutils"

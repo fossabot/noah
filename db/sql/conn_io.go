@@ -21,6 +21,7 @@ import (
     "fmt"
     "github.com/pkg/errors"
     "github.com/readystock/noah/db/sql/pgwire/pgproto"
+    "github.com/readystock/noah/db/sql/plan"
     "github.com/readystock/noah/db/sql/types"
     "io"
     "sync"
@@ -199,7 +200,7 @@ type PrepareStmt struct {
     // Stmt can be nil, in which case executing it should produce an "empty query
     // response" message.
     // Stmt      tree.Statement
-    TypeHints types.PlaceholderTypes
+    TypeHints plan.PlaceholderTypes
     // RawTypeHints is the representation of type hints exactly as specified by
     // the client.
     RawTypeHints []types.OID
