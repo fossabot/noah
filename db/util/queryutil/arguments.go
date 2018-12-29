@@ -26,10 +26,6 @@ func GetArguments(stmt interface{}) (numArgs int) {
     return linq.From(examineArguments(stmt, 0)).Distinct().Count()
 }
 
-func ReplaceArguments(stmt interface{}) (pg_query.Node) {
-    return nil
-}
-
 func examineArguments(value interface{}, depth int) []int {
     args := make([]int, 0)
     print := func(msg string, args ...interface{}) {

@@ -52,6 +52,14 @@ var (
             Query:  "SELECT products.id FROM products JOIN types ON types.id=products.type_id WHERE products.id IN (SELECT id FROM other)",
             Tables: []string{"products", "types", "other"},
         },
+        {
+            Query:  "INSERT INTO products (id) VALUES(1);",
+            Tables: []string{"products"},
+        },
+        {
+            Query:  "UPDATE variations SET id=4 WHERE id=3;",
+            Tables: []string{"variations"},
+        },
     }
 )
 
