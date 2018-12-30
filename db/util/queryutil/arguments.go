@@ -20,6 +20,7 @@ import (
     "fmt"
     "github.com/readystock/golinq"
     "github.com/readystock/noah/db/sql/plan"
+    "github.com/readystock/noah/db/sql/types"
     "github.com/readystock/pg_query_go/nodes"
     "reflect"
     "strconv"
@@ -99,11 +100,25 @@ func replaceArguments(value interface{}, depth int, args plan.QueryArguments) in
                             Str: argValue,
                         },
                     }
-                case int8, int16, int32, int64:
+                case int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64:
                     intv, _ := strconv.ParseUint(fmt.Sprintf("%v", argValue), 10, 64)
                     return pg_query.A_Const{
                         Val: pg_query.Integer{
                             Ival: int64(intv),
+                        },
+                    }
+                case *types.Numeric:
+                    floatyMcFloatyFace := float64(0.0)
+                    argValue.AssignTo(&floatyMcFloatyFace)
+                    return pg_query.A_Const{
+                        Val: pg_query.Float{
+                            Str: fmt.Sprintf("%v", floatyMcFloatyFace),
+                        },
+                    }
+                case float32, float64:
+                    return pg_query.A_Const{
+                        Val: pg_query.String{
+                            Str: fmt.Sprintf("%v", argValue),
                         },
                     }
                 case bool:

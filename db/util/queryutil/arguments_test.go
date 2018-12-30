@@ -124,6 +124,25 @@ var (
                 },
             },
         },
+        {
+            Query:    "INSERT INTO users (id, enabled, setup, value) VALUES($1, $2, $1, $3) RETURNING *;",
+            ArgCount: 3,
+            Arguments: map[string]types.Value{
+                "1": &types.Int4{
+                    Status: types.Present,
+                    Int:    1,
+                },
+                "2": &types.Bool{
+                    Status: types.Present,
+                    Bool:   false,
+                },
+                "3": func() *types.Numeric {
+                    float := types.Numeric{}
+                    float.Set(float64(5.6))
+                    return &float
+                }(),
+            },
+        },
     }
 )
 
