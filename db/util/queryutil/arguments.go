@@ -21,6 +21,7 @@ import (
     "github.com/readystock/noah/db/sql/plan"
     "github.com/readystock/pg_query_go/nodes"
     "reflect"
+    "strconv"
 )
 
 func GetArguments(stmt interface{}) []int {
@@ -87,10 +88,50 @@ func replaceArguments(value interface{}, depth int, args plan.QueryArguments) in
         // fmt.Printf("%s%s\n", strings.Repeat("\t", depth), fmt.Sprintf(msg, args...))
     }
 
-    if _, ok := value.(pg_query.ParamRef); ok {
-        return pg_query.String{
-            Str:"MY HANDS ARE TYPING WORDS",
+    if param, ok := value.(pg_query.ParamRef); ok {
+        if arg, ok := args[strconv.FormatInt(int64(param.Number), 10)]; ok {
+            return func() pg_query.Node {
+                switch argValue := arg.Get().(type) {
+                case string:
+                    return pg_query.A_Const{
+                        Val: pg_query.String{
+                            Str: argValue,
+                        },
+                    }
+                case int8, int16, int32, int64:
+                    return pg_query.A_Const{
+                        Val: pg_query.Integer{
+                            Ival: argValue.(int64),
+                        },
+                    }
+                case bool:
+                    return pg_query.TypeCast{
+                        Arg: pg_query.A_Const{
+                            Val: pg_query.String{
+                                Str:"true",
+                            },
+                        },
+                        TypeName: &pg_query.TypeName{
+                            Names:pg_query.List{
+                                Items:[]pg_query.Node{
+                                    pg_query.String{
+                                        Str: "pg_catalog",
+                                    },
+                                    pg_query.String{
+                                        Str: "bool",
+                                    },
+                                },
+                            },
+                        },
+                    }
+                default:
+                    return nil
+                }
+            }()
+        } else {
+            panic("my hands are typgin words")
         }
+
     }
 
     if value == nil {
@@ -108,7 +149,7 @@ func replaceArguments(value interface{}, depth int, args plan.QueryArguments) in
     case reflect.Slice:
         if val.Len() > 0 {
             print("[-] Slice Type <%s> Size: %d", val.Type().String(), val.Len())
-            copySlice := reflect.MakeSlice(reflect.SliceOf(typ.Elem()), val.Len(), (val.Cap() + 1) * 2)
+            copySlice := reflect.MakeSlice(reflect.SliceOf(typ.Elem()), val.Len(), (val.Cap()+1)*2)
             reflect.Copy(copySlice, val)
             print("[")
             depth++
@@ -143,20 +184,6 @@ func replaceArguments(value interface{}, depth int, args plan.QueryArguments) in
             }
         }
         return copy.Interface()
-    // case reflect.Interface:
-    //     copy := reflect.New(val.Elem().Type()).Elem()
-    //     copyType := reflect.TypeOf(copy.Interface())
-    //     print("[-] Copied Interface Type <%s> Kind <%s> Fields: %d", copy.Type().Name(), copy.Kind().String(), copy.NumField())
-    //     depth++
-    //     for i := 0; i < copy.NumField(); i++ {
-    //         field := copy.Field(i)
-    //         fieldType := copyType.Field(i)
-    //         actual := val.Elem().Field(i)
-    //         print("[%d] Copying Field <%s> Type <%s> Kind <%s> Actual %s", i, fieldType.Name, field.Type().String(), field.Kind().String(), actual.Type().String())
-    //         result := replaceArguments(actual.Interface(), depth+1, args)
-    //         copy.Field(i).Set(reflect.ValueOf(result))
-    //     }
-    //     return copy.Interface()
     default:
         return value
     }

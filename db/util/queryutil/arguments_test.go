@@ -17,6 +17,7 @@
 package queryutil
 
 import (
+    "fmt"
     "github.com/readystock/noah/db/sql/plan"
     "github.com/readystock/noah/db/sql/types"
     "github.com/readystock/pg_query_go"
@@ -145,5 +146,12 @@ func Test_ReplaceArguments(t *testing.T) {
 
         argCount = GetArguments(result)
         assert.Equal(t, 0, len(argCount), "number of arguments should now be 0")
+
+        query, err := result.(pg_query2.Node).Deparse(pg_query2.Context_None)
+        if err != nil {
+            t.Error(err)
+            t.FailNow()
+        }
+        fmt.Println("Query: ", *query)
     }
 }
