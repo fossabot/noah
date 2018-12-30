@@ -107,10 +107,11 @@ func replaceArguments(value interface{}, depth int, args plan.QueryArguments) in
                         },
                     }
                 case bool:
+                    boolVal := string([]rune(fmt.Sprintf("%v", argValue))[0])
                     return pg_query.TypeCast{
                         Arg: pg_query.A_Const{
                             Val: pg_query.String{
-                                Str:"true",
+                                Str: boolVal,
                             },
                         },
                         TypeName: &pg_query.TypeName{
