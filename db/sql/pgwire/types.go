@@ -27,7 +27,10 @@ import (
     "github.com/readystock/noah/db/util/duration"
     "github.com/readystock/noah/db/util/timeofday"
     "github.com/readystock/noah/db/util/timeutil"
+    "math"
+    "math/big"
     "strconv"
+    "strings"
     "time"
 )
 
@@ -206,6 +209,86 @@ func (b *writeBuffer) writeBinaryDatum(
         // NULL is encoded as -1; all other values have a length prefix.
         b.putInt32(-1)
         return
+    }
+
+    switch v := d.(type) {
+    case *types.Bool:
+        b.putInt32(1) // Booleans always have a length of 1
+        if v.Bool { // Write 1 for true and 0 for false.
+            b.writeByte(1)
+        } else {
+            b.writeByte(0)
+        }
+    case types.Integer: // This should cover int2, int4 and int8
+        b.putInt32(8)
+        b.putInt64(v.GetInt())
+    case types.Float: // This should cover all float types but also some uint types
+        b.putInt32(8)
+        b.putInt64(int64(math.Float64bits(float64(v.GetFloat()))))
+    case *types.Decimal:
+        alloc := struct {
+            pgNum pgwirebase.PGNumeric
+            bigI big.Int
+        }{
+            pgNum: pgwirebase.PGNumeric{
+                // Since we use 2000 as the exponent limits in tree.DecimalCtx, this
+                // conversion should not overflow.
+                // NOTE: The above was true for cockroachdb, this may not be true for noah.
+                Dscale: int16(-v.Exp),
+            },
+        }
+
+        if v.Int.Sign() >= 0 {
+            alloc.pgNum.Sign = pgwirebase.PGNumericPos
+        } else {
+            alloc.pgNum.Sign = pgwirebase.PGNumericNeg
+        }
+
+        isZero := func(r rune) bool {
+            return r == '0'
+        }
+
+        roachDecimal, err := v.GetApdDecimal()
+        if err != nil {
+            b.setError(err)
+            return
+        }
+
+        // Mostly cribbed from libpqtypes' str2num.
+        digits := strings.TrimLeftFunc(alloc.bigI.Abs(&roachDecimal.Coeff).String(), isZero)
+        dweight := len(digits) - int(alloc.pgNum.Dscale) - 1
+        digits = strings.TrimRightFunc(digits, isZero)
+        if dweight >= 0 {
+            alloc.pgNum.Weight = int16((dweight+1+pgwirebase.PGDecDigits-1)/pgwirebase.PGDecDigits - 1)
+        } else {
+            alloc.pgNum.Weight = int16(-((-dweight-1)/pgwirebase.PGDecDigits + 1))
+        }
+        offset := (int(alloc.pgNum.Weight)+1)*pgwirebase.PGDecDigits - (dweight + 1)
+        alloc.pgNum.Ndigits = int16((len(digits) + offset + pgwirebase.PGDecDigits - 1) / pgwirebase.PGDecDigits)
+        if len(digits) == 0 {
+            offset = 0
+            alloc.pgNum.Ndigits = 0
+            alloc.pgNum.Weight = 0
+        }
+        digitIdx := -offset
+        nextDigit := func() int16 {
+            var ndigit int16
+            for nextDigitIdx := digitIdx + pgwirebase.PGDecDigits; digitIdx < nextDigitIdx; digitIdx++ {
+                ndigit *= 10
+                if digitIdx >= 0 && digitIdx < len(digits) {
+                    ndigit += int16(digits[digitIdx] - '0')
+                }
+            }
+            return ndigit
+        }
+        b.putInt32(int32(2 * (4 + alloc.pgNum.Ndigits)))
+        b.putInt16(alloc.pgNum.Ndigits)
+        b.putInt16(alloc.pgNum.Weight)
+        b.putInt16(int16(alloc.pgNum.Sign))
+        b.putInt16(alloc.pgNum.Dscale)
+        for digitIdx < len(digits) {
+            b.putInt16(nextDigit())
+        }
     }
 
     // switch v := tree.UnwrapDatum(nil, d).(type) {
