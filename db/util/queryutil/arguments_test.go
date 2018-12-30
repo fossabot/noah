@@ -109,6 +109,20 @@ var (
                 },
             },
         },
+        {
+            Query:    "INSERT INTO users (id, enabled) VALUES($1, $2) RETURNING *;",
+            ArgCount: 2,
+            Arguments: map[string]types.Value{
+                "1": &types.Int4{
+                    Status: types.Present,
+                    Int:    1,
+                },
+                "2": &types.Bool{
+                    Status: types.Present,
+                    Bool:   true,
+                },
+            },
+        },
     }
 )
 
