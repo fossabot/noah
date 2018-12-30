@@ -228,7 +228,7 @@ func (b *writeBuffer) writeBinaryDatum(
     case *types.Decimal:
         alloc := struct {
             pgNum pgwirebase.PGNumeric
-            bigI big.Int
+            bigI  big.Int
         }{
             pgNum: pgwirebase.PGNumeric{
                 // Since we use 2000 as the exponent limits in tree.DecimalCtx, this
@@ -289,83 +289,35 @@ func (b *writeBuffer) writeBinaryDatum(
         for digitIdx < len(digits) {
             b.putInt16(nextDigit())
         }
+    case *types.Bytea:
+        b.putInt32(int32(len(v.Bytes)))
+        b.write(v.Bytes)
+    case *types.QChar:
+        b.putInt32(1)
+        b.write([]byte{ byte(v.Int) })
+    case *types.UUID:
+        b.putInt32(16)
+        b.write(v.Bytes[:])
+    case *types.Text:
+        b.writeLengthPrefixedString(v.String)
+    case *types.Timestamp:
+        b.putInt32(8)
+        b.putInt64(timeToPgBinary(v.Time, nil))
+    case *types.Timestamptz:
+        b.putInt32(8)
+        b.putInt64(timeToPgBinary(v.Time, sessionLoc))
+    case *types.Date:
+        b.putInt32(4)
+        b.putInt32(dateToPgBinary(v.Time))
+    case *types.Interval:
+        b.putInt32(16)
+        b.putInt64(v.Microseconds)
+        b.putInt32(v.Days)
+        b.putInt32(v.Months)
+    default:
+        b.setError(errors.Errorf("unsupported type %T", d))
     }
 
-    // case *tree.DBytes:
-    //     b.putInt32(int32(len(*v)))
-    //     b.write([]byte(*v))
-    //
-    // case *tree.DUuid:
-    //     b.putInt32(16)
-    //     b.write(v.GetBytes())
-    //
-    // case *tree.DIPAddr:
-    //     // We calculate the Postgres binary format for an IPAddr. For the spec see,
-    //     // https://github.com/postgres/postgres/blob/81c5e46c490e2426db243eada186995da5bb0ba7/src/backend/utils/adt/network.c#L144
-    //     // The pgBinary encoding is as follows:
-    //     //  The int32 length of the following bytes.
-    //     //  The family byte.
-    //     //  The mask size byte.
-    //     //  A 0 byte for is_cidr. It's ignored on the postgres frontend.
-    //     //  The length of our IP bytes.
-    //     //  The IP bytes.
-    //     const pgIPAddrBinaryHeaderSize = 4
-    //     if v.Family == ipaddr.IPv4family {
-    //         b.putInt32(net.IPv4len + pgIPAddrBinaryHeaderSize)
-    //         b.writeByte(pgwirebase.PGBinaryIPv4family)
-    //         b.writeByte(v.Mask)
-    //         b.writeByte(0)
-    //         b.writeByte(byte(net.IPv4len))
-    //         err := v.Addr.WriteIPv4Bytes(b)
-    //         if err != nil {
-    //             b.setError(err)
-    //         }
-    //     } else if v.Family == ipaddr.IPv6family {
-    //         b.putInt32(net.IPv6len + pgIPAddrBinaryHeaderSize)
-    //         b.writeByte(pgwirebase.PGBinaryIPv6family)
-    //         b.writeByte(v.Mask)
-    //         b.writeByte(0)
-    //         b.writeByte(byte(net.IPv6len))
-    //         err := v.Addr.WriteIPv6Bytes(b)
-    //         if err != nil {
-    //             b.setError(err)
-    //         }
-    //     } else {
-    //         b.setError(errors.Errorf("error encoding inet to pgBinary: %v", v.IPAddr))
-    //     }
-    //
-    // case *tree.DString:
-    //     b.writeLengthPrefixedString(string(*v))
-    //
-    // case *tree.DCollatedString:
-    //     b.writeLengthPrefixedString(v.Contents)
-    //
-    // case *tree.DTimestamp:
-    //     b.putInt32(8)
-    //     b.putInt64(timeToPgBinary(v.Time, nil))
-    //
-    // case *tree.DTimestampTZ:
-    //     b.putInt32(8)
-    //     b.putInt64(timeToPgBinary(v.Time, sessionLoc))
-    //
-    // case *tree.DDate:
-    //     b.putInt32(4)
-    //     b.putInt32(dateToPgBinary(v))
-    //
-    // case *tree.DTime:
-    //     b.putInt32(8)
-    //     b.putInt64(int64(*v))
-    //
-    // case *tree.DTimeTZ:
-    //     b.putInt32(8)
-    //     b.putInt64(int64(timeofday.FromTime(v.ToTime().UTC())))
-    //
-    // case *tree.DInterval:
-    //     b.putInt32(16)
-    //     b.putInt64(v.Nanos / int64(time.Microsecond/time.Nanosecond))
-    //     b.putInt32(int32(v.Days))
-    //     b.putInt32(int32(v.Months))
-    //
     // case *tree.DArray:
     //     if v.ParamTyp.FamilyEqual(types.AnyArray) {
     //         b.setError(errors.New("unsupported binary serialization of multidimensional arrays"))
@@ -472,10 +424,10 @@ func timeToPgBinary(t time.Time, offset *time.Location) int64 {
     return duration.DiffMicros(t, pgwirebase.PGEpochJDate)
 }
 
-// //
-// // // dateToPgBinary calculates the Postgres binary format for a date. The date is
-// // // represented as the number of days between the given date and Jan 1, 2000
-// // // (dubbed the PGEpochJDate), stored within an int32.
-// func dateToPgBinary(d *tree.DDate) int32 {
-//     return int32(*d) - pgwirebase.PGEpochJDateFromUnix
-// }
+//
+// // dateToPgBinary calculates the Postgres binary format for a date. The date is
+// // represented as the number of days between the given date and Jan 1, 2000
+// // (dubbed the PGEpochJDate), stored within an int32.
+func dateToPgBinary(d time.Time) int32 {
+    return int32(d.Unix()) - pgwirebase.PGEpochJDateFromUnix
+}
