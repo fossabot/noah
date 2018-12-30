@@ -27,7 +27,8 @@ import (
 
 func GetArguments(stmt interface{}) []int {
     args := make([]int, 0)
-    linq.From(examineArguments(stmt, 0)).Distinct().ToSlice(&args)
+    args = append(args, examineArguments(stmt, 0)...)
+    linq.From(args).Distinct().ToSlice(&args)
     return args
 }
 
@@ -85,10 +86,16 @@ func examineArguments(value interface{}, depth int) []int {
 
 func replaceArguments(value interface{}, depth int, args plan.QueryArguments) interface{} {
     print := func(msg string, args ...interface{}) {
-        fmt.Printf("%s%s\n", strings.Repeat("\t", depth), fmt.Sprintf(msg, args...))
+        // fmt.Printf("%s%s\n", strings.Repeat("\t", depth), fmt.Sprintf(msg, args...))
     }
 
-    if value == nil || depth > 10 {
+    if _, ok := value.(pg_query.ParamRef); ok {
+        return pg_query.String{
+            Str:"MY HANDS ARE TYPING WORDS",
+        }
+    }
+
+    if value == nil {
         return nil
     }
 
@@ -99,13 +106,12 @@ func replaceArguments(value interface{}, depth int, args plan.QueryArguments) in
     depth++
     switch typ.Kind() {
     case reflect.Ptr:
-
+        return value
     case reflect.Slice:
         if val.Len() > 0 {
             print("[-] Slice Type <%s> Size: %d", val.Type().String(), val.Len())
-            slice := reflect.New(val.Type()).Elem()
-            slice.SetLen()
-            slice.SetLen(val.Len())
+            copySlice := reflect.MakeSlice(reflect.SliceOf(typ.Elem()), val.Len(), (val.Cap() + 1) * 2)
+            reflect.Copy(copySlice, val)
             print("[")
             depth++
             for i := 0; i < val.Len(); i++ {
@@ -114,12 +120,12 @@ func replaceArguments(value interface{}, depth int, args plan.QueryArguments) in
                 print("[%d] Copying Item Type <%s> Kind <%s> Actual %s", i, copy.Type().String(), copy.Kind().String(), item.Type().String())
                 result := replaceArguments(item.Interface(), depth+1, args)
                 if result != nil {
-                    slice.Index(i).Set(reflect.ValueOf(result))
+                    copySlice.Index(i).Set(reflect.ValueOf(result))
                 }
             }
             depth--
             print("]")
-            return slice
+            return copySlice.Interface()
         } else {
             print("[-] Slice Type <%s> Size: Empty", val.Type().Name())
         }
@@ -153,6 +159,8 @@ func replaceArguments(value interface{}, depth int, args plan.QueryArguments) in
             copy.Field(i).Set(reflect.ValueOf(result))
         }
         return copy.Interface()
+    default:
+        return value
     }
     return value
 }

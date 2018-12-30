@@ -17,8 +17,6 @@
 package queryutil
 
 import (
-    "encoding/json"
-    "fmt"
     "github.com/readystock/noah/db/sql/plan"
     "github.com/readystock/noah/db/sql/types"
     "github.com/readystock/pg_query_go"
@@ -63,7 +61,7 @@ func Test_GetArguments(t *testing.T) {
 
         argCount := GetArguments(stmt)
 
-        assert.Equal(t, item.ArgCount, argCount, "number of arguments does not match expected")
+        assert.Equal(t, item.ArgCount, len(argCount), "number of arguments does not match expected")
     }
 }
 
@@ -83,6 +81,34 @@ var (
                 },
             },
         },
+        {
+            Query:    "SELECT products.id FROM products WHERE products.sku=$1 AND products.type=$2",
+            ArgCount: 2,
+            Arguments: map[string]types.Value{
+                "1": &types.Int4{
+                    Status: types.Present,
+                    Int:    1,
+                },
+                "2": &types.Bool{
+                    Status: types.Present,
+                    Bool:   true,
+                },
+            },
+        },
+        {
+            Query:    "UPDATE users SET enabled=$1 WHERE type=$2",
+            ArgCount: 2,
+            Arguments: map[string]types.Value{
+                "1": &types.Int4{
+                    Status: types.Present,
+                    Int:    1,
+                },
+                "2": &types.Bool{
+                    Status: types.Present,
+                    Bool:   true,
+                },
+            },
+        },
     }
 )
 
@@ -94,9 +120,6 @@ func Test_ReplaceArguments(t *testing.T) {
             t.FailNow()
         }
 
-        j, _ := json.Marshal(parsed)
-        fmt.Println(string(j))
-
         stmt := parsed.Statements[0].(pg_query2.RawStmt).Stmt
 
         argCount := GetArguments(stmt)
@@ -105,10 +128,8 @@ func Test_ReplaceArguments(t *testing.T) {
 
         // Now we will replace the arguments, and there should be 0 after
         result := ReplaceArguments(stmt, item.Arguments)
-        j, _ = json.Marshal(result)
-        fmt.Println(string(j))
 
-        argCount = GetArguments(stmt)
-        assert.Equal(t, 0, argCount, "number of arguments should now be 0")
+        argCount = GetArguments(result)
+        assert.Equal(t, 0, len(argCount), "number of arguments should now be 0")
     }
 }
