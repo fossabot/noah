@@ -117,7 +117,7 @@ func replaceArguments(value interface{}, depth int, args plan.QueryArguments) in
                     }
                 case float32, float64:
                     return pg_query.A_Const{
-                        Val: pg_query.String{
+                        Val: pg_query.Float{
                             Str: fmt.Sprintf("%v", argValue),
                         },
                     }
