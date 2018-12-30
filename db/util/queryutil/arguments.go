@@ -17,6 +17,7 @@
 package queryutil
 
 import (
+    "fmt"
     "github.com/readystock/golinq"
     "github.com/readystock/noah/db/sql/plan"
     "github.com/readystock/pg_query_go/nodes"
@@ -99,9 +100,10 @@ func replaceArguments(value interface{}, depth int, args plan.QueryArguments) in
                         },
                     }
                 case int8, int16, int32, int64:
+                    intv, _ := strconv.ParseUint(fmt.Sprintf("%v", argValue), 10, 64)
                     return pg_query.A_Const{
                         Val: pg_query.Integer{
-                            Ival: argValue.(int64),
+                            Ival: int64(intv),
                         },
                     }
                 case bool:
