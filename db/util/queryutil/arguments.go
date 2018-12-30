@@ -31,8 +31,8 @@ func GetArguments(stmt interface{}) []int {
     return args
 }
 
-func ReplaceArguments(stmt *pg_query.Node, args plan.QueryArguments) {
-    replaceArguments(stmt, 0, args)
+func ReplaceArguments(stmt interface{}, args plan.QueryArguments) interface{} {
+    return replaceArguments(stmt, 0, args)
 }
 
 func examineArguments(value interface{}, depth int) []int {
@@ -83,7 +83,81 @@ func examineArguments(value interface{}, depth int) []int {
     return args
 }
 
-func replaceArguments(value *pg_query.Node, depth int, args plan.QueryArguments) {
+func replaceArguments(value interface{}, depth int, args plan.QueryArguments) interface{} {
+    print := func(msg string, args ...interface{}) {
+        fmt.Printf("%s%s\n", strings.Repeat("\t", depth), fmt.Sprintf(msg, args...))
+    }
+
+    if value == nil || depth > 10 {
+        return nil
+    }
+
+    typ := reflect.TypeOf(value)
+    val := reflect.ValueOf(value)
+
+    print("[-] Parent Type <%s> Kind <%s>", typ.Name(), typ.Kind().String())
+    depth++
+    switch typ.Kind() {
+    case reflect.Ptr:
+
+    case reflect.Slice:
+        if val.Len() > 0 {
+            print("[-] Slice Type <%s> Size: %d", val.Type().String(), val.Len())
+            slice := reflect.New(val.Type()).Elem()
+            slice.SetLen()
+            slice.SetLen(val.Len())
+            print("[")
+            depth++
+            for i := 0; i < val.Len(); i++ {
+                item := val.Index(i)
+                copy := reflect.New(item.Type())
+                print("[%d] Copying Item Type <%s> Kind <%s> Actual %s", i, copy.Type().String(), copy.Kind().String(), item.Type().String())
+                result := replaceArguments(item.Interface(), depth+1, args)
+                if result != nil {
+                    slice.Index(i).Set(reflect.ValueOf(result))
+                }
+            }
+            depth--
+            print("]")
+            return slice
+        } else {
+            print("[-] Slice Type <%s> Size: Empty", val.Type().Name())
+        }
+    case reflect.Struct:
+        copy := reflect.New(typ).Elem()
+        copyType := reflect.TypeOf(copy.Interface())
+        print("[-] Copied Struct Type <%s> Kind <%s> Fields: %d", copy.Type().Name(), copy.Kind().String(), copy.NumField())
+        depth++
+        for i := 0; i < copy.NumField(); i++ {
+            field := copy.Field(i)
+            fieldType := copyType.Field(i)
+            actual := val.Field(i)
+            print("[%d] Copying Field <%s> Type <%s> Kind <%s> Actual %s", i, fieldType.Name, field.Type().String(), field.Kind().String(), actual.Type().String())
+            result := replaceArguments(actual.Interface(), depth+1, args)
+            if result != nil {
+                copy.Field(i).Set(reflect.ValueOf(result))
+            }
+        }
+        return copy.Interface()
+    case reflect.Interface:
+        copy := reflect.New(val.Elem().Type()).Elem()
+        copyType := reflect.TypeOf(copy.Interface())
+        print("[-] Copied Interface Type <%s> Kind <%s> Fields: %d", copy.Type().Name(), copy.Kind().String(), copy.NumField())
+        depth++
+        for i := 0; i < copy.NumField(); i++ {
+            field := copy.Field(i)
+            fieldType := copyType.Field(i)
+            actual := val.Elem().Field(i)
+            print("[%d] Copying Field <%s> Type <%s> Kind <%s> Actual %s", i, fieldType.Name, field.Type().String(), field.Kind().String(), actual.Type().String())
+            result := replaceArguments(actual.Interface(), depth+1, args)
+            copy.Field(i).Set(reflect.ValueOf(result))
+        }
+        return copy.Interface()
+    }
+    return value
+}
+
+func replaceArgumentsold(value *pg_query.Node, depth int, args plan.QueryArguments) {
     print := func(msg string, args ...interface{}) {
         fmt.Printf("%s%s\n", strings.Repeat("\t", depth), fmt.Sprintf(msg, args...))
     }
@@ -149,7 +223,7 @@ func replaceArguments(value *pg_query.Node, depth int, args plan.QueryArguments)
                         continue
                     }
                     replaceArguments(&val, depth+1, args)
-                    reflect.ValueOf(value).Field(i).Addr().Set(reflect.ValueOf(val))
+                    reflect.ValueOf(value).Elem().Field(i).Set(reflect.ValueOf(&val))
                     // if v.Field(i).CanSet() {
                     //     v.Field(i).Set(reflect.ValueOf(val))
                     // }

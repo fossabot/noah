@@ -104,7 +104,9 @@ func Test_ReplaceArguments(t *testing.T) {
         assert.Equal(t, item.ArgCount, len(argCount), "number of arguments does not match expected")
 
         // Now we will replace the arguments, and there should be 0 after
-        ReplaceArguments(&stmt, item.Arguments)
+        result := ReplaceArguments(stmt, item.Arguments)
+        j, _ = json.Marshal(result)
+        fmt.Println(string(j))
 
         argCount = GetArguments(stmt)
         assert.Equal(t, 0, argCount, "number of arguments should now be 0")
