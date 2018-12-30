@@ -160,3 +160,7 @@ func (src *QChar) EncodeBinary(ci *ConnInfo, buf []byte) ([]byte, error) {
 
     return append(buf, byte(src.Int)), nil
 }
+
+func (dst *QChar) DecodeText(ci *ConnInfo, src []byte) error {
+    return dst.DecodeBinary(ci, src)
+}

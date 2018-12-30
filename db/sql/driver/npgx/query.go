@@ -395,6 +395,10 @@ func (rows *Rows) PgValues() ([]types.Value, error) {
             switch fd.FormatCode {
             case TextFormatCode:
                 decoder := value.(types.TextDecoder)
+
+                // if !ok {
+                //     golog.Errorf("cannot convert type %s to TextDecoder", reflect.TypeOf(value).String())
+                // }
                 if decoder == nil {
                     decoder = &types.GenericText{}
                 }

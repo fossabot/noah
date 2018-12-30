@@ -20,6 +20,7 @@ import (
     "github.com/kataras/go-errors"
     "github.com/readystock/noah/db/sql/plan"
     "github.com/readystock/noah/db/system"
+    "github.com/readystock/noah/db/util/queryutil"
     "github.com/readystock/pg_query_go/nodes"
 )
 
@@ -54,6 +55,8 @@ func (stmt *SelectStatement) Execute(ex *connExecutor, res RestrictedCommandResu
 }
 
 func (stmt *SelectStatement) replaceParameters(ex *connExecutor, pinfo *plan.PlaceholderInfo) error {
+    newStmt := queryutil.ReplaceArguments(stmt.Statement, pinfo.Values)
+    stmt.Statement = newStmt.(pg_query.SelectStmt)
     return nil
 }
 
