@@ -59,7 +59,7 @@ have specified a custom address for noah to listen to for pgwire
 connections. This method accepts pgwire protocol and should work
 with almost all typical Postgres drivers and IDEs.`,
 		Run: func(cmd *cobra.Command, args []string) {
-			golog.SetLevel(LogLevel)
+			golog.SetLevel("verbose")
 			golog.Infof("Starting noah...")
 
 			sctx, err := system.NewSystemContext(StoreDirectory, GrpcAddr, JoinAddr, PGWireAddr)

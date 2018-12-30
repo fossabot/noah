@@ -18,7 +18,7 @@ package sql
 
 import (
     "fmt"
-    "github.com/kataras/golog"
+    "github.com/readystock/golog"
 )
 
 func (ex *connExecutor) Debug(msg string, args ...interface{}) {

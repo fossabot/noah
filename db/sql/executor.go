@@ -88,9 +88,10 @@ func (ex *connExecutor) ExecutePlans(plans []plan.NodeExecutionPlan, res Restric
             for response.Rows.Next() {
                 if len(columns) == 0 {
                     columns = response.Rows.PgFieldDescriptions()
-                    ex.Debug("retrieved %d column(s)", len(columns))
                     res.SetColumns(columns)
                 }
+
+                ex.Debug("retrieved %d column(s)", len(columns))
 
                 row := make([]types.Value, len(columns))
                 if values, err := response.Rows.PgValues(); err != nil {
