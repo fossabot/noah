@@ -20,6 +20,7 @@ import (
     "encoding/json"
     "fmt"
     "github.com/kataras/go-errors"
+    "github.com/readystock/noah/db/sql/types"
     "strconv"
 )
 
@@ -28,6 +29,16 @@ var (
         ConnectionPoolInitConnections: int64(5),
         QueryReplicationFactor:        int64(2),
         InitialSetupTimestamp:         nil,
+    }
+    settingsInfo = map[NoahSetting]struct {
+        Setting     NoahSetting
+        Description string
+        Type        types.DataType
+    }{
+        ConnectionPoolInitConnections: {
+            Setting:     ConnectionPoolInitConnections,
+            Description: "Number of connections to initialize in a connection pool.",
+        },
     }
 )
 
@@ -50,6 +61,13 @@ func (ctx *SSettings) SetSetting(SettingName string, SettingValue interface{}) e
     } else {
         return ctx.db.Set([]byte(fmt.Sprintf("%s%s", settingsExternalPath, SettingName)), j)
     }
+}
+
+func (ctx *SSettings) SetSettingString(SettingName, SettingValue string) error {
+    if _, ok := settingsKeys[NoahSetting(SettingName)]; !ok {
+        return errors.New("setting key `%s` is not valid and has not been set.").Format(SettingName)
+    }
+    return ctx.db.Set([]byte(fmt.Sprintf("%s%s", settingsExternalPath, SettingName)), []byte(SettingValue))
 }
 
 func (ctx *SSettings) GetSetting(SettingName NoahSetting) (*string, error) {

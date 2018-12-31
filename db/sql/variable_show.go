@@ -37,8 +37,9 @@ func CreateVariableShowStatement(stmt pg_query.VariableShowStmt) *VariableShowSt
 }
 
 func (stmt *VariableShowStatement) Execute(ex *connExecutor, res RestrictedCommandResult, pinfo *plan.PlaceholderInfo) error {
-    if strings.HasPrefix(strings.ToLower(*stmt.Statement.Name), "noah") {
-        settingName := strings.Replace(strings.ToLower(*stmt.Statement.Name), "noah.", "", 1)
+    name := strings.ToLower(*stmt.Statement.Name)
+    if strings.HasPrefix(name, "noah") {
+        settingName := strings.Replace(name, "noah.", "", 1)
         value, err := ex.SystemContext.Settings.GetSetting(system.NoahSetting(settingName))
         if err != nil {
             return err

@@ -13,13 +13,14 @@ message NTable {
     string Schema = 2;
     NTableType TableType = 3;
     bool IsCommitted = 4;
+    bool IsSystem = 5;
     oneof PrimaryKey {
-        NColumn PKey = 5;
+        NColumn PKey = 6;
     }
     oneof ShardKey {
-        NColumn SKey = 6;
+        NColumn SKey = 7;
     }
-    repeated NColumn Columns = 7;
+    repeated NColumn Columns = 8;
 }
 
 message NColumn {

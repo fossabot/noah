@@ -39,6 +39,7 @@ type SContext struct {
     Pool      *SPool
     Nodes     *SNode
     Sequences *SSequence
+    Setup     *SSetup
     Query     *SQuery
 }
 
@@ -68,6 +69,7 @@ func NewSystemContext(dataDirectory, listenAddr, joinAddr, pgWireAddr string) (*
     nodes := SNode(base)
     query := SQuery(base)
     pool := SPool{baseContext: &base}
+    setup := SSetup(base)
 
     sctx.Settings = &settings
     sctx.Accounts = &accounts
@@ -76,6 +78,7 @@ func NewSystemContext(dataDirectory, listenAddr, joinAddr, pgWireAddr string) (*
     sctx.Nodes = &nodes
     sctx.Sequences = &sequences
     sctx.Query = &query
+    sctx.Setup = &setup
     return &sctx, nil
 }
 

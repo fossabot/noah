@@ -17,6 +17,7 @@
 package system
 
 import (
+    "github.com/readystock/golog"
     "github.com/readystock/noah/testutils"
     "os"
     "testing"
@@ -40,6 +41,7 @@ var (
 )
 
 func TestMain(m *testing.M) {
+    golog.SetLevel("verbose")
     tempFolder := testutils.CreateTempFolder()
     defer testutils.DeleteTempFolder(tempFolder)
 
