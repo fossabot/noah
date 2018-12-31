@@ -18,7 +18,6 @@ package logflags
 
 import (
     "flag"
-    "github.com/readystock/noah/db/util/humanizeutil"
     "strconv"
     "sync"
 )
@@ -83,13 +82,13 @@ func InitFlags(
     verbosity, vmodule, traceLocation flag.Value,
     logFileMaxSize, logFilesCombinedMaxSize *int64,
 ) {
-    flag.BoolVar(nocolor, NoColorName, *nocolor, "disable standard error log colorization")
-    flag.BoolVar(noRedirectStderr, NoRedirectStderrName, *noRedirectStderr, "disable redirect of stderr to the log file")
-    flag.Var(verbosity, VerbosityName, "log level for V logs")
-    flag.Var(vmodule, VModuleName, "comma-separated list of pattern=N settings for file-filtered logging")
-    flag.Var(traceLocation, LogBacktraceAtName, "when logging hits line file:N, emit a stack trace")
-    flag.Var(logDir, LogDirName, "if non-empty, write log files in this directory")
-    flag.BoolVar(showLogs, ShowLogsName, *showLogs, "print logs instead of saving them in files")
-    flag.Var(humanizeutil.NewBytesValue(logFileMaxSize), LogFileMaxSizeName, "maximum size of each log file")
-    flag.Var(humanizeutil.NewBytesValue(logFilesCombinedMaxSize), LogFilesCombinedMaxSizeName, "maximum combined size of all log files")
+    // flag.BoolVar(nocolor, NoColorName, *nocolor, "disable standard error log colorization")
+    // flag.BoolVar(noRedirectStderr, NoRedirectStderrName, *noRedirectStderr, "disable redirect of stderr to the log file")
+    // flag.Var(verbosity, VerbosityName, "log level for V logs")
+    // flag.Var(vmodule, VModuleName, "comma-separated list of pattern=N settings for file-filtered logging")
+    // flag.Var(traceLocation, LogBacktraceAtName, "when logging hits line file:N, emit a stack trace")
+    // flag.Var(logDir, LogDirName, "if non-empty, write log files in this directory")
+    // flag.BoolVar(showLogs, ShowLogsName, *showLogs, "print logs instead of saving them in files")
+    // flag.Var(humanizeutil.NewBytesValue(logFileMaxSize), LogFileMaxSizeName, "maximum size of each log file")
+    // flag.Var(humanizeutil.NewBytesValue(logFilesCombinedMaxSize), LogFilesCombinedMaxSizeName, "maximum combined size of all log files")
 }

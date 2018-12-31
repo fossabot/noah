@@ -16,22 +16,17 @@
 
 package log
 
-import (
-	"flag"
-	"github.com/readystock/noah/db/util/log/logflags"
-)
-
 func init() {
-	logflags.InitFlags(
-		&logging.noStderrRedirect,
-		&logging.logDir, &showLogs, &noColor, &logging.verbosity,
-		&logging.vmodule, &logging.traceLocation,
-		&LogFileMaxSize, &LogFilesCombinedMaxSize,
-	)
-	// We define these flags here because they have the type Severity
-	// which we can't pass to logflags without creating an import cycle.
-	flag.Var(&logging.stderrThreshold,
-		logflags.LogToStderrName, "logs at or above this threshold go to stderr")
-	flag.Var(&logging.fileThreshold,
-		logflags.LogFileVerbosityThresholdName, "minimum verbosity of messages written to the log file")
+	// logflags.InitFlags(
+	// 	&logging.noStderrRedirect,
+	// 	&logging.logDir, &showLogs, &noColor, &logging.verbosity,
+	// 	&logging.vmodule, &logging.traceLocation,
+	// 	&LogFileMaxSize, &LogFilesCombinedMaxSize,
+	// )
+	// // We define these flags here because they have the type Severity
+	// // which we can't pass to logflags without creating an import cycle.
+	// flag.Var(&logging.stderrThreshold,
+	// 	logflags.LogToStderrName, "logs at or above this threshold go to stderr")
+	// flag.Var(&logging.fileThreshold,
+	// 	logflags.LogFileVerbosityThresholdName, "minimum verbosity of messages written to the log file")
 }
