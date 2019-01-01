@@ -17,7 +17,7 @@
 package system
 
 import (
-    "flag"
+
     "github.com/readystock/arctonyx"
     "github.com/readystock/noah/db/util/snowflake"
     "time"
@@ -44,7 +44,6 @@ type SContext struct {
 }
 
 func NewSystemContext(dataDirectory, listenAddr, joinAddr, pgWireAddr string) (*SContext, error) {
-    flag.Parse()
     db, err := arctonyx.CreateStore(dataDirectory, listenAddr, joinAddr)
     if err != nil {
         return nil, err

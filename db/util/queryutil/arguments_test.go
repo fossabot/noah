@@ -17,7 +17,9 @@
 package queryutil
 
 import (
+    "encoding/json"
     "fmt"
+    "github.com/kataras/golog"
     "github.com/readystock/noah/db/sql/plan"
     "github.com/readystock/noah/db/sql/types"
     "github.com/readystock/pg_query_go"
@@ -143,6 +145,11 @@ var (
                 }(),
             },
         },
+        {
+            Query:     "select current_database(), current_schema(), current_user",
+            ArgCount:  0,
+            Arguments: map[string]types.Value{},
+        },
     }
 )
 
@@ -156,21 +163,33 @@ func Test_ReplaceArguments(t *testing.T) {
 
         stmt := parsed.Statements[0].(pg_query2.RawStmt).Stmt
 
-        argCount := GetArguments(stmt)
+        func () {
+            defer func() {
+                if r := recover(); r != nil {
+                    golog.Errorf("Replacing arguments in query `%s` has resulted in a panic", item.Query)
+                    j, _ := json.Marshal(stmt)
+                    golog.Errorf("Parse Tree: ->")
+                    golog.Info(string(j))
+                    golog.Fatal(r)
+                }
+            }()
 
-        assert.Equal(t, item.ArgCount, len(argCount), "number of arguments does not match expected")
+            argCount := GetArguments(stmt)
 
-        // Now we will replace the arguments, and there should be 0 after
-        result := ReplaceArguments(stmt, item.Arguments)
+            assert.Equal(t, item.ArgCount, len(argCount), "number of arguments does not match expected")
 
-        argCount = GetArguments(result)
-        assert.Equal(t, 0, len(argCount), "number of arguments should now be 0")
+            // Now we will replace the arguments, and there should be 0 after
+            result := ReplaceArguments(stmt, item.Arguments)
 
-        query, err := result.(pg_query2.Node).Deparse(pg_query2.Context_None)
-        if err != nil {
-            t.Error(err)
-            t.FailNow()
-        }
-        fmt.Println("Query: ", *query)
+            argCount = GetArguments(result)
+            assert.Equal(t, 0, len(argCount), "number of arguments should now be 0")
+
+            query, err := result.(pg_query2.Node).Deparse(pg_query2.Context_None)
+            if err != nil {
+                t.Error(err)
+                t.FailNow()
+            }
+            fmt.Println("Query: ", *query)
+        }()
     }
 }

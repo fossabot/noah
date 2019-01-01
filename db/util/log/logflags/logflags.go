@@ -17,7 +17,6 @@
 package logflags
 
 import (
-    "flag"
     "strconv"
     "sync"
 )
@@ -55,7 +54,7 @@ func (ab *atomicBool) Type() string {
     return "bool"
 }
 
-var _ flag.Value = &atomicBool{}
+// var _ flag.Value = &atomicBool{}
 
 // LogToStderrName and others are flag names.
 const (
@@ -72,23 +71,23 @@ const (
     LogFileVerbosityThresholdName = "log-file-verbosity"
 )
 
-// InitFlags creates logging flags which update the given variables. The passed mutex is
-// locked while the boolean variables are accessed during flag updates.
-func InitFlags(
-    noRedirectStderr *bool,
-    logDir flag.Value,
-    showLogs *bool,
-    nocolor *bool,
-    verbosity, vmodule, traceLocation flag.Value,
-    logFileMaxSize, logFilesCombinedMaxSize *int64,
-) {
-    // flag.BoolVar(nocolor, NoColorName, *nocolor, "disable standard error log colorization")
-    // flag.BoolVar(noRedirectStderr, NoRedirectStderrName, *noRedirectStderr, "disable redirect of stderr to the log file")
-    // flag.Var(verbosity, VerbosityName, "log level for V logs")
-    // flag.Var(vmodule, VModuleName, "comma-separated list of pattern=N settings for file-filtered logging")
-    // flag.Var(traceLocation, LogBacktraceAtName, "when logging hits line file:N, emit a stack trace")
-    // flag.Var(logDir, LogDirName, "if non-empty, write log files in this directory")
-    // flag.BoolVar(showLogs, ShowLogsName, *showLogs, "print logs instead of saving them in files")
-    // flag.Var(humanizeutil.NewBytesValue(logFileMaxSize), LogFileMaxSizeName, "maximum size of each log file")
-    // flag.Var(humanizeutil.NewBytesValue(logFilesCombinedMaxSize), LogFilesCombinedMaxSizeName, "maximum combined size of all log files")
-}
+// // InitFlags creates logging flags which update the given variables. The passed mutex is
+// // locked while the boolean variables are accessed during flag updates.
+// func InitFlags(
+//     noRedirectStderr *bool,
+//     logDir flag.Value,
+//     showLogs *bool,
+//     nocolor *bool,
+//     verbosity, vmodule, traceLocation flag.Value,
+//     logFileMaxSize, logFilesCombinedMaxSize *int64,
+// ) {
+//     // flag.BoolVar(nocolor, NoColorName, *nocolor, "disable standard error log colorization")
+//     // flag.BoolVar(noRedirectStderr, NoRedirectStderrName, *noRedirectStderr, "disable redirect of stderr to the log file")
+//     // flag.Var(verbosity, VerbosityName, "log level for V logs")
+//     // flag.Var(vmodule, VModuleName, "comma-separated list of pattern=N settings for file-filtered logging")
+//     // flag.Var(traceLocation, LogBacktraceAtName, "when logging hits line file:N, emit a stack trace")
+//     // flag.Var(logDir, LogDirName, "if non-empty, write log files in this directory")
+//     // flag.BoolVar(showLogs, ShowLogsName, *showLogs, "print logs instead of saving them in files")
+//     // flag.Var(humanizeutil.NewBytesValue(logFileMaxSize), LogFileMaxSizeName, "maximum size of each log file")
+//     // flag.Var(humanizeutil.NewBytesValue(logFilesCombinedMaxSize), LogFilesCombinedMaxSizeName, "maximum combined size of all log files")
+// }

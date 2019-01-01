@@ -60,6 +60,12 @@ const secondsInDay = 24 * 60 * 60
 func (b *writeBuffer) writeTextDatum(
     pginfo *types.ConnInfo, d types.Value, sessionLoc *time.Location, be sessiondata.BytesEncodeFormat,
 ) {
+    if d == nil {
+        // NULL is encoded as -1; all other values have a length prefix.
+        b.putInt32(-1)
+        return
+    }
+
     v := d.Get()
     if v == nil {
         // NULL is encoded as -1; all other values have a length prefix.
@@ -204,6 +210,12 @@ func (b *writeBuffer) writeTextDatum(
 func (b *writeBuffer) writeBinaryDatum(
     pginfo *types.ConnInfo, d types.Value, sessionLoc *time.Location,
 ) {
+    if d == nil {
+        // NULL is encoded as -1; all other values have a length prefix.
+        b.putInt32(-1)
+        return
+    }
+
     v := d.Get()
     if v == nil {
         // NULL is encoded as -1; all other values have a length prefix.
