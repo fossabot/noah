@@ -70,18 +70,8 @@ func (stmt *SelectStatement) getTargetNodes(ex *connExecutor) ([]system.NNode, e
     }
 
     // If the query doesn't target any tables then the query should be able to be served by any node
-    if len(tables) == 0 {
-        if node, err := ex.SystemContext.Nodes.GetFirstNode(system.AllNodes); err != nil {
-            return nil, errors.New("no nodes available to serve this query.")
-        } else {
-            return []system.NNode{*node}, nil
-        }
-    }
-
-    // The query targets at least 1 table.
-
-    // If all the tables are global tables, then
-    if linq.From(tables).AllT(func(table system.NTable) bool {
+    // Or if the query targets only global tables.
+    if len(tables) == 0 || linq.From(tables).AllT(func(table system.NTable) bool {
         return table.TableType == system.NTableType_GLOBAL
     }) {
         if node, err := ex.SystemContext.Nodes.GetFirstNode(system.AllNodes); err != nil {
