@@ -140,6 +140,7 @@ func (stmt *SelectStatement) compilePlan(ex *connExecutor, nodes []system.NNode)
             CompiledQuery: *deparsed,
             Node:          nodes[i],
             ReadOnly:      true,
+            Type:          stmt.Statement.StatementType(),
         }
     }
     return plans, nil

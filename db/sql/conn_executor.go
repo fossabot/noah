@@ -18,7 +18,6 @@ package sql
 
 import (
     "fmt"
-    "github.com/kataras/golog"
     "github.com/readystock/noah/db/sql/driver/npgx"
     "github.com/readystock/noah/db/sql/pgwire/pgerror"
     "github.com/readystock/noah/db/sql/plan"
@@ -226,7 +225,6 @@ func (ex *connExecutor) run() (err error) {
                 return err
             }
         case ExecPortal:
-            golog.Warnf("executing portal")
             portal, ok := ex.prepStmtsNamespace.portals[tcmd.Name]
             if !ok {
                 err = pgerror.NewErrorf(pgerror.CodeInvalidCursorNameError, "unknown portal %q", tcmd.Name)
@@ -234,7 +232,6 @@ func (ex *connExecutor) run() (err error) {
                 res = ex.clientComm.CreateErrorResult(pos)
                 break
             }
-            // fmt.Printf("portal resolved to: %s", portal.Stmt.Str)
             ex.curStmt = portal.Stmt.Statement
 
             pinfo := &plan.PlaceholderInfo{
@@ -255,7 +252,6 @@ func (ex *connExecutor) run() (err error) {
                 NeedRowDesc, pos, portal.OutFormats)
             res = stmtRes
             err = ex.execStmt(*ex.curStmt, stmtRes, pos, pinfo)
-            golog.Debugf("done executing statement")
         case PrepareStmt:
             res = ex.clientComm.CreatePrepareResult(pos)
             err = ex.execPrepare(tcmd)

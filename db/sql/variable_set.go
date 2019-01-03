@@ -74,6 +74,7 @@ func (stmt *VariableSetStatement) compilePlan(ex *connExecutor, nodes []system.N
         plans[i] = plan.NodeExecutionPlan{
             CompiledQuery: *deparsed,
             Node:          nodes[i],
+            Type:          stmt.Statement.StatementType(),
         }
     }
     return plans, nil

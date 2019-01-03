@@ -135,6 +135,7 @@ func (stmt *CreateStatement) compilePlan(ex *connExecutor, nodes []system.NNode)
             CompiledQuery: *compiled,
             Node:          nodes[i],
             ReadOnly:      false,
+            Type:          stmt.Statement.StatementType(),
         }
     }
     return plans, nil

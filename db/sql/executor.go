@@ -17,7 +17,6 @@
 package sql
 
 import (
-    "fmt"
     "github.com/ahmetb/go-linq"
     "github.com/juju/errors"
     "github.com/readystock/noah/db/sql/driver/npgx"
@@ -25,12 +24,14 @@ import (
     "github.com/readystock/noah/db/sql/plan"
     "github.com/readystock/noah/db/sql/types"
     "github.com/readystock/noah/db/util"
+    "github.com/readystock/pg_query_go/nodes"
 )
 
 type executeResponse struct {
     Error  error
     Rows   *npgx.Rows
     NodeID uint64
+    Type   pg_query.StmtType
 }
 
 func (ex *connExecutor) ExecutePlans(plans []plan.NodeExecutionPlan, res RestrictedCommandResult) (err error) {
@@ -45,6 +46,7 @@ func (ex *connExecutor) ExecutePlans(plans []plan.NodeExecutionPlan, res Restric
             // defer util.CatchPanic(&err)
             exResponse := executeResponse{
                 NodeID: pln.Node.NodeId,
+                Type:   pln.Type,
             }
 
             defer func() {
@@ -84,41 +86,47 @@ func (ex *connExecutor) ExecutePlans(plans []plan.NodeExecutionPlan, res Restric
             continue
         }
 
-        if response.Rows != nil {
-            for response.Rows.Next() {
-                if len(columns) == 0 {
-                    columns = response.Rows.PgFieldDescriptions()
-                    res.SetColumns(columns)
+        switch response.Type {
+        case pg_query.Rows:
+            if response.Rows != nil {
+                for response.Rows.Next() {
+                    if len(columns) == 0 {
+                        columns = response.Rows.PgFieldDescriptions()
+                        res.SetColumns(columns)
+                    }
+
+                    ex.Debug("retrieved %d column(s)", len(columns))
+
+                    row := make([]types.Value, len(columns))
+                    if values, err := response.Rows.PgValues(); err != nil {
+                        ex.Error(err.Error())
+                        errs = append(errs, err)
+                        continue
+                    } else {
+                        for c, v := range values {
+                            row[c] = v
+                        }
+                    }
+
+                    res.AddRow(row)
+                    result = append(result, row)
                 }
 
-                ex.Debug("retrieved %d column(s)", len(columns))
-
-                row := make([]types.Value, len(columns))
-                if values, err := response.Rows.PgValues(); err != nil {
-                    ex.Error(err.Error())
+                if err := response.Rows.Err(); err != nil {
+                    ex.Error("received error from node [%d]: %s", response.NodeID, err)
                     errs = append(errs, err)
                     continue
-                } else {
-                    for c, v := range values {
-                        row[c] = v
-                    }
                 }
 
-                fmt.Printf("Row: %+v\n", row)
-                res.AddRow(row)
-                result = append(result, row)
+                response.Rows.Close()
+            } else {
+                ex.Debug("no rows returned for query `%s`", plans[0].CompiledQuery)
             }
-
-            if err := response.Rows.Err(); err != nil {
-                ex.Error("received error from node [%d]: %s", response.NodeID, err)
-                errs = append(errs, err)
-                continue
-            }
-
-            response.Rows.Close()
-        } else {
-            ex.Debug("no rows returned for query `%s`", plans[0].CompiledQuery)
+        default:
+            return errors.Errorf("cannot handle statement type %d", response.Type)
         }
+
+
     }
     ex.Debug("%d row(s) compiled for query `%s`", len(result), plans[0].CompiledQuery)
 
