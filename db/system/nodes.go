@@ -67,6 +67,35 @@ func (ctx *SNode) GetLiveNodes(scope NodeScope) (n []NNode, e error) {
     return n, e
 }
 
+func (ctx *SNode) GetFirstNode(scope NodeScope) (*NNode, error) {
+    predicate := func(node NNode) bool {
+        if scope == AllNodes {
+            return node.IsAlive
+        } else if scope == ReplicaNodes {
+            return node.IsAlive && node.ReplicaOf > 0
+        } else if scope == StandardNodes {
+            return node.IsAlive && node.ReplicaOf == 0
+        }
+        return false
+    }
+
+    values, err := ctx.db.GetPrefix([]byte(nodesPath))
+    if err != nil {
+        return nil, err
+    }
+
+    for _, val := range values {
+        node := NNode{}
+        if err := proto.Unmarshal(val.Value, &node); err != nil {
+            return nil, err
+        }
+        if predicate(node) {
+            return &node, nil
+        }
+    }
+    return nil, errors.New("no nodes in the cluster match the scope")
+}
+
 func (ctx *SNode) GetNode(nodeId uint64) (*NNode, error) {
     value, err := ctx.db.Get([]byte(fmt.Sprintf("%s%d", nodesPath, nodeId)))
     if err != nil {

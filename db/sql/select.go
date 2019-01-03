@@ -17,6 +17,7 @@
 package sql
 
 import (
+    "github.com/ahmetb/go-linq"
     "github.com/kataras/go-errors"
     "github.com/readystock/noah/db/sql/plan"
     "github.com/readystock/noah/db/system"
@@ -63,19 +64,30 @@ func (stmt *SelectStatement) replaceParameters(ex *connExecutor, pinfo *plan.Pla
 func (stmt *SelectStatement) getTargetNodes(ex *connExecutor) ([]system.NNode, error) {
     // If there is no from clause, this query can be sent to any node, if we already have a
     // connection to a node use that one, if not get a new one.
-    if stmt.Statement.FromClause.Items == nil || len(stmt.Statement.FromClause.Items) == 0 {
-        if len(ex.nodes) > 0 {
-            for id := range ex.nodes {
-                node, err := ex.SystemContext.Nodes.GetNode(id)
-                return []system.NNode{*node}, err
-            }
+    tables, err := stmt.getTables(ex.SystemContext)
+    if err != nil {
+        return nil, err
+    }
+
+    // If the query doesn't target any tables then the query should be able to be served by any node
+    if len(tables) == 0 {
+        if node, err := ex.SystemContext.Nodes.GetFirstNode(system.AllNodes); err != nil {
+            return nil, errors.New("no nodes available to serve this query.")
         } else {
-            nodes, err := ex.SystemContext.Nodes.GetLiveNodes(system.AllNodes)
-            if len(nodes) > 0 {
-                return []system.NNode{nodes[0]}, err
-            } else {
-                return nil, errors.New("no nodes available to serve this query.")
-            }
+            return []system.NNode{*node}, nil
+        }
+    }
+
+    // The query targets at least 1 table.
+
+    // If all the tables are global tables, then
+    if linq.From(tables).AllT(func(table system.NTable) bool {
+        return table.TableType == system.NTableType_GLOBAL
+    }) {
+        if node, err := ex.SystemContext.Nodes.GetFirstNode(system.AllNodes); err != nil {
+            return nil, errors.New("no nodes available to serve this query.")
+        } else {
+            return []system.NNode{*node}, nil
         }
     }
 
@@ -109,15 +121,17 @@ func (stmt *SelectStatement) getTargetNodes(ex *connExecutor) ([]system.NNode, e
     }
 }
 
-func (stmt *SelectStatement) getTables() []string {
-    tables := make([]string, 0)
-    for _, from := range stmt.Statement.FromClause.Items {
-        switch fromItem := from.(type) {
-        case pg_query.RangeVar:
-            tables = append(tables, *fromItem.Relname)
+func (stmt *SelectStatement) getTables(sctx *system.SContext) ([]system.NTable, error) {
+    tableKeys := queryutil.GetTables(stmt.Statement)
+    tables := make([]system.NTable, len(tableKeys))
+    for i, tableName := range tableKeys {
+        if table, err := sctx.Schema.GetTable(tableName); err != nil {
+            return nil, err
+        } else {
+            tables[i] = *table
         }
     }
-    return tables
+    return tables, nil
 }
 
 func (stmt *SelectStatement) getAccountIDs() ([]uint64, error) {
