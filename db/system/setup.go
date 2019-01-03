@@ -24,6 +24,10 @@ import (
 type SSetup baseContext
 
 func (ctx *SSetup) DoSetup() error {
+    if !ctx.db.IsLeader() {
+        // If the current node is not the leader then we don't want to run this.
+        return nil
+    }
     schema := SSchema(*ctx)
     tables, err := schema.GetTables()
     if err != nil {

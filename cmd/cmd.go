@@ -82,6 +82,10 @@ with almost all typical Postgres drivers and IDEs.`,
                 os.Exit(0)
             }()
 
+            if err := sctx.Setup.DoSetup(); err != nil {
+                golog.Fatalf("failed to perform setup on node; %s", err.Error())
+            }
+
             wg := sync.WaitGroup{}
             wg.Add(3)
 

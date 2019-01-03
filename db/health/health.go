@@ -25,8 +25,20 @@ import (
 )
 
 func StartHealthChecker(sctx *system.SContext) error {
+    isLeader := sctx.IsLeader()
+
     for {
         time.Sleep(500 * time.Millisecond)
+        // If this node gets promoted to leader
+        newLeader := sctx.IsLeader()
+        if !isLeader && newLeader {
+            golog.Info("promoted to leader, beginning health checks")
+            isLeader = newLeader
+        }
+
+        if !isLeader {
+            continue
+        }
 
         nodes, err := sctx.Nodes.GetNodes()
         if err != nil {

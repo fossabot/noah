@@ -98,6 +98,10 @@ func (ctx *SContext) CoordinatorID() uint64 {
     return ctx.db.NodeID()
 }
 
+func (ctx *SContext) IsLeader() bool {
+    return ctx.db.IsLeader()
+}
+
 func (ctx *SContext) Close() {
     ctx.db.Close()
 }
