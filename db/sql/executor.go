@@ -122,6 +122,8 @@ func (ex *connExecutor) ExecutePlans(plans []plan.NodeExecutionPlan, res Restric
             } else {
                 ex.Debug("no rows returned for query `%s`", plans[0].CompiledQuery)
             }
+        case pg_query.DDL:
+            return nil
         default:
             return errors.Errorf("cannot handle statement type %d", response.Type)
         }
