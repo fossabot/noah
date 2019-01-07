@@ -9,7 +9,7 @@ Copyright 2018 The Cockroach Authors.
 
 License (Apache License 2.0) https://github.com/cockroachdb/cockroach/blob/master/LICENSE
 
-> Noah's internal wire protocol and message handling is inherited directly from CockroachDB,
+> Noah's internal wire protocol and message handling and wire code is inherited directly from CockroachDB,
 the connExecutor is also used to handle query processing. But the query parser, key value store
 and raft implementations have all been removed and replaced with a custom version to route queries
 to an external Postgres database.

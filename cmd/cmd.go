@@ -60,6 +60,11 @@ have specified a custom address for noah to listen to for pgwire
 connections. This method accepts pgwire protocol and should work
 with almost all typical Postgres drivers and IDEs.`,
         Run: func(cmd *cobra.Command, args []string) {
+
+        },
+    }
+    startCmd = &cobra.Command{
+        Run: func(cmd *cobra.Command, args []string) {
             golog.SetLevel("verbose")
             golog.Infof("Starting noah...")
 
@@ -100,8 +105,8 @@ with almost all typical Postgres drivers and IDEs.`,
                 api.StartApp(sctx, WebAddr)
             }()
             go func() {
-            	defer wg.Done()
-            	health.StartHealthChecker(sctx)
+                defer wg.Done()
+                health.StartHealthChecker(sctx)
             }()
             golog.Infof("Noah is now running.")
             wg.Wait()
@@ -119,12 +124,12 @@ var (
 )
 
 func init() {
-    rootCmd.Flags().StringVarP(&PGWireAddr, "pgwire", "p", ":5433", "address that will accept PostgreSQL connections")
-    rootCmd.Flags().StringVarP(&GrpcAddr, "grpc", "g", ":5434", "address that will be used for Noah's raft/gRPC interface")
-    rootCmd.Flags().StringVarP(&WebAddr, "web", "w", ":5435", "address that will be used for Noah's HTTP interface")
-    rootCmd.Flags().StringVarP(&JoinAddr, "join", "j", "", "address and gRPC port of another node in a cluster to join")
-    rootCmd.Flags().StringVarP(&StoreDirectory, "store", "s", "data", "directory that will be used for Noah's key value store")
-    rootCmd.Flags().StringVarP(&LogLevel, "log", "l", "verbose", "log output level, valid values: verbose, debug, info, warn, error, fatal")
+    startCmd.Flags().StringVarP(&PGWireAddr, "pgwire", "p", ":5433", "address that will accept PostgreSQL connections")
+    startCmd.Flags().StringVarP(&GrpcAddr, "grpc", "g", ":5434", "address that will be used for Noah's raft/gRPC interface")
+    startCmd.Flags().StringVarP(&WebAddr, "web", "w", ":5435", "address that will be used for Noah's HTTP interface")
+    startCmd.Flags().StringVarP(&JoinAddr, "join", "j", "", "address and gRPC port of another node in a cluster to join")
+    startCmd.Flags().StringVarP(&StoreDirectory, "store", "s", "data", "directory that will be used for Noah's key value store")
+    startCmd.Flags().StringVarP(&LogLevel, "log", "l", "verbose", "log output level, valid values: verbose, debug, info, warn, error, fatal")
 }
 
 func Execute() {

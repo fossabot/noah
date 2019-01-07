@@ -128,7 +128,6 @@ func (ex *connExecutor) ExecutePlans(plans []plan.NodeExecutionPlan, res Restric
             return errors.Errorf("cannot handle statement type %d", response.Type)
         }
 
-
     }
     ex.Debug("%d row(s) compiled for query `%s`", len(result), plans[0].CompiledQuery)
 
