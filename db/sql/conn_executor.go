@@ -25,10 +25,8 @@ import (
 	"github.com/readystock/noah/db/system"
 	"github.com/readystock/noah/db/util/fsm"
 	nodes "github.com/readystock/pg_query_go/nodes"
-	"sync"
-
-	// "github.com/readystock/pgx"
 	"io"
+	"sync"
 )
 
 type Server struct {

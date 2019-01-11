@@ -15,3 +15,32 @@
  */
 
 package sql
+
+import (
+	"github.com/readystock/noah/db/sql/plan"
+	"github.com/readystock/noah/db/system"
+	"github.com/readystock/pg_query_go/nodes"
+)
+
+type DropStatement struct {
+	Statement pg_query.DropStmt
+	IQueryStatement
+}
+
+func CreateDropStatement(stmt pg_query.DropStmt) *DropStatement {
+	return &DropStatement{
+		Statement: stmt,
+	}
+}
+
+func (stmt *DropStatement) Execute(ex *connExecutor, res RestrictedCommandResult, pinfo *plan.PlaceholderInfo) error {
+	return nil
+}
+
+func (stmt *DropStatement) compilePlan(ex *connExecutor, nodes []system.NNode) ([]plan.NodeExecutionPlan, error) {
+	return nil, nil
+}
+
+func (stmt *DropStatement) getTargetNodes(ex *connExecutor) ([]system.NNode, error) {
+	return nil, nil
+}
