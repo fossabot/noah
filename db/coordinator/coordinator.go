@@ -17,31 +17,31 @@
 package coordinator
 
 import (
-    "github.com/kataras/golog"
-    "github.com/pkg/errors"
-    "github.com/readystock/noah/db/base"
-    "github.com/readystock/noah/db/sql/pgwire"
-    "github.com/readystock/noah/db/system"
-    "github.com/readystock/noah/db/util"
-    "net"
-    "time"
+	"github.com/kataras/golog"
+	"github.com/pkg/errors"
+	"github.com/readystock/noah/db/base"
+	"github.com/readystock/noah/db/sql/pgwire"
+	"github.com/readystock/noah/db/system"
+	"github.com/readystock/noah/db/util"
+	"net"
+	"time"
 )
 
 const (
-    // ErrSSLRequired is returned when a client attempts to connect to a
-    // secure server in cleartext.
-    ErrSSLRequired = "node is running secure mode, SSL connection required"
+	// ErrSSLRequired is returned when a client attempts to connect to a
+	// secure server in cleartext.
+	ErrSSLRequired = "node is running secure mode, SSL connection required"
 
-    // ErrDraining is returned when a client attempts to connect to a server
-    // which is not accepting client connections.
-    ErrDraining = "server is not accepting clients"
+	// ErrDraining is returned when a client attempts to connect to a server
+	// which is not accepting client connections.
+	ErrDraining = "server is not accepting clients"
 )
 
 // Fully-qualified names for metrics.
 
 const (
-    version30  = 196608
-    versionSSL = 80877103
+	version30  = 196608
+	versionSSL = 80877103
 )
 
 // cancelMaxWait is the amount of time a draining server gives to sessions to
@@ -53,51 +53,45 @@ const cancelMaxWait = 1 * time.Second
 var connReservationBatchSize = 5
 
 var (
-    sslSupported   = []byte{'S'}
-    sslUnsupported = []byte{'N'}
+	sslSupported   = []byte{'S'}
+	sslUnsupported = []byte{'N'}
 )
 
 type Server struct {
 }
 
 func Start(sctx *system.SContext) (err error) {
-    defer util.CatchPanic(&err)
-    advertiseAddr := sctx.PGWireAddress
-    if addr, err := net.ResolveTCPAddr("tcp", advertiseAddr); err != nil {
-        return errors.Errorf("unable to resolve RPC address %q: %v", advertiseAddr, err)
-    } else {
-        listener, err := net.ListenTCP("tcp", addr)
-        if err != nil {
-            return errors.Errorf("unable to listen on address %q: %v", advertiseAddr, err)
-        }
+	defer util.CatchPanic(&err)
+	advertiseAddr := sctx.PGWireAddress
+	if addr, err := net.ResolveTCPAddr("tcp", advertiseAddr); err != nil {
+		return errors.Errorf("unable to resolve RPC address %q: %v", advertiseAddr, err)
+	} else {
+		listener, err := net.ListenTCP("tcp", addr)
+		if err != nil {
+			return errors.Errorf("unable to listen on address %q: %v", advertiseAddr, err)
+		}
 
-        // pending, complete := make(chan *net.TCPConn), make(chan *net.TCPConn)
-        //
-        // for i := 0; i < 5; i++ {
-        //     go StartIncomingConnection(sctx, pending, complete)
-        // }
-
-        for {
-            conn, err := listener.AcceptTCP()
-            if err != nil {
-                golog.Error(err.Error())
-            }
-            go handleConnection(sctx, conn)
-        }
-    }
+		for {
+			conn, err := listener.AcceptTCP()
+			if err != nil {
+				golog.Error(err.Error())
+			}
+			go handleConnection(sctx, conn)
+		}
+	}
 }
 
 func StartIncomingConnection(sctx *system.SContext, in <-chan *net.TCPConn, out chan<- *net.TCPConn) {
-    for conn := range in {
-        handleConnection(sctx, conn)
-        out <- conn
-    }
+	for conn := range in {
+		handleConnection(sctx, conn)
+		out <- conn
+	}
 }
 
 func handleConnection(sctx *system.SContext, conn *net.TCPConn) error {
-    golog.Infof("Handling connection from %s", conn.RemoteAddr().String())
-    serv := pgwire.MakeServer(&base.Config{
-        Insecure: true,
-    })
-    return serv.ServeConn(sctx, conn)
+	golog.Infof("Handling connection from %s", conn.RemoteAddr().String())
+	serv := pgwire.MakeServer(&base.Config{
+		Insecure: true,
+	})
+	return serv.ServeConn(sctx, conn)
 }
