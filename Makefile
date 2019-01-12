@@ -1,11 +1,19 @@
-.PHONY: default build protos
+.PHONY: default build protos fresh setup_build_dir
 default: build
 
-build:
-	protos
-	go build
-
 PROTOS_DIRECTORY = ./protos
+BUILD_DIRECTORY = ./bin
+PACKAGE = github.com/readystock/noah
+EXECUTABLE_NAME = noah
+
+build: protos setup_build_dir
+	go build -o $(BUILD_DIRECTORY)/$(EXECUTABLE_NAME) $(PACKAGE)
+
+fresh: protos setup_build_dir
+	go build -a -x -v -o $(BUILD_DIRECTORY)/$(EXECUTABLE_NAME) $(PACKAGE)
+
+setup_build_dir:
+	mkdir -p $(BUILD_DIRECTORY)
 
 protos:
 	protoc -I=$(PROTOS_DIRECTORY) --go_out=./db/system $(PROTOS_DIRECTORY)/sequences.proto
