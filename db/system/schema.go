@@ -29,8 +29,6 @@ var (
 
 type SSchema baseContext
 
-
-
 func (ctx *SSchema) CreateTable(table NTable) error {
     if existingTable, err := ctx.GetTable(table.TableName); err != nil {
         return err

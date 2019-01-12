@@ -11,11 +11,11 @@ The next ID used will always be greater than the previous ID (on that coordinato
 The amount the ID is incremented depends on how many chunks the master coordinator created when it generated the range.
 
 
-Each node will receive a `Starting` and `Ending` value, as well as a `Node_Index` and `Number_Of_Nodes`. 
+Each node will receive a `Starting` and `Ending` value, as well as a `Index` and `Number_Of_Splits`. 
 The node index is essentially that coordinator's sequence offset for ID generation. 
 The number of nodes is how many coordinators received that specific range.
 
-`Starting + (Node_Index) + (Number_Of_Nodes * Current_ID) - (Number_Of_Nodes - 1) = Next_ID`
+`Starting + (Index) + (Number_Of_Splits * Current_ID) - (Number_Of_Splits - 1) = Next_ID`
 
 
 For Example:

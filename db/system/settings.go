@@ -30,6 +30,7 @@ var (
         QueryReplicationFactor:        int64(2),
         InitialSetupTimestamp:         nil,
     }
+
     settingsInfo = map[NoahSetting]struct {
         Setting     NoahSetting
         Description string
