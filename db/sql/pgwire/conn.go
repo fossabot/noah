@@ -419,28 +419,24 @@ func (c *conn) handleDescribe(buf *pgwirebase.ReadBuffer) error {
             Name: name,
             Type: typ,
         })
-    return nil
 }
 
 // An error is returned iff the statement buffer has been closed. In that case,
 // the connection should be considered toast.
 func (c *conn) handleClose(buf *pgwirebase.ReadBuffer) error {
-    // typ, err := buf.GetPrepareType()
-    // if err != nil {
-    //     return c.stmtBuf.Push(ctx, sql.SendError{Err: err})
-    // }
-    // name, err := buf.GetString()
-    // if err != nil {
-    //     return c.stmtBuf.Push(ctx, sql.SendError{Err: err})
-    // }
-    // return c.stmtBuf.Push(
-    //     ctx,
-    //     sql.DeletePreparedStmt{
-    //         Name: name,
-    //         Type: typ,
-    //     })
-
-    return nil
+    typ, err := buf.GetPrepareType()
+    if err != nil {
+        return c.stmtBuf.Push(sql.SendError{Err: err})
+    }
+    name, err := buf.GetString()
+    if err != nil {
+        return c.stmtBuf.Push(sql.SendError{Err: err})
+    }
+    return c.stmtBuf.Push(
+        sql.DeletePreparedStmt{
+            Name: name,
+            Type: typ,
+        })
 }
 
 // handleBind queues instructions for creating a portal from a prepared
