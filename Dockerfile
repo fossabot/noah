@@ -3,8 +3,8 @@ RUN echo $GOPATH
 RUN mkdir -p $GOPATH/src/github.com/readystock/noah
 COPY ./ $GOPATH/src/github.com/readystock/noah
 WORKDIR $GOPATH/src/github.com/readystock/noah
-RUN go get -u
-RUN go build -o noah
+RUN go get -d -u
+RUN make
 
 FROM noah-build
 RUN mkdir /ndb
