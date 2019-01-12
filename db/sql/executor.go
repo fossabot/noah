@@ -34,7 +34,7 @@ type executeResponse struct {
     Type   pg_query.StmtType
 }
 
-func (ex *connExecutor) ExecutePlans(plans []plan.NodeExecutionPlan, res RestrictedCommandResult) (err error) {
+func (ex *connExecutor) ExecutePlans(plans []plan.NodeExecutionPlan, res CommandResult) (err error) {
     // defer util.CatchPanic(&err)
     if len(plans) == 0 {
         ex.Error("no plans were provided, nothing will be executed")
@@ -123,6 +123,7 @@ func (ex *connExecutor) ExecutePlans(plans []plan.NodeExecutionPlan, res Restric
                 ex.Debug("no rows returned for query `%s`", plans[0].CompiledQuery)
             }
         case pg_query.DDL:
+            res.S
             return nil
         default:
             return errors.Errorf("cannot handle statement type %d", response.Type)

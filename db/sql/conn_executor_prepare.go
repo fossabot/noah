@@ -241,6 +241,13 @@ func (ex *connExecutor) prepare(stmt nodes.Stmt, parseTypeHints plan.Placeholder
         TypeHints: parseTypeHints,
         Statement: &stmt,
     }
+
+    if stmt == nil {
+        return prepared, nil
+    }
+
+    prepared.Columns = getPlanColumns(stmt)
+
     return prepared, nil
 }
 

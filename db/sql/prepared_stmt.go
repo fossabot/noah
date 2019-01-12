@@ -18,6 +18,7 @@ package sql
 
 import (
     "context"
+    "github.com/readystock/noah/db/sql/pgwire/pgproto"
     "github.com/readystock/noah/db/sql/pgwire/pgwirebase"
     "github.com/readystock/noah/db/sql/plan"
     "github.com/readystock/noah/db/sql/types"
@@ -43,6 +44,8 @@ type PreparedStatement struct {
     Statement *nodes.Stmt
 
     Types plan.PlaceholderTypes
+
+    Columns []pgproto.FieldDescription
 
     InTypes []types.OID
 

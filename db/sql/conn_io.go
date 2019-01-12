@@ -780,7 +780,7 @@ type DescribeResult interface {
     SetNoDataRowDescription()
     // SetPrepStmtOutput tells the client about the results schema of a prepared
     // statement.
-    // SetPrepStmtOutput(context.Context, sqlbase.ResultColumns)
+    SetPrepStmtOutput(context.Context, []pgproto.FieldDescription)
     // SetPortalOutput tells the client about the results schema and formatting of
     // a portal.
     // SetPortalOutput(context.Context, sqlbase.ResultColumns, []pgwirebase.FormatCode)

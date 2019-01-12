@@ -142,12 +142,16 @@ func replaceArguments(value interface{}, depth int, args plan.QueryArguments) in
                             },
                         },
                     }
+                case nil:
+                    return &pg_query.A_Const{
+                        Val: pg_query.Null{},
+                    }
                 default:
-                    return nil
+                    panic(fmt.Sprintf("unsupported type %+v", argValue))
                 }
             }()
         } else {
-            panic("my hands are typgin words")
+            panic("parameter is not a param reference")
         }
 
     }

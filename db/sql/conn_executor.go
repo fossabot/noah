@@ -17,6 +17,7 @@
 package sql
 
 import (
+	"context"
 	"fmt"
 	"github.com/readystock/noah/db/sql/driver/npgx"
 	"github.com/readystock/noah/db/sql/pgwire/pgerror"
@@ -256,7 +257,7 @@ func (ex *connExecutor) run() (err error) {
 		case DescribeStmt:
 			descRes := ex.clientComm.CreateDescribeResult(pos)
 			res = descRes
-			// err = ex.execDescribe(context.Background(), tcmd, descRes)
+			err = ex.execDescribe(context.Background(), tcmd, descRes)
 		case BindStmt:
 			res = ex.clientComm.CreateBindResult(pos)
 			err = ex.execBind(tcmd)
@@ -323,4 +324,10 @@ func (ex *connExecutor) run() (err error) {
 			}
 		}
 	}
+}
+
+// stmtHasNoData returns true if describing a result of the input statement
+// type should return NoData.
+func stmtHasNoData(stmt nodes.Stmt) bool {
+	return stmt == nil || stmt.StatementType() != nodes.Rows
 }

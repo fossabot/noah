@@ -17,9 +17,7 @@
 package queryutil
 
 import (
-    "encoding/json"
     "fmt"
-    "github.com/kataras/golog"
     "github.com/readystock/noah/db/sql/plan"
     "github.com/readystock/noah/db/sql/types"
     "github.com/readystock/pg_query_go"
@@ -150,6 +148,57 @@ var (
             ArgCount:  0,
             Arguments: map[string]types.Value{},
         },
+        {
+            Query:    "INSERT INTO users (id, enabled, setup) VALUES($1, $2, $1) RETURNING *;",
+            ArgCount: 2,
+            Arguments: map[string]types.Value{
+                "1": &types.Int4{
+                    Status: types.Present,
+                    Int:    1,
+                },
+                "2": &types.Text{
+                    Status: types.Present,
+                    String: "hello world",
+                },
+            },
+        },
+        {
+            Query:    "INSERT INTO users (id, enabled, setup) VALUES($1, $2, $1) RETURNING *;",
+            ArgCount: 2,
+            Arguments: map[string]types.Value{
+                "1": &types.Float4{
+                    Status: types.Present,
+                    Float:  82.3,
+                },
+                "2": &types.Float8{
+                    Status: types.Present,
+                    Float:  1.4,
+                },
+            },
+        },
+        {
+            Query:    "INSERT INTO users (id, enabled, setup) VALUES($1, $2, $1) RETURNING *;",
+            ArgCount: 2,
+            Arguments: map[string]types.Value{
+                "1": &types.Float4{
+                    Status: types.Null,
+                },
+                "2": &types.Float8{
+                    Status: types.Present,
+                    Float:  1.4,
+                },
+            },
+        },
+        {
+            Query:    "DELETE FROM users WHERE user_id = $1;",
+            ArgCount: 1,
+            Arguments: map[string]types.Value{
+                "1": &types.Int8{
+                    Status: types.Present,
+                    Int:    28412931,
+                },
+            },
+        },
     }
 )
 
@@ -163,16 +212,16 @@ func Test_ReplaceArguments(t *testing.T) {
 
         stmt := parsed.Statements[0].(pg_query2.RawStmt).Stmt
 
-        func () {
-            defer func() {
-                if r := recover(); r != nil {
-                    golog.Errorf("Replacing arguments in query `%s` has resulted in a panic", item.Query)
-                    j, _ := json.Marshal(stmt)
-                    golog.Errorf("Parse Tree: ->")
-                    golog.Info(string(j))
-                    golog.Fatal(r)
-                }
-            }()
+        func() {
+            // defer func() {
+            //     if r := recover(); r != nil {
+            //         golog.Errorf("Replacing arguments in query `%s` has resulted in a panic", item.Query)
+            //         j, _ := json.Marshal(stmt)
+            //         golog.Errorf("Parse Tree: ->")
+            //         golog.Info(string(j))
+            //         golog.Fatal(r)
+            //     }
+            // }()
 
             argCount := GetArguments(stmt)
 
