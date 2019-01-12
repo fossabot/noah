@@ -12,6 +12,8 @@ some of the key value store data and wire protocol. Cockroach had some protos
 that have been "hard-coded" into noah to make builds easier. These protos also
 won't be modified so there should be no need to regenerate them.
 
+Any tools that you might need can be found in [tools](./docs/Tools.md).
+
 To build noah.
 ```bash
 go get -d -u github.com/readystock/noah
