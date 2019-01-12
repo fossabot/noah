@@ -44,7 +44,8 @@ func (ex *connExecutor) execDescribe(
         if stmtHasNoData(*ps.Statement) {
             res.SetNoDataRowDescription()
         } else {
-            res.SetPrepStmtOutput(ctx, ps.Columns)
+            ex.Warn("cannot handle prepared statement output")
+            // res.SetPrepStmtOutput(ctx, ps.Columns)
         }
     case pgwirebase.PreparePortal:
         portal, ok := ex.prepStmtsNamespace.portals[descCmd.Name]
@@ -56,7 +57,8 @@ func (ex *connExecutor) execDescribe(
         if stmtHasNoData(*portal.Stmt.Statement) {
             res.SetNoDataRowDescription()
         } else {
-            res.SetPortalOutput(ctx, portal.Stmt.Columns, portal.OutFormats)
+            ex.Warn("cannot handle portal output of statement")
+           // res.SetPortalOutput(ctx, portal.Stmt.Columns, portal.OutFormats)
         }
     default:
         return errors.Errorf("unknown describe type: %s", descCmd.Type)

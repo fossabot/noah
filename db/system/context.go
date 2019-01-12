@@ -17,67 +17,80 @@
 package system
 
 import (
-	"github.com/readystock/arctonyx"
-	"github.com/readystock/noah/db/util/snowflake"
-	"time"
+    "github.com/pkg/errors"
+    "github.com/readystock/arctonyx"
+    "github.com/readystock/noah/db/util/snowflake"
+    "net"
+    "time"
 )
 
 type baseContext struct {
-	db        *arctonyx.Store
-	snowflake *snowflake.Snowflake
+    db        *arctonyx.Store
+    snowflake *snowflake.Snowflake
 }
 
 type SContext struct {
-	baseContext
+    baseContext
 
-	PGWireAddress string
+    PGListen  *net.TCPListener
+    isRunning bool
 
-	Settings  *SSettings
-	Accounts  *SAccounts
-	Schema    *SSchema
-	Pool      *SPool
-	Nodes     *SNode
-	Sequences *SSequence
-	Setup     *SSetup
-	Query     *SQuery
+    Settings  *SSettings
+    Accounts  *SAccounts
+    Schema    *SSchema
+    Pool      *SPool
+    Nodes     *SNode
+    Sequences *SSequence
+    Setup     *SSetup
+    Query     *SQuery
 }
 
 func NewSystemContext(dataDirectory, listenAddr, joinAddr, pgWireAddr string) (*SContext, error) {
-	db, err := arctonyx.CreateStore(dataDirectory, listenAddr, joinAddr)
-	if err != nil {
-		return nil, err
-	}
-	// Wait 5 seconds, this should be enough for the store to elect itself as leader if needed.
-	time.Sleep(5 * time.Second)
+    db, err := arctonyx.CreateStore(dataDirectory, listenAddr, joinAddr)
+    if err != nil {
+        return nil, err
+    }
+    // Wait 5 seconds, this should be enough for the store to elect itself as leader if needed.
+    time.Sleep(5 * time.Second)
 
-	base := baseContext{
-		snowflake: snowflake.NewSnowflake(uint16(db.NodeID())),
-		db:        db,
-	}
+    base := baseContext{
+        snowflake: snowflake.NewSnowflake(uint16(db.NodeID())),
+        db:        db,
+    }
 
-	sctx := SContext{
-		baseContext:   base,
-		PGWireAddress: pgWireAddr,
-	}
+     addr, err := net.ResolveTCPAddr("tcp", pgWireAddr)
+     if err != nil {
+         panic(errors.Errorf("unable to resolve address %q: %v", pgWireAddr, err))
+     }
 
-	settings := SSettings(base)
-	accounts := SAccounts(base)
-	schema := SSchema(base)
-	sequences := SSequence(base)
-	nodes := SNode(base)
-	query := SQuery(base)
-	pool := SPool{baseContext: &base}
-	setup := SSetup(base)
+    listen, err := net.ListenTCP("tcp", addr)
+    if err != nil {
+        panic(errors.Errorf("unable to listen on address %q: %v", addr, err))
+    }
 
-	sctx.Settings = &settings
-	sctx.Accounts = &accounts
-	sctx.Schema = &schema
-	sctx.Pool = &pool
-	sctx.Nodes = &nodes
-	sctx.Sequences = &sequences
-	sctx.Query = &query
-	sctx.Setup = &setup
-	return &sctx, nil
+    sctx := SContext{
+        baseContext:   base,
+        PGListen: listen,
+    }
+
+    settings := SSettings(base)
+    accounts := SAccounts(base)
+    schema := SSchema(base)
+    sequences := SSequence(base)
+    nodes := SNode(base)
+    query := SQuery(base)
+    pool := SPool{baseContext: &base}
+    setup := SSetup(base)
+
+    sctx.Settings = &settings
+    sctx.Accounts = &accounts
+    sctx.Schema = &schema
+    sctx.Pool = &pool
+    sctx.Nodes = &nodes
+    sctx.Sequences = &sequences
+    sctx.Query = &query
+    sctx.Setup = &setup
+    return &sctx, nil
 }
 
 // func (ctx *SContext) InitStore() error {
@@ -90,17 +103,33 @@ func NewSystemContext(dataDirectory, listenAddr, joinAddr, pgWireAddr string) (*
 // }
 
 func (ctx *SContext) NewSnowflake() (uint64, error) {
-	return ctx.snowflake.NextID()
+    return ctx.snowflake.NextID()
 }
 
 func (ctx *SContext) CoordinatorID() uint64 {
-	return ctx.db.NodeID()
+    return ctx.db.NodeID()
 }
 
 func (ctx *SContext) IsLeader() bool {
-	return ctx.db.IsLeader()
+    return ctx.db.IsLeader()
+}
+
+func (ctx *SContext) GrpcListenAddr() string {
+    return ctx.db.ListenAddr()
+}
+
+func (ctx *SContext) PgListenAddr() string {
+    return ctx.PGListen.Addr().String()
+}
+
+func (ctx *SContext) FinishedStartup() {
+    ctx.isRunning = true
+}
+
+func (ctx *SContext) IsRunning() bool {
+    return ctx.isRunning
 }
 
 func (ctx *SContext) Close() {
-	ctx.db.Close()
+    ctx.db.Close()
 }

@@ -14,17 +14,21 @@
  * permissions and limitations under the License.
  */
 
-package sql
+package testsuite
 
-// import (
-//     "github.com/readystock/noah/db/sql/pgwire/pgproto"
-//     "github.com/readystock/noah/db/util/queryutil"
-//     "github.com/readystock/pg_query_go/nodes"
-// )
+import (
+    "testing"
+)
 
-// getPlanColumns implements the logic for the
-// planColumns/planMutableColumns functions. The mut argument
-// indicates whether the slice should be mutable (mut=true) or not.
-// func getPlanColumns(stmt pg_query.Stmt) []pgproto.FieldDescription {
-//     return queryutil.GetColumns(stmt)
-// }
+func Test_Select1_Simple(t *testing.T) {
+    result, err := Connection.Query(`SELECT 1;`)
+    if err != nil {
+        t.Error(err)
+        t.FailNow()
+    }
+
+    if result.Err() != nil {
+        t.Error(err)
+        t.FailNow()
+    }
+}

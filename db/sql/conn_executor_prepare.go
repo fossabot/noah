@@ -246,7 +246,7 @@ func (ex *connExecutor) prepare(stmt nodes.Stmt, parseTypeHints plan.Placeholder
         return prepared, nil
     }
 
-    prepared.Columns = getPlanColumns(stmt)
+    // prepared.Columns = getPlanColumns(stmt)
 
     return prepared, nil
 }

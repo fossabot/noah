@@ -17,6 +17,7 @@
 package sql
 
 import (
+	"fmt"
 	"github.com/ahmetb/go-linq"
 	"github.com/kataras/go-errors"
 	"github.com/readystock/noah/db/sql/plan"
@@ -124,6 +125,9 @@ func (stmt *SelectStatement) getTables(sctx *system.SContext) ([]system.NTable, 
 		if table, err := sctx.Schema.GetTable(tableName); err != nil {
 			return nil, err
 		} else {
+			if table == nil {
+				return nil, errors.New(fmt.Sprintf("table [%s] does not exist", tableName))
+			}
 			tables[i] = *table
 		}
 	}

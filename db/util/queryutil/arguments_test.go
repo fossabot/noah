@@ -17,7 +17,9 @@
 package queryutil
 
 import (
+    "encoding/json"
     "fmt"
+    "github.com/readystock/golog"
     "github.com/readystock/noah/db/sql/plan"
     "github.com/readystock/noah/db/sql/types"
     "github.com/readystock/pg_query_go"
@@ -213,15 +215,15 @@ func Test_ReplaceArguments(t *testing.T) {
         stmt := parsed.Statements[0].(pg_query2.RawStmt).Stmt
 
         func() {
-            // defer func() {
-            //     if r := recover(); r != nil {
-            //         golog.Errorf("Replacing arguments in query `%s` has resulted in a panic", item.Query)
-            //         j, _ := json.Marshal(stmt)
-            //         golog.Errorf("Parse Tree: ->")
-            //         golog.Info(string(j))
-            //         golog.Fatal(r)
-            //     }
-            // }()
+            defer func() {
+                if r := recover(); r != nil {
+                    golog.Errorf("Replacing arguments in query `%s` has resulted in a panic", item.Query)
+                    j, _ := json.Marshal(stmt)
+                    golog.Errorf("Parse Tree: ->")
+                    golog.Info(string(j))
+                    golog.Fatal(r)
+                }
+            }()
 
             argCount := GetArguments(stmt)
 

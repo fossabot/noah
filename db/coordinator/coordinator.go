@@ -18,7 +18,6 @@ package coordinator
 
 import (
 	"github.com/kataras/golog"
-	"github.com/pkg/errors"
 	"github.com/readystock/noah/db/base"
 	"github.com/readystock/noah/db/sql/pgwire"
 	"github.com/readystock/noah/db/system"
@@ -62,29 +61,17 @@ type Server struct {
 
 func Start(sctx *system.SContext) (err error) {
 	defer util.CatchPanic(&err)
-	advertiseAddr := sctx.PGWireAddress
-	if addr, err := net.ResolveTCPAddr("tcp", advertiseAddr); err != nil {
-		return errors.Errorf("unable to resolve RPC address %q: %v", advertiseAddr, err)
-	} else {
-		listener, err := net.ListenTCP("tcp", addr)
+	for {
+		conn, err := sctx.PGListen.AcceptTCP()
 		if err != nil {
-			return errors.Errorf("unable to listen on address %q: %v", advertiseAddr, err)
+			golog.Error(err.Error())
 		}
 
-		for {
-			conn, err := listener.AcceptTCP()
-			if err != nil {
-				golog.Error(err.Error())
+		go func() {
+			if err := handleConnection(sctx, conn); err != nil {
+				golog.Errorf("failed handling connection %v", err)
 			}
-			go handleConnection(sctx, conn)
-		}
-	}
-}
-
-func StartIncomingConnection(sctx *system.SContext, in <-chan *net.TCPConn, out chan<- *net.TCPConn) {
-	for conn := range in {
-		handleConnection(sctx, conn)
-		out <- conn
+		}()
 	}
 }
 
