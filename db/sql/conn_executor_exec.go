@@ -117,9 +117,8 @@ func (ex *connExecutor) getStatementHandler(tree nodes.Stmt) (IQueryStatement, e
 	// case nodes.DoStmt:
 	// case nodes.DropOwnedStmt:
 	// case nodes.DropRoleStmt:
-	// case nodes.DropStmt:
-	// 	return CreateDropStatement(stmt), nil
-	// //     // return nil, _drop.CreateDropStatment(stmt, tree).HandleComment(ctx)
+	case nodes.DropStmt:
+		return CreateDropStatement(stmt), nil
 	// case nodes.DropSubscriptionStmt:
 	// case nodes.DropTableSpaceStmt:
 	// case nodes.DropUserMappingStmt:
