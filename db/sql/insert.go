@@ -109,17 +109,17 @@ func (stmt *InsertStatement) getAccountIds(table system.NTable) ([]uint64, error
         column := nodes[shardKeyIndex]
         val, err := column.Deparse(pg_query.Context_None)
         if err != nil {
-            return -1
+            return 0
         }
         iVal, err := strconv.ParseUint(*val, 10, 64)
         if err != nil {
-            return -1
+            return 0
         }
         return iVal
     }).Distinct().ToSlice(&accountIds)
 
     if linq.From(accountIds).AnyWithT(func(id uint64) bool {
-        return id < 0
+        return id == 0
     }) {
         return nil, errors.New("there are invalid account IDs provided in insert values")
     }

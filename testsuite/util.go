@@ -17,13 +17,15 @@
 package testsuite
 
 type QueryTest struct {
-    Query    string
-    Args     []interface{}
-    Expected [][]interface{}
+    Query         string
+    Args          []interface{}
+    Expected      [][]interface{}
+    ExpectedError error
 }
 
 type ExecTest struct {
-    Query    string
-    Args     []interface{}
-    Expected int64
+    Query         string
+    Args          []interface{}
+    Expected      int64
+    ExpectedError error
 }
