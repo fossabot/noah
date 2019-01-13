@@ -185,12 +185,19 @@ func DoQueryTest(t *testing.T, test QueryTest) [][]interface{} {
             t.FailNow()
         }
 
-        assert.EqualValuesf(t, test.Expected[index], vals,
-            "`%s` | %v - row [%d] did not return expected value", test.Query, test.Args, index)
+        if test.Expected != nil {
+            assert.EqualValuesf(t, test.Expected[index], vals,
+                "`%s` | %v - row [%d] did not return expected value", test.Query, test.Args, index)
+        }
+
         results = append(results, vals)
         index++
     }
-    assert.Equal(t, len(test.Expected), index, "`%s` | %v - number of rows returned did not match expected", test.Query, test.Args)
+
+    if test.Expected != nil {
+        assert.Equal(t, len(test.Expected), index, "`%s` | %v - number of rows returned did not match expected", test.Query, test.Args)
+    }
+
     return results
 }
 

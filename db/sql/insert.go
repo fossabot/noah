@@ -17,10 +17,14 @@
 package sql
 
 import (
+    "fmt"
+    "github.com/readystock/golinq"
     "github.com/kataras/go-errors"
     "github.com/readystock/noah/db/sql/plan"
     "github.com/readystock/noah/db/system"
     "github.com/readystock/pg_query_go/nodes"
+    "strconv"
+    "strings"
 )
 
 type InsertStatement struct {
@@ -50,34 +54,77 @@ func (stmt *InsertStatement) Execute(ex *connExecutor, res RestrictedCommandResu
 }
 
 func (stmt *InsertStatement) getTargetNodes(ex *connExecutor) ([]system.NNode, error) {
-    accounts, err := stmt.getAccountIDs()
+    tableName := *stmt.Statement.Relation.Relname
+
+    table, err := ex.SystemContext.Schema.GetTable(tableName)
     if err != nil {
         return nil, err
     }
 
-    if len(accounts) == 1 {
-        return ex.SystemContext.Accounts.GetNodesForAccount(accounts[0])
-    } else if len(accounts) > 1 {
-        return nil, errors.New("multi account queries are not supported at this time.")
-        // node_ids := make([]uint64, 0)
-        // From(accounts).SelectManyT(func(id uint64) Query {
-        //     if ids, err := ex.GetNodesForAccountID(&id); err == nil {
-        //         return From(ids)
-        //     }
-        //     return From(make([]uint64, 0))
-        // }).Distinct().ToSlice(&node_ids)
-        // if len(node_ids) == 0 {
-        //     return nil, errors.New("could not find nodes for account IDs")
-        // } else {
-        //     return node_ids, nil
-        // }
-    } else {
+    if table == nil {
+        return nil, errors.New(fmt.Sprintf("table [%s] does not exist", tableName))
+    }
+
+    // If the insert query targets global or account tables then we want to target all nodes.
+    if table.TableType == system.NTableType_GLOBAL || table.TableType == system.NTableType_ACCOUNT {
         return ex.SystemContext.Nodes.GetNodes()
+    } else {
+        accountIds, err := stmt.getAccountIds(*table)
+        if err != nil {
+            return nil, err
+        }
+
+        if len(accountIds) > 1 {
+            return nil, errors.New("cannot insert into more than 1 account ID at this time")
+        }
+
+        return ex.SystemContext.Accounts.GetNodesForAccount(accountIds[0])
     }
 }
 
-func (stmt *InsertStatement) getAccountIDs() ([]uint64, error) {
-    return make([]uint64, 0), nil
+func (stmt *InsertStatement) getAccountIds(table system.NTable) ([]uint64, error) {
+    // Since we are inserting into a sharded table we need to find the shard key in the insert
+    // statement. If the shard key is missing we want to throw an error, if its present we want
+    // to take its index and look at its provided value.
+    shardKey := table.ShardKey.(*system.NTable_SKey).SKey
+
+    shardKeyIndex := linq.From(stmt.Statement.Cols.Items).IndexOfT(func(col pg_query.ResTarget) bool {
+        return strings.ToLower(*col.Name) == shardKey.ColumnName
+    })
+
+    // We couldn't find a value for the shard key, throw an error and return the shard column name
+    if shardKeyIndex < 0 {
+        return nil, errors.New(fmt.Sprintf("insert statement is missing the shard column [%s] value", shardKey.ColumnName))
+    }
+
+    if  stmt.Statement.SelectStmt == nil || stmt.Statement.SelectStmt.(pg_query.SelectStmt).ValuesLists == nil {
+        return nil, errors.New("value list was not provided, these types of inserts are not yet supported")
+    }
+
+    valuesList := stmt.Statement.SelectStmt.(pg_query.SelectStmt).ValuesLists
+
+    accountIds := make([]uint64, 0)
+
+    linq.From(valuesList).SelectT(func(nodes []pg_query.Node) uint64 {
+        column := nodes[shardKeyIndex]
+        val, err := column.Deparse(pg_query.Context_None)
+        if err != nil {
+            return -1
+        }
+        iVal, err := strconv.ParseUint(*val, 10, 64)
+        if err != nil {
+            return -1
+        }
+        return iVal
+    }).Distinct().ToSlice(&accountIds)
+
+    if linq.From(accountIds).AnyWithT(func(id uint64) bool {
+        return id < 0
+    }) {
+        return nil, errors.New("there are invalid account IDs provided in insert values")
+    }
+
+    return accountIds, nil
 }
 
 func (stmt *InsertStatement) compilePlan(ex *connExecutor, nodes []system.NNode) ([]plan.NodeExecutionPlan, error) {

@@ -47,19 +47,16 @@ func Test_Select_CurrentUser(t *testing.T) {
     })
 }
 
-// func Test_Select_MultiColumn(t *testing.T) {
-//     test := QueryTest{
-//         Query: "SELECT true::bool, 5.5;",
-//         Args: nil,
-//         Expected: [][]interface{}{
-//             {
-//                 true,
-//                 5.5,
-//             },
-//         },
-//     }
-//     DoQueryTest(t, test)
-// }
+func Test_Select_Numeric(t *testing.T) {
+    t.Skip("numeric types are not supported by noah's client facing wire yet")
+    DoQueryTest(t, QueryTest{
+        Query: "SELECT 5.5;",
+        Args:  nil,
+        Expected: [][]interface{}{
+            {5.5,},
+        },
+    })
+}
 
 func Test_Select_Unions(t *testing.T) {
     DoQueryTest(t, QueryTest{
@@ -83,12 +80,10 @@ func Test_Select_Math(t *testing.T) {
 
 func Test_Create_And_Insert(t *testing.T) {
     DoExecTest(t, ExecTest{
-        Query:    "CREATE TABLE IF NOT EXISTS public.temptest123 (id BIGINT);",
-        Expected: 0,
+        Query: "CREATE TABLE IF NOT EXISTS public.temptest123 (id BIGINT);",
     })
     defer DoExecTest(t, ExecTest{
-        Query:    "DROP TABLE public.temptest123 CASCADE;",
-        Expected: 0,
+        Query: "DROP TABLE public.temptest123 CASCADE;",
     })
     DoQueryTest(t, QueryTest{
         Query: "INSERT INTO public.temptest123 (id) VALUES(1) RETURNING id;",
@@ -96,4 +91,54 @@ func Test_Create_And_Insert(t *testing.T) {
             {int64(1),},
         },
     })
+}
+
+func Test_Create_And_InsertMultiRows(t *testing.T) {
+    t.Skip("pg_query_go's deparser does not support deparsing multiple value rows yet")
+    DoExecTest(t, ExecTest{
+        Query: "CREATE TABLE IF NOT EXISTS public.temptest123 (id BIGINT);",
+    })
+    defer DoExecTest(t, ExecTest{
+        Query: "DROP TABLE public.temptest123 CASCADE;",
+    })
+    DoQueryTest(t, QueryTest{
+        Query: "INSERT INTO public.temptest123 (id) VALUES(1),(2) RETURNING id;",
+        Expected: [][]interface{}{
+            {int64(1),},
+        },
+    })
+}
+
+func Test_Create_And_InsertFromAmbiguousSelect(t *testing.T) {
+    t.Skip("noah does not yet support inserting from an ambiguous select")
+
+    // Create tables needed
+    DoExecTest(t, ExecTest{
+        Query: `CREATE TABLE IF NOT EXISTS public.tempaccounts (id BIGSERIAL PRIMARY KEY, number INT) TABLESPACE "noah.account";`,
+    })
+    DoExecTest(t, ExecTest{
+        Query: `CREATE TABLE IF NOT EXISTS public.tempsharded (id BIGSERIAL PRIMARY KEY, account_id BIGINT NOT NULL REFERENCES public.tempaccounts (id)) TABLESPACE "noah.shard";`,
+    })
+
+    // Drop our tables at the end of the test
+    defer DoExecTest(t, ExecTest{
+        Query: "DROP TABLE public.tempaccounts CASCADE;",
+    })
+    defer DoExecTest(t, ExecTest{
+        Query: "DROP TABLE IF EXISTS public.tempsharded CASCADE;",
+    })
+    //
+    // //numberOfAccounts := 4
+    //
+    // account1 := DoQueryTest(t, QueryTest{
+    //     Query: "INSERT INTO public.tempaccounts (number) VALUES(1) RETURNING *;",
+    // })
+    //
+    // account2 := DoQueryTest(t, QueryTest{
+    //     Query: "INSERT INTO public.tempaccounts (number) VALUES(2) RETURNING *;",
+    // })
+    //
+    // _, _ := account1[0][0], account2[0][0]
+    //
+    //
 }
