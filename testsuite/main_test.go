@@ -178,6 +178,7 @@ func DoQueryTest(t *testing.T, test QueryTest) [][]interface{} {
             t.Error(err)
             t.FailNow()
         }
+
         vals, err := result.Values()
         if err != nil {
             t.Error(err)
@@ -189,6 +190,7 @@ func DoQueryTest(t *testing.T, test QueryTest) [][]interface{} {
         results = append(results, vals)
         index++
     }
+    assert.Equal(t, len(test.Expected), index, "`%s` | %v - number of rows returned did not match expected", test.Query, test.Args)
     return results
 }
 
