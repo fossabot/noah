@@ -81,7 +81,7 @@ func Test_Select_Math(t *testing.T) {
     })
 }
 
-func Test_Create_AndSelect(t *testing.T) {
+func Test_Create_And_Insert(t *testing.T) {
     DoExecTest(t, ExecTest{
         Query:    "CREATE TABLE IF NOT EXISTS public.temptest123 (id BIGINT);",
         Expected: 0,
