@@ -16,19 +16,14 @@
 
 package testsuite
 
-import (
-    "testing"
-)
+type QueryTest struct {
+    Query    string
+    Args     []interface{}
+    Expected [][]interface{}
+}
 
-func Test_Select1_Simple(t *testing.T) {
-    result, err := Connection.Query(`SELECT 1;`)
-    if err != nil {
-        t.Error(err)
-        t.FailNow()
-    }
-
-    if result.Err() != nil {
-        t.Error(err)
-        t.FailNow()
-    }
+type ExecTest struct {
+    Query    string
+    Args     []interface{}
+    Expected int64
 }

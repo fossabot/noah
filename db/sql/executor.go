@@ -99,7 +99,7 @@ func (ex *connExecutor) ExecutePlans(plans []plan.NodeExecutionPlan, res Restric
 
                     row := make([]types.Value, len(columns))
                     if values, err := response.Rows.PgValues(); err != nil {
-                        ex.Error(err.Error())
+                        ex.Error("reading values from wire: %v", err.Error())
                         errs = append(errs, err)
                         continue
                     } else {
@@ -123,7 +123,14 @@ func (ex *connExecutor) ExecutePlans(plans []plan.NodeExecutionPlan, res Restric
                 ex.Debug("no rows returned for query `%s`", plans[0].CompiledQuery)
             }
         case pg_query.DDL:
-            return nil
+            if response.Rows != nil {
+                if err := response.Rows.Err(); err != nil {
+                    ex.Error("received error from node [%d]: %s", response.NodeID, err)
+                    errs = append(errs, err)
+                    continue
+                }
+                response.Rows.Close()
+            }
         default:
             return errors.Errorf("cannot handle statement type %d", response.Type)
         }

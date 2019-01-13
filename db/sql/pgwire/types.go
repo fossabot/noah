@@ -96,9 +96,6 @@ func (b *writeBuffer) writeTextDatum(
         b.putInt32(int32(len(s)))
         b.write(s)
 
-    // case *tree.DDecimal:
-    //    b.writeLengthPrefixedDatum(v)
-
     case *types.Bytea:
         result := lex.EncodeByteArrayToRawBytes(string(v.Bytes), be, false /* skipHexPrefix */)
         b.putInt32(int32(len(result)))
