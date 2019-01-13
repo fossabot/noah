@@ -21,6 +21,10 @@ import (
     "github.com/readystock/golog"
 )
 
+func (ex *connExecutor) Verbose(msg string, args ...interface{}) {
+    golog.Verbosef(fmt.Sprintf("[%s] %s", ex.ClientAddress, msg), args...)
+}
+
 func (ex *connExecutor) Debug(msg string, args ...interface{}) {
     golog.Debugf(fmt.Sprintf("[%s] %s", ex.ClientAddress, msg), args...)
 }

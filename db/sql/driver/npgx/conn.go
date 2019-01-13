@@ -22,7 +22,7 @@ import (
     "encoding/binary"
     "encoding/hex"
     "github.com/kataras/go-errors"
-    "github.com/kataras/golog"
+    "github.com/readystock/golog"
     "github.com/readystock/noah/db/sql/driver"
     "github.com/readystock/noah/db/sql/pgio"
     "github.com/readystock/noah/db/sql/pgwire/pgproto"
@@ -693,7 +693,7 @@ func (c *Conn) processContextFreeMsg(msg pgproto.BackendMessage) (err error) {
     case *pgproto.ErrorResponse:
         return c.rxErrorResponse(msg)
     case *pgproto.NoticeResponse:
-        return errors.New("notice response not supported at this time.")
+        // We dont need to do anything with this because we are not handling it within noah.
     case *pgproto.NotificationResponse:
         return errors.New("notification response not supported at this time.")
     case *pgproto.ReadyForQuery:

@@ -34,12 +34,23 @@ type executeResponse struct {
     Type   pg_query.StmtType
 }
 
-func (ex *connExecutor) ExecutePlans(plans []plan.NodeExecutionPlan, res RestrictedCommandResult) (err error) {
+func (ex *connExecutor) ExecutePlans(plans []plan.NodeExecutionPlan, res RestrictedCommandResult) (error) {
     // defer util.CatchPanic(&err)
     if len(plans) == 0 {
         ex.Error("no plans were provided, nothing will be executed")
         return errors.New("no plans were provided")
     }
+
+    // If none of the plans are read only then increment the number of changes at the end of the
+    // execution.
+    if linq.From(plans).AllT(func(plan plan.NodeExecutionPlan) bool {
+        return !plan.ReadOnly
+    }) {
+        defer func() {
+            ex.changes++
+        }()
+    }
+
     responses := make(chan *executeResponse, len(plans))
     for _, p := range plans {
         go func(ex *connExecutor, pln plan.NodeExecutionPlan) {
@@ -50,11 +61,10 @@ func (ex *connExecutor) ExecutePlans(plans []plan.NodeExecutionPlan, res Restric
             }
 
             defer func() {
-                exResponse.Error = err
                 responses <- &exResponse
             }()
 
-            ex.Info("Executing query: `%s` on node [%d]", pln.CompiledQuery, pln.Node.NodeId)
+            ex.Info("executing query: `%s` on database node [%d]", pln.CompiledQuery, pln.Node.NodeId)
             tx, err := ex.GetNodeTransaction(pln.Node.NodeId)
             if err != nil {
                 ex.Error(err.Error())
@@ -124,11 +134,14 @@ func (ex *connExecutor) ExecutePlans(plans []plan.NodeExecutionPlan, res Restric
             }
         case pg_query.DDL:
             if response.Rows != nil {
+                response.Rows.Next()
+
                 if err := response.Rows.Err(); err != nil {
                     ex.Error("received error from node [%d]: %s", response.NodeID, err)
                     errs = append(errs, err)
                     continue
                 }
+
                 response.Rows.Close()
             }
         default:
@@ -137,17 +150,35 @@ func (ex *connExecutor) ExecutePlans(plans []plan.NodeExecutionPlan, res Restric
     }
     ex.Debug("%d row(s) compiled for query `%s`", len(result), plans[0].CompiledQuery)
 
-    if ex.TransactionMode == TransactionMode_AutoCommit && linq.From(plans).AnyWithT(func(plan plan.NodeExecutionPlan) bool {
-        return !plan.ReadOnly
+    if ex.TransactionMode == TransactionMode_AutoCommit &&
+        linq.From(plans).AnyWithT(func(plan plan.NodeExecutionPlan) bool {
+            return !plan.ReadOnly
     }) { // If we are auto-committing this stuff and there are no errors
         if len(errs) == 0 {
-            if err := ex.PrepareTwoPhase(); err != nil {
-                return errors.Wrap(err, ex.Rollback()) // If the prepare two phase failed (which is really rare) then rollback the current changes in autocommit and return an error
+            if len(ex.nodes) == 1 {
+                if err := ex.Commit(); err != nil {
+                    return util.CombineErrors(append(errs, err))
+                }
             } else {
-                return ex.CommitTwoPhase()
+                if err := ex.PrepareTwoPhase(); err != nil {
+                    errs = append(errs, err)
+                    // If the prepare two phase failed (which is really rare) then rollback the current changes in autocommit and return an error
+                    if err := ex.Rollback(); err != nil {
+                        errs = append(errs, err)
+                    }
+                    return util.CombineErrors(errs)
+                } else {
+                    return ex.CommitTwoPhase()
+                }
             }
         } else {
-            return ex.Rollback()
+            if ex.changes > 0 {
+                if err := ex.Rollback(); err != nil {
+                    return util.CombineErrors(append(errs, err))
+                }
+            } else {
+                return util.CombineErrors(errs)
+            }
         }
     }
     return util.CombineErrors(errs)
@@ -171,6 +202,8 @@ func (ex *connExecutor) PrepareTwoPhase() error {
 
     transactionId = ex.TransactionID
 
+    ex.Debug("preparing two-phase commit for changes on %d node(s), transaction ID [%d]", len(ex.nodes), transactionId)
+
     count := len(ex.nodes)
     responses := make(chan executeResponse, count)
     for id, tx := range ex.nodes {
@@ -189,6 +222,7 @@ func (ex *connExecutor) PrepareTwoPhase() error {
             errs = append(errs, response.Error)
         }
     }
+    ex.Verbose("%d error(s) from execution %v", len(errs), errs)
     return util.CombineErrors(errs)
 }
 

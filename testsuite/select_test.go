@@ -83,17 +83,17 @@ func Test_Select_Math(t *testing.T) {
 
 func Test_Create_AndSelect(t *testing.T) {
     DoExecTest(t, ExecTest{
-        Query:    "CREATE TABLE temptest123 (id BIGINT);",
+        Query:    "CREATE TABLE IF NOT EXISTS public.temptest123 (id BIGINT);",
         Expected: 0,
     })
     defer DoExecTest(t, ExecTest{
-        Query:    "DROP TABLE temptest123 CASCADE;",
+        Query:    "DROP TABLE public.temptest123 CASCADE;",
         Expected: 0,
     })
     DoQueryTest(t, QueryTest{
-        Query: "INSERT INTO temptest123 (id) VALUES(1) RETURNING id;",
+        Query: "INSERT INTO public.temptest123 (id) VALUES(1) RETURNING id;",
         Expected: [][]interface{}{
-            {int32(1),},
+            {int64(1),},
         },
     })
 }
