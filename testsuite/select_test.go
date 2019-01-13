@@ -17,6 +17,7 @@
 package testsuite
 
 import (
+    "fmt"
     "github.com/stretchr/testify/assert"
     "testing"
 )
@@ -92,6 +93,39 @@ func Test_Create_And_Insert(t *testing.T) {
             {int64(1),},
         },
     })
+}
+
+func Test_Create_Global_And_Insert(t *testing.T) {
+    DoExecTest(t, ExecTest{
+        Query: `CREATE TABLE public.temp (id BIGINT) TABLESPACE "noah.global";`,
+    })
+    defer DoExecTest(t, ExecTest{
+        Query: "DROP TABLE public.temp CASCADE;",
+    })
+    DoQueryTest(t, QueryTest{
+        Query: "INSERT INTO public.temp (id) VALUES(1) RETURNING id;",
+        Expected: [][]interface{}{
+            {int64(1),},
+        },
+    })
+}
+
+func Test_Create_Global_And_Insert_Multiple(t *testing.T) {
+    DoExecTest(t, ExecTest{
+        Query: `CREATE TABLE public.temp (id BIGINT) TABLESPACE "noah.global";`,
+    })
+    defer DoExecTest(t, ExecTest{
+        Query: "DROP TABLE public.temp CASCADE;",
+    })
+
+    for i := 0; i < 100; i ++ {
+        DoQueryTest(t, QueryTest{
+            Query: fmt.Sprintf("INSERT INTO public.temp (id) VALUES (%d) RETURNING id;", i),
+            Expected: [][]interface{}{
+                {int64(i),},
+            },
+        })
+    }
 }
 
 func Test_Create_And_InsertMultiRows(t *testing.T) {
