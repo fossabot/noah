@@ -18,8 +18,8 @@ package sql
 
 import (
     "fmt"
-    "github.com/readystock/golinq"
     "github.com/kataras/go-errors"
+    "github.com/readystock/golinq"
     "github.com/readystock/noah/db/sql/plan"
     "github.com/readystock/noah/db/system"
     "github.com/readystock/pg_query_go/nodes"
@@ -29,6 +29,7 @@ import (
 
 type InsertStatement struct {
     Statement pg_query.InsertStmt
+    table     system.NTable
     IQueryStatement
 }
 
@@ -65,6 +66,8 @@ func (stmt *InsertStatement) getTargetNodes(ex *connExecutor) ([]system.NNode, e
         return nil, errors.New(fmt.Sprintf("table [%s] does not exist", tableName))
     }
 
+    stmt.table = *table
+
     // If the insert query targets global or account tables then we want to target all nodes.
     if table.TableType == system.NTableType_GLOBAL || table.TableType == system.NTableType_ACCOUNT {
         return ex.SystemContext.Nodes.GetNodes()
@@ -97,7 +100,7 @@ func (stmt *InsertStatement) getAccountIds(table system.NTable) ([]uint64, error
         return nil, errors.New(fmt.Sprintf("insert statement is missing the shard column [%s] value", shardKey.ColumnName))
     }
 
-    if  stmt.Statement.SelectStmt == nil || stmt.Statement.SelectStmt.(pg_query.SelectStmt).ValuesLists == nil {
+    if stmt.Statement.SelectStmt == nil || stmt.Statement.SelectStmt.(pg_query.SelectStmt).ValuesLists == nil {
         return nil, errors.New("value list was not provided, these types of inserts are not yet supported")
     }
 
@@ -133,11 +136,12 @@ func (stmt *InsertStatement) compilePlan(ex *connExecutor, nodes []system.NNode)
     if err != nil {
         return nil, err
     }
+
     for i := 0; i < len(plans); i++ {
         plans[i] = plan.NodeExecutionPlan{
             CompiledQuery: *deparsed,
             Node:          nodes[i],
-            ReadOnly:      true,
+            ReadOnly:      false,
             Type:          stmt.Statement.StatementType(),
         }
     }

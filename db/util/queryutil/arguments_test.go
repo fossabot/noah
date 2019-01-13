@@ -191,16 +191,16 @@ var (
                 },
             },
         },
-        {
-            Query:    "DELETE FROM users WHERE user_id = $1;",
-            ArgCount: 1,
-            Arguments: map[string]types.Value{
-                "1": &types.Int8{
-                    Status: types.Present,
-                    Int:    28412931,
-                },
-            },
-        },
+        // {
+        //     Query:    "DELETE FROM users WHERE user_id = $1;",
+        //     ArgCount: 1,
+        //     Arguments: map[string]types.Value{
+        //         "1": &types.Int8{
+        //             Status: types.Present,
+        //             Int:    28412931,
+        //         },
+        //     },
+        // },
     }
 )
 

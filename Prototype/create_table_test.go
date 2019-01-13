@@ -45,6 +45,7 @@ var (
 )
 
 func Test_CreateTable(t *testing.T) {
+	t.Skip("skipping prototype tests")
 	fmt.Printf("%d Table(s) in metadata\n", len(cluster.Tables))
 	for _, QuerySet := range createQueries {
 		context := Start()

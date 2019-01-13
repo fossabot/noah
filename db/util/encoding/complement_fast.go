@@ -1,3 +1,5 @@
+// +build 386 amd64
+
 /*
  * Copyright (c) 2018 Ready Stock
  *
@@ -13,8 +15,6 @@
  * or implied. See the License for the specific language governing
  * permissions and limitations under the License.
  */
-
-// +build 386 amd64
 
 package encoding
 

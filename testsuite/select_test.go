@@ -17,6 +17,7 @@
 package testsuite
 
 import (
+    "github.com/stretchr/testify/assert"
     "testing"
 )
 
@@ -80,13 +81,13 @@ func Test_Select_Math(t *testing.T) {
 
 func Test_Create_And_Insert(t *testing.T) {
     DoExecTest(t, ExecTest{
-        Query: "CREATE TABLE IF NOT EXISTS public.temptest123 (id BIGINT);",
+        Query: "CREATE TABLE public.temp (id BIGINT);",
     })
     defer DoExecTest(t, ExecTest{
-        Query: "DROP TABLE public.temptest123 CASCADE;",
+        Query: "DROP TABLE public.temp CASCADE;",
     })
     DoQueryTest(t, QueryTest{
-        Query: "INSERT INTO public.temptest123 (id) VALUES(1) RETURNING id;",
+        Query: "INSERT INTO public.temp (id) VALUES(1) RETURNING id;",
         Expected: [][]interface{}{
             {int64(1),},
         },
@@ -141,4 +142,19 @@ func Test_Create_And_InsertFromAmbiguousSelect(t *testing.T) {
     // _, _ := account1[0][0], account2[0][0]
     //
     //
+}
+
+func Test_Create_And_InsertWithSerial(t *testing.T) {
+    t.Skip("sequences are not yet finished for insert statements")
+    DoExecTest(t, ExecTest{
+        Query: "CREATE TABLE public.temp (id BIGSERIAL, number BIGINT);",
+    })
+    defer DoExecTest(t, ExecTest{
+        Query: "DROP TABLE public.temp CASCADE;",
+    })
+    result := DoQueryTest(t, QueryTest{
+        Query: "INSERT INTO public.temp (number) VALUES(1) RETURNING *;",
+    })
+    assert.Equal(t, 1, result[0][1], "the number column inserted does not match the number returned")
+    assert.True(t, result[0][0].(int64) > 0, "the ID column returned is not valid")
 }

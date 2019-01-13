@@ -7,6 +7,32 @@ os:
 go:
 - "1.11"
 
+services:
+  - postgresql
+
+addons:
+  postgresql: "10"
+  apt:
+    packages:
+      - postgresql-10
+      - postgresql-client-10
+before_install:
+  - sudo sed -i -e '/local.*peer/s/postgres/all/' -e 's/peer\|md5/trust/g' /etc/postgresql/*/main/pg_hba.conf
+  - sudo service postgresql restart
+  - sleep 1
+
+before_script:
+  - psql -c 'create database travis_ci_test;' -U postgres
+
+env:
+  global:
+    - PGPORT=5432
+    - PGDATABASE=postgres
+    - PGUSER=postgres
+    - PGPASSWORD=''
+    - PGHOST=localhost
+    - PGX_TEST_DATABASE=postgres://postgres:@127.0.0.1:5432/postgres
+
 install:
 - go get -v -d google.golang.org/grpc
 - go get -v -d -t github.com/golang/protobuf/...
@@ -15,3 +41,4 @@ install:
 - mkdir -p "$HOME"/src && ln -s "$HOME"/protoc "$HOME"/src/protobuf
 - export PATH=$HOME/protoc/bin:$GOPATH/bin:$PATH
 - make protos
+- go get -d -u

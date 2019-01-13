@@ -33,7 +33,7 @@ func Test_Nodes_AddNodes(t *testing.T) {
             ReplicaOf: 0,
             Region:    "",
             Zone:      "",
-            IsAlive:   true,
+            IsAlive:   false,
         },
         {
             Address:   "127.0.0.1:0",
@@ -44,7 +44,7 @@ func Test_Nodes_AddNodes(t *testing.T) {
             ReplicaOf: 0,
             Region:    "",
             Zone:      "",
-            IsAlive:   true,
+            IsAlive:   false,
         },
         {
             Address:   "127.0.0.1:0",
@@ -55,7 +55,7 @@ func Test_Nodes_AddNodes(t *testing.T) {
             ReplicaOf: 0,
             Region:    "",
             Zone:      "",
-            IsAlive:   true,
+            IsAlive:   false,
         },
     }
 

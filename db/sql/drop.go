@@ -17,6 +17,7 @@
 package sql
 
 import (
+	"fmt"
 	"github.com/pkg/errors"
 	"github.com/readystock/golinq"
 	"github.com/readystock/golog"
@@ -37,22 +38,28 @@ func CreateDropStatement(stmt pg_query.DropStmt) *DropStatement {
 }
 
 func (stmt *DropStatement) Execute(ex *connExecutor, res RestrictedCommandResult, pinfo *plan.PlaceholderInfo) error {
-	targetNodes, err := stmt.getTargetNodes(ex)
-	if err != nil {
-		return err
-	}
-	ex.Debug("Preparing to send query to %d node(s)", len(targetNodes))
+	switch stmt.Statement.RemoveType {
+	case pg_query.OBJECT_TABLE:
+		targetNodes, err := stmt.getTargetNodes(ex)
+		if err != nil {
+			return err
+		}
+		ex.Debug("Preparing to send query to %d node(s)", len(targetNodes))
 
-	plans, err := stmt.compilePlan(ex, targetNodes)
-	if err != nil {
-		return err
-	}
+		plans, err := stmt.compilePlan(ex, targetNodes)
+		if err != nil {
+			return err
+		}
 
-	if err := ex.ExecutePlans(plans, res); err != nil {
-		return err
-	} else {
-		tableName := stmt.Statement.Objects.Items[len(stmt.Statement.Objects.Items) - 1].(pg_query.String).Str
-		return ex.SystemContext.Schema.DropTable(tableName)
+		if err := ex.ExecutePlans(plans, res); err != nil {
+			return err
+		} else {
+			inner := stmt.Statement.Objects.Items[0].(pg_query.List).Items
+			tableName := inner[len(inner) - 1].(pg_query.String).Str
+			return ex.SystemContext.Schema.DropTable(tableName)
+		}
+	default:
+		return errors.New(fmt.Sprintf("cannot drop object [%v], not yet supported", stmt.Statement.RemoveType))
 	}
 }
 

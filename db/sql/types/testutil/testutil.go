@@ -20,8 +20,7 @@ import (
     "context"
     "database/sql"
     "fmt"
-    "github.com/readystock/noah/db/sql/driver/npgx"
-    "github.com/readystock/pgx"
+    "github.com/jackc/pgx"
     "os"
     "reflect"
     "testing"
@@ -49,13 +48,13 @@ func MustConnectDatabaseSQL(t testing.TB, driverName string) *sql.DB {
     return db
 }
 
-func MustConnectPgx(t testing.TB) *npgx.Conn {
-    config, err := npgx.ParseConnectionString(os.Getenv("PGX_TEST_DATABASE"))
+func MustConnectPgx(t testing.TB) *pgx.Conn {
+    config, err := pgx.ParseConnectionString(os.Getenv("PGX_TEST_DATABASE"))
     if err != nil {
         t.Fatal(err)
     }
 
-    conn, err := npgx.Connect(config)
+    conn, err := pgx.Connect(config)
     if err != nil {
         t.Fatal(err)
     }
