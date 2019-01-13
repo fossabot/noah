@@ -128,6 +128,36 @@ func Test_Create_Global_And_Insert_Multiple(t *testing.T) {
     }
 }
 
+func Test_Create_Global_And_InsertFew_ThenSelect(t *testing.T) {
+    DoExecTest(t, ExecTest{
+        Query: `CREATE TABLE IF NOT EXISTS public.temp (id BIGINT) TABLESPACE "noah.global";`,
+    })
+    DoExecTest(t, ExecTest{
+        Query: `DELETE FROM public.temp;`,
+    })
+    defer DoExecTest(t, ExecTest{
+        Query: "DROP TABLE public.temp CASCADE;",
+    })
+
+    for i := 0; i < 10; i ++ {
+        DoQueryTest(t, QueryTest{
+            Query: fmt.Sprintf("INSERT INTO public.temp (id) VALUES (%d) RETURNING id;", i),
+            Expected: [][]interface{}{
+                {int64(i),},
+            },
+        })
+    }
+
+    for i := 0; i < 10; i ++ {
+        DoQueryTest(t, QueryTest{
+            Query: fmt.Sprintf("SELECT id FROM public.temp WHERE id = %d;", i),
+            Expected: [][]interface{}{
+                {int64(i),},
+            },
+        })
+    }
+}
+
 func Test_Create_And_InsertMultiRows(t *testing.T) {
     t.Skip("pg_query_go's deparser does not support deparsing multiple value rows yet")
     DoExecTest(t, ExecTest{

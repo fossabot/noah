@@ -170,6 +170,8 @@ func DoQueryTest(t *testing.T, test QueryTest) [][]interface{} {
         t.FailNow()
     }
 
+    defer result.Close()
+
     results := make([][]interface{}, len(test.Expected))
 
     index := 0
