@@ -209,16 +209,21 @@ func Test_Create_And_InsertFromAmbiguousSelect(t *testing.T) {
 }
 
 func Test_Create_And_InsertWithSerial(t *testing.T) {
-    t.Skip("sequences are not yet finished for insert statements")
+    DoExecTest(t, ExecTest{
+        Query: "DROP TABLE IF EXISTS public.temp CASCADE;",
+    })
     DoExecTest(t, ExecTest{
         Query: "CREATE TABLE public.temp (id BIGSERIAL, number BIGINT);",
     })
     defer DoExecTest(t, ExecTest{
         Query: "DROP TABLE public.temp CASCADE;",
     })
-    result := DoQueryTest(t, QueryTest{
-        Query: "INSERT INTO public.temp (number) VALUES(1) RETURNING *;",
-    })
-    assert.Equal(t, 1, result[0][1], "the number column inserted does not match the number returned")
-    assert.True(t, result[0][0].(int64) > 0, "the ID column returned is not valid")
+
+    for i := 0; i < 10; i++ {
+        result := DoQueryTest(t, QueryTest{
+            Query: fmt.Sprintf("INSERT INTO public.temp (number) VALUES(%d) RETURNING *;", i),
+        })
+        assert.Equal(t, int64(i), result[0][1], "the number column inserted does not match the number returned")
+        assert.True(t, result[0][0].(int64) > 0, "the ID column returned is not valid")
+    }
 }
