@@ -19,6 +19,7 @@ package sql
 import (
     "context"
     "github.com/pkg/errors"
+    "github.com/readystock/golog"
     "github.com/readystock/noah/db/sql/pgwire/pgerror"
     "github.com/readystock/noah/db/sql/pgwire/pgwirebase"
 )
@@ -44,7 +45,7 @@ func (ex *connExecutor) execDescribe(
         if stmtHasNoData(*ps.Statement) {
             res.SetNoDataRowDescription()
         } else {
-            ex.Warn("cannot handle prepared statement output")
+            golog.Warnf("cannot handle prepared statement output")
             // res.SetPrepStmtOutput(ctx, ps.Columns)
         }
     case pgwirebase.PreparePortal:
@@ -57,7 +58,7 @@ func (ex *connExecutor) execDescribe(
         if stmtHasNoData(*portal.Stmt.Statement) {
             res.SetNoDataRowDescription()
         } else {
-            ex.Warn("cannot handle portal output of statement")
+            golog.Warnf("cannot handle portal output of statement")
            // res.SetPortalOutput(ctx, portal.Stmt.Columns, portal.OutFormats)
         }
     default:

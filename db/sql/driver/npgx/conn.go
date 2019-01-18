@@ -394,7 +394,7 @@ func connect(config driver.ConnConfig, connInfo *types.ConnInfo) (c *Conn, err e
         c.config.Port = 5432
     }
 
-    if c.config.Database != "" {
+    if c.config.Database == "" {
         c.config.Database = "postgres"
     }
 
@@ -484,7 +484,7 @@ func (c *Conn) connect(config driver.ConnConfig, network, address string, dial D
             }
         case *pgproto.ReadyForQuery:
             c.rxReadyForQuery(msg)
-            golog.Debugf("connection established to postgres %s", c.config.Host)
+            golog.Debugf("connection established to postgres %s db %s", c.config.Host, c.config.Database)
 
             if c.ConnInfo == minimalConnInfo {
                 err = c.initConnInfo()

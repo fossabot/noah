@@ -19,6 +19,7 @@ package sql
 import (
     "context"
     "fmt"
+    "github.com/readystock/golog"
     "github.com/readystock/noah/db/sql/driver/npgx"
     "github.com/readystock/noah/db/sql/pgwire/pgerror"
     "github.com/readystock/noah/db/sql/plan"
@@ -69,10 +70,10 @@ func (ex *connExecutor) GetNodeTransaction(nodeId uint64) (*npgx.Transaction, er
     }
     tx, ok := ex.nodes[nodeId]
     if !ok {
-        ex.Debug("node [%d] is not in the session, acquiring connection", nodeId)
+        golog.Debugf("node [%d] is not in the session, acquiring connection", nodeId)
         // A connection has not yet been made to this node. Allocate one.
         if t, err := ex.SystemContext.Pool.AcquireTransaction(nodeId); err != nil {
-            ex.Error(err.Error())
+            golog.Errorf(err.Error())
             return nil, err
         } else {
             if ex.nodes == nil {
@@ -198,7 +199,7 @@ func (ex *connExecutor) run() (err error) {
             return err
         }
         if cmd == nil {
-            ex.Warn("found null command, advancing 1")
+            golog.Warnf("found null command, advancing 1")
             ex.stmtBuf.advanceOne()
         }
         // var ev fsm.Event

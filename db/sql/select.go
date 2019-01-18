@@ -20,7 +20,8 @@ import (
 	"fmt"
 	"github.com/ahmetb/go-linq"
 	"github.com/kataras/go-errors"
-	"github.com/readystock/noah/db/sql/plan"
+    "github.com/readystock/golog"
+    "github.com/readystock/noah/db/sql/plan"
 	"github.com/readystock/noah/db/system"
 	"github.com/readystock/noah/db/util/queryutil"
 	"github.com/readystock/pg_query_go/nodes"
@@ -42,7 +43,7 @@ func (stmt *SelectStatement) Execute(ex *connExecutor, res RestrictedCommandResu
 	if err != nil {
 		return err
 	}
-	ex.Debug("Preparing to send query to %d node(s)", len(targetNodes))
+	golog.Debugf("Preparing to send query to %d node(s)", len(targetNodes))
 
 	if err := stmt.replaceParameters(ex, pinfo); err != nil {
 		return err

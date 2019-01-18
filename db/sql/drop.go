@@ -44,7 +44,7 @@ func (stmt *DropStatement) Execute(ex *connExecutor, res RestrictedCommandResult
 		if err != nil {
 			return err
 		}
-		ex.Debug("Preparing to send query to %d node(s)", len(targetNodes))
+		golog.Debugf("Preparing to send query to %d node(s)", len(targetNodes))
 
 		plans, err := stmt.compilePlan(ex, targetNodes)
 		if err != nil {

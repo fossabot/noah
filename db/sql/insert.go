@@ -20,6 +20,7 @@ import (
     "fmt"
     "github.com/kataras/go-errors"
     "github.com/readystock/golinq"
+    "github.com/readystock/golog"
     "github.com/readystock/noah/db/sql/plan"
     "github.com/readystock/noah/db/system"
     "github.com/readystock/pg_query_go/nodes"
@@ -44,7 +45,7 @@ func (stmt *InsertStatement) Execute(ex *connExecutor, res RestrictedCommandResu
     if err != nil {
         return err
     }
-    ex.Debug("Preparing to send query to %d node(s)", len(targetNodes))
+    golog.Debugf("Preparing to send query to %d node(s)", len(targetNodes))
 
     plans, err := stmt.compilePlan(ex, targetNodes)
     if err != nil {

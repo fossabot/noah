@@ -30,12 +30,19 @@ import (
 )
 
 var (
+    postgresConfig = pgx.ConnConfig{
+        Host:     "127.0.0.1",
+        Port:     5432,
+        Database: "postgres",
+        User:     "postgres",
+        Password: "Spring!2016",
+    }
     SystemCtx *system.SContext
     Nodes     = []system.NNode{
         {
             Address:   "127.0.0.1",
             Port:      5432,
-            Database:  "ready_one",
+            Database:  "ready_test_one",
             User:      "postgres",
             Password:  "Spring!2016",
             ReplicaOf: 0,
@@ -85,6 +92,32 @@ func recoverName() {
 
 func TestMain(m *testing.M) {
     retCode := func() int {
+        golog.Infof("SETTING UP TEST DATABASE")
+
+        postgres, err := pgx.Connect(postgresConfig)
+        if err != nil {
+            panic(err)
+        }
+
+        if _, err := postgres.Exec("DROP DATABASE IF EXISTS ready_test_one"); err != nil {
+            panic(err)
+        }
+
+        if _, err := postgres.Exec("CREATE DATABASE ready_test_one"); err != nil {
+            panic(err)
+        }
+
+        defer func() {
+            golog.Infof("TEARING DOWN TEST DATABASE")
+            if _, err := postgres.Exec("SELECT pg_terminate_backend(pg_stat_activity.pid) FROM pg_stat_activity WHERE pg_stat_activity.datname = 'ready_test_one';"); err != nil {
+                panic(err)
+            }
+
+            if _, err := postgres.Exec("DROP DATABASE IF EXISTS ready_test_one"); err != nil {
+                panic(err)
+            }
+        }()
+
         golog.Info("RUNNING SQL TEST")
         tempFolder := testutils.CreateTempFolder()
         defer testutils.DeleteTempFolder(tempFolder)
@@ -113,7 +146,7 @@ func TestMain(m *testing.M) {
             if _, err := SystemCtx.Nodes.AddNode(node); err != nil {
                 panic(err)
             } else {
-                //SystemCtx.Nodes.SetNodeLive(newNode.NodeId, true)
+                // SystemCtx.Nodes.SetNodeLive(newNode.NodeId, true)
             }
         }
 

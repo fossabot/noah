@@ -19,6 +19,7 @@ package sql
 import (
     "github.com/ahmetb/go-linq"
     "github.com/juju/errors"
+    "github.com/readystock/golog"
     "github.com/readystock/noah/db/sql/driver/npgx"
     "github.com/readystock/noah/db/sql/pgwire/pgproto"
     "github.com/readystock/noah/db/sql/plan"
@@ -37,7 +38,7 @@ type executeResponse struct {
 func (ex *connExecutor) ExecutePlans(plans []plan.NodeExecutionPlan, res RestrictedCommandResult) (error) {
     // defer util.CatchPanic(&err)
     if len(plans) == 0 {
-        ex.Error("no plans were provided, nothing will be executed")
+        golog.Errorf("no plans were provided, nothing will be executed")
         return errors.New("no plans were provided")
     }
 
@@ -64,22 +65,22 @@ func (ex *connExecutor) ExecutePlans(plans []plan.NodeExecutionPlan, res Restric
                 responses <- &exResponse
             }()
 
-            ex.Info("executing query: `%s` on database node [%d]", pln.CompiledQuery, pln.Node.NodeId)
+            golog.Infof("executing query: `%s` on database node [%d]", pln.CompiledQuery, pln.Node.NodeId)
             tx, err := ex.GetNodeTransaction(pln.Node.NodeId)
             if err != nil {
-                ex.Error(err.Error())
+                golog.Errorf(err.Error())
                 exResponse.Error = err
                 return
             }
 
             rows, err := tx.Query(pln.CompiledQuery)
             if err != nil {
-                ex.Error(err.Error())
+                golog.Errorf(err.Error())
                 exResponse.Error = err
                 return
             }
 
-            ex.Debug("received rows response from node [%d]", pln.Node.NodeId)
+            golog.Debugf("received rows response from node [%d]", pln.Node.NodeId)
             exResponse.Rows = rows
         }(ex, p)
     }
@@ -89,9 +90,9 @@ func (ex *connExecutor) ExecutePlans(plans []plan.NodeExecutionPlan, res Restric
     errs := make([]error, 0)
     for i := 0; i < len(plans); i++ {
         response := <-responses
-        ex.Debug("handling response from node [%d]", response.NodeID)
+        golog.Debugf("handling response from node [%d]", response.NodeID)
         if response.Error != nil {
-            ex.Error("received error from node [%d]: %s", response.NodeID, response.Error.Error())
+            golog.Errorf("received error from node [%d]: %s", response.NodeID, response.Error.Error())
             errs = append(errs, response.Error)
             continue
         }
@@ -105,11 +106,11 @@ func (ex *connExecutor) ExecutePlans(plans []plan.NodeExecutionPlan, res Restric
                         res.SetColumns(columns)
                     }
 
-                    ex.Debug("retrieved %d column(s)", len(columns))
+                    golog.Debugf("retrieved %d column(s)", len(columns))
 
                     row := make([]types.Value, len(columns))
                     if values, err := response.Rows.PgValues(); err != nil {
-                        ex.Error("reading values from wire: %v", err.Error())
+                        golog.Errorf("reading values from wire: %v", err.Error())
                         errs = append(errs, err)
                         continue
                     } else {
@@ -123,21 +124,21 @@ func (ex *connExecutor) ExecutePlans(plans []plan.NodeExecutionPlan, res Restric
                 }
 
                 if err := response.Rows.Err(); err != nil {
-                    ex.Error("received error from node [%d]: %s", response.NodeID, err)
+                    golog.Errorf("received error from node [%d]: %s", response.NodeID, err)
                     errs = append(errs, err)
                     continue
                 }
 
                 response.Rows.Close()
             } else {
-                ex.Debug("no rows returned for query `%s`", plans[0].CompiledQuery)
+                golog.Debugf("no rows returned for query `%s`", plans[0].CompiledQuery)
             }
         case pg_query.DDL:
             if response.Rows != nil {
                 response.Rows.Next()
 
                 if err := response.Rows.Err(); err != nil {
-                    ex.Error("received error from node [%d]: %s", response.NodeID, err)
+                    golog.Errorf("received error from node [%d]: %s", response.NodeID, err)
                     errs = append(errs, err)
                     continue
                 }
@@ -148,7 +149,7 @@ func (ex *connExecutor) ExecutePlans(plans []plan.NodeExecutionPlan, res Restric
             return errors.Errorf("cannot handle statement type %d", response.Type)
         }
     }
-    ex.Debug("%d row(s) compiled for query `%s`", len(result), plans[0].CompiledQuery)
+    golog.Debugf("%d row(s) compiled for query `%s`", len(result), plans[0].CompiledQuery)
 
     if ex.TransactionMode == TransactionMode_AutoCommit &&
         linq.From(plans).AnyWithT(func(plan plan.NodeExecutionPlan) bool {
@@ -202,7 +203,7 @@ func (ex *connExecutor) PrepareTwoPhase() error {
 
     transactionId = ex.TransactionID
 
-    ex.Debug("preparing two-phase commit for changes on %d node(s), transaction ID [%d]", len(ex.nodes), transactionId)
+    golog.Debugf("preparing two-phase commit for changes on %d node(s), transaction ID [%d]", len(ex.nodes), transactionId)
 
     count := len(ex.nodes)
     responses := make(chan executeResponse, count)
@@ -222,7 +223,7 @@ func (ex *connExecutor) PrepareTwoPhase() error {
             errs = append(errs, response.Error)
         }
     }
-    ex.Verbose("%d error(s) from execution %v", len(errs), errs)
+    golog.Verbosef("%d error(s) from execution %v", len(errs), errs)
     return util.CombineErrors(errs)
 }
 
