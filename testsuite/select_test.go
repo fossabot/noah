@@ -117,7 +117,6 @@ func Test_Create_Global_And_Insert_Multiple(t *testing.T) {
     defer DoExecTest(t, ExecTest{
         Query: "DROP TABLE public.temp CASCADE;",
     })
-
     for i := 0; i < 10; i ++ {
         DoQueryTest(t, QueryTest{
             Query: fmt.Sprintf("INSERT INTO public.temp (id) VALUES (%d) RETURNING id;", i),
@@ -132,13 +131,9 @@ func Test_Create_Global_And_InsertFew_ThenSelect(t *testing.T) {
     DoExecTest(t, ExecTest{
         Query: `CREATE TABLE IF NOT EXISTS public.temp (id BIGINT) TABLESPACE "noah.global";`,
     })
-    // DoExecTest(t, ExecTest{
-    //     Query: `DELETE FROM public.temp;`,
-    // })
     defer DoExecTest(t, ExecTest{
         Query: "DROP TABLE public.temp CASCADE;",
     })
-
     for i := 0; i < 10; i ++ {
         DoQueryTest(t, QueryTest{
             Query: fmt.Sprintf("INSERT INTO public.temp (id) VALUES (%d) RETURNING id;", i),
@@ -218,7 +213,6 @@ func Test_Create_And_InsertWithSerial(t *testing.T) {
     defer DoExecTest(t, ExecTest{
         Query: "DROP TABLE public.temp CASCADE;",
     })
-
     for i := 0; i < 10; i++ {
         result := DoQueryTest(t, QueryTest{
             Query: fmt.Sprintf("INSERT INTO public.temp (number) VALUES(%d) RETURNING *;", i),
