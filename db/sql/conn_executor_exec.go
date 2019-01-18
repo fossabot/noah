@@ -112,7 +112,8 @@ func (ex *connExecutor) getStatementHandler(tree nodes.Stmt) (IQueryStatement, e
 	// case nodes.DeallocateStmt:
 	// case nodes.DeclareCursorStmt:
 	// case nodes.DefineStmt:
-	// case nodes.DeleteStmt:
+	case nodes.DeleteStmt:
+		return CreateDeleteStatement(stmt), nil
 	// case nodes.DiscardStmt:
 	// case nodes.DoStmt:
 	// case nodes.DropOwnedStmt:

@@ -39,3 +39,11 @@ message NForeignKey {
     string ColumnName = 2;
     bool IsShardKey = 3;
 }
+
+message NDatabase {
+    string DatabaseName = 1;
+}
+
+message NSchema {
+    string SchemaName = 1;
+}

@@ -17,39 +17,41 @@
 package testsuite
 
 import (
-    "fmt"
-    "github.com/jackc/pgx"
-    "github.com/readystock/golog"
+	"fmt"
+	"github.com/jackc/pgx"
+	"github.com/readystock/golog"
 )
 
 type TestingLogger interface {
-    Log(args ...interface{})
+	Log(args ...interface{})
 }
 
 type Logger struct {
-
+	glog *golog.Logger
 }
 
 func NewLogger() *Logger {
-    return &Logger{}
+	return &Logger{
+		glog: golog.NewWithDepth(6),
+	}
 }
 
 func (l *Logger) Log(level pgx.LogLevel, msg string, data map[string]interface{}) {
-    logArgs := make([]interface{}, 0, 2+len(data))
-    logArgs = append(logArgs, level, msg)
-    for k, v := range data {
-        logArgs = append(logArgs, fmt.Sprintf("%s=%v", k, v))
-    }
-    switch level {
-    case pgx.LogLevelTrace:
-        golog.Verbosef("\t[PGX] %v | %s", logArgs, msg)
-    case pgx.LogLevelDebug:
-        golog.Debugf("\t[PGX] %v | %s", logArgs, msg)
-    case pgx.LogLevelInfo:
-        golog.Infof("\t[PGX] %v | %s", logArgs, msg)
-    case pgx.LogLevelWarn:
-        golog.Warnf("\t[PGX] %v | %s", logArgs, msg)
-    case pgx.LogLevelError:
-        golog.Errorf("\t[PGX] %v | %s", logArgs, msg)
-    }
+	logArgs := make([]interface{}, 0, 2+len(data))
+	logArgs = append(logArgs, level, msg)
+	for k, v := range data {
+		logArgs = append(logArgs, fmt.Sprintf("%s=%v", k, v))
+	}
+	switch level {
+	case pgx.LogLevelTrace:
+		l.glog.Verbosef("[PGX] %v | %s", logArgs, msg)
+	case pgx.LogLevelDebug:
+		l.glog.Debugf("[PGX] %v | %s", logArgs, msg)
+	case pgx.LogLevelInfo:
+		l.glog.Infof("[PGX] %v | %s", logArgs, msg)
+	case pgx.LogLevelWarn:
+		l.glog.Warnf("[PGX] %v | %s", logArgs, msg)
+	case pgx.LogLevelError:
+		l.glog.Errorf("[PGX] %v | %s", logArgs, msg)
+	}
 }
