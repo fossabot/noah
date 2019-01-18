@@ -167,6 +167,7 @@ func TestMain(m *testing.M) {
         }()
 
         defer recoverName()
+        golog.SetLevel("info")
         return m.Run()
     }()
     os.Exit(retCode)

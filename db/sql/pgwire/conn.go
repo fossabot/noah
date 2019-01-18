@@ -21,7 +21,7 @@ import (
     "bytes"
     "context"
     "fmt"
-    "github.com/kataras/golog"
+    "github.com/readystock/golog"
     "github.com/readystock/noah/db/sql/pgwire/pgproto"
     "github.com/readystock/noah/db/sql/types"
     "github.com/readystock/noah/db/system"
