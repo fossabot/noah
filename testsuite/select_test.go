@@ -154,17 +154,18 @@ func Test_Create_Global_And_InsertFew_ThenSelect(t *testing.T) {
 }
 
 func Test_Create_And_InsertMultiRows(t *testing.T) {
-    t.Skip("pg_query_go's deparser does not support deparsing multiple value rows yet")
+    // t.Skip("pg_query_go's deparser does not support deparsing multiple value rows yet")
     DoExecTest(t, ExecTest{
-        Query: "CREATE TABLE IF NOT EXISTS public.temptest123 (id BIGINT);",
+        Query: "CREATE TABLE public.temp (id BIGINT);",
     })
     defer DoExecTest(t, ExecTest{
-        Query: "DROP TABLE public.temptest123 CASCADE;",
+        Query: "DROP TABLE public.temp CASCADE;",
     })
     DoQueryTest(t, QueryTest{
-        Query: "INSERT INTO public.temptest123 (id) VALUES(1),(2) RETURNING id;",
+        Query: "INSERT INTO public.temp (id) VALUES(1),(2) RETURNING id;",
         Expected: [][]interface{}{
             {int64(1),},
+            {int64(2),},
         },
     })
 }

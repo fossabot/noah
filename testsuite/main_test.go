@@ -93,7 +93,8 @@ func recoverName() {
 }
 
 func TestMain(m *testing.M) {
-	retCode := func() int {
+    golog.SetLevel("trace")
+    retCode := func() int {
 		golog.Infof("SETTING UP TEST DATABASE")
 
 		postgres, err := pgx.Connect(postgresConfig)
@@ -169,7 +170,6 @@ func TestMain(m *testing.M) {
 		}()
 
 		defer recoverName()
-		golog.SetLevel("info")
 		return m.Run()
 	}()
 	os.Exit(retCode)
@@ -200,9 +200,15 @@ func GetConnection() *pgx.Conn {
 }
 
 func DoQueryTest(t *testing.T, test QueryTest) [][]interface{} {
+    startTime := time.Now()
+    defer func() {
+       golog.Tracef("FINISHED TESTING QUERY, TIME: %v", time.Since(startTime))
+    }()
+    golog.Tracef("SENDING QUERY `%s`", test.Query)
 	result, err := Connection.Query(test.Query, test.Args...)
 	if err != nil {
-		t.Error(err)
+        golog.Error(result.Err())
+	    t.Error(err)
 		t.FailNow()
 	}
 
@@ -213,13 +219,15 @@ func DoQueryTest(t *testing.T, test QueryTest) [][]interface{} {
 	index := 0
 	for result.Next() {
 		if result.Err() != nil {
+		    golog.Error(result.Err())
 			t.Error(err)
 			t.FailNow()
 		}
 
 		vals, err := result.Values()
 		if err != nil {
-			t.Error(err)
+            golog.Error(result.Err())
+		    t.Error(err)
 			t.FailNow()
 		}
 
@@ -231,6 +239,12 @@ func DoQueryTest(t *testing.T, test QueryTest) [][]interface{} {
 		results = append(results, vals)
 		index++
 	}
+
+    if result.Err() != nil {
+        golog.Error(result.Err())
+        t.Error(err)
+        t.FailNow()
+    }
 
 	if test.Expected != nil {
 		assert.Equal(t, len(test.Expected), index, "`%s` | %v - number of rows returned did not match expected", test.Query, test.Args)

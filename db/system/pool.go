@@ -28,14 +28,6 @@ type SPool struct {
     nodePools map[uint64]*npgx.ConnPool
 }
 
-func (pool *SPool) AcquireTransaction(nodeId uint64) (*npgx.Transaction, error) {
-    if conn, err := pool.AcquireConnection(nodeId); err != nil {
-        return nil, err
-    } else {
-        return conn.Begin()
-    }
-}
-
 func (pool *SPool) AcquireConnection(nodeId uint64) (*npgx.Conn, error) {
     if nodePool, ok := pool.nodePools[nodeId]; !ok {
         // Init a new connection

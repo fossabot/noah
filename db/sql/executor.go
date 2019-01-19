@@ -66,14 +66,14 @@ func (ex *connExecutor) ExecutePlans(plans []plan.NodeExecutionPlan, res Restric
 			}()
 
 			golog.Infof("executing query: `%s` on database node [%d]", pln.CompiledQuery, pln.Node.NodeId)
-			tx, err := ex.GetNodeTransaction(pln.Node.NodeId)
+			conn, err := ex.GetNodeTransaction(pln.Node.NodeId)
 			if err != nil {
 				golog.Errorf(err.Error())
 				exResponse.Error = err
 				return
 			}
 
-			rows, err := tx.Query(pln.CompiledQuery)
+			rows, err := conn.Query(pln.CompiledQuery)
 			if err != nil {
 				golog.Errorf(err.Error())
 				exResponse.Error = err
@@ -126,7 +126,6 @@ func (ex *connExecutor) ExecutePlans(plans []plan.NodeExecutionPlan, res Restric
 				if err := response.Rows.Err(); err != nil {
 					golog.Errorf("received error from node [%d]: %s", response.NodeID, err)
 					errs = append(errs, err)
-					continue
 				}
 
 				response.Rows.Close()
@@ -140,7 +139,6 @@ func (ex *connExecutor) ExecutePlans(plans []plan.NodeExecutionPlan, res Restric
 				if err := response.Rows.Err(); err != nil {
 					golog.Errorf("received error from node [%d]: %s", response.NodeID, err)
 					errs = append(errs, err)
-					continue
 				}
 
 				response.Rows.Close()
@@ -173,13 +171,14 @@ func (ex *connExecutor) ExecutePlans(plans []plan.NodeExecutionPlan, res Restric
 				}
 			}
 		} else {
-			if ex.changes > 0 {
-				if err := ex.Rollback(); err != nil {
-					return util.CombineErrors(append(errs, err))
-				}
-			} else {
-				return util.CombineErrors(errs)
-			}
+			return util.CombineErrors(errs)
+			// if ex.changes > 0 {
+			// 	if err := ex.Rollback(); err != nil {
+			// 		return util.CombineErrors(append(errs, err))
+			// 	}
+			// } else {
+			// 	return util.CombineErrors(errs)
+			// }
 		}
 	}
 	return util.CombineErrors(errs)
@@ -187,7 +186,7 @@ func (ex *connExecutor) ExecutePlans(plans []plan.NodeExecutionPlan, res Restric
 
 func (ex *connExecutor) PrepareTwoPhase() error {
 	if ex.nodes == nil {
-		ex.nodes = map[uint64]*npgx.Transaction{}
+		ex.nodes = map[uint64]*npgx.Conn{}
 		return nil // There were never any transactions to release
 	}
 
@@ -207,14 +206,14 @@ func (ex *connExecutor) PrepareTwoPhase() error {
 
 	count := len(ex.nodes)
 	responses := make(chan executeResponse, count)
-	for id, tx := range ex.nodes {
-		func(tx *npgx.Transaction) {
+	for id, conn := range ex.nodes {
+		func(conn *npgx.Conn) {
 			response := executeResponse{
 				NodeID: id,
 			}
 			defer func() { responses <- response }()
-			response.Error = tx.PrepareTwoPhase(transactionId)
-		}(tx)
+			// response.Error = conn.PrepareTwoPhase(transactionId)
+		}(conn)
 	}
 	errs := make([]error, 0)
 	for i := 0; i < count; i++ {
@@ -229,20 +228,20 @@ func (ex *connExecutor) PrepareTwoPhase() error {
 
 func (ex *connExecutor) CommitTwoPhase() error {
 	if ex.nodes == nil {
-		ex.nodes = map[uint64]*npgx.Transaction{}
+		ex.nodes = map[uint64]*npgx.Conn{}
 		return nil // There were never any transactions to commit
 	}
 
 	count := len(ex.nodes)
 	responses := make(chan executeResponse, count)
-	for id, tx := range ex.nodes {
-		func(tx *npgx.Transaction) {
+	for id, conn := range ex.nodes {
+		func(conn *npgx.Conn) {
 			response := executeResponse{
 				NodeID: id,
 			}
 			defer func() { responses <- response }()
-			response.Error = tx.CommitTwoPhase()
-		}(tx)
+			// response.Error = conn.CommitTwoPhase()
+		}(conn)
 	}
 
 	ex.nSync.Lock()
@@ -260,20 +259,20 @@ func (ex *connExecutor) CommitTwoPhase() error {
 
 func (ex *connExecutor) RollbackTwoPhase() error {
 	if ex.nodes == nil {
-		ex.nodes = map[uint64]*npgx.Transaction{}
+		ex.nodes = map[uint64]*npgx.Conn{}
 		return nil // There were never any transactions to commit
 	}
 
 	count := len(ex.nodes)
 	responses := make(chan executeResponse, count)
-	for id, tx := range ex.nodes {
-		func(tx *npgx.Transaction) {
+	for id, conn := range ex.nodes {
+		func(conn *npgx.Conn) {
 			response := executeResponse{
 				NodeID: id,
 			}
 			defer func() { responses <- response }()
-			response.Error = tx.RollbackTwoPhase()
-		}(tx)
+			// response.Error = tx.RollbackTwoPhase()
+		}(conn)
 	}
 
 	ex.nSync.Lock()
@@ -291,20 +290,20 @@ func (ex *connExecutor) RollbackTwoPhase() error {
 
 func (ex *connExecutor) Commit() error {
 	if ex.nodes == nil {
-		ex.nodes = map[uint64]*npgx.Transaction{}
+		ex.nodes = map[uint64]*npgx.Conn{}
 		return nil // There were never any transactions to commit
 	}
 
 	count := len(ex.nodes)
 	responses := make(chan executeResponse, count)
-	for id, tx := range ex.nodes {
-		func(tx *npgx.Transaction) {
+	for id, conn := range ex.nodes {
+		func(conn *npgx.Conn) {
 			response := executeResponse{
 				NodeID: id,
 			}
 			defer func() { responses <- response }()
-			response.Error = tx.Commit()
-		}(tx)
+			// response.Error = tx.Commit()
+		}(conn)
 	}
 
 	ex.nSync.Lock()
@@ -322,20 +321,20 @@ func (ex *connExecutor) Commit() error {
 
 func (ex *connExecutor) Rollback() error {
 	if ex.nodes == nil {
-		ex.nodes = map[uint64]*npgx.Transaction{}
+		ex.nodes = map[uint64]*npgx.Conn{}
 		return nil // There were never any transactions to commit
 	}
 
 	count := len(ex.nodes)
 	responses := make(chan executeResponse, count)
-	for id, tx := range ex.nodes {
-		func(tx *npgx.Transaction) {
+	for id, conn := range ex.nodes {
+		func(conn *npgx.Conn) {
 			response := executeResponse{
 				NodeID: id,
 			}
 			defer func() { responses <- response }()
-			response.Error = tx.Rollback()
-		}(tx)
+			// response.Error = tx.Rollback()
+		}(conn)
 	}
 
 	ex.nSync.Lock()

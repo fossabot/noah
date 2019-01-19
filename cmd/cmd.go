@@ -114,7 +114,6 @@ type NodeConfig struct {
 }
 
 func RunNode(config NodeConfig, sctx *system.SContext) {
-    golog.SetLevel("verbose")
     golog.Infof("Starting noah...")
 
     s, err := system.NewSystemContext(config.StoreDirectory, config.GrpcAddr, config.JoinAddr, config.PGWireAddr)
