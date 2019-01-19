@@ -17,52 +17,52 @@
 package sql
 
 import (
-    "context"
-    "github.com/pkg/errors"
-    "github.com/readystock/golog"
-    "github.com/readystock/noah/db/sql/pgwire/pgerror"
-    "github.com/readystock/noah/db/sql/pgwire/pgwirebase"
+	"context"
+	"github.com/pkg/errors"
+	"github.com/readystock/golog"
+	"github.com/readystock/noah/db/sql/pgwire/pgerror"
+	"github.com/readystock/noah/db/sql/pgwire/pgwirebase"
 )
 
 func (ex *connExecutor) execDescribe(
-    ctx context.Context, descCmd DescribeStmt, res DescribeResult,
+	ctx context.Context, descCmd DescribeStmt, res DescribeResult,
 ) error {
-    // return pgerror.NewErrorf(
-    //     pgerror.CodeDataExceptionError,
-    //     "unknown prepared statement %q", descCmd.Name)
+	// return pgerror.NewErrorf(
+	//     pgerror.CodeDataExceptionError,
+	//     "unknown prepared statement %q", descCmd.Name)
 
-    switch descCmd.Type {
-    case pgwirebase.PrepareStatement:
-        ps, ok := ex.prepStmtsNamespace.prepStmts[descCmd.Name]
-        if !ok {
-            return pgerror.NewErrorf(
-                pgerror.CodeInvalidSQLStatementNameError,
-                "unknown prepared statement %q", descCmd.Name)
-        }
+	switch descCmd.Type {
+	case pgwirebase.PrepareStatement:
+		ps, ok := ex.prepStmtsNamespace.prepStmts[descCmd.Name]
+		if !ok {
+			return pgerror.NewErrorf(
+				pgerror.CodeInvalidSQLStatementNameError,
+				"unknown prepared statement %q", descCmd.Name)
+		}
 
-        res.SetInTypes(ps.InTypes)
+		res.SetInTypes(ps.InTypes)
 
-        if stmtHasNoData(*ps.Statement) {
-            res.SetNoDataRowDescription()
-        } else {
-            golog.Warnf("cannot handle prepared statement output")
-            // res.SetPrepStmtOutput(ctx, ps.Columns)
-        }
-    case pgwirebase.PreparePortal:
-        portal, ok := ex.prepStmtsNamespace.portals[descCmd.Name]
-        if !ok {
-            return pgerror.NewErrorf(
-                pgerror.CodeInvalidCursorNameError, "unknown portal %q", descCmd.Name)
-        }
+		if stmtHasNoData(*ps.Statement) {
+			res.SetNoDataRowDescription()
+		} else {
+			// golog.Warnf("cannot handle prepared statement output")
+			// res.SetPrepStmtOutput(ctx, ps.Columns)
+		}
+	case pgwirebase.PreparePortal:
+		portal, ok := ex.prepStmtsNamespace.portals[descCmd.Name]
+		if !ok {
+			return pgerror.NewErrorf(
+				pgerror.CodeInvalidCursorNameError, "unknown portal %q", descCmd.Name)
+		}
 
-        if stmtHasNoData(*portal.Stmt.Statement) {
-            res.SetNoDataRowDescription()
-        } else {
-            golog.Warnf("cannot handle portal output of statement")
-           // res.SetPortalOutput(ctx, portal.Stmt.Columns, portal.OutFormats)
-        }
-    default:
-        return errors.Errorf("unknown describe type: %s", descCmd.Type)
-    }
-    return nil
+		if stmtHasNoData(*portal.Stmt.Statement) {
+			res.SetNoDataRowDescription()
+		} else {
+			golog.Warnf("cannot handle portal output of statement")
+			// res.SetPortalOutput(ctx, portal.Stmt.Columns, portal.OutFormats)
+		}
+	default:
+		return errors.Errorf("unknown describe type: %s", descCmd.Type)
+	}
+	return nil
 }

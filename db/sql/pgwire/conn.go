@@ -17,41 +17,41 @@
 package pgwire
 
 import (
-    "bufio"
-    "bytes"
-    "context"
-    "fmt"
-    "github.com/readystock/golog"
-    "github.com/readystock/noah/db/sql/pgwire/pgproto"
-    "github.com/readystock/noah/db/sql/types"
-    "github.com/readystock/noah/db/system"
-    "github.com/readystock/noah/db/util/timeutil"
-    "github.com/sirupsen/logrus"
+	"bufio"
+	"bytes"
+	"context"
+	"fmt"
+	"github.com/readystock/golog"
+	"github.com/readystock/noah/db/sql/pgwire/pgproto"
+	"github.com/readystock/noah/db/sql/types"
+	"github.com/readystock/noah/db/system"
+	"github.com/readystock/noah/db/util/timeutil"
+	"github.com/sirupsen/logrus"
 
-    "github.com/pkg/errors"
-    // log "github.com/sirupsen/logrus"
-    "io"
-    "net"
-    "strconv"
-    "sync"
-    "sync/atomic"
-    "time"
+	"github.com/pkg/errors"
+	// log "github.com/sirupsen/logrus"
+	"io"
+	"net"
+	"strconv"
+	"sync"
+	"sync/atomic"
+	"time"
 
-    "github.com/readystock/noah/db/sql"
-    "github.com/readystock/noah/db/sql/pgwire/pgerror"
-    "github.com/readystock/noah/db/sql/pgwire/pgwirebase"
+	"github.com/readystock/noah/db/sql"
+	"github.com/readystock/noah/db/sql/pgwire/pgerror"
+	"github.com/readystock/noah/db/sql/pgwire/pgwirebase"
 
-    "github.com/readystock/noah/db/sql/sessiondata"
-    "github.com/readystock/noah/db/sql/sqlbase"
-    "github.com/readystock/pg_query_go"
-    nodes "github.com/readystock/pg_query_go/nodes"
-    "reflect"
+	"github.com/readystock/noah/db/sql/sessiondata"
+	"github.com/readystock/noah/db/sql/sqlbase"
+	"github.com/readystock/pg_query_go"
+	nodes "github.com/readystock/pg_query_go/nodes"
+	"reflect"
 )
 
 const (
-    authOK                int32 = 0
-    authCleartextPassword int32 = 3
-    authMD5Password       int32 = 5
+	authOK                int32 = 0
+	authCleartextPassword int32 = 3
+	authMD5Password       int32 = 5
 )
 
 // conn implements a pgwire network connection (version 3 of the protocol,
@@ -62,39 +62,39 @@ const (
 // the client through the sql.ClientComm interface, implemented by this conn
 // (code is in command_result.go).
 type conn struct {
-    conn net.Conn
+	conn net.Conn
 
-    sessionArgs sql.SessionArgs
+	sessionArgs sql.SessionArgs
 
-    // rd is a buffered reader consuming conn. All reads from conn go through
-    // this.
-    rd bufio.Reader
+	// rd is a buffered reader consuming conn. All reads from conn go through
+	// this.
+	rd bufio.Reader
 
-    // stmtBuf is populated with commands queued for execution by this conn.
-    stmtBuf *sql.StmtBuf
+	// stmtBuf is populated with commands queued for execution by this conn.
+	stmtBuf *sql.StmtBuf
 
-    // err is an error, accessed atomically. It represents any error encountered
-    // while accessing the underlying network connection. This can read via
-    // GetErr() by anybody. If it is found to be != nil, the conn is no longer to
-    // be used.
-    err atomic.Value
+	// err is an error, accessed atomically. It represents any error encountered
+	// while accessing the underlying network connection. This can read via
+	// GetErr() by anybody. If it is found to be != nil, the conn is no longer to
+	// be used.
+	err atomic.Value
 
-    // writerState groups together all aspects of the write-side state of the
-    // connection.
-    writerState struct {
-        fi flushInfo
-        // buf contains command results (rows, etc.) until they're flushed to the
-        // network connection.
-        buf    bytes.Buffer
-        tagBuf [64]byte
-    }
+	// writerState groups together all aspects of the write-side state of the
+	// connection.
+	writerState struct {
+		fi flushInfo
+		// buf contains command results (rows, etc.) until they're flushed to the
+		// network connection.
+		buf    bytes.Buffer
+		tagBuf [64]byte
+	}
 
-    readBuf    pgwirebase.ReadBuffer
-    msgBuilder *writeBuffer
+	readBuf    pgwirebase.ReadBuffer
+	msgBuilder *writeBuffer
 
-    pginfo *types.ConnInfo
+	pginfo *types.ConnInfo
 
-    log *logrus.Entry
+	log *logrus.Entry
 }
 
 // serveConn creates a conn that will serve the netConn. It returns once the
@@ -136,62 +136,62 @@ type conn struct {
 // being that we want to stop when we're both outside transactions and outside
 // batches.
 func serveConn(
-    netConn net.Conn,
-    sArgs sql.SessionArgs,
-    sqlServer *sql.Server,
-    insecure bool,
-    sctx *system.SContext,
+	netConn net.Conn,
+	sArgs sql.SessionArgs,
+	sqlServer *sql.Server,
+	insecure bool,
+	sctx *system.SContext,
 ) error {
-    sArgs.RemoteAddr = netConn.RemoteAddr()
+	sArgs.RemoteAddr = netConn.RemoteAddr()
 
-    // fmt.Println("new connection with options: %+v", sArgs)
+	// fmt.Println("new connection with options: %+v", sArgs)
 
-    c := newConn(netConn, sArgs)
+	c := newConn(netConn, sArgs)
 
-    // sendError := func(err error) error {
-    //     _ /* err */ = writeErr(err, c.msgBuilder, c.conn)
-    //     return err
-    // }
+	// sendError := func(err error) error {
+	//     _ /* err */ = writeErr(err, c.msgBuilder, c.conn)
+	//     return err
+	// }
 
-    if err := c.handleAuthentication(insecure); err != nil {
-        _ = c.conn.Close()
-        return err
-    }
+	if err := c.handleAuthentication(insecure); err != nil {
+		_ = c.conn.Close()
+		return err
+	}
 
-    // Do the reading of commands from the network.
-    readingErr := c.serveImpl(sqlServer, sctx)
-    return readingErr
+	// Do the reading of commands from the network.
+	readingErr := c.serveImpl(sqlServer, sctx)
+	return readingErr
 }
 
 func newConn(netConn net.Conn, sArgs sql.SessionArgs) *conn {
-    c := &conn{
-        conn:        netConn,
-        stmtBuf:     sql.NewStmtBuf(),
-        sessionArgs: sArgs,
-        msgBuilder:  newWriteBuffer(),
-        rd:          *bufio.NewReader(netConn),
-        pginfo:      types.NewConnInfo(),
-        log: logrus.WithFields(logrus.Fields{
-            "Addr": netConn.RemoteAddr(),
-        }),
-    }
-    c.writerState.fi.buf = &c.writerState.buf
-    c.writerState.fi.lastFlushed = -1
-    c.writerState.fi.cmdStarts = make(map[sql.CmdPos]int)
+	c := &conn{
+		conn:        netConn,
+		stmtBuf:     sql.NewStmtBuf(),
+		sessionArgs: sArgs,
+		msgBuilder:  newWriteBuffer(),
+		rd:          *bufio.NewReader(netConn),
+		pginfo:      types.NewConnInfo(),
+		log: logrus.WithFields(logrus.Fields{
+			"Addr": netConn.RemoteAddr(),
+		}),
+	}
+	c.writerState.fi.buf = &c.writerState.buf
+	c.writerState.fi.lastFlushed = -1
+	c.writerState.fi.cmdStarts = make(map[sql.CmdPos]int)
 
-    return c
+	return c
 }
 
 func (c *conn) setErr(err error) {
-    c.err.Store(err)
+	c.err.Store(err)
 }
 
 func (c *conn) GetErr() error {
-    err := c.err.Load()
-    if err != nil {
-        return err.(error)
-    }
-    return nil
+	err := c.err.Load()
+	if err != nil {
+		return err.(error)
+	}
+	return nil
 }
 
 // serveImpl continuously reads from the network connection and pushes execution
@@ -206,237 +206,235 @@ func (c *conn) GetErr() error {
 // tests, sqlServer can be nil, in which case the command processor and the
 // write-side of the connection will not be created.
 func (c *conn) serveImpl(sqlServer *sql.Server, sctx *system.SContext) error {
-    defer func() { _ = c.conn.Close() }()
+	defer func() { _ = c.conn.Close() }()
 
-    // NOTE: We're going to write a few messages to the connection in this method,
-    // for the handshake. After that, all writes are done async, in the
-    // startWriter() goroutine.
+	// NOTE: We're going to write a few messages to the connection in this method,
+	// for the handshake. After that, all writes are done async, in the
+	// startWriter() goroutine.
 
-    for key, value := range statusReportParams {
-        c.msgBuilder.initMsg(pgwirebase.ServerMsgParameterStatus)
-        c.msgBuilder.writeTerminatedString(key)
-        c.msgBuilder.writeTerminatedString(value)
-        if err := c.msgBuilder.finishMsg(c.conn); err != nil {
-            return err
-        }
-    }
+	for key, value := range statusReportParams {
+		c.msgBuilder.initMsg(pgwirebase.ServerMsgParameterStatus)
+		c.msgBuilder.writeTerminatedString(key)
+		c.msgBuilder.writeTerminatedString(value)
+		if err := c.msgBuilder.finishMsg(c.conn); err != nil {
+			return err
+		}
+	}
 
-    // An initial readyForQuery message is part of the handshake.
-    c.msgBuilder.initMsg(pgwirebase.ServerMsgReady)
-    c.msgBuilder.writeByte(byte(sql.IdleTxnBlock))
-    if err := c.msgBuilder.finishMsg(c.conn); err != nil {
-        return err
-    }
+	// An initial readyForQuery message is part of the handshake.
+	c.msgBuilder.initMsg(pgwirebase.ServerMsgReady)
+	c.msgBuilder.writeByte(byte(sql.IdleTxnBlock))
+	if err := c.msgBuilder.finishMsg(c.conn); err != nil {
+		return err
+	}
 
-    // Once a session has been set up, the underlying net.Conn is switched to
-    // a conn that exits if the session's context is canceled.
-    c.conn = newReadTimeoutConn(c.conn, func() error {
-        // If the context was closed, it's time to bail. Either a higher-level
-        // server or the command processor have canceled us.
+	// Once a session has been set up, the underlying net.Conn is switched to
+	// a conn that exits if the session's context is canceled.
+	c.conn = newReadTimeoutConn(c.conn, func() error {
+		// If the context was closed, it's time to bail. Either a higher-level
+		// server or the command processor have canceled us.
 
-        // If the server is draining, we'll let the processor know by pushing a
-        // DrainRequest. This will make the processor quit whenever it finds a good
-        // time.
-        // if draining() {
-        //     _ /* err */ = c.stmtBuf.Push(sql.DrainRequest{})
-        // }
-        return nil
-    })
-    c.rd = *bufio.NewReader(c.conn)
-    sendErr := func(err error) error {
-        msgBuilder := newWriteBuffer()
-        _ /* err */ = writeErr(err, msgBuilder, c.conn)
-        _ = c.conn.Close()
-        return err
-    }
-    var wg sync.WaitGroup
-    var writerErr error
-    if sqlServer != nil {
-        wg.Add(1)
-        go func() {
-            writerErr = sqlServer.ServeConn(c.stmtBuf, c, c.conn.RemoteAddr().String(), sctx)
-            if writerErr != nil {
-                sendErr(writerErr)
-            }
-            // TODO(andrei): Should we sometimes transmit the writerErr's to the client?
-            wg.Done()
-        }()
-    }
+		// If the server is draining, we'll let the processor know by pushing a
+		// DrainRequest. This will make the processor quit whenever it finds a good
+		// time.
+		// if draining() {
+		//     _ /* err */ = c.stmtBuf.Push(sql.DrainRequest{})
+		// }
+		return nil
+	})
+	c.rd = *bufio.NewReader(c.conn)
+	sendErr := func(err error) error {
+		msgBuilder := newWriteBuffer()
+		_ /* err */ = writeErr(err, msgBuilder, c.conn)
+		_ = c.conn.Close()
+		return err
+	}
+	var wg sync.WaitGroup
+	var writerErr error
+	if sqlServer != nil {
+		wg.Add(1)
+		go func() {
+			writerErr = sqlServer.ServeConn(c.stmtBuf, c, c.conn.RemoteAddr().String(), sctx)
+			if writerErr != nil {
+				sendErr(writerErr)
+			}
+			// TODO(andrei): Should we sometimes transmit the writerErr's to the client?
+			wg.Done()
+		}()
+	}
 
-    // var err error
-    var terminateSeen bool
-    var doingExtendedQueryMessage bool
+	// var err error
+	var terminateSeen bool
+	var doingExtendedQueryMessage bool
 
 Loop:
-    for {
-        var typ pgwirebase.ClientMessageType
-        typ, _, err := c.readBuf.ReadTypedMsg(&c.rd)
-        if err != nil {
-            break Loop
-        }
-        timeReceived := time.Now().UTC()
-        golog.Debug("Receiving input.")
+	for {
+		var typ pgwirebase.ClientMessageType
+		typ, _, err := c.readBuf.ReadTypedMsg(&c.rd)
+		if err != nil {
+			break Loop
+		}
+		timeReceived := time.Now().UTC()
 
-        switch typ {
-        case pgwirebase.ClientMsgSimpleQuery:
-            golog.Debug("handling simple query message")
-            if doingExtendedQueryMessage {
-                golog.Error("SimpleQuery not allowed while in extended protocol mode")
-                if err = c.stmtBuf.Push(
-                    sql.SendError{
-                        Err: pgwirebase.NewProtocolViolationErrorf(
-                            "SimpleQuery not allowed while in extended protocol mode"),
-                    },
-                ); err != nil {
-                    break
-                }
-            }
-            if err = c.handleSimpleQuery(&c.readBuf, timeReceived); err != nil {
-                golog.Error(err.Error())
-                golog.Error("Could not handle simple query")
-                break
-            }
-            err = c.stmtBuf.Push(sql.Sync{})
-        case pgwirebase.ClientMsgExecute:
-            doingExtendedQueryMessage = true
-            err = c.handleExecute(&c.readBuf, timeReceived)
-        case pgwirebase.ClientMsgParse:
-            doingExtendedQueryMessage = true
-            err = c.handleParse(&c.readBuf)
-        case pgwirebase.ClientMsgDescribe:
-            doingExtendedQueryMessage = true
-            err = c.handleDescribe(&c.readBuf)
-        case pgwirebase.ClientMsgBind:
-            doingExtendedQueryMessage = true
-            err = c.handleBind(&c.readBuf)
-        case pgwirebase.ClientMsgClose:
-            doingExtendedQueryMessage = true
-            err = c.handleClose(&c.readBuf)
-        case pgwirebase.ClientMsgTerminate:
-            terminateSeen = true
-            break Loop
-        case pgwirebase.ClientMsgSync:
-            doingExtendedQueryMessage = false
-            // We're starting a batch here. If the client continues using the extended
-            // protocol and encounters an error, everything until the next sync
-            // message has to be skipped. See:
-            // https://www.postgresql.org/docs/current/10/protocol-flow.html#PROTOCOL-FLOW-EXT-QUERY
-            err = c.handleSync()
-        case pgwirebase.ClientMsgFlush:
-            doingExtendedQueryMessage = true
-            err = c.handleFlush()
-        case pgwirebase.ClientMsgCopyData, pgwirebase.ClientMsgCopyDone, pgwirebase.ClientMsgCopyFail:
-            // We're supposed to ignore these messages, per the protocol spec. This
-            // state will happen when an error occurs on the server-side during a copy
-            // operation: the server will send an error and a ready message back to
-            // the client, and must then ignore further copy messages. See:
-            // https://github.com/postgres/postgres/blob/6e1dd2773eb60a6ab87b27b8d9391b756e904ac3/src/backend/tcop/postgres.c#L4295
-        default:
-            err = c.stmtBuf.Push(
-                sql.SendError{Err: pgwirebase.NewUnrecognizedMsgTypeErr(typ)})
-        }
+		switch typ {
+		case pgwirebase.ClientMsgSimpleQuery:
+			if doingExtendedQueryMessage {
+				golog.Error("SimpleQuery not allowed while in extended protocol mode")
+				if err = c.stmtBuf.Push(
+					sql.SendError{
+						Err: pgwirebase.NewProtocolViolationErrorf(
+							"SimpleQuery not allowed while in extended protocol mode"),
+					},
+				); err != nil {
+					break
+				}
+			}
+			if err = c.handleSimpleQuery(&c.readBuf, timeReceived); err != nil {
+				golog.Error(err.Error())
+				golog.Error("Could not handle simple query")
+				break
+			}
+			err = c.stmtBuf.Push(sql.Sync{})
+		case pgwirebase.ClientMsgExecute:
+			doingExtendedQueryMessage = true
+			err = c.handleExecute(&c.readBuf, timeReceived)
+		case pgwirebase.ClientMsgParse:
+			doingExtendedQueryMessage = true
+			err = c.handleParse(&c.readBuf)
+		case pgwirebase.ClientMsgDescribe:
+			doingExtendedQueryMessage = true
+			err = c.handleDescribe(&c.readBuf)
+		case pgwirebase.ClientMsgBind:
+			doingExtendedQueryMessage = true
+			err = c.handleBind(&c.readBuf)
+		case pgwirebase.ClientMsgClose:
+			doingExtendedQueryMessage = true
+			err = c.handleClose(&c.readBuf)
+		case pgwirebase.ClientMsgTerminate:
+			terminateSeen = true
+			break Loop
+		case pgwirebase.ClientMsgSync:
+			doingExtendedQueryMessage = false
+			// We're starting a batch here. If the client continues using the extended
+			// protocol and encounters an error, everything until the next sync
+			// message has to be skipped. See:
+			// https://www.postgresql.org/docs/current/10/protocol-flow.html#PROTOCOL-FLOW-EXT-QUERY
+			err = c.handleSync()
+		case pgwirebase.ClientMsgFlush:
+			doingExtendedQueryMessage = true
+			err = c.handleFlush()
+		case pgwirebase.ClientMsgCopyData, pgwirebase.ClientMsgCopyDone, pgwirebase.ClientMsgCopyFail:
+			// We're supposed to ignore these messages, per the protocol spec. This
+			// state will happen when an error occurs on the server-side during a copy
+			// operation: the server will send an error and a ready message back to
+			// the client, and must then ignore further copy messages. See:
+			// https://github.com/postgres/postgres/blob/6e1dd2773eb60a6ab87b27b8d9391b756e904ac3/src/backend/tcop/postgres.c#L4295
+		default:
+			err = c.stmtBuf.Push(
+				sql.SendError{Err: pgwirebase.NewUnrecognizedMsgTypeErr(typ)})
+		}
 
-        if err != nil {
-            fmt.Println(err.Error())
-            break Loop
-        }
-    }
+		if err != nil {
+			fmt.Println(err.Error())
+			break Loop
+		}
+	}
 
-    // Signal command processing to stop. It might be the case that the processor
-    // canceled our context and that's how we got here; in that case, this will
-    // be a no-op.
-    c.stmtBuf.Close()
-    // stopProcessor()
-    wg.Wait()
+	// Signal command processing to stop. It might be the case that the processor
+	// canceled our context and that's how we got here; in that case, this will
+	// be a no-op.
+	c.stmtBuf.Close()
+	// stopProcessor()
+	wg.Wait()
 
-    if terminateSeen {
-        return nil
-    }
-    // If we're draining, let the client know by piling on an AdminShutdownError
-    // and flushing the buffer.
-    // if draining() {
-    //     _ /* err */ = writeErr(
-    //         newAdminShutdownErr(err), c.msgBuilder, &c.writerState.buf)
-    //     _ /* n */, _ /* err */ = c.writerState.buf.WriteTo(c.conn)
-    //
-    //     // Swallow whatever error we might have gotten from the writer. If we're
-    //     // draining, it's probably a canceled context error.
-    //     return nil
-    // }
-    if writerErr != nil {
-        return writerErr
-    }
-    return nil
+	if terminateSeen {
+		return nil
+	}
+	// If we're draining, let the client know by piling on an AdminShutdownError
+	// and flushing the buffer.
+	// if draining() {
+	//     _ /* err */ = writeErr(
+	//         newAdminShutdownErr(err), c.msgBuilder, &c.writerState.buf)
+	//     _ /* n */, _ /* err */ = c.writerState.buf.WriteTo(c.conn)
+	//
+	//     // Swallow whatever error we might have gotten from the writer. If we're
+	//     // draining, it's probably a canceled context error.
+	//     return nil
+	// }
+	if writerErr != nil {
+		return writerErr
+	}
+	return nil
 }
 
 // An error is returned iff the statement buffer has been closed. In that case,
 // the connection should be considered toast.
 func (c *conn) handleSimpleQuery(
-    buf *pgwirebase.ReadBuffer, timeReceived time.Time,
+	buf *pgwirebase.ReadBuffer, timeReceived time.Time,
 ) error {
-    query, err := buf.GetString()
-    if err != nil {
-        return c.stmtBuf.Push(sql.SendError{Err: err})
-    }
+	query, err := buf.GetString()
+	if err != nil {
+		return c.stmtBuf.Push(sql.SendError{Err: err})
+	}
 
-    startParse := timeutil.Now()
-    golog.Infof("[%s] Query: `%s`", c.conn.RemoteAddr().String(), query)
-    p, err := pg_query.Parse(query)
-    endParse := time.Now().UTC()
-    if err != nil {
-        golog.Errorf("[%s] %s", c.conn.RemoteAddr().String(), err.Error())
-        return c.stmtBuf.Push(sql.SendError{Err: err})
-    }
+	startParse := timeutil.Now()
+	golog.Infof("[%s] Query: `%s`", c.conn.RemoteAddr().String(), query)
+	p, err := pg_query.Parse(query)
+	endParse := time.Now().UTC()
+	if err != nil {
+		golog.Errorf("[%s] %s", c.conn.RemoteAddr().String(), err.Error())
+		return c.stmtBuf.Push(sql.SendError{Err: err})
+	}
 
-    j, _ := p.MarshalJSON()
-    // golog.Debugf("[%s] Tree: %s", c.conn.RemoteAddr().String(), string(j))
+	j, _ := p.MarshalJSON()
+	// golog.Debugf("[%s] Tree: %s", c.conn.RemoteAddr().String(), string(j))
 
-    if stmt, ok := p.Statements[0].(nodes.RawStmt).Stmt.(nodes.Stmt); !ok {
-        return c.stmtBuf.Push(sql.SendError{Err: errors.Errorf("error, cannot currently handle statements of type: %s, json: %s", reflect.TypeOf(p.Statements[0].(nodes.RawStmt).Stmt).Name(), string(j))})
-    } else {
-        return c.stmtBuf.Push(sql.ExecStmt{
-            Stmt:         stmt,
-            TimeReceived: timeReceived,
-            ParseStart:   startParse,
-            ParseEnd:     endParse,
-        })
-    }
+	if stmt, ok := p.Statements[0].(nodes.RawStmt).Stmt.(nodes.Stmt); !ok {
+		return c.stmtBuf.Push(sql.SendError{Err: errors.Errorf("error, cannot currently handle statements of type: %s, json: %s", reflect.TypeOf(p.Statements[0].(nodes.RawStmt).Stmt).Name(), string(j))})
+	} else {
+		return c.stmtBuf.Push(sql.ExecStmt{
+			Stmt:         stmt,
+			TimeReceived: timeReceived,
+			ParseStart:   startParse,
+			ParseEnd:     endParse,
+		})
+	}
 }
 
 // An error is returned iff the statement buffer has been closed. In that case,
 // the connection should be considered toast.
 func (c *conn) handleDescribe(buf *pgwirebase.ReadBuffer) error {
-    typ, err := buf.GetPrepareType()
-    if err != nil {
-        return c.stmtBuf.Push(sql.SendError{Err: err})
-    }
-    name, err := buf.GetString()
-    if err != nil {
-        return c.stmtBuf.Push(sql.SendError{Err: err})
-    }
-    return c.stmtBuf.Push(
-        sql.DescribeStmt{
-            Name: name,
-            Type: typ,
-        })
+	typ, err := buf.GetPrepareType()
+	if err != nil {
+		return c.stmtBuf.Push(sql.SendError{Err: err})
+	}
+	name, err := buf.GetString()
+	if err != nil {
+		return c.stmtBuf.Push(sql.SendError{Err: err})
+	}
+	return c.stmtBuf.Push(
+		sql.DescribeStmt{
+			Name: name,
+			Type: typ,
+		})
 }
 
 // An error is returned iff the statement buffer has been closed. In that case,
 // the connection should be considered toast.
 func (c *conn) handleClose(buf *pgwirebase.ReadBuffer) error {
-    typ, err := buf.GetPrepareType()
-    if err != nil {
-        return c.stmtBuf.Push(sql.SendError{Err: err})
-    }
-    name, err := buf.GetString()
-    if err != nil {
-        return c.stmtBuf.Push(sql.SendError{Err: err})
-    }
-    return c.stmtBuf.Push(
-        sql.DeletePreparedStmt{
-            Name: name,
-            Type: typ,
-        })
+	typ, err := buf.GetPrepareType()
+	if err != nil {
+		return c.stmtBuf.Push(sql.SendError{Err: err})
+	}
+	name, err := buf.GetString()
+	if err != nil {
+		return c.stmtBuf.Push(sql.SendError{Err: err})
+	}
+	return c.stmtBuf.Push(
+		sql.DeletePreparedStmt{
+			Name: name,
+			Type: typ,
+		})
 }
 
 // handleBind queues instructions for creating a portal from a prepared
@@ -444,183 +442,183 @@ func (c *conn) handleClose(buf *pgwirebase.ReadBuffer) error {
 // An error is returned iff the statement buffer has been closed. In that case,
 // the connection should be considered toast.
 func (c *conn) handleBind(buf *pgwirebase.ReadBuffer) error {
-    portalName, err := buf.GetString()
-    if err != nil {
-        return c.stmtBuf.Push(sql.SendError{Err: err})
-    }
-    statementName, err := buf.GetString()
-    if err != nil {
-        return c.stmtBuf.Push(sql.SendError{Err: err})
-    }
+	portalName, err := buf.GetString()
+	if err != nil {
+		return c.stmtBuf.Push(sql.SendError{Err: err})
+	}
+	statementName, err := buf.GetString()
+	if err != nil {
+		return c.stmtBuf.Push(sql.SendError{Err: err})
+	}
 
-    // From the docs on number of argument format codes to bind:
-    // This can be zero to indicate that there are no arguments or that the
-    // arguments all use the default format (text); or one, in which case the
-    // specified format code is applied to all arguments; or it can equal the
-    // actual number of arguments.
-    // http://www.postgresql.org/docs/current/static/protocol-message-formats.html
-    numQArgFormatCodes, err := buf.GetUint16()
-    if err != nil {
-        return c.stmtBuf.Push(sql.SendError{Err: err})
-    }
-    lenCodes := numQArgFormatCodes
-    if lenCodes == 0 {
-        lenCodes = 1
-    }
-    qArgFormatCodes := make([]pgwirebase.FormatCode, lenCodes)
-    switch numQArgFormatCodes {
-    case 0:
-        // No format codes means all arguments are passed as text.
-        qArgFormatCodes[0] = pgwirebase.FormatText
-    case 1:
-        // `1` means read one code and apply it to every argument.
-        ch, err := buf.GetUint16()
-        if err != nil {
-            return c.stmtBuf.Push(sql.SendError{Err: err})
-        }
-        fmtCode := pgwirebase.FormatCode(ch)
-        qArgFormatCodes[0] = fmtCode
-    default:
-        // Read one format code for each argument and apply it to that argument.
-        for i := range qArgFormatCodes {
-            code, err := buf.GetUint16()
-            if err != nil {
-                return c.stmtBuf.Push(sql.SendError{Err: err})
-            }
-            qArgFormatCodes[i] = pgwirebase.FormatCode(code)
-        }
-    }
+	// From the docs on number of argument format codes to bind:
+	// This can be zero to indicate that there are no arguments or that the
+	// arguments all use the default format (text); or one, in which case the
+	// specified format code is applied to all arguments; or it can equal the
+	// actual number of arguments.
+	// http://www.postgresql.org/docs/current/static/protocol-message-formats.html
+	numQArgFormatCodes, err := buf.GetUint16()
+	if err != nil {
+		return c.stmtBuf.Push(sql.SendError{Err: err})
+	}
+	lenCodes := numQArgFormatCodes
+	if lenCodes == 0 {
+		lenCodes = 1
+	}
+	qArgFormatCodes := make([]pgwirebase.FormatCode, lenCodes)
+	switch numQArgFormatCodes {
+	case 0:
+		// No format codes means all arguments are passed as text.
+		qArgFormatCodes[0] = pgwirebase.FormatText
+	case 1:
+		// `1` means read one code and apply it to every argument.
+		ch, err := buf.GetUint16()
+		if err != nil {
+			return c.stmtBuf.Push(sql.SendError{Err: err})
+		}
+		fmtCode := pgwirebase.FormatCode(ch)
+		qArgFormatCodes[0] = fmtCode
+	default:
+		// Read one format code for each argument and apply it to that argument.
+		for i := range qArgFormatCodes {
+			code, err := buf.GetUint16()
+			if err != nil {
+				return c.stmtBuf.Push(sql.SendError{Err: err})
+			}
+			qArgFormatCodes[i] = pgwirebase.FormatCode(code)
+		}
+	}
 
-    numValues, err := buf.GetUint16()
-    if err != nil {
-        return c.stmtBuf.Push(sql.SendError{Err: err})
-    }
-    qargs := make([][]byte, numValues)
-    for i := 0; i < int(numValues); i++ {
-        plen, err := buf.GetUint32()
-        if err != nil {
-            return c.stmtBuf.Push(sql.SendError{Err: err})
-        }
-        if int32(plen) == -1 {
-            // The argument is a NULL value.
-            qargs[i] = nil
-            continue
-        }
-        b, err := buf.GetBytes(int(plen))
-        if err != nil {
-            return c.stmtBuf.Push(sql.SendError{Err: err})
-        }
-        qargs[i] = b
-    }
+	numValues, err := buf.GetUint16()
+	if err != nil {
+		return c.stmtBuf.Push(sql.SendError{Err: err})
+	}
+	qargs := make([][]byte, numValues)
+	for i := 0; i < int(numValues); i++ {
+		plen, err := buf.GetUint32()
+		if err != nil {
+			return c.stmtBuf.Push(sql.SendError{Err: err})
+		}
+		if int32(plen) == -1 {
+			// The argument is a NULL value.
+			qargs[i] = nil
+			continue
+		}
+		b, err := buf.GetBytes(int(plen))
+		if err != nil {
+			return c.stmtBuf.Push(sql.SendError{Err: err})
+		}
+		qargs[i] = b
+	}
 
-    // From the docs on number of result-column format codes to bind:
-    // This can be zero to indicate that there are no result columns or that
-    // the result columns should all use the default format (text); or one, in
-    // which case the specified format code is applied to all result columns
-    // (if any); or it can equal the actual number of result columns of the
-    // query.
-    // http://www.postgresql.org/docs/current/static/protocol-message-formats.html
-    numColumnFormatCodes, err := buf.GetUint16()
-    if err != nil {
-        return c.stmtBuf.Push(sql.SendError{Err: err})
-    }
-    var columnFormatCodes []pgwirebase.FormatCode
-    switch numColumnFormatCodes {
-    case 0:
-        // All columns will use the text format.
-        columnFormatCodes = make([]pgwirebase.FormatCode, 1)
-        columnFormatCodes[0] = pgwirebase.FormatText
-    case 1:
-        // All columns will use the one specficied format.
-        ch, err := buf.GetUint16()
-        if err != nil {
-            return c.stmtBuf.Push(sql.SendError{Err: err})
-        }
-        fmtCode := pgwirebase.FormatCode(ch)
-        columnFormatCodes = make([]pgwirebase.FormatCode, 1)
-        columnFormatCodes[0] = fmtCode
-    default:
-        columnFormatCodes = make([]pgwirebase.FormatCode, numColumnFormatCodes)
-        // Read one format code for each column and apply it to that column.
-        for i := range columnFormatCodes {
-            ch, err := buf.GetUint16()
-            if err != nil {
-                return c.stmtBuf.Push(sql.SendError{Err: err})
-            }
-            columnFormatCodes[i] = pgwirebase.FormatCode(ch)
-        }
-    }
+	// From the docs on number of result-column format codes to bind:
+	// This can be zero to indicate that there are no result columns or that
+	// the result columns should all use the default format (text); or one, in
+	// which case the specified format code is applied to all result columns
+	// (if any); or it can equal the actual number of result columns of the
+	// query.
+	// http://www.postgresql.org/docs/current/static/protocol-message-formats.html
+	numColumnFormatCodes, err := buf.GetUint16()
+	if err != nil {
+		return c.stmtBuf.Push(sql.SendError{Err: err})
+	}
+	var columnFormatCodes []pgwirebase.FormatCode
+	switch numColumnFormatCodes {
+	case 0:
+		// All columns will use the text format.
+		columnFormatCodes = make([]pgwirebase.FormatCode, 1)
+		columnFormatCodes[0] = pgwirebase.FormatText
+	case 1:
+		// All columns will use the one specficied format.
+		ch, err := buf.GetUint16()
+		if err != nil {
+			return c.stmtBuf.Push(sql.SendError{Err: err})
+		}
+		fmtCode := pgwirebase.FormatCode(ch)
+		columnFormatCodes = make([]pgwirebase.FormatCode, 1)
+		columnFormatCodes[0] = fmtCode
+	default:
+		columnFormatCodes = make([]pgwirebase.FormatCode, numColumnFormatCodes)
+		// Read one format code for each column and apply it to that column.
+		for i := range columnFormatCodes {
+			ch, err := buf.GetUint16()
+			if err != nil {
+				return c.stmtBuf.Push(sql.SendError{Err: err})
+			}
+			columnFormatCodes[i] = pgwirebase.FormatCode(ch)
+		}
+	}
 
-    return c.stmtBuf.Push(
-        sql.BindStmt{
-            PreparedStatementName: statementName,
-            PortalName:            portalName,
-            Args:                  qargs,
-            ArgFormatCodes:        qArgFormatCodes,
-            OutFormats:            columnFormatCodes,
-        })
+	return c.stmtBuf.Push(
+		sql.BindStmt{
+			PreparedStatementName: statementName,
+			PortalName:            portalName,
+			Args:                  qargs,
+			ArgFormatCodes:        qArgFormatCodes,
+			OutFormats:            columnFormatCodes,
+		})
 }
 
 // An error is returned iff the statement buffer has been closed. In that case,
 // the connection should be considered toast.
 func (c *conn) handleExecute(
-    buf *pgwirebase.ReadBuffer, timeReceived time.Time,
+	buf *pgwirebase.ReadBuffer, timeReceived time.Time,
 ) error {
-    portalName, err := buf.GetString()
-    if err != nil {
-        return c.stmtBuf.Push(sql.SendError{Err: err})
-    }
-    limit, err := buf.GetUint32()
-    if err != nil {
-        return c.stmtBuf.Push(sql.SendError{Err: err})
-    }
-    return c.stmtBuf.Push(sql.ExecPortal{
-        Name:         portalName,
-        TimeReceived: timeReceived,
-        Limit:        int(limit),
-    })
+	portalName, err := buf.GetString()
+	if err != nil {
+		return c.stmtBuf.Push(sql.SendError{Err: err})
+	}
+	limit, err := buf.GetUint32()
+	if err != nil {
+		return c.stmtBuf.Push(sql.SendError{Err: err})
+	}
+	return c.stmtBuf.Push(sql.ExecPortal{
+		Name:         portalName,
+		TimeReceived: timeReceived,
+		Limit:        int(limit),
+	})
 }
 
 func (c *conn) handleFlush() error {
-    return c.stmtBuf.Push(sql.Flush{})
+	return c.stmtBuf.Push(sql.Flush{})
 }
 
 func (c *conn) handleSync() error {
-    return c.stmtBuf.Push(sql.Sync{})
+	return c.stmtBuf.Push(sql.Sync{})
 }
 
 // SendCommandComplete is part of the pgwirebase.Conn interface.
 func (c *conn) SendCommandComplete(tag []byte) error {
-    c.bufferCommandComplete(tag)
-    return nil
+	c.bufferCommandComplete(tag)
+	return nil
 }
 
 // Rd is part of the pgwirebase.Conn interface.
 func (c *conn) Rd() pgwirebase.BufferedReader {
-    return &pgwireReader{conn: c}
+	return &pgwireReader{conn: c}
 }
 
 // flushInfo encapsulates information about what results have been flushed to
 // the network.
 type flushInfo struct {
-    // buf is a reference to writerState.buf.
-    buf *bytes.Buffer
-    // lastFlushed indicates the highest command for which results have been
-    // flushed. The command may have further results in the buffer that haven't
-    // been flushed.
-    lastFlushed sql.CmdPos
-    // map from CmdPos to the index of the buffer where the results for the
-    // respective result begins.
-    cmdStarts map[sql.CmdPos]int
+	// buf is a reference to writerState.buf.
+	buf *bytes.Buffer
+	// lastFlushed indicates the highest command for which results have been
+	// flushed. The command may have further results in the buffer that haven't
+	// been flushed.
+	lastFlushed sql.CmdPos
+	// map from CmdPos to the index of the buffer where the results for the
+	// respective result begins.
+	cmdStarts map[sql.CmdPos]int
 }
 
 // registerCmd updates cmdStarts when the first result for a new command is
 // received.
 func (fi *flushInfo) registerCmd(pos sql.CmdPos) {
-    if _, ok := fi.cmdStarts[pos]; ok {
-        return
-    }
-    fi.cmdStarts[pos] = fi.buf.Len()
+	if _, ok := fi.cmdStarts[pos]; ok {
+		return
+	}
+	fi.cmdStarts[pos] = fi.buf.Len()
 }
 
 // convertToErrWithPGCode recognizes errs that should have SQL error codes to be
@@ -632,52 +630,52 @@ func (fi *flushInfo) registerCmd(pos sql.CmdPos) {
 // TODO(andrei): sqlbase.ConvertBatchError() seems to serve similar purposes, but
 // it's called from more specialized contexts. Consider unifying the two.
 func convertToErrWithPGCode(err error) error {
-    if err == nil {
-        return nil
-    }
-    return sqlbase.NewError(err)
-    // switch tErr := err.(type) {
-    // case *roachpb.HandledRetryableTxnError:
-    //
-    // case *roachpb.AmbiguousResultError:
-    //     // TODO(andrei): Once DistSQL starts executing writes, we'll need a
-    //     // different mechanism to marshal AmbiguousResultErrors from the executing
-    //     // nodes.
-    //     return sqlbase.NewStatementCompletionUnknownError(tErr)
-    // default:
-    //     return err
-    // }
+	if err == nil {
+		return nil
+	}
+	return sqlbase.NewError(err)
+	// switch tErr := err.(type) {
+	// case *roachpb.HandledRetryableTxnError:
+	//
+	// case *roachpb.AmbiguousResultError:
+	//     // TODO(andrei): Once DistSQL starts executing writes, we'll need a
+	//     // different mechanism to marshal AmbiguousResultErrors from the executing
+	//     // nodes.
+	//     return sqlbase.NewStatementCompletionUnknownError(tErr)
+	// default:
+	//     return err
+	// }
 }
 
 func cookTag(tagStr string, buf []byte, stmt nodes.Stmt, rowsAffected int) []byte {
-    if tagStr == "INSERT" {
-        // From the postgres docs (49.5. Message Formats):
-        // `INSERT oid rows`... oid is the object ID of the inserted row if
-        //     rows is 1 and the target table has OIDs; otherwise oid is 0.
-        tagStr = "INSERT 0"
-    }
-    tag := append(buf, tagStr...)
+	if tagStr == "INSERT" {
+		// From the postgres docs (49.5. Message Formats):
+		// `INSERT oid rows`... oid is the object ID of the inserted row if
+		//     rows is 1 and the target table has OIDs; otherwise oid is 0.
+		tagStr = "INSERT 0"
+	}
+	tag := append(buf, tagStr...)
 
-    switch stmt.StatementType() {
-    case nodes.RowsAffected:
-        tag = append(tag, ' ')
-        tag = strconv.AppendInt(tag, int64(rowsAffected), 10)
-    case nodes.Rows:
-        tag = append(tag, ' ')
-        tag = strconv.AppendUint(tag, uint64(rowsAffected), 10)
-    case nodes.Ack, nodes.DDL:
-        if tagStr == "SELECT" {
-            tag = append(tag, ' ')
-            tag = strconv.AppendInt(tag, int64(rowsAffected), 10)
-        }
-    case nodes.CopyIn:
-        // Nothing to do. The CommandComplete message has been sent elsewhere.
-        panic(fmt.Sprintf("CopyIn statements should have been handled elsewhere " +
-            "and not produce results"))
-    default:
-        panic(fmt.Sprintf("unexpected result type %d", stmt.StatementType()))
-    }
-    return tag
+	switch stmt.StatementType() {
+	case nodes.RowsAffected:
+		tag = append(tag, ' ')
+		tag = strconv.AppendInt(tag, int64(rowsAffected), 10)
+	case nodes.Rows:
+		tag = append(tag, ' ')
+		tag = strconv.AppendUint(tag, uint64(rowsAffected), 10)
+	case nodes.Ack, nodes.DDL:
+		if tagStr == "SELECT" {
+			tag = append(tag, ' ')
+			tag = strconv.AppendInt(tag, int64(rowsAffected), 10)
+		}
+	case nodes.CopyIn:
+		// Nothing to do. The CommandComplete message has been sent elsewhere.
+		panic(fmt.Sprintf("CopyIn statements should have been handled elsewhere " +
+			"and not produce results"))
+	default:
+		panic(fmt.Sprintf("unexpected result type %d", stmt.StatementType()))
+	}
+	return tag
 }
 
 // bufferRow serializes a row and adds it to the buffer.
@@ -686,150 +684,150 @@ func cookTag(tagStr string, buf []byte, stmt nodes.Stmt, rowsAffected int) []byt
 // which case all columns are encoded using the text encoding. Otherwise, it
 // needs to contain an entry for every column.
 func (c *conn) bufferRow(
-    row []types.Value,
-    formatCodes []pgwirebase.FormatCode,
-    loc *time.Location,
-    be sessiondata.BytesEncodeFormat,
+	row []types.Value,
+	formatCodes []pgwirebase.FormatCode,
+	loc *time.Location,
+	be sessiondata.BytesEncodeFormat,
 ) {
-    c.msgBuilder.initMsg(pgwirebase.ServerMsgDataRow)
-    c.msgBuilder.putInt16(int16(len(row)))
-    for i, col := range row {
-        fmtCode := pgwirebase.FormatText
-        if formatCodes != nil && len(formatCodes) > 0 {
-            fmtCode = formatCodes[i]
-        }
-        switch fmtCode {
-        case pgwirebase.FormatText:
-            c.msgBuilder.writeTextDatum(c.pginfo, col, loc, be)
-        case pgwirebase.FormatBinary:
-            c.msgBuilder.writeBinaryDatum(c.pginfo, col, loc)
-        default:
-            c.msgBuilder.setError(errors.Errorf("unsupported format code %s", fmtCode))
-        }
-    }
-    if err := c.msgBuilder.finishMsg(&c.writerState.buf); err != nil {
-        panic(fmt.Sprintf("unexpected err from buffer: %s", err))
-    }
+	c.msgBuilder.initMsg(pgwirebase.ServerMsgDataRow)
+	c.msgBuilder.putInt16(int16(len(row)))
+	for i, col := range row {
+		fmtCode := pgwirebase.FormatText
+		if formatCodes != nil && len(formatCodes) > 0 {
+			fmtCode = formatCodes[i]
+		}
+		switch fmtCode {
+		case pgwirebase.FormatText:
+			c.msgBuilder.writeTextDatum(c.pginfo, col, loc, be)
+		case pgwirebase.FormatBinary:
+			c.msgBuilder.writeBinaryDatum(c.pginfo, col, loc)
+		default:
+			c.msgBuilder.setError(errors.Errorf("unsupported format code %s", fmtCode))
+		}
+	}
+	if err := c.msgBuilder.finishMsg(&c.writerState.buf); err != nil {
+		panic(fmt.Sprintf("unexpected err from buffer: %s", err))
+	}
 }
 
 func (c *conn) bufferReadyForQuery(txnStatus byte) {
-    c.msgBuilder.initMsg(pgwirebase.ServerMsgReady)
-    c.msgBuilder.writeByte(txnStatus)
-    if err := c.msgBuilder.finishMsg(&c.writerState.buf); err != nil {
-        panic(fmt.Sprintf("unexpected err from buffer: %s", err))
-    }
+	c.msgBuilder.initMsg(pgwirebase.ServerMsgReady)
+	c.msgBuilder.writeByte(txnStatus)
+	if err := c.msgBuilder.finishMsg(&c.writerState.buf); err != nil {
+		panic(fmt.Sprintf("unexpected err from buffer: %s", err))
+	}
 }
 
 func (c *conn) bufferParseComplete() {
-    c.msgBuilder.initMsg(pgwirebase.ServerMsgParseComplete)
-    if err := c.msgBuilder.finishMsg(&c.writerState.buf); err != nil {
-        panic(fmt.Sprintf("unexpected err from buffer: %s", err))
-    }
+	c.msgBuilder.initMsg(pgwirebase.ServerMsgParseComplete)
+	if err := c.msgBuilder.finishMsg(&c.writerState.buf); err != nil {
+		panic(fmt.Sprintf("unexpected err from buffer: %s", err))
+	}
 }
 
 func (c *conn) bufferBindComplete() {
-    c.msgBuilder.initMsg(pgwirebase.ServerMsgBindComplete)
-    if err := c.msgBuilder.finishMsg(&c.writerState.buf); err != nil {
-        panic(fmt.Sprintf("unexpected err from buffer: %s", err))
-    }
+	c.msgBuilder.initMsg(pgwirebase.ServerMsgBindComplete)
+	if err := c.msgBuilder.finishMsg(&c.writerState.buf); err != nil {
+		panic(fmt.Sprintf("unexpected err from buffer: %s", err))
+	}
 }
 
 func (c *conn) bufferCloseComplete() {
-    c.msgBuilder.initMsg(pgwirebase.ServerMsgCloseComplete)
-    if err := c.msgBuilder.finishMsg(&c.writerState.buf); err != nil {
-        panic(fmt.Sprintf("unexpected err from buffer: %s", err))
-    }
+	c.msgBuilder.initMsg(pgwirebase.ServerMsgCloseComplete)
+	if err := c.msgBuilder.finishMsg(&c.writerState.buf); err != nil {
+		panic(fmt.Sprintf("unexpected err from buffer: %s", err))
+	}
 }
 
 func (c *conn) bufferCommandComplete(tag []byte) {
-    c.msgBuilder.initMsg(pgwirebase.ServerMsgCommandComplete)
-    c.msgBuilder.write(tag)
-    c.msgBuilder.nullTerminate()
-    if err := c.msgBuilder.finishMsg(&c.writerState.buf); err != nil {
-        panic(fmt.Sprintf("unexpected err from buffer: %s", err))
-    }
+	c.msgBuilder.initMsg(pgwirebase.ServerMsgCommandComplete)
+	c.msgBuilder.write(tag)
+	c.msgBuilder.nullTerminate()
+	if err := c.msgBuilder.finishMsg(&c.writerState.buf); err != nil {
+		panic(fmt.Sprintf("unexpected err from buffer: %s", err))
+	}
 }
 
 func (c *conn) bufferErr(err error) {
-    if err := writeErr(err, c.msgBuilder, &c.writerState.buf); err != nil {
-        panic(fmt.Sprintf("unexpected err from buffer: %s", err))
-    }
+	if err := writeErr(err, c.msgBuilder, &c.writerState.buf); err != nil {
+		panic(fmt.Sprintf("unexpected err from buffer: %s", err))
+	}
 }
 func (c *conn) bufferEmptyQueryResponse() {
-    c.msgBuilder.initMsg(pgwirebase.ServerMsgEmptyQuery)
-    if err := c.msgBuilder.finishMsg(&c.writerState.buf); err != nil {
-        panic(fmt.Sprintf("unexpected err from buffer: %s", err))
-    }
+	c.msgBuilder.initMsg(pgwirebase.ServerMsgEmptyQuery)
+	if err := c.msgBuilder.finishMsg(&c.writerState.buf); err != nil {
+		panic(fmt.Sprintf("unexpected err from buffer: %s", err))
+	}
 }
 
 func writeErr(err error, msgBuilder *writeBuffer, w io.Writer) error {
-    msgBuilder.initMsg(pgwirebase.ServerMsgErrorResponse)
+	msgBuilder.initMsg(pgwirebase.ServerMsgErrorResponse)
 
-    msgBuilder.putErrFieldMsg(pgwirebase.ServerErrFieldSeverity)
-    msgBuilder.writeTerminatedString("ERROR")
+	msgBuilder.putErrFieldMsg(pgwirebase.ServerErrFieldSeverity)
+	msgBuilder.writeTerminatedString("ERROR")
 
-    pgErr, ok := pgerror.GetPGCause(err)
-    var code string
-    if ok {
-        code = pgErr.Code
-    } else {
-        code = pgerror.CodeInternalError
-    }
+	pgErr, ok := pgerror.GetPGCause(err)
+	var code string
+	if ok {
+		code = pgErr.Code
+	} else {
+		code = pgerror.CodeInternalError
+	}
 
-    msgBuilder.putErrFieldMsg(pgwirebase.ServerErrFieldSQLState)
-    msgBuilder.writeTerminatedString(code)
+	msgBuilder.putErrFieldMsg(pgwirebase.ServerErrFieldSQLState)
+	msgBuilder.writeTerminatedString(code)
 
-    if ok && pgErr.Detail != "" {
-        msgBuilder.putErrFieldMsg(pgwirebase.ServerErrFileldDetail)
-        msgBuilder.writeTerminatedString(pgErr.Detail)
-    }
+	if ok && pgErr.Detail != "" {
+		msgBuilder.putErrFieldMsg(pgwirebase.ServerErrFileldDetail)
+		msgBuilder.writeTerminatedString(pgErr.Detail)
+	}
 
-    if ok && pgErr.Hint != "" {
-        msgBuilder.putErrFieldMsg(pgwirebase.ServerErrFileldHint)
-        msgBuilder.writeTerminatedString(pgErr.Hint)
-    }
+	if ok && pgErr.Hint != "" {
+		msgBuilder.putErrFieldMsg(pgwirebase.ServerErrFileldHint)
+		msgBuilder.writeTerminatedString(pgErr.Hint)
+	}
 
-    if ok && pgErr.Source != nil {
-        errCtx := pgErr.Source
-        if errCtx.File != "" {
-            msgBuilder.putErrFieldMsg(pgwirebase.ServerErrFieldSrcFile)
-            msgBuilder.writeTerminatedString(errCtx.File)
-        }
+	if ok && pgErr.Source != nil {
+		errCtx := pgErr.Source
+		if errCtx.File != "" {
+			msgBuilder.putErrFieldMsg(pgwirebase.ServerErrFieldSrcFile)
+			msgBuilder.writeTerminatedString(errCtx.File)
+		}
 
-        if errCtx.Line > 0 {
-            msgBuilder.putErrFieldMsg(pgwirebase.ServerErrFieldSrcLine)
-            msgBuilder.writeTerminatedString(strconv.Itoa(int(errCtx.Line)))
-        }
+		if errCtx.Line > 0 {
+			msgBuilder.putErrFieldMsg(pgwirebase.ServerErrFieldSrcLine)
+			msgBuilder.writeTerminatedString(strconv.Itoa(int(errCtx.Line)))
+		}
 
-        if errCtx.Function != "" {
-            msgBuilder.putErrFieldMsg(pgwirebase.ServerErrFieldSrcFunction)
-            msgBuilder.writeTerminatedString(errCtx.Function)
-        }
-    }
+		if errCtx.Function != "" {
+			msgBuilder.putErrFieldMsg(pgwirebase.ServerErrFieldSrcFunction)
+			msgBuilder.writeTerminatedString(errCtx.Function)
+		}
+	}
 
-    msgBuilder.putErrFieldMsg(pgwirebase.ServerErrFieldMsgPrimary)
-    msgBuilder.writeTerminatedString(err.Error())
+	msgBuilder.putErrFieldMsg(pgwirebase.ServerErrFieldMsgPrimary)
+	msgBuilder.writeTerminatedString(err.Error())
 
-    msgBuilder.nullTerminate()
-    return msgBuilder.finishMsg(w)
+	msgBuilder.nullTerminate()
+	return msgBuilder.finishMsg(w)
 }
 
 func (c *conn) bufferParamDesc(types []types.OID) {
-    c.msgBuilder.initMsg(pgwirebase.ServerMsgParameterDescription)
-    c.msgBuilder.putInt16(int16(len(types)))
-    for _, t := range types {
-        c.msgBuilder.putInt32(int32(t))
-    }
-    if err := c.msgBuilder.finishMsg(&c.writerState.buf); err != nil {
-        panic(fmt.Sprintf("unexpected err from buffer: %s", err))
-    }
+	c.msgBuilder.initMsg(pgwirebase.ServerMsgParameterDescription)
+	c.msgBuilder.putInt16(int16(len(types)))
+	for _, t := range types {
+		c.msgBuilder.putInt32(int32(t))
+	}
+	if err := c.msgBuilder.finishMsg(&c.writerState.buf); err != nil {
+		panic(fmt.Sprintf("unexpected err from buffer: %s", err))
+	}
 }
 
 func (c *conn) bufferNoDataMsg() {
-    c.msgBuilder.initMsg(pgwirebase.ServerMsgNoData)
-    if err := c.msgBuilder.finishMsg(&c.writerState.buf); err != nil {
-        panic(fmt.Sprintf("unexpected err from buffer: %s", err))
-    }
+	c.msgBuilder.initMsg(pgwirebase.ServerMsgNoData)
+	if err := c.msgBuilder.finishMsg(&c.writerState.buf); err != nil {
+		panic(fmt.Sprintf("unexpected err from buffer: %s", err))
+	}
 }
 
 // writeRowDescription writes a row description to the given writer.
@@ -839,63 +837,63 @@ func (c *conn) bufferNoDataMsg() {
 //
 // If an error is returned, it has also been saved on c.err.
 func (c *conn) writeRowDescription(
-    columns []pgproto.FieldDescription,
-    formatCodes []pgwirebase.FormatCode,
-    w io.Writer,
+	columns []pgproto.FieldDescription,
+	formatCodes []pgwirebase.FormatCode,
+	w io.Writer,
 ) error {
-    c.msgBuilder.initMsg(pgwirebase.ServerMsgRowDescription)
-    c.msgBuilder.putInt16(int16(len(columns)))
-    for i, column := range columns {
-        c.msgBuilder.writeTerminatedString(column.Name)
-        c.msgBuilder.putInt32(0) // Table OID (optional).
-        c.msgBuilder.putInt16(0) // Column attribute ID (optional).
-        c.msgBuilder.putInt32(int32(column.DataTypeOID))
-        c.msgBuilder.putInt16(int16(column.DataTypeSize))
+	c.msgBuilder.initMsg(pgwirebase.ServerMsgRowDescription)
+	c.msgBuilder.putInt16(int16(len(columns)))
+	for i, column := range columns {
+		c.msgBuilder.writeTerminatedString(column.Name)
+		c.msgBuilder.putInt32(0) // Table OID (optional).
+		c.msgBuilder.putInt16(0) // Column attribute ID (optional).
+		c.msgBuilder.putInt32(int32(column.DataTypeOID))
+		c.msgBuilder.putInt16(int16(column.DataTypeSize))
 
-        c.msgBuilder.putInt32(-1)
-        if formatCodes == nil || len(formatCodes) == 0 {
-            c.msgBuilder.putInt16(int16(pgwirebase.FormatText))
-        } else {
-            c.msgBuilder.putInt16(int16(formatCodes[i]))
-        }
-    }
-    if err := c.msgBuilder.finishMsg(w); err != nil {
-        c.setErr(err)
-        return err
-    }
-    return nil
+		c.msgBuilder.putInt32(-1)
+		if formatCodes == nil || len(formatCodes) == 0 {
+			c.msgBuilder.putInt16(int16(pgwirebase.FormatText))
+		} else {
+			c.msgBuilder.putInt16(int16(formatCodes[i]))
+		}
+	}
+	if err := c.msgBuilder.finishMsg(w); err != nil {
+		c.setErr(err)
+		return err
+	}
+	return nil
 }
 
 // Flush is part of the ClientComm interface.
 //
 // In case conn.err is set, this is a no-op - the previous err is returned.
 func (c *conn) Flush(pos sql.CmdPos) error {
-    // Check that there were no previous network errors. If there were, we'd
-    // probably also fail the write below, but this check is here to make
-    // absolutely sure that we don't send some results after we previously had
-    // failed to send others.
-    if err := c.GetErr(); err != nil {
-        return err
-    }
+	// Check that there were no previous network errors. If there were, we'd
+	// probably also fail the write below, but this check is here to make
+	// absolutely sure that we don't send some results after we previously had
+	// failed to send others.
+	if err := c.GetErr(); err != nil {
+		return err
+	}
 
-    c.writerState.fi.lastFlushed = pos
-    c.writerState.fi.cmdStarts = make(map[sql.CmdPos]int)
+	c.writerState.fi.lastFlushed = pos
+	c.writerState.fi.cmdStarts = make(map[sql.CmdPos]int)
 
-    _ /* n */, err := c.writerState.buf.WriteTo(c.conn)
-    if err != nil {
-        c.setErr(err)
-        return err
-    }
-    return nil
+	_ /* n */, err := c.writerState.buf.WriteTo(c.conn)
+	if err != nil {
+		c.setErr(err)
+		return err
+	}
+	return nil
 }
 
 // maybeFlush flushes the buffer to the network connection if it exceeded
 // connResultsBufferSizeBytes.
 func (c *conn) maybeFlush(pos sql.CmdPos) (bool, error) {
-    if c.writerState.buf.Len() <= 1024 { // TODO (elliotcourant) CHECK THIS OUT I HAVE NO IDEA WHAT IT DOES
-        return false, nil
-    }
-    return true, c.Flush(pos)
+	if c.writerState.buf.Len() <= 1024 { // TODO (elliotcourant) CHECK THIS OUT I HAVE NO IDEA WHAT IT DOES
+		return false, nil
+	}
+	return true, c.Flush(pos)
 }
 
 // LockCommunication is part of the ClientComm interface.
@@ -905,125 +903,125 @@ func (c *conn) maybeFlush(pos sql.CmdPos) (bool, error) {
 // nothing to "lock" - communication is naturally blocked as the command
 // processor won't write any more results.
 func (c *conn) LockCommunication() sql.ClientLock {
-    return &clientConnLock{flushInfo: &c.writerState.fi}
+	return &clientConnLock{flushInfo: &c.writerState.fi}
 }
 
 // clientConnLock is the connection's implementation of sql.ClientLock. It lets
 // the sql module lock the flushing of results and find out what has already
 // been flushed.
 type clientConnLock struct {
-    *flushInfo
+	*flushInfo
 }
 
 var _ sql.ClientLock = &clientConnLock{}
 
 // Close is part of the sql.ClientLock interface.
 func (cl *clientConnLock) Close() {
-    // Nothing to do. See LockCommunication note.
+	// Nothing to do. See LockCommunication note.
 }
 
 // ClientPos is part of the sql.ClientLock interface.
 func (cl *clientConnLock) ClientPos() sql.CmdPos {
-    return cl.lastFlushed
+	return cl.lastFlushed
 }
 
 // RTrim is part of the sql.ClientLock interface.
 func (cl *clientConnLock) RTrim(ctx context.Context, pos sql.CmdPos) {
-    if pos <= cl.lastFlushed {
-        panic(fmt.Sprintf("asked to trim to pos: %d, below the last flush: %d", pos, cl.lastFlushed))
-    }
-    idx, ok := cl.cmdStarts[pos]
-    if !ok {
-        // If we don't have a start index for pos yet, it must be that no results
-        // for it yet have been produced yet.
-        idx = cl.buf.Len()
-    }
-    // Remove everything from the buffer after idx.
-    cl.buf.Truncate(idx)
-    // Update cmdStarts: delete commands that were trimmed.
-    for p := range cl.cmdStarts {
-        if p >= pos {
-            delete(cl.cmdStarts, p)
-        }
-    }
+	if pos <= cl.lastFlushed {
+		panic(fmt.Sprintf("asked to trim to pos: %d, below the last flush: %d", pos, cl.lastFlushed))
+	}
+	idx, ok := cl.cmdStarts[pos]
+	if !ok {
+		// If we don't have a start index for pos yet, it must be that no results
+		// for it yet have been produced yet.
+		idx = cl.buf.Len()
+	}
+	// Remove everything from the buffer after idx.
+	cl.buf.Truncate(idx)
+	// Update cmdStarts: delete commands that were trimmed.
+	for p := range cl.cmdStarts {
+		if p >= pos {
+			delete(cl.cmdStarts, p)
+		}
+	}
 }
 
 // CreateStatementResult is part of the sql.ClientComm interface.
 func (c *conn) CreateStatementResult(
-    stmt nodes.Stmt,
-    descOpt sql.RowDescOpt,
-    pos sql.CmdPos,
-    formatCodes []pgwirebase.FormatCode,
+	stmt nodes.Stmt,
+	descOpt sql.RowDescOpt,
+	pos sql.CmdPos,
+	formatCodes []pgwirebase.FormatCode,
 ) sql.CommandResult {
-    res := c.makeCommandResult(descOpt, pos, stmt, formatCodes)
-    return &res
+	res := c.makeCommandResult(descOpt, pos, stmt, formatCodes)
+	return &res
 }
 
 // CreateSyncResult is part of the sql.ClientComm interface.
 func (c *conn) CreateSyncResult(pos sql.CmdPos) sql.SyncResult {
-    res := c.makeMiscResult(pos, readyForQuery)
-    return &res
+	res := c.makeMiscResult(pos, readyForQuery)
+	return &res
 }
 
 // CreateFlushResult is part of the sql.ClientComm interface.
 func (c *conn) CreateFlushResult(pos sql.CmdPos) sql.FlushResult {
-    res := c.makeMiscResult(pos, flush)
-    return &res
+	res := c.makeMiscResult(pos, flush)
+	return &res
 }
 
 // CreateDrainResult is part of the sql.ClientComm interface.
 func (c *conn) CreateDrainResult(pos sql.CmdPos) sql.DrainResult {
-    res := c.makeMiscResult(pos, noCompletionMsg)
-    return &res
+	res := c.makeMiscResult(pos, noCompletionMsg)
+	return &res
 }
 
 // CreateBindResult is part of the sql.ClientComm interface.
 func (c *conn) CreateBindResult(pos sql.CmdPos) sql.BindResult {
-    res := c.makeMiscResult(pos, bindComplete)
-    return &res
+	res := c.makeMiscResult(pos, bindComplete)
+	return &res
 }
 
 // CreatePrepareResult is part of the sql.ClientComm interface.
 func (c *conn) CreatePrepareResult(pos sql.CmdPos) sql.ParseResult {
-    res := c.makeMiscResult(pos, parseComplete)
-    return &res
+	res := c.makeMiscResult(pos, parseComplete)
+	return &res
 }
 
 // CreateDescribeResult is part of the sql.ClientComm interface.
 func (c *conn) CreateDescribeResult(pos sql.CmdPos) sql.DescribeResult {
-    res := c.makeMiscResult(pos, noCompletionMsg)
-    return &res
+	res := c.makeMiscResult(pos, noCompletionMsg)
+	return &res
 }
 
 // CreateEmptyQueryResult is part of the sql.ClientComm interface.
 func (c *conn) CreateEmptyQueryResult(pos sql.CmdPos) sql.EmptyQueryResult {
-    res := c.makeMiscResult(pos, emptyQueryResponse)
-    return &res
+	res := c.makeMiscResult(pos, emptyQueryResponse)
+	return &res
 }
 
 // CreateDeleteResult is part of the sql.ClientComm interface.
 func (c *conn) CreateDeleteResult(pos sql.CmdPos) sql.DeleteResult {
-    res := c.makeMiscResult(pos, closeComplete)
-    return &res
+	res := c.makeMiscResult(pos, closeComplete)
+	return &res
 }
 
 // CreateErrorResult is part of the sql.ClientComm interface.
 func (c *conn) CreateErrorResult(pos sql.CmdPos) sql.ErrorResult {
-    res := c.makeMiscResult(pos, noCompletionMsg)
-    res.errExpected = true
-    return &res
+	res := c.makeMiscResult(pos, noCompletionMsg)
+	res.errExpected = true
+	return &res
 }
 
 // CreateCopyInResult is part of the sql.ClientComm interface.
 func (c *conn) CreateCopyInResult(pos sql.CmdPos) sql.CopyInResult {
-    res := c.makeMiscResult(pos, noCompletionMsg)
-    return &res
+	res := c.makeMiscResult(pos, noCompletionMsg)
+	return &res
 }
 
 // pgwireReader is an io.Reader that wraps a conn, maintaining its metrics as
 // it is consumed.
 type pgwireReader struct {
-    conn *conn
+	conn *conn
 }
 
 // pgwireReader implements the pgwirebase.BufferedReader interface.
@@ -1031,20 +1029,20 @@ var _ pgwirebase.BufferedReader = &pgwireReader{}
 
 // Read is part of the pgwirebase.BufferedReader interface.
 func (r *pgwireReader) Read(p []byte) (int, error) {
-    n, err := r.conn.rd.Read(p)
-    return n, err
+	n, err := r.conn.rd.Read(p)
+	return n, err
 }
 
 // ReadString is part of the pgwirebase.BufferedReader interface.
 func (r *pgwireReader) ReadString(delim byte) (string, error) {
-    s, err := r.conn.rd.ReadString(delim)
-    return s, err
+	s, err := r.conn.rd.ReadString(delim)
+	return s, err
 }
 
 // ReadByte is part of the pgwirebase.BufferedReader interface.
 func (r *pgwireReader) ReadByte() (byte, error) {
-    b, err := r.conn.rd.ReadByte()
-    return b, err
+	b, err := r.conn.rd.ReadByte()
+	return b, err
 }
 
 // handleAuthentication should discuss with the client to arrange
@@ -1054,151 +1052,151 @@ func (r *pgwireReader) ReadByte() (byte, error) {
 // database to look up authentication data, use the internal executor.
 func (c *conn) handleAuthentication(insecure bool) error { // ctx context.Context,
 
-    sendError := func(err error) error {
-        _ /* err */ = writeErr(err, c.msgBuilder, c.conn)
-        return err
-    }
+	sendError := func(err error) error {
+		_ /* err */ = writeErr(err, c.msgBuilder, c.conn)
+		return err
+	}
 
-    // Check that the requested user exists and retrieve the hashed
-    // password in case password authentication is needed.
-    exists, _ := true, []byte("123") /*sql.GetUserHashedPassword(
-        ctx, c.execCfg, &c.metrics.SQLMemMetrics, c.sessionArgs.User,
-    )*/
-    // if err != nil {
-    //     return sendError(err)
-    // }
-    if !exists {
-        return sendError(errors.Errorf("user %s does not exist", c.sessionArgs.User))
-    } else {
-        if _, err := c.sendAuthPasswordRequest(); err != nil {
-            return sendError(err)
-        }
-    }
+	// Check that the requested user exists and retrieve the hashed
+	// password in case password authentication is needed.
+	exists, _ := true, []byte("123") /*sql.GetUserHashedPassword(
+	    ctx, c.execCfg, &c.metrics.SQLMemMetrics, c.sessionArgs.User,
+	)*/
+	// if err != nil {
+	//     return sendError(err)
+	// }
+	if !exists {
+		return sendError(errors.Errorf("user %s does not exist", c.sessionArgs.User))
+	} else {
+		if _, err := c.sendAuthPasswordRequest(); err != nil {
+			return sendError(err)
+		}
+	}
 
-    // if tlsConn, ok := c.conn.(*tls.Conn); ok {
-    //     var authenticationHook security.UserAuthHook
-    //
-    //     tlsState := tlsConn.ConnectionState()
-    //     // If no certificates are provided, default to password
-    //     // authentication.
-    //     if len(tlsState.PeerCertificates) == 0 {
-    //         password, err := c.sendAuthPasswordRequest()
-    //         if err != nil {
-    //             return sendError(err)
-    //         }
-    //         authenticationHook = security.UserAuthPasswordHook(
-    //             insecure, password, hashedPassword,
-    //         )
-    //     } else {
-    //         // Normalize the username contained in the certificate.
-    //         // tlsState.PeerCertificates[0].Subject.CommonName = tree.Name(
-    //         //     tlsState.PeerCertificates[0].Subject.CommonName,
-    //         // ).Normalize()
-    //         var err error
-    //         authenticationHook, err = security.UserAuthCertHook(insecure, &tlsState)
-    //         if err != nil {
-    //             return sendError(err)
-    //         }
-    //     }
-    //
-    //     if err := authenticationHook(c.sessionArgs.User, true /* public */); err != nil {
-    //         return sendError(err)
-    //     }
-    // }
+	// if tlsConn, ok := c.conn.(*tls.Conn); ok {
+	//     var authenticationHook security.UserAuthHook
+	//
+	//     tlsState := tlsConn.ConnectionState()
+	//     // If no certificates are provided, default to password
+	//     // authentication.
+	//     if len(tlsState.PeerCertificates) == 0 {
+	//         password, err := c.sendAuthPasswordRequest()
+	//         if err != nil {
+	//             return sendError(err)
+	//         }
+	//         authenticationHook = security.UserAuthPasswordHook(
+	//             insecure, password, hashedPassword,
+	//         )
+	//     } else {
+	//         // Normalize the username contained in the certificate.
+	//         // tlsState.PeerCertificates[0].Subject.CommonName = tree.Name(
+	//         //     tlsState.PeerCertificates[0].Subject.CommonName,
+	//         // ).Normalize()
+	//         var err error
+	//         authenticationHook, err = security.UserAuthCertHook(insecure, &tlsState)
+	//         if err != nil {
+	//             return sendError(err)
+	//         }
+	//     }
+	//
+	//     if err := authenticationHook(c.sessionArgs.User, true /* public */); err != nil {
+	//         return sendError(err)
+	//     }
+	// }
 
-    c.msgBuilder.initMsg(pgwirebase.ServerMsgAuth)
-    c.msgBuilder.putInt32(authOK)
-    return c.msgBuilder.finishMsg(c.conn)
+	c.msgBuilder.initMsg(pgwirebase.ServerMsgAuth)
+	c.msgBuilder.putInt32(authOK)
+	return c.msgBuilder.finishMsg(c.conn)
 }
 
 // sendAuthPasswordRequest requests a cleartext password from the client and
 // returns it.
 func (c *conn) sendAuthPasswordRequest() (string, error) {
-    c.msgBuilder.initMsg(pgwirebase.ServerMsgAuth)
-    c.msgBuilder.putInt32(authCleartextPassword)
-    if err := c.msgBuilder.finishMsg(c.conn); err != nil {
-        return "", err
-    }
+	c.msgBuilder.initMsg(pgwirebase.ServerMsgAuth)
+	c.msgBuilder.putInt32(authCleartextPassword)
+	if err := c.msgBuilder.finishMsg(c.conn); err != nil {
+		return "", err
+	}
 
-    typ, _, err := c.readBuf.ReadTypedMsg(&c.rd)
-    if err != nil {
-        return "", err
-    }
+	typ, _, err := c.readBuf.ReadTypedMsg(&c.rd)
+	if err != nil {
+		return "", err
+	}
 
-    if typ != pgwirebase.ClientMsgPassword {
-        return "", errors.Errorf("invalid response to authentication request: %s", typ)
-    }
+	if typ != pgwirebase.ClientMsgPassword {
+		return "", errors.Errorf("invalid response to authentication request: %s", typ)
+	}
 
-    return c.readBuf.GetString()
+	return c.readBuf.GetString()
 }
 
 // statusReportParams is a static mapping from run-time parameters to their respective
 // hard-coded values, each of which is to be returned as part of the status report
 // during connection initialization.
 var statusReportParams = map[string]string{
-    "client_encoding": "UTF8",
-    "DateStyle":       "ISO",
-    // All datetime binary formats expect 64-bit integer microsecond values.
-    // This param needs to be provided to clients or some may provide 64-bit
-    // floating-point microsecond values instead, which was a legacy datetime
-    // binary format.
-    "integer_datetimes": "on",
-    // The latest version of the docs that was consulted during the development
-    // of this package. We specify this version to avoid having to support old
-    // code paths which various client tools fall back to if they can't
-    // determine that the server is new enough.
-    "server_version": sql.PgServerVersion,
-    // The current CockroachDB version string.
-    // If this parameter is not present, some drivers (including Python's psycopg2)
-    // will add redundant backslash escapes for compatibility with non-standard
-    // backslash handling in older versions of postgres.
-    "standard_conforming_strings": "on",
+	"client_encoding": "UTF8",
+	"DateStyle":       "ISO",
+	// All datetime binary formats expect 64-bit integer microsecond values.
+	// This param needs to be provided to clients or some may provide 64-bit
+	// floating-point microsecond values instead, which was a legacy datetime
+	// binary format.
+	"integer_datetimes": "on",
+	// The latest version of the docs that was consulted during the development
+	// of this package. We specify this version to avoid having to support old
+	// code paths which various client tools fall back to if they can't
+	// determine that the server is new enough.
+	"server_version": sql.PgServerVersion,
+	// The current CockroachDB version string.
+	// If this parameter is not present, some drivers (including Python's psycopg2)
+	// will add redundant backslash escapes for compatibility with non-standard
+	// backslash handling in older versions of postgres.
+	"standard_conforming_strings": "on",
 }
 
 // readTimeoutConn overloads net.Conn.Read by periodically calling
 // checkExitConds() and aborting the read if an error is returned.
 type readTimeoutConn struct {
-    net.Conn
-    checkExitConds func() error
+	net.Conn
+	checkExitConds func() error
 }
 
 func newReadTimeoutConn(c net.Conn, checkExitConds func() error) net.Conn {
-    // net.Pipe does not support setting deadlines. See
-    // https://github.com/golang/go/blob/go1.7.4/src/net/pipe.go#L57-L67
-    //
-    // TODO(andrei): starting with Go 1.10, pipes are supposed to support
-    // timeouts, so this should go away when we upgrade the compiler.
-    if c.LocalAddr().Network() == "pipe" {
-        return c
-    }
-    return &readTimeoutConn{
-        Conn:           c,
-        checkExitConds: checkExitConds,
-    }
+	// net.Pipe does not support setting deadlines. See
+	// https://github.com/golang/go/blob/go1.7.4/src/net/pipe.go#L57-L67
+	//
+	// TODO(andrei): starting with Go 1.10, pipes are supposed to support
+	// timeouts, so this should go away when we upgrade the compiler.
+	if c.LocalAddr().Network() == "pipe" {
+		return c
+	}
+	return &readTimeoutConn{
+		Conn:           c,
+		checkExitConds: checkExitConds,
+	}
 }
 
 func (c *readTimeoutConn) Read(b []byte) (int, error) {
-    // readTimeout is the amount of time ReadTimeoutConn should wait on a
-    // read before checking for exit conditions. The tradeoff is between the
-    // time it takes to react to session context cancellation and the overhead
-    // of waking up and checking for exit conditions.
-    const readTimeout = 1 * time.Second
+	// readTimeout is the amount of time ReadTimeoutConn should wait on a
+	// read before checking for exit conditions. The tradeoff is between the
+	// time it takes to react to session context cancellation and the overhead
+	// of waking up and checking for exit conditions.
+	const readTimeout = 1 * time.Second
 
-    // Remove the read deadline when returning from this function to avoid
-    // unexpected behavior.
-    defer func() { _ = c.SetReadDeadline(time.Time{}) }()
-    for {
-        if err := c.checkExitConds(); err != nil {
-            return 0, err
-        }
-        if err := c.SetReadDeadline(time.Now().UTC().Add(readTimeout)); err != nil {
-            return 0, err
-        }
-        n, err := c.Conn.Read(b)
-        // Continue if the error is due to timing out.
-        if err, ok := err.(net.Error); ok && err.Timeout() {
-            continue
-        }
-        return n, err
-    }
+	// Remove the read deadline when returning from this function to avoid
+	// unexpected behavior.
+	defer func() { _ = c.SetReadDeadline(time.Time{}) }()
+	for {
+		if err := c.checkExitConds(); err != nil {
+			return 0, err
+		}
+		if err := c.SetReadDeadline(time.Now().UTC().Add(readTimeout)); err != nil {
+			return 0, err
+		}
+		n, err := c.Conn.Read(b)
+		// Continue if the error is due to timing out.
+		if err, ok := err.(net.Error); ok && err.Timeout() {
+			continue
+		}
+		return n, err
+	}
 }

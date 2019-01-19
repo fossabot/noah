@@ -8,6 +8,8 @@ enum TransactionMode {
 }
 
 enum TransactionState {
-    None = 0;
-    Open = 1;
+    NONE = 0;
+    PRE = 1;
+    ENTERED = 2;
+    ENDING = 3;
 }
