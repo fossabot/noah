@@ -28,6 +28,7 @@ before_install:
   - mkdir -p "$HOME"/src && ln -s "$HOME"/protoc "$HOME"/src/protobuf
   - go get -u github.com/golang/protobuf/protoc-gen-go
   - export PATH=$HOME/protoc/bin:$GOPATH/bin:$PATH
+  - go get -d -u
 
 before_script:
   - psql -c 'create database travis_ci_test;' -U postgres
@@ -43,4 +44,5 @@ env:
 
 install:
   - make protos
-  - go get -d -u
+  - make protos -C $GOPATH/src/github.com/readystock/pg_query_go
+  - make protos -C $GOPATH/src/github.com/readystock/raft
