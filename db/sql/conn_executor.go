@@ -181,7 +181,7 @@ func (s *Server) newConnExecutor(stmtBuf *StmtBuf, clientComm ClientComm) *connE
 			prepStmts: make(map[string]prepStmtEntry),
 			portals:   make(map[string]portalEntry),
 		},
-		TransactionState: TransactionState_None,
+		TransactionState: TransactionState_NONE,
 		TransactionMode:  TransactionMode_AutoCommit,
 		typeInfo:         types.NewConnInfo(),
 	}

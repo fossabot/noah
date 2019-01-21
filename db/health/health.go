@@ -17,83 +17,82 @@
 package health
 
 import (
-    "github.com/kataras/golog"
-    "github.com/readystock/noah/db/sql/driver"
-    "github.com/readystock/noah/db/sql/driver/npgx"
-    "github.com/readystock/noah/db/system"
-    "time"
+	"github.com/kataras/golog"
+	"github.com/readystock/noah/db/sql/driver/npgx"
+	"github.com/readystock/noah/db/system"
+	"time"
 )
 
 func StartHealthChecker(sctx *system.SContext) error {
-    isLeader := sctx.IsLeader()
+	isLeader := sctx.IsLeader()
 
-    for {
-        time.Sleep(500 * time.Millisecond)
-        // If this node gets promoted to leader
-        newLeader := sctx.IsLeader()
-        if !isLeader && newLeader {
-            golog.Info("promoted to leader, beginning health checks")
-            isLeader = newLeader
-        }
+	for {
+		time.Sleep(500 * time.Millisecond)
+		// If this node gets promoted to leader
+		newLeader := sctx.IsLeader()
+		if !isLeader && newLeader {
+			golog.Info("promoted to leader, beginning health checks")
+			isLeader = newLeader
+		}
 
-        if !isLeader {
-            continue
-        }
+		if !isLeader {
+			continue
+		}
 
-        nodes, err := sctx.Nodes.GetNodes()
-        if err != nil {
-            golog.Errorf("could not retrieve nodes; %s", err.Error())
-        }
+		nodes, err := sctx.Nodes.GetNodes()
+		if err != nil {
+			golog.Errorf("could not retrieve nodes; %s", err.Error())
+		}
 
-        setNodeLive := func(nodeId uint64, alive bool) {
-            if err := sctx.Nodes.SetNodeLive(nodeId, alive); err != nil {
-                golog.Errorf("could not update live state of node [%d]; %s", nodeId, err.Error())
-            }
-        }
+		setNodeLive := func(nodeId uint64, alive bool) {
+			if err := sctx.Nodes.SetNodeLive(nodeId, alive); err != nil {
+				golog.Errorf("could not update live state of node [%d]; %s", nodeId, err.Error())
+			}
+		}
 
-        for _, node := range nodes {
-            func(node system.NNode){
-                conn, err := npgx.Connect(driver.ConnConfig{
-                    Host:     node.Address,
-                    Port:     uint16(node.Port),
-                    Database: node.Database,
-                    User:     node.User,
-                    Password: node.Password,
-                })
-                if err != nil {
-                    if node.IsAlive {
-                        golog.Warnf("could not connect to node [%d]; %s", node.NodeId, err.Error())
-                        setNodeLive(node.NodeId, false)
-                    }
-                    return
-                }
-                defer conn.Close()
+		for _, node := range nodes {
+			func(node system.NNode) {
+				conn, err := npgx.Connect(npgx.ConnConfig{
+					Host:     node.Address,
+					Port:     uint16(node.Port),
+					Database: node.Database,
+					User:     node.User,
+					Password: node.Password,
+				})
+				if err != nil {
+					if node.IsAlive {
+						golog.Warnf("could not connect to node [%d]; %s", node.NodeId, err.Error())
+						setNodeLive(node.NodeId, false)
+					}
+					return
+				}
+				defer conn.Close()
 
-                rows, err := conn.Query("SELECT 1;")
-                if err != nil {
-                    if node.IsAlive {
-                        golog.Warnf("could not query node [%d]; %s", node.NodeId, err.Error())
-                        setNodeLive(node.NodeId, false)
-                    }
-                    return
-                }
-                defer rows.Close()
+				rows, err := conn.Query("SELECT 1;")
+				if err != nil {
+					if node.IsAlive {
+						golog.Warnf("could not query node [%d]; %s", node.NodeId, err.Error())
+						setNodeLive(node.NodeId, false)
+					}
+					return
+				}
+				defer rows.Close()
 
-                if rows.Next() {
-                    if rows.Err() != nil {
-                        if node.IsAlive {
-                            golog.Warnf("could not query node [%d]; %s", node.NodeId, err.Error())
-                            setNodeLive(node.NodeId, false)
-                        }
-                    } else {
-                        if !node.IsAlive {
-                            golog.Infof("node [%d] is now alive", node.NodeId)
-                            setNodeLive(node.NodeId, true)
-                        }
-                    }
-                    return
-                }
-            }(node)
-        }
-    }
+				if rows.Next() {
+					if rows.Err() != nil {
+						if node.IsAlive {
+							golog.Warnf("could not query node [%d]; %s", node.NodeId, err.Error())
+							setNodeLive(node.NodeId, false)
+						}
+					} else {
+						if !node.IsAlive {
+							golog.Infof("node [%d] is now alive", node.NodeId)
+							setNodeLive(node.NodeId, true)
+						}
+					}
+					return
+				}
+			}(node)
+		}
+	}
 }

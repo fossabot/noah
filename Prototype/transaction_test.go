@@ -22,6 +22,7 @@ import (
 )
 
 func Test_TransactionSimple(t *testing.T) {
+	t.Skip("prototype types are outdate")
 	context := Start()
 	fmt.Println("STATE:", context.TransactionState)
 	if _, err := InjestQuery(&context, "BEGIN;"); err != nil {
