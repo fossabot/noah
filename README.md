@@ -1,4 +1,7 @@
-# Noah [![CodeFactor](https://www.codefactor.io/repository/github/readystock/noah/badge)](https://www.codefactor.io/repository/github/readystock/noah)
+# Noah 
+[![Build Status](https://travis-ci.com/readystock/noah.svg?token=QvXZjJzgiir2JHLaKFrG&branch=master)](https://travis-ci.com/readystock/noah)
+[![CodeFactor](https://www.codefactor.io/repository/github/readystock/noah/badge)](https://www.codefactor.io/repository/github/readystock/noah)
+
 Noah is a database sharding tool for Postgres inspired by Vitess and Citus. 
 At it's core is a gutted version of CockroachDB, rewritten to use multiple PostgreSQL databases as it's primary storage engine.
 The query parsing of Cockroach has also been replaced by PostgreSQL's actual query parser in C. 
