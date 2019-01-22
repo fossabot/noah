@@ -18,7 +18,6 @@ package health
 
 import (
 	"github.com/kataras/golog"
-	"github.com/readystock/noah/db/sql/driver/npgx"
 	"github.com/readystock/noah/db/system"
 	"time"
 )
@@ -52,13 +51,8 @@ func StartHealthChecker(sctx *system.SContext) error {
 
 		for _, node := range nodes {
 			func(node system.NNode) {
-				conn, err := npgx.Connect(npgx.ConnConfig{
-					Host:     node.Address,
-					Port:     uint16(node.Port),
-					Database: node.Database,
-					User:     node.User,
-					Password: node.Password,
-				})
+
+				conn, err := sctx.Pool.AcquireConnection(node.NodeId)
 				if err != nil {
 					if node.IsAlive {
 						golog.Warnf("could not connect to node [%d]; %s", node.NodeId, err.Error())

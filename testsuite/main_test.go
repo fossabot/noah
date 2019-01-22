@@ -17,6 +17,7 @@
 package testsuite
 
 import (
+	"fmt"
 	"github.com/jackc/pgx"
 	"github.com/readystock/golog"
 	"github.com/readystock/noah/cmd"
@@ -39,51 +40,9 @@ var (
 		LogLevel: 6,
 		Logger:   NewLogger(),
 	}
-	SystemCtx *system.SContext
-	Nodes     = []system.NNode{
-		{
-			Address:   "127.0.0.1",
-			Port:      5432,
-			Database:  "ready_test_one",
-			User:      "postgres",
-			Password:  "Spring!2016",
-			ReplicaOf: 0,
-			Region:    "",
-			Zone:      "",
-		},
-		// {
-		//     Address:   "127.0.0.1",
-		//     Port:      5432,
-		//     Database:  "ready_two",
-		//     User:      "postgres",
-		//     Password:  "Spring!2016",
-		//     ReplicaOf: 0,
-		//     Region:    "",
-		//     Zone:      "",
-		// },
-		// {
-		//     Address:   "127.0.0.1",
-		//     Port:      5432,
-		//     Database:  "ready_three",
-		//     User:      "postgres",
-		//     Password:  "Spring!2016",
-		//     ReplicaOf: 0,
-		//     Region:    "",
-		//     Zone:      "",
-		// },
-		// {
-		//     Address:   "127.0.0.1",
-		//     Port:      5432,
-		//     Database:  "ready_four",
-		//     User:      "postgres",
-		//     Password:  "Spring!2016",
-		//     ReplicaOf: 0,
-		//     Region:    "",
-		//     Zone:      "",
-		// },
-	}
-
-	Connection *pgx.Conn
+	SystemCtx     *system.SContext
+	NumberOfNodes = 3
+	Connection    *pgx.Conn
 )
 
 func recoverName() {
@@ -93,8 +52,23 @@ func recoverName() {
 }
 
 func TestMain(m *testing.M) {
-    golog.SetLevel("trace")
-    retCode := func() int {
+	golog.Infof("Testing with %d node(s)", NumberOfNodes)
+	nodes := make([]system.NNode, NumberOfNodes)
+	for i := 0; i < NumberOfNodes; i++ {
+		nodes[i] = system.NNode{
+			Address:   "127.0.0.1",
+			Port:      5432,
+			Database:  fmt.Sprintf("ready_test_%d", i+1),
+			User:      "postgres",
+			Password:  "Spring!2016",
+			ReplicaOf: 0,
+			Region:    "",
+			Zone:      "",
+		}
+	}
+
+	golog.SetLevel("trace")
+	retCode := func() int {
 		golog.Infof("SETTING UP TEST DATABASE")
 
 		postgres, err := pgx.Connect(postgresConfig)
@@ -102,22 +76,26 @@ func TestMain(m *testing.M) {
 			panic(err)
 		}
 
-		if _, err := postgres.Exec("DROP DATABASE IF EXISTS ready_test_one"); err != nil {
-			panic(err)
-		}
-
-		if _, err := postgres.Exec("CREATE DATABASE ready_test_one"); err != nil {
-			panic(err)
-		}
-
-		defer func() {
-			golog.Infof("TEARING DOWN TEST DATABASE")
-			if _, err := postgres.Exec("SELECT pg_terminate_backend(pg_stat_activity.pid) FROM pg_stat_activity WHERE pg_stat_activity.datname = 'ready_test_one';"); err != nil {
+		for _, node := range nodes {
+			if _, err := postgres.Exec(fmt.Sprintf("DROP DATABASE IF EXISTS %s", node.Database)); err != nil {
 				panic(err)
 			}
 
-			if _, err := postgres.Exec("DROP DATABASE IF EXISTS ready_test_one"); err != nil {
+			if _, err := postgres.Exec(fmt.Sprintf("CREATE DATABASE %s", node.Database)); err != nil {
 				panic(err)
+			}
+		}
+
+		defer func() {
+			golog.Infof("TEARING DOWN TEST DATABASES")
+			for _, node := range nodes {
+				if _, err := postgres.Exec(fmt.Sprintf("SELECT pg_terminate_backend(pg_stat_activity.pid) FROM pg_stat_activity WHERE pg_stat_activity.datname = '%s';", node.Database)); err != nil {
+					panic(err)
+				}
+
+				if _, err := postgres.Exec(fmt.Sprintf("DROP DATABASE IF EXISTS %s", node.Database)); err != nil {
+					panic(err)
+				}
 			}
 		}()
 
@@ -145,7 +123,7 @@ func TestMain(m *testing.M) {
 
 		SystemCtx = sctx
 
-		for _, node := range Nodes {
+		for _, node := range nodes {
 			if _, err := SystemCtx.Nodes.AddNode(node); err != nil {
 				panic(err)
 			} else {
@@ -153,9 +131,10 @@ func TestMain(m *testing.M) {
 			}
 		}
 
+		// We want to wait just a short while while the health checker verifies the new nodes.
 		time.Sleep(5 * time.Second)
 
-		golog.Infof("finished adding %d test node(s) to cluster", len(Nodes))
+		golog.Infof("finished adding %d test node(s) to cluster", len(nodes))
 
 		golog.Warnf("connecting to noah")
 		conn := GetConnection()
@@ -200,15 +179,15 @@ func GetConnection() *pgx.Conn {
 }
 
 func DoQueryTest(t *testing.T, test QueryTest) [][]interface{} {
-    startTime := time.Now()
-    defer func() {
-       golog.Tracef("FINISHED TESTING QUERY, TIME: %v", time.Since(startTime))
-    }()
-    golog.Tracef("SENDING QUERY `%s`", test.Query)
+	startTime := time.Now()
+	defer func() {
+		golog.Tracef("FINISHED TESTING QUERY, TIME: %v", time.Since(startTime))
+	}()
+	golog.Tracef("SENDING QUERY `%s`", test.Query)
 	result, err := Connection.Query(test.Query, test.Args...)
 	if err != nil {
-        golog.Error(result.Err())
-	    t.Error(err)
+		golog.Error(result.Err())
+		t.Error(err)
 		t.FailNow()
 	}
 
@@ -219,15 +198,15 @@ func DoQueryTest(t *testing.T, test QueryTest) [][]interface{} {
 	index := 0
 	for result.Next() {
 		if result.Err() != nil {
-		    golog.Error(result.Err())
+			golog.Error(result.Err())
 			t.Error(err)
 			t.FailNow()
 		}
 
 		vals, err := result.Values()
 		if err != nil {
-            golog.Error(result.Err())
-		    t.Error(err)
+			golog.Error(result.Err())
+			t.Error(err)
 			t.FailNow()
 		}
 
@@ -240,11 +219,11 @@ func DoQueryTest(t *testing.T, test QueryTest) [][]interface{} {
 		index++
 	}
 
-    if result.Err() != nil {
-        golog.Error(result.Err())
-        t.Error(err)
-        t.FailNow()
-    }
+	if result.Err() != nil {
+		golog.Error(result.Err())
+		t.Error(err)
+		t.FailNow()
+	}
 
 	if test.Expected != nil {
 		assert.Equal(t, len(test.Expected), index, "`%s` | %v - number of rows returned did not match expected", test.Query, test.Args)
