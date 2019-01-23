@@ -17,7 +17,7 @@
 package health
 
 import (
-	"github.com/kataras/golog"
+	"github.com/readystock/golog"
 	"github.com/readystock/noah/db/system"
 	"time"
 )
@@ -52,7 +52,7 @@ func StartHealthChecker(sctx *system.SContext) error {
 		for _, node := range nodes {
 			func(node system.NNode) {
 
-				conn, err := sctx.Pool.AcquireConnection(node.NodeId)
+				conn, err := sctx.Pool.Acquire(node.NodeId)
 				if err != nil {
 					if node.IsAlive {
 						golog.Warnf("could not connect to node [%d]; %s", node.NodeId, err.Error())
@@ -60,7 +60,7 @@ func StartHealthChecker(sctx *system.SContext) error {
 					}
 					return
 				}
-				defer conn.Close()
+				defer sctx.Pool.Release(conn)
 
 				rows, err := conn.Query("SELECT 1;")
 				if err != nil {
@@ -72,19 +72,17 @@ func StartHealthChecker(sctx *system.SContext) error {
 				}
 				defer rows.Close()
 
-				if rows.Next() {
-					if rows.Err() != nil {
-						if node.IsAlive {
-							golog.Warnf("could not query node [%d]; %s", node.NodeId, err.Error())
-							setNodeLive(node.NodeId, false)
-						}
-					} else {
-						if !node.IsAlive {
-							golog.Infof("node [%d] is now alive", node.NodeId)
-							setNodeLive(node.NodeId, true)
-						}
+				result := rows.Next()
+				if err := rows.Err(); err != nil {
+					if node.IsAlive {
+						golog.Warnf("could not query node [%d]; %s", node.NodeId, err.Error())
+						setNodeLive(node.NodeId, false)
 					}
-					return
+				} else if result {
+					if !node.IsAlive {
+						golog.Infof("node [%d] is now alive", node.NodeId)
+						setNodeLive(node.NodeId, true)
+					}
 				}
 			}(node)
 		}

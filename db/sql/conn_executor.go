@@ -25,6 +25,7 @@ import (
 	"github.com/readystock/noah/db/sql/plan"
 	"github.com/readystock/noah/db/sql/types"
 	"github.com/readystock/noah/db/system"
+	"github.com/readystock/noah/db/util"
 	"github.com/readystock/noah/db/util/fsm"
 	nodes "github.com/readystock/pg_query_go/nodes"
 	"io"
@@ -62,7 +63,7 @@ func (ex *connExecutor) BacklogQuery(query string) {
 	ex.Backlog = append(ex.Backlog, query)
 }
 
-func (ex *connExecutor) GetNodeTransaction(nodeId uint64) (*npgx.Conn, error) {
+func (ex *connExecutor) GetNodeConnection(nodeId uint64) (*npgx.Conn, error) {
 	ex.nSync.Lock()
 	defer ex.nSync.Unlock()
 	if ex.nodes == nil {
@@ -73,7 +74,7 @@ func (ex *connExecutor) GetNodeTransaction(nodeId uint64) (*npgx.Conn, error) {
 	if !ok {
 		golog.Debugf("node [%d] is not in the session, acquiring connection", nodeId)
 		// A connection has not yet been made to this node. Allocate one.
-		if t, err := ex.SystemContext.Pool.AcquireConnection(nodeId); err != nil {
+		if t, err := ex.SystemContext.Pool.Acquire(nodeId); err != nil {
 			golog.Errorf(err.Error())
 			return nil, err
 		} else {
@@ -81,10 +82,45 @@ func (ex *connExecutor) GetNodeTransaction(nodeId uint64) (*npgx.Conn, error) {
 				ex.nodes = map[uint64]*npgx.Conn{}
 			}
 			ex.nodes[nodeId] = t
+			golog.Warnf("new connection count is %d node(s) from executor", len(ex.nodes))
 			return t, nil
 		}
 	}
 	return conn, nil
+}
+
+func (ex *connExecutor) ReleaseNodeConnection(nodeId uint64) error {
+	ex.nSync.Lock()
+	defer ex.nSync.Unlock()
+	if ex.nodes == nil {
+		return nil
+	}
+
+	conn, ok := ex.nodes[nodeId]
+	if !ok {
+		return nil
+	}
+
+	delete(ex.nodes, nodeId)
+	return ex.SystemContext.Pool.Release(conn)
+}
+
+func (ex *connExecutor) ReleaseAllConnections() error {
+	errs := make([]error, 0)
+	// return any connections to pool.
+	golog.Warnf("releasing connection to %d node(s) from executor", len(ex.nodes))
+	for nodeId := range ex.nodes {
+		golog.Verbosef("releasing connection to node [%d] from executor", nodeId)
+		if err := ex.ReleaseNodeConnection(nodeId); err != nil {
+			errs = append(errs, err)
+		}
+	}
+
+	if len(errs) > 0 {
+		return util.CombineErrors(errs)
+	}
+
+	return nil
 }
 
 func (ex *connExecutor) SetNodeTransaction(nodeId uint64, conn *npgx.Conn) {
@@ -190,6 +226,9 @@ func (s *Server) newConnExecutor(stmtBuf *StmtBuf, clientComm ClientComm) *connE
 }
 
 func (ex *connExecutor) run() (err error) {
+	defer func() {
+
+	}()
 	// defer util.CatchPanic(&err)
 	for {
 		cmd, pos, err := ex.stmtBuf.curCmd()

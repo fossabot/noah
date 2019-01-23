@@ -36,6 +36,16 @@ type executeResponse struct {
 }
 
 func (ex *connExecutor) ExecutePlans(plans []plan.NodeExecutionPlan, res RestrictedCommandResult) error {
+	errs := make([]error, 0)
+	defer func() {
+		if ex.TransactionState == TransactionState_NONE {
+			golog.Errorf("done executing non-transaction statement, releasing connections")
+			if err := ex.ReleaseAllConnections(); err != nil {
+				errs = append(errs, err)
+			}
+		}
+	}()
+
 	// defer util.CatchPanic(&err)
 	if len(plans) == 0 {
 		golog.Errorf("no plans were provided, nothing will be executed")
@@ -66,7 +76,7 @@ func (ex *connExecutor) ExecutePlans(plans []plan.NodeExecutionPlan, res Restric
 			}()
 
 			golog.Infof("executing query: `%s` on database node [%d]", pln.CompiledQuery, pln.Node.NodeId)
-			conn, err := ex.GetNodeTransaction(pln.Node.NodeId)
+			conn, err := ex.GetNodeConnection(pln.Node.NodeId)
 			if err != nil {
 				golog.Errorf(err.Error())
 				exResponse.Error = err
@@ -87,7 +97,6 @@ func (ex *connExecutor) ExecutePlans(plans []plan.NodeExecutionPlan, res Restric
 
 	columns := make([]pgproto.FieldDescription, 0)
 	result := make([][]types.Value, 0)
-	errs := make([]error, 0)
 	for i := 0; i < len(plans); i++ {
 		response := <-responses
 		golog.Debugf("handling response from node [%d]", response.NodeID)
@@ -149,36 +158,21 @@ func (ex *connExecutor) ExecutePlans(plans []plan.NodeExecutionPlan, res Restric
 	}
 	golog.Debugf("%d row(s) compiled for query `%s`", len(result), plans[0].CompiledQuery)
 
-	if ex.TransactionMode == TransactionMode_AutoCommit &&
-		linq.From(plans).AnyWithT(func(plan plan.NodeExecutionPlan) bool {
+	if ex.TransactionMode == TransactionMode_AutoCommit {
+		if linq.From(plans).AnyWithT(func(plan plan.NodeExecutionPlan) bool {
 			return !plan.ReadOnly
-		}) { // If we are auto-committing this stuff and there are no errors
-		if len(errs) == 0 {
-			if len(ex.nodes) == 1 {
-				if err := ex.Commit(); err != nil {
-					return util.CombineErrors(append(errs, err))
+		}) {
+			// If there were writes in the current query plan.
+			if len(errs) == 0 {
+				// If we are targeting more than 1 node then we want to handle that.
+				if len(ex.nodes) > 1 {
+					if err := ex.Commit(); err != nil {
+						return util.CombineErrors(append(errs, err))
+					}
 				}
 			} else {
-				if err := ex.PrepareTwoPhase(); err != nil {
-					errs = append(errs, err)
-					// If the prepare two phase failed (which is really rare) then rollback the current changes in autocommit and return an error
-					if err := ex.Rollback(); err != nil {
-						errs = append(errs, err)
-					}
-					return util.CombineErrors(errs)
-				} else {
-					return ex.CommitTwoPhase()
-				}
+				return util.CombineErrors(errs)
 			}
-		} else {
-			return util.CombineErrors(errs)
-			// if ex.changes > 0 {
-			// 	if err := ex.Rollback(); err != nil {
-			// 		return util.CombineErrors(append(errs, err))
-			// 	}
-			// } else {
-			// 	return util.CombineErrors(errs)
-			// }
 		}
 	}
 	return util.CombineErrors(errs)
@@ -244,17 +238,17 @@ func (ex *connExecutor) CommitTwoPhase() error {
 		}(conn)
 	}
 
-	ex.nSync.Lock()
-	defer ex.nSync.Unlock()
-	errs := make([]error, 0)
-	for i := 0; i < count; i++ {
-		response := <-responses
-		if response.Error != nil {
-			errs = append(errs, response.Error)
-		}
-		delete(ex.nodes, response.NodeID)
-	}
-	return util.CombineErrors(errs)
+	// ex.nSync.Lock()
+	// defer ex.nSync.Unlock()
+	// errs := make([]error, 0)
+	// for i := 0; i < count; i++ {
+	// 	response := <-responses
+	// 	if response.Error != nil {
+	// 		errs = append(errs, response.Error)
+	// 	}
+	// 	delete(ex.nodes, response.NodeID)
+	// }
+	return nil
 }
 
 func (ex *connExecutor) RollbackTwoPhase() error {
@@ -275,17 +269,17 @@ func (ex *connExecutor) RollbackTwoPhase() error {
 		}(conn)
 	}
 
-	ex.nSync.Lock()
-	defer ex.nSync.Unlock()
-	errs := make([]error, 0)
-	for i := 0; i < count; i++ {
-		response := <-responses
-		if response.Error != nil {
-			errs = append(errs, response.Error)
-		}
-		delete(ex.nodes, response.NodeID)
-	}
-	return util.CombineErrors(errs)
+	// ex.nSync.Lock()
+	// defer ex.nSync.Unlock()
+	// errs := make([]error, 0)
+	// for i := 0; i < count; i++ {
+	// 	response := <-responses
+	// 	if response.Error != nil {
+	// 		errs = append(errs, response.Error)
+	// 	}
+	// 	delete(ex.nodes, response.NodeID)
+	// }
+	return nil
 }
 
 func (ex *connExecutor) Commit() error {
@@ -306,17 +300,17 @@ func (ex *connExecutor) Commit() error {
 		}(conn)
 	}
 
-	ex.nSync.Lock()
-	defer ex.nSync.Unlock()
-	errs := make([]error, 0)
-	for i := 0; i < count; i++ {
-		response := <-responses
-		if response.Error != nil {
-			errs = append(errs, response.Error)
-		}
-		delete(ex.nodes, response.NodeID)
-	}
-	return util.CombineErrors(errs)
+	// ex.nSync.Lock()
+	// defer ex.nSync.Unlock()
+	// errs := make([]error, 0)
+	// for i := 0; i < count; i++ {
+	// 	response := <-responses
+	// 	if response.Error != nil {
+	// 		errs = append(errs, response.Error)
+	// 	}
+	// 	delete(ex.nodes, response.NodeID)
+	// }
+	return nil
 }
 
 func (ex *connExecutor) Rollback() error {
@@ -337,15 +331,15 @@ func (ex *connExecutor) Rollback() error {
 		}(conn)
 	}
 
-	ex.nSync.Lock()
-	defer ex.nSync.Unlock()
-	errs := make([]error, 0)
-	for i := 0; i < count; i++ {
-		response := <-responses
-		if response.Error != nil {
-			errs = append(errs, response.Error)
-		}
-		delete(ex.nodes, response.NodeID)
-	}
-	return util.CombineErrors(errs)
+	// ex.nSync.Lock()
+	// defer ex.nSync.Unlock()
+	// errs := make([]error, 0)
+	// for i := 0; i < count; i++ {
+	// 	response := <-responses
+	// 	if response.Error != nil {
+	// 		errs = append(errs, response.Error)
+	// 	}
+	// 	delete(ex.nodes, response.NodeID)
+	// }
+	return nil
 }

@@ -32,6 +32,7 @@ type Connection interface {
 }
 
 type ConnConfig struct {
+	NodeId   uint64 // NodeId is just used by noah for managing connection pools.
 	Host     string // host (e.g. localhost) or path to unix domain socket directory (e.g. /private/tmp)
 	Port     uint16 // default: 5432
 	Database string

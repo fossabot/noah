@@ -19,6 +19,7 @@ package system
 import (
 	"github.com/readystock/noah/db/sql/driver/npgx"
 	"sync"
+	"time"
 )
 
 type SPool struct {
@@ -27,22 +28,42 @@ type SPool struct {
 	nodePools map[uint64]*npgx.ConnPool
 }
 
-func (pool *SPool) AcquireConnection(nodeId uint64) (*npgx.Conn, error) {
-	if nodePool, ok := pool.nodePools[nodeId]; !ok {
-		// Init a new connection
+func (pool *SPool) Acquire(nodeId uint64) (*npgx.Conn, error) {
+	nodePool, ok := pool.nodePools[nodeId]
+	if !ok {
 		sNode := SNode(*pool.baseContext)
 		if node, err := (&sNode).GetNode(nodeId); err != nil {
 			return nil, err
 		} else {
-			return npgx.Connect(npgx.ConnConfig{
-				Host:     node.Address,
-				Port:     uint16(node.Port),
-				Database: node.Database,
-				User:     node.User,
-				Password: node.Password,
+			p, err := npgx.NewConnPool(npgx.ConnPoolConfig{
+				ConnConfig: npgx.ConnConfig{
+					NodeId:   node.NodeId,
+					Host:     node.Address,
+					Port:     uint16(node.Port),
+					Database: node.Database,
+					User:     node.User,
+					Password: node.Password,
+				},
+				MaxConnections: 5,
+				AcquireTimeout: time.Second * 1,
 			})
+			if err != nil {
+				return nil, err
+			}
+
+			pool.nodePools[nodeId] = p
+			nodePool = p
 		}
-	} else {
-		return nodePool.Acquire()
 	}
+	return nodePool.Acquire()
+}
+
+func (pool *SPool) Release(conn *npgx.Conn) error {
+	nodePool, ok := pool.nodePools[conn.GetNodeId()]
+	if !ok {
+		return conn.Close()
+	}
+
+	nodePool.Release(conn)
+	return nil
 }

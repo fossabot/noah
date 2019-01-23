@@ -19,7 +19,7 @@ package npgx
 import (
 	"context"
 	"github.com/kataras/go-errors"
-	"github.com/kataras/golog"
+	"github.com/readystock/golog"
 	"github.com/readystock/noah/db/sql/types"
 	"sync"
 	"time"
@@ -131,6 +131,7 @@ func (p *ConnPool) afterConnectionCreated(c *Conn) (*Conn, error) {
 
 // Release gives up use of a connection.
 func (p *ConnPool) Release(conn *Conn) {
+	golog.Warnf("releasing connection for node [%d]", conn.GetNodeId())
 	if conn.ctxInProgress {
 		panic("should never release when context is in progress")
 	}
@@ -179,6 +180,7 @@ func (p *ConnPool) Acquire() (*Conn, error) {
 
 // acquire performs acquision assuming pool is already locked
 func (p *ConnPool) acquire(deadline *time.Time) (*Conn, error) {
+	golog.Verbosef("acquiring connection for node [%d]", p.config.NodeId)
 	if p.closed {
 		return nil, ErrClosedPool
 	}

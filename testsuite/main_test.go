@@ -41,7 +41,7 @@ var (
 		Logger:   NewLogger(),
 	}
 	SystemCtx     *system.SContext
-	NumberOfNodes = 3
+	NumberOfNodes = 1
 	Connection    *pgx.Conn
 )
 

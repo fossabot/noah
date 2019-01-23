@@ -65,11 +65,12 @@ func (ex *connExecutor) BeginTransaction() error {
 	if ex.TransactionState != TransactionState_NONE {
 		return errors.New("error cannot begin transaction at this time")
 	}
+
 	if id, err := ex.SystemContext.NewSnowflake(); err != nil {
 		return err
 	} else {
 		ex.TransactionID = id
-		ex.TransactionState = TransactionState_ENTERED
+		ex.TransactionState = TransactionState_PRE
 		ex.TransactionMode = TransactionMode_Manual
 		return nil
 	}

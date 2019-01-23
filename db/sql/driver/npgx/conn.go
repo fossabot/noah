@@ -113,6 +113,10 @@ type Conn struct {
 	frontend *pgproto.Frontend
 }
 
+func (conn *Conn) GetNodeId() uint64 {
+	return conn.config.NodeId
+}
+
 type QueryExOptions struct {
 	// When ParameterOIDs are present and the query is not a prepared statement,
 	// then ParameterOIDs and ResultFormatCodes will be used to avoid an extra
