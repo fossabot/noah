@@ -131,7 +131,7 @@ func (p *ConnPool) afterConnectionCreated(c *Conn) (*Conn, error) {
 
 // Release gives up use of a connection.
 func (p *ConnPool) Release(conn *Conn) {
-	golog.Warnf("releasing connection for node [%d]", conn.GetNodeId())
+	// golog.Warnf("releasing connection for node [%d]", conn.GetNodeId())
 	if conn.ctxInProgress {
 		panic("should never release when context is in progress")
 	}

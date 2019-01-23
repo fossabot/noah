@@ -31,6 +31,17 @@ func Test_Select_Simple(t *testing.T) {
 	})
 }
 
+func Test_Select_SimpleMany(t *testing.T) {
+	for i := 0; i < 1000; i++ {
+		DoQueryTest(t, QueryTest{
+			Query: "SELECT 1;",
+			Expected: [][]interface{}{
+				{int32(1)},
+			},
+		})
+	}
+}
+
 func Test_Select_TypeConversion(t *testing.T) {
 	DoQueryTest(t, QueryTest{
 		Query: "SELECT 1::text;",
@@ -134,7 +145,7 @@ func Test_Create_Global_And_InsertFew_ThenSelect(t *testing.T) {
 	defer DoExecTest(t, ExecTest{
 		Query: "DROP TABLE public.temp CASCADE;",
 	})
-	for i := 0; i < 10; i++ {
+	for i := 0; i < 1000; i++ {
 		DoQueryTest(t, QueryTest{
 			Query: fmt.Sprintf("INSERT INTO public.temp (id) VALUES (%d) RETURNING id;", i),
 			Expected: [][]interface{}{
@@ -143,7 +154,7 @@ func Test_Create_Global_And_InsertFew_ThenSelect(t *testing.T) {
 		})
 	}
 
-	for i := 0; i < 10; i++ {
+	for i := 0; i < 1000; i++ {
 		DoQueryTest(t, QueryTest{
 			Query: fmt.Sprintf("SELECT id FROM public.temp WHERE id = %d;", i),
 			Expected: [][]interface{}{
@@ -213,7 +224,7 @@ func Test_Create_And_InsertWithSerial(t *testing.T) {
 	defer DoExecTest(t, ExecTest{
 		Query: "DROP TABLE public.temp CASCADE;",
 	})
-	for i := 0; i < 10; i++ {
+	for i := 0; i < 1000; i++ {
 		result := DoQueryTest(t, QueryTest{
 			Query: fmt.Sprintf("INSERT INTO public.temp (number) VALUES(%d) RETURNING *;", i),
 		})
