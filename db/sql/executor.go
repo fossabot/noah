@@ -185,173 +185,72 @@ func (ex *connExecutor) PrepareTwoPhase() error {
 		return nil // There were never any transactions to release
 	}
 
-	transactionID := ex.TransactionID
+	golog.Debugf("preparing two-phase transaction for changes on %d node(s), transaction ID [%d]", len(ex.nodes), ex.TransactionID)
 
-	golog.Debugf("preparing two-phase commit for changes on %d node(s), transaction ID [%d]", len(ex.nodes), transactionID)
-
-	count := len(ex.nodes)
-	responses := make(chan executeResponse, count)
-	for id, conn := range ex.nodes {
-		func(conn *npgx.Conn) {
-			response := executeResponse{
-				NodeID: id,
-			}
-			defer func() { responses <- response }()
-			result, err := conn.Query(fmt.Sprintf("PREPARE TRANSACTION %d_%d", id, transactionID))
-			if err != nil {
-				response.Error = err
-				return
-			}
-
-			result.Next()
-
-			if err := result.Err(); err != nil {
-				response.Error = err
-			}
-		}(conn)
-	}
-
-	errs := make([]error, 0)
-	for i := 0; i < count; i++ {
-		response := <-responses
-		if response.Error != nil {
-			errs = append(errs, response.Error)
-		}
-	}
-
-	golog.Verbosef("%d error(s) from execution %v", len(errs), errs)
-	return util.CombineErrors(errs)
+	return ex.doTransaction(func(nodeID uint64) string {
+		return fmt.Sprintf("PREPARE TRANSACTION %d_%d", nodeID, ex.TransactionID)
+	})
 }
 
 func (ex *connExecutor) CommitTwoPhase() error {
 	if ex.nodes == nil {
 		ex.nodes = map[uint64]*npgx.Conn{}
-		return nil // There were never any transactions to commit
+		return nil // There were never any transactions to release
 	}
 
-	transactionID := ex.TransactionID
+	golog.Debugf("preparing two-phase commit for changes on %d node(s), transaction ID [%d]", len(ex.nodes), ex.TransactionID)
 
-	count := len(ex.nodes)
-	responses := make(chan executeResponse, count)
-	for id, conn := range ex.nodes {
-		func(conn *npgx.Conn) {
-			response := executeResponse{
-				NodeID: id,
-			}
-			defer func() { responses <- response }()
-			result, err := conn.Query(fmt.Sprintf("COMMIT TRANSACTION %d_%d", id, transactionID))
-			if err != nil {
-				response.Error = err
-				return
-			}
-
-			result.Next()
-
-			if err := result.Err(); err != nil {
-				response.Error = err
-			}
-		}(conn)
-	}
-
-	errs := make([]error, 0)
-	for i := 0; i < count; i++ {
-		response := <-responses
-		if response.Error != nil {
-			errs = append(errs, response.Error)
-		}
-	}
-
-	golog.Verbosef("%d error(s) from execution %v", len(errs), errs)
-	return util.CombineErrors(errs)
+	return ex.doTransaction(func(nodeID uint64) string {
+		return fmt.Sprintf("COMMIT TRANSACTION %d_%d", nodeID, ex.TransactionID)
+	})
 }
 
 func (ex *connExecutor) RollbackTwoPhase() error {
 	if ex.nodes == nil {
 		ex.nodes = map[uint64]*npgx.Conn{}
-		return nil // There were never any transactions to commit
+		return nil // There were never any transactions to release
 	}
 
-	transactionID := ex.TransactionID
+	golog.Debugf("preparing two-phase rollback for changes on %d node(s), transaction ID [%d]", len(ex.nodes), ex.TransactionID)
 
-	count := len(ex.nodes)
-	responses := make(chan executeResponse, count)
-	for id, conn := range ex.nodes {
-		func(conn *npgx.Conn) {
-			response := executeResponse{
-				NodeID: id,
-			}
-			defer func() { responses <- response }()
-			result, err := conn.Query(fmt.Sprintf("ROLLBACK TRANSACTION %d_%d", id, transactionID))
-			if err != nil {
-				response.Error = err
-				return
-			}
-
-			result.Next()
-
-			if err := result.Err(); err != nil {
-				response.Error = err
-			}
-		}(conn)
-	}
-
-	errs := make([]error, 0)
-	for i := 0; i < count; i++ {
-		response := <-responses
-		if response.Error != nil {
-			errs = append(errs, response.Error)
-		}
-	}
-
-	golog.Verbosef("%d error(s) from execution %v", len(errs), errs)
-	return util.CombineErrors(errs)
+	return ex.doTransaction(func(nodeID uint64) string {
+		return fmt.Sprintf("ROLLBACK TRANSACTION %d_%d", nodeID, ex.TransactionID)
+	})
 }
 
 func (ex *connExecutor) Commit() error {
 	if ex.nodes == nil {
 		ex.nodes = map[uint64]*npgx.Conn{}
-		return nil // There were never any transactions to commit
+		return nil // There were never any transactions to release
 	}
 
-	count := len(ex.nodes)
-	responses := make(chan executeResponse, count)
-	for id, conn := range ex.nodes {
-		func(conn *npgx.Conn) {
-			response := executeResponse{
-				NodeID: id,
-			}
-			defer func() { responses <- response }()
-			result, err := conn.Query("COMMIT")
-			if err != nil {
-				response.Error = err
-				return
-			}
+	golog.Debugf("committing changes on %d node(s), transaction ID [%d]", len(ex.nodes), ex.TransactionID)
 
-			result.Next()
-
-			if err := result.Err(); err != nil {
-				response.Error = err
-			}
-		}(conn)
-	}
-
-	errs := make([]error, 0)
-	for i := 0; i < count; i++ {
-		response := <-responses
-		if response.Error != nil {
-			errs = append(errs, response.Error)
-		}
-	}
-
-	golog.Verbosef("%d error(s) from execution %v", len(errs), errs)
-	return util.CombineErrors(errs)
+	return ex.doTransaction(func(nodeID uint64) string {
+		return "COMMIT"
+	})
 }
 
 func (ex *connExecutor) Rollback() error {
 	if ex.nodes == nil {
 		ex.nodes = map[uint64]*npgx.Conn{}
-		return nil // There were never any transactions to commit
+		return nil // There were never any transactions to release
 	}
+
+	golog.Debugf("rolling back changes on %d node(s), transaction ID [%d]", len(ex.nodes), ex.TransactionID)
+
+	return ex.doTransaction(func(nodeID uint64) string {
+		return "ROLLBACK"
+	})
+}
+
+func (ex *connExecutor) doTransaction(query func(nodeID uint64) string) error {
+	if ex.nodes == nil {
+		ex.nodes = map[uint64]*npgx.Conn{}
+		return nil // There were never any transactions to release
+	}
+
+	// golog.Debugf("preparing two-phase commit for changes on %d node(s), transaction ID [%d]", len(ex.nodes), transactionID)
 
 	count := len(ex.nodes)
 	responses := make(chan executeResponse, count)
@@ -361,7 +260,7 @@ func (ex *connExecutor) Rollback() error {
 				NodeID: id,
 			}
 			defer func() { responses <- response }()
-			result, err := conn.Query("ROLLBACK")
+			result, err := conn.Query(query(id))
 			if err != nil {
 				response.Error = err
 				return
@@ -385,4 +284,5 @@ func (ex *connExecutor) Rollback() error {
 
 	golog.Verbosef("%d error(s) from execution %v", len(errs), errs)
 	return util.CombineErrors(errs)
+
 }
