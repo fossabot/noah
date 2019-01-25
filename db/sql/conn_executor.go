@@ -83,6 +83,24 @@ func (ex *connExecutor) GetNodeConnection(nodeId uint64) (*npgx.Conn, error) {
 			}
 			ex.nodes[nodeId] = t
 			golog.Warnf("new connection count is %d node(s) from executor", len(ex.nodes))
+
+			// We have just acquired a new connection to the node. If we are currently in a transaction state
+			// then we will want to begin a transaction on this node.
+			if ex.TransactionState == TransactionState_PRE ||
+				ex.TransactionState == TransactionState_ENTERED {
+
+				result, err := t.Query("BEGIN")
+				if err != nil {
+					return nil, err
+				}
+
+				result.Next()
+
+				if result.Err() != nil {
+					return nil, result.Err()
+				}
+			}
+
 			return t, nil
 		}
 	}

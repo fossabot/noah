@@ -39,6 +39,11 @@ func (stmt *TransactionStatement) Execute(ex *connExecutor, res RestrictedComman
 	case pq.TRANS_STMT_BEGIN, pq.TRANS_STMT_START:
 		return ex.BeginTransaction()
 	case pq.TRANS_STMT_COMMIT:
+		if ex.TransactionState != TransactionState_NONE &&
+			ex.TransactionState != TransactionState_ENDING {
+			return errors.New("no transaction to rollback")
+		}
+
 		if err := ex.PrepareTwoPhase(); err != nil {
 			return err
 		} else {

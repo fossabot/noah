@@ -17,6 +17,7 @@
 package sql
 
 import (
+	"fmt"
 	"github.com/ahmetb/go-linq"
 	"github.com/juju/errors"
 	"github.com/readystock/golog"
@@ -184,19 +185,9 @@ func (ex *connExecutor) PrepareTwoPhase() error {
 		return nil // There were never any transactions to release
 	}
 
-	transactionId := uint64(0)
-	if ex.TransactionMode == TransactionMode_AutoCommit { // If we are auto-committing and we are targeting multiple nodes
-		id, err := ex.SystemContext.NewSnowflake()
-		if err != nil {
-			return err
-		}
-		transactionId = id
-		ex.TransactionID = id
-	}
+	transactionID := ex.TransactionID
 
-	transactionId = ex.TransactionID
-
-	golog.Debugf("preparing two-phase commit for changes on %d node(s), transaction ID [%d]", len(ex.nodes), transactionId)
+	golog.Debugf("preparing two-phase commit for changes on %d node(s), transaction ID [%d]", len(ex.nodes), transactionID)
 
 	count := len(ex.nodes)
 	responses := make(chan executeResponse, count)
@@ -206,9 +197,20 @@ func (ex *connExecutor) PrepareTwoPhase() error {
 				NodeID: id,
 			}
 			defer func() { responses <- response }()
-			// response.Error = conn.PrepareTwoPhase(transactionId)
+			result, err := conn.Query(fmt.Sprintf("PREPARE TRANSACTION %d_%d", id, transactionID))
+			if err != nil {
+				response.Error = err
+				return
+			}
+
+			result.Next()
+
+			if err := result.Err(); err != nil {
+				response.Error = err
+			}
 		}(conn)
 	}
+
 	errs := make([]error, 0)
 	for i := 0; i < count; i++ {
 		response := <-responses
@@ -216,6 +218,7 @@ func (ex *connExecutor) PrepareTwoPhase() error {
 			errs = append(errs, response.Error)
 		}
 	}
+
 	golog.Verbosef("%d error(s) from execution %v", len(errs), errs)
 	return util.CombineErrors(errs)
 }
@@ -226,6 +229,8 @@ func (ex *connExecutor) CommitTwoPhase() error {
 		return nil // There were never any transactions to commit
 	}
 
+	transactionID := ex.TransactionID
+
 	count := len(ex.nodes)
 	responses := make(chan executeResponse, count)
 	for id, conn := range ex.nodes {
@@ -234,21 +239,30 @@ func (ex *connExecutor) CommitTwoPhase() error {
 				NodeID: id,
 			}
 			defer func() { responses <- response }()
-			// response.Error = conn.CommitTwoPhase()
+			result, err := conn.Query(fmt.Sprintf("COMMIT TRANSACTION %d_%d", id, transactionID))
+			if err != nil {
+				response.Error = err
+				return
+			}
+
+			result.Next()
+
+			if err := result.Err(); err != nil {
+				response.Error = err
+			}
 		}(conn)
 	}
 
-	// ex.nSync.Lock()
-	// defer ex.nSync.Unlock()
-	// errs := make([]error, 0)
-	// for i := 0; i < count; i++ {
-	// 	response := <-responses
-	// 	if response.Error != nil {
-	// 		errs = append(errs, response.Error)
-	// 	}
-	// 	delete(ex.nodes, response.NodeID)
-	// }
-	return nil
+	errs := make([]error, 0)
+	for i := 0; i < count; i++ {
+		response := <-responses
+		if response.Error != nil {
+			errs = append(errs, response.Error)
+		}
+	}
+
+	golog.Verbosef("%d error(s) from execution %v", len(errs), errs)
+	return util.CombineErrors(errs)
 }
 
 func (ex *connExecutor) RollbackTwoPhase() error {
@@ -257,6 +271,8 @@ func (ex *connExecutor) RollbackTwoPhase() error {
 		return nil // There were never any transactions to commit
 	}
 
+	transactionID := ex.TransactionID
+
 	count := len(ex.nodes)
 	responses := make(chan executeResponse, count)
 	for id, conn := range ex.nodes {
@@ -265,21 +281,30 @@ func (ex *connExecutor) RollbackTwoPhase() error {
 				NodeID: id,
 			}
 			defer func() { responses <- response }()
-			// response.Error = tx.RollbackTwoPhase()
+			result, err := conn.Query(fmt.Sprintf("ROLLBACK TRANSACTION %d_%d", id, transactionID))
+			if err != nil {
+				response.Error = err
+				return
+			}
+
+			result.Next()
+
+			if err := result.Err(); err != nil {
+				response.Error = err
+			}
 		}(conn)
 	}
 
-	// ex.nSync.Lock()
-	// defer ex.nSync.Unlock()
-	// errs := make([]error, 0)
-	// for i := 0; i < count; i++ {
-	// 	response := <-responses
-	// 	if response.Error != nil {
-	// 		errs = append(errs, response.Error)
-	// 	}
-	// 	delete(ex.nodes, response.NodeID)
-	// }
-	return nil
+	errs := make([]error, 0)
+	for i := 0; i < count; i++ {
+		response := <-responses
+		if response.Error != nil {
+			errs = append(errs, response.Error)
+		}
+	}
+
+	golog.Verbosef("%d error(s) from execution %v", len(errs), errs)
+	return util.CombineErrors(errs)
 }
 
 func (ex *connExecutor) Commit() error {
@@ -296,21 +321,30 @@ func (ex *connExecutor) Commit() error {
 				NodeID: id,
 			}
 			defer func() { responses <- response }()
-			// response.Error = tx.Commit()
+			result, err := conn.Query("COMMIT")
+			if err != nil {
+				response.Error = err
+				return
+			}
+
+			result.Next()
+
+			if err := result.Err(); err != nil {
+				response.Error = err
+			}
 		}(conn)
 	}
 
-	// ex.nSync.Lock()
-	// defer ex.nSync.Unlock()
-	// errs := make([]error, 0)
-	// for i := 0; i < count; i++ {
-	// 	response := <-responses
-	// 	if response.Error != nil {
-	// 		errs = append(errs, response.Error)
-	// 	}
-	// 	delete(ex.nodes, response.NodeID)
-	// }
-	return nil
+	errs := make([]error, 0)
+	for i := 0; i < count; i++ {
+		response := <-responses
+		if response.Error != nil {
+			errs = append(errs, response.Error)
+		}
+	}
+
+	golog.Verbosef("%d error(s) from execution %v", len(errs), errs)
+	return util.CombineErrors(errs)
 }
 
 func (ex *connExecutor) Rollback() error {
@@ -327,19 +361,28 @@ func (ex *connExecutor) Rollback() error {
 				NodeID: id,
 			}
 			defer func() { responses <- response }()
-			// response.Error = tx.Rollback()
+			result, err := conn.Query("ROLLBACK")
+			if err != nil {
+				response.Error = err
+				return
+			}
+
+			result.Next()
+
+			if err := result.Err(); err != nil {
+				response.Error = err
+			}
 		}(conn)
 	}
 
-	// ex.nSync.Lock()
-	// defer ex.nSync.Unlock()
-	// errs := make([]error, 0)
-	// for i := 0; i < count; i++ {
-	// 	response := <-responses
-	// 	if response.Error != nil {
-	// 		errs = append(errs, response.Error)
-	// 	}
-	// 	delete(ex.nodes, response.NodeID)
-	// }
-	return nil
+	errs := make([]error, 0)
+	for i := 0; i < count; i++ {
+		response := <-responses
+		if response.Error != nil {
+			errs = append(errs, response.Error)
+		}
+	}
+
+	golog.Verbosef("%d error(s) from execution %v", len(errs), errs)
+	return util.CombineErrors(errs)
 }
