@@ -32,7 +32,7 @@ type Logger struct {
 
 func NewLogger() *Logger {
 	return &Logger{
-		glog: golog.NewWithDepth(6),
+		glog: golog.NewWithDepth(7),
 	}
 }
 

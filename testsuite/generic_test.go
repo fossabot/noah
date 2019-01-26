@@ -233,7 +233,7 @@ func Test_Create_And_InsertWithSerial(t *testing.T) {
 	}
 }
 
-func Test_Create_And_InsertWithSerial_Transaction(t *testing.T) {
+func Test_Create_And_InsertWithSerial_Rollback(t *testing.T) {
 	DoExecTest(t, ExecTest{
 		Query: "DROP TABLE IF EXISTS public.temp CASCADE;",
 	})
@@ -280,6 +280,89 @@ func Test_Create_And_InsertWithSerial_Transaction(t *testing.T) {
 	})
 
 	// Make sure the number of rows in the table is 0
+	DoQueryTest(t, QueryTest{
+		Query: `SELECT COUNT(*) FROM public.temp;`,
+		Expected: [][]interface{}{
+			{int64(0)},
+		},
+	})
+}
+
+func Test_Create_And_InsertWithSerial_Commit(t *testing.T) {
+	DoExecTest(t, ExecTest{
+		Query: "DROP TABLE IF EXISTS public.temp CASCADE;",
+	})
+	DoExecTest(t, ExecTest{
+		Query: "CREATE TABLE public.temp (id BIGSERIAL, number BIGINT);",
+	})
+	defer DoExecTest(t, ExecTest{
+		Query: "DROP TABLE public.temp CASCADE;",
+	})
+
+	DoQueryTest(t, QueryTest{
+		Query: `SELECT COUNT(*) FROM public.temp;`,
+		Expected: [][]interface{}{
+			{int64(0)},
+		},
+	})
+
+	// Begin the transaction
+	DoExecTest(t, ExecTest{
+		Query: `BEGIN`,
+	})
+
+	numberOfInserts := 10
+
+	for i := 0; i < numberOfInserts; i++ {
+		result := DoQueryTest(t, QueryTest{
+			Query: fmt.Sprintf("INSERT INTO public.temp (number) VALUES(%d) RETURNING *;", i),
+		})
+		assert.Equal(t, int64(i), result[0][1], "the number column inserted does not match the number returned")
+		assert.True(t, result[0][0].(int64) > 0, "the ID column returned is not valid")
+	}
+
+	// Make sure the number of the rows in the table match the number of rows inserted
+	DoQueryTest(t, QueryTest{
+		Query: `SELECT COUNT(*) FROM public.temp;`,
+		Expected: [][]interface{}{
+			{int64(numberOfInserts)},
+		},
+	})
+
+	// Rollback the transaction
+	DoExecTest(t, ExecTest{
+		Query: `COMMIT`,
+	})
+
+	// Make sure the number of the rows in the table match the number of rows inserted after the commit
+	DoQueryTest(t, QueryTest{
+		Query: `SELECT COUNT(*) FROM public.temp;`,
+		Expected: [][]interface{}{
+			{int64(numberOfInserts)},
+		},
+	})
+
+	// Begin another transaction
+	DoExecTest(t, ExecTest{
+		Query: `BEGIN`,
+	})
+
+	// Make sure the number of the rows in the table match the number of rows inserted after the commit
+	DoExecTest(t, ExecTest{
+		Query: `DELETE FROM public.temp;`,
+	})
+
+	DoQueryTest(t, QueryTest{
+		Query: `SELECT COUNT(*) FROM public.temp;`,
+		Expected: [][]interface{}{
+			{int64(0)},
+		},
+	})
+
+	DoExecTest(t, ExecTest{
+		Query: `COMMIT`,
+	})
+
 	DoQueryTest(t, QueryTest{
 		Query: `SELECT COUNT(*) FROM public.temp;`,
 		Expected: [][]interface{}{

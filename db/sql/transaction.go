@@ -39,22 +39,75 @@ func (stmt *TransactionStatement) Execute(ex *connExecutor, res RestrictedComman
 	case pq.TRANS_STMT_BEGIN, pq.TRANS_STMT_START:
 		return ex.BeginTransaction()
 	case pq.TRANS_STMT_COMMIT:
-		if ex.TransactionState != TransactionState_NONE &&
-			ex.TransactionState != TransactionState_ENDING {
-			return errors.New("no transaction to rollback")
-		}
+		defer func() {
+			ex.TransactionState = TransactionState_NONE
+			ex.TransactionMode = TransactionMode_AutoCommit
+		}()
 
-		if err := ex.PrepareTwoPhase(); err != nil {
-			return err
-		} else {
-			return ex.CommitTwoPhase()
-		}
-	case pq.TRANS_STMT_ROLLBACK:
 		if ex.TransactionState != TransactionState_ENTERED {
+			// If the user sent a begin but then hasn't sent anything else, then simply exit the
+			// transaction.
+			if ex.TransactionState == TransactionState_PRE {
+				return nil
+			}
+			return errors.New("no transaction to commit")
+		}
+		ex.TransactionState = TransactionState_ENDING
+
+		nodesInTransaction := 0
+		for _, inTransaction := range ex.nodeTransactions {
+			if inTransaction {
+				nodesInTransaction++
+			}
+		}
+
+		// if there are no nodes currently in a transaction then simply return null
+		if nodesInTransaction == 0 {
+			return nil
+		} else if nodesInTransaction > 1 {
+			if err := ex.PrepareTwoPhase(); err != nil {
+				return err
+			} else {
+				return ex.CommitTwoPhase()
+			}
+		} else {
+			return ex.Commit()
+		}
+
+	case pq.TRANS_STMT_ROLLBACK:
+		defer func() {
+			ex.nSync.Lock()
+			defer ex.nSync.Unlock()
+			ex.TransactionState = TransactionState_NONE
+			ex.TransactionMode = TransactionMode_AutoCommit
+			ex.nodeTransactions = map[uint64]bool{}
+		}()
+
+		if ex.TransactionState != TransactionState_ENTERED {
+			// If the user sent a begin but then hasn't sent anything else, then simply exit the
+			// transaction.
+			if ex.TransactionState == TransactionState_PRE {
+				return nil
+			}
+
 			return errors.New("no transaction to rollback")
 		}
 
-		return ex.Rollback()
+		ex.TransactionState = TransactionState_ENDING
+
+		nodesInTransaction := 0
+		for _, inTransaction := range ex.nodeTransactions {
+			if inTransaction {
+				nodesInTransaction++
+			}
+		}
+
+		// if there are no nodes currently in a transaction then simply return null
+		if nodesInTransaction == 0 {
+			return nil
+		} else {
+			return ex.Rollback()
+		}
 	}
 	return nil
 }

@@ -19,6 +19,7 @@ package sql
 import (
 	"fmt"
 	"github.com/kataras/go-errors"
+	"github.com/readystock/golog"
 	"github.com/readystock/noah/db/sql/plan"
 	"github.com/readystock/noah/db/system"
 	"github.com/readystock/pg_query_go/nodes"
@@ -36,8 +37,18 @@ func CreateDeleteStatement(stmt pg_query.DeleteStmt) *DeleteStatement {
 }
 
 func (stmt *DeleteStatement) Execute(ex *connExecutor, res RestrictedCommandResult, pinfo *plan.PlaceholderInfo) error {
+	targetNodes, err := stmt.getTargetNodes(ex)
+	if err != nil {
+		return err
+	}
+	golog.Debugf("Preparing to send query to %d node(s)", len(targetNodes))
 
-	return nil
+	plans, err := stmt.compilePlan(ex, targetNodes)
+	if err != nil {
+		return err
+	}
+
+	return ex.ExecutePlans(plans, res)
 }
 
 func (stmt *DeleteStatement) getTargetNodes(ex *connExecutor) ([]system.NNode, error) {
@@ -51,18 +62,27 @@ func (stmt *DeleteStatement) getTargetNodes(ex *connExecutor) ([]system.NNode, e
 		return nil, errors.New(fmt.Sprintf("table [%s] does not exist", tableName))
 	}
 
-	if stmt.Statement.WhereClause == nil {
+	accountIds, err := stmt.getAccountIds()
+	if err != nil {
+		return nil, err
+	}
+
+	if len(accountIds) > 1 {
+		return nil, errors.New("cannot delete into more than 1 account ID at this time")
+	}
+
+	if len(accountIds) == 0 {
 		// If there is no where clause then we are deleting everything from the table.
 		// In the future we will want to add something to restrict this and allow
 		// users to configure this.
-		_, err := ex.SystemContext.Nodes.GetNodes()
-		if err != nil {
-			return nil, err
-		}
-
+		return ex.SystemContext.Nodes.GetNodes()
 	}
 
-	return nil, nil
+	return ex.SystemContext.Accounts.GetNodesForAccounts(accountIds...)
+}
+
+func (stmt *DeleteStatement) getAccountIds() ([]uint64, error) {
+	return make([]uint64, 0), nil
 }
 
 func (stmt *DeleteStatement) compilePlan(ex *connExecutor, nodes []system.NNode) ([]plan.NodeExecutionPlan, error) {

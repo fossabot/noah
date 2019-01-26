@@ -193,7 +193,7 @@ func DoQueryTest(t *testing.T, test QueryTest) [][]interface{} {
 
 	defer result.Close()
 
-	results := make([][]interface{}, len(test.Expected))
+	results := make([][]interface{}, 0)
 
 	index := 0
 	for result.Next() {

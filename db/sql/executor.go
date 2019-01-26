@@ -142,7 +142,7 @@ func (ex *connExecutor) ExecutePlans(plans []plan.NodeExecutionPlan, res Restric
 			} else {
 				golog.Debugf("no rows returned for query `%s`", plans[0].CompiledQuery)
 			}
-		case pg_query.DDL:
+		case pg_query.DDL, pg_query.RowsAffected:
 			if response.Rows != nil {
 				response.Rows.Next()
 
@@ -154,7 +154,7 @@ func (ex *connExecutor) ExecutePlans(plans []plan.NodeExecutionPlan, res Restric
 				response.Rows.Close()
 			}
 		default:
-			return errors.Errorf("cannot handle statement type %d", response.Type)
+			return errors.Errorf("cannot handle statement type [%s]", response.Type.String())
 		}
 	}
 	golog.Debugf("%d row(s) compiled for query `%s`", len(result), plans[0].CompiledQuery)
@@ -231,7 +231,7 @@ func (ex *connExecutor) RollbackTwoPhase() error {
 	golog.Debugf("preparing two-phase rollback for changes on %d node(s), transaction ID [%d]", len(ex.nodes), ex.TransactionID)
 
 	return ex.doTransaction(func(nodeID uint64) string {
-		return fmt.Sprintf("ROLLBACK TRANSACTION %d_%d", nodeID, ex.TransactionID)
+		return fmt.Sprintf(`ROLLBACK TRANSACTION %d%d`, nodeID, ex.TransactionID)
 	})
 }
 
