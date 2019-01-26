@@ -76,8 +76,8 @@ func (ex *connExecutor) ExecutePlans(plans []plan.NodeExecutionPlan, res Restric
 				responses <- &exResponse
 			}()
 
-			golog.Infof("executing query: `%s` on database node [%d]", pln.CompiledQuery, pln.Node.NodeId)
-			conn, err := ex.GetNodeConnection(pln.Node.NodeId)
+			golog.Infof("executing query: `%s` on database node [%d] | transaction: %v", pln.CompiledQuery, pln.Node.NodeId, !pln.ReadOnly && len(plans) > 1)
+			conn, err := ex.GetNodeConnection(pln.Node.NodeId, !pln.ReadOnly && len(plans) > 1)
 			if err != nil {
 				golog.Errorf(err.Error())
 				exResponse.Error = err
@@ -159,7 +159,11 @@ func (ex *connExecutor) ExecutePlans(plans []plan.NodeExecutionPlan, res Restric
 	}
 	golog.Debugf("%d row(s) compiled for query `%s`", len(result), plans[0].CompiledQuery)
 
-	if ex.TransactionMode == TransactionMode_AutoCommit {
+	// Transaction handling.
+	switch ex.TransactionState {
+	case TransactionState_NONE:
+		// If we are not in a transaction then we want to treat each write statement
+		// as a transaction.
 		if linq.From(plans).AnyWithT(func(plan plan.NodeExecutionPlan) bool {
 			return !plan.ReadOnly
 		}) {
@@ -167,14 +171,27 @@ func (ex *connExecutor) ExecutePlans(plans []plan.NodeExecutionPlan, res Restric
 			if len(errs) == 0 {
 				// If we are targeting more than 1 node then we want to handle that.
 				if len(ex.nodes) > 1 {
-					if err := ex.Commit(); err != nil {
+					if err := ex.PrepareTwoPhase(); err != nil {
 						return util.CombineErrors(append(errs, err))
 					}
+
+					if err := ex.CommitTwoPhase(); err != nil {
+						return util.CombineErrors(append(errs, err))
+					}
+					return util.CombineErrors(errs)
+				} else {
+					return util.CombineErrors(errs)
 				}
-			} else {
-				return util.CombineErrors(errs)
 			}
 		}
+	case TransactionState_PRE:
+		// Technically this should not be able to happen.
+	case TransactionState_ENTERED:
+
+	case TransactionState_ENDING:
+
+	default:
+
 	}
 	return util.CombineErrors(errs)
 }
@@ -245,9 +262,15 @@ func (ex *connExecutor) Rollback() error {
 }
 
 func (ex *connExecutor) doTransaction(query func(nodeID uint64) string) error {
+	ex.nSync.Lock()
+	defer ex.nSync.Unlock()
 	if ex.nodes == nil {
 		ex.nodes = map[uint64]*npgx.Conn{}
 		return nil // There were never any transactions to release
+	}
+
+	if ex.nodeTransactions == nil {
+		ex.nodeTransactions = map[uint64]bool{}
 	}
 
 	// golog.Debugf("preparing two-phase commit for changes on %d node(s), transaction ID [%d]", len(ex.nodes), transactionID)
@@ -260,6 +283,17 @@ func (ex *connExecutor) doTransaction(query func(nodeID uint64) string) error {
 				NodeID: id,
 			}
 			defer func() { responses <- response }()
+
+			nodeInTransaction, ok := ex.nodeTransactions[id]
+			if !ok {
+				nodeInTransaction = false
+			}
+
+			// if the node is not in a transaction then don't send any transaction nodes
+			if !nodeInTransaction {
+				return
+			}
+
 			result, err := conn.Query(query(id))
 			if err != nil {
 				response.Error = err

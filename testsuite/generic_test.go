@@ -61,7 +61,7 @@ func Test_Select_CurrentUser(t *testing.T) {
 }
 
 func Test_Select_Numeric(t *testing.T) {
-	t.Skip("numeric types are not supported by noah's client facing wire yet")
+	t.Skip("numeric types are not supported by noah's wire yet")
 	DoQueryTest(t, QueryTest{
 		Query: "SELECT 5.5;",
 		Args:  nil,
@@ -231,4 +231,59 @@ func Test_Create_And_InsertWithSerial(t *testing.T) {
 		assert.Equal(t, int64(i), result[0][1], "the number column inserted does not match the number returned")
 		assert.True(t, result[0][0].(int64) > 0, "the ID column returned is not valid")
 	}
+}
+
+func Test_Create_And_InsertWithSerial_Transaction(t *testing.T) {
+	DoExecTest(t, ExecTest{
+		Query: "DROP TABLE IF EXISTS public.temp CASCADE;",
+	})
+	DoExecTest(t, ExecTest{
+		Query: "CREATE TABLE public.temp (id BIGSERIAL, number BIGINT);",
+	})
+	defer DoExecTest(t, ExecTest{
+		Query: "DROP TABLE public.temp CASCADE;",
+	})
+
+	DoQueryTest(t, QueryTest{
+		Query: `SELECT COUNT(*) FROM public.temp;`,
+		Expected: [][]interface{}{
+			{int64(0)},
+		},
+	})
+
+	// Begin the transaction
+	DoExecTest(t, ExecTest{
+		Query: `BEGIN`,
+	})
+
+	numberOfInserts := 10
+
+	for i := 0; i < numberOfInserts; i++ {
+		result := DoQueryTest(t, QueryTest{
+			Query: fmt.Sprintf("INSERT INTO public.temp (number) VALUES(%d) RETURNING *;", i),
+		})
+		assert.Equal(t, int64(i), result[0][1], "the number column inserted does not match the number returned")
+		assert.True(t, result[0][0].(int64) > 0, "the ID column returned is not valid")
+	}
+
+	// Make sure the number of the rows in the table match the number of rows inserted
+	DoQueryTest(t, QueryTest{
+		Query: `SELECT COUNT(*) FROM public.temp;`,
+		Expected: [][]interface{}{
+			{int64(numberOfInserts)},
+		},
+	})
+
+	// Rollback the transaction
+	DoExecTest(t, ExecTest{
+		Query: `ROLLBACK`,
+	})
+
+	// Make sure the number of rows in the table is 0
+	DoQueryTest(t, QueryTest{
+		Query: `SELECT COUNT(*) FROM public.temp;`,
+		Expected: [][]interface{}{
+			{int64(0)},
+		},
+	})
 }

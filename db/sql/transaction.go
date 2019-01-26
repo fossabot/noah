@@ -53,7 +53,8 @@ func (stmt *TransactionStatement) Execute(ex *connExecutor, res RestrictedComman
 		if ex.TransactionState != TransactionState_ENTERED {
 			return errors.New("no transaction to rollback")
 		}
-		return ex.RollbackTwoPhase()
+
+		return ex.Rollback()
 	}
 	return nil
 }

@@ -47,6 +47,7 @@ type connExecutor struct {
 
 	nSync            sync.Mutex
 	nodes            map[uint64]*npgx.Conn
+	nodeTransactions map[uint64]bool
 	TransactionState TransactionState
 	TransactionMode  TransactionMode
 	TransactionID    uint64
@@ -63,11 +64,14 @@ func (ex *connExecutor) BacklogQuery(query string) {
 	ex.Backlog = append(ex.Backlog, query)
 }
 
-func (ex *connExecutor) GetNodeConnection(nodeId uint64) (*npgx.Conn, error) {
+func (ex *connExecutor) GetNodeConnection(nodeId uint64, doTransaction bool) (*npgx.Conn, error) {
 	ex.nSync.Lock()
 	defer ex.nSync.Unlock()
 	if ex.nodes == nil {
 		ex.nodes = map[uint64]*npgx.Conn{}
+	}
+	if ex.nodeTransactions == nil {
+		ex.nodeTransactions = map[uint64]bool{}
 	}
 
 	conn, ok := ex.nodes[nodeId]
@@ -78,32 +82,34 @@ func (ex *connExecutor) GetNodeConnection(nodeId uint64) (*npgx.Conn, error) {
 			golog.Errorf(err.Error())
 			return nil, err
 		} else {
-			if ex.nodes == nil {
-				ex.nodes = map[uint64]*npgx.Conn{}
-			}
 			ex.nodes[nodeId] = t
 			golog.Warnf("new connection count is %d node(s) from executor", len(ex.nodes))
-
-			// We have just acquired a new connection to the node. If we are currently in a transaction state
-			// then we will want to begin a transaction on this node.
-			if ex.TransactionState == TransactionState_PRE ||
-				ex.TransactionState == TransactionState_ENTERED {
-
-				result, err := t.Query("BEGIN")
-				if err != nil {
-					return nil, err
-				}
-
-				result.Next()
-
-				if result.Err() != nil {
-					return nil, result.Err()
-				}
-			}
-
-			return t, nil
+			conn = t
 		}
 	}
+
+	nodeInTransaction, ok := ex.nodeTransactions[nodeId]
+	if !ok {
+		nodeInTransaction = false
+	}
+
+	// We have just acquired a new connection to the node. If we are currently in a transaction state
+	// then we will want to begin a transaction on this node.
+	if !nodeInTransaction && (doTransaction || ex.TransactionState == TransactionState_PRE || ex.TransactionState == TransactionState_ENTERED) {
+		result, err := conn.Query("BEGIN")
+		if err != nil {
+			return nil, err
+		}
+
+		result.Next()
+
+		if result.Err() != nil {
+			return nil, result.Err()
+		}
+		ex.TransactionState = TransactionState_ENTERED
+		ex.nodeTransactions[nodeId] = true
+	}
+
 	return conn, nil
 }
 
