@@ -242,3 +242,21 @@ func DoExecTest(t *testing.T, test ExecTest) {
 	assert.Equal(t, test.Expected, result.RowsAffected(),
 		"`%s` | %v - did not return expected rows affected", test.Query, test.Args)
 }
+
+func Begin(t *testing.T) {
+	DoExecTest(t, ExecTest{
+		Query: `BEGIN`,
+	})
+}
+
+func Rollback(t *testing.T) {
+	DoExecTest(t, ExecTest{
+		Query: `ROLLBACK`,
+	})
+}
+
+func Commit(t *testing.T) {
+	DoExecTest(t, ExecTest{
+		Query: `COMMIT`,
+	})
+}

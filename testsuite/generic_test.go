@@ -252,9 +252,7 @@ func Test_Create_And_InsertWithSerial_Rollback(t *testing.T) {
 	})
 
 	// Begin the transaction
-	DoExecTest(t, ExecTest{
-		Query: `BEGIN`,
-	})
+	Begin(t)
 
 	numberOfInserts := 10
 
@@ -275,9 +273,7 @@ func Test_Create_And_InsertWithSerial_Rollback(t *testing.T) {
 	})
 
 	// Rollback the transaction
-	DoExecTest(t, ExecTest{
-		Query: `ROLLBACK`,
-	})
+	Rollback(t)
 
 	// Make sure the number of rows in the table is 0
 	DoQueryTest(t, QueryTest{
@@ -307,9 +303,7 @@ func Test_Create_And_InsertWithSerial_Commit(t *testing.T) {
 	})
 
 	// Begin the transaction
-	DoExecTest(t, ExecTest{
-		Query: `BEGIN`,
-	})
+	Begin(t)
 
 	numberOfInserts := 10
 
@@ -330,9 +324,7 @@ func Test_Create_And_InsertWithSerial_Commit(t *testing.T) {
 	})
 
 	// Rollback the transaction
-	DoExecTest(t, ExecTest{
-		Query: `COMMIT`,
-	})
+	Commit(t)
 
 	// Make sure the number of the rows in the table match the number of rows inserted after the commit
 	DoQueryTest(t, QueryTest{
@@ -343,9 +335,7 @@ func Test_Create_And_InsertWithSerial_Commit(t *testing.T) {
 	})
 
 	// Begin another transaction
-	DoExecTest(t, ExecTest{
-		Query: `BEGIN`,
-	})
+	Begin(t)
 
 	// Make sure the number of the rows in the table match the number of rows inserted after the commit
 	DoExecTest(t, ExecTest{
@@ -359,9 +349,7 @@ func Test_Create_And_InsertWithSerial_Commit(t *testing.T) {
 		},
 	})
 
-	DoExecTest(t, ExecTest{
-		Query: `COMMIT`,
-	})
+	Commit(t)
 
 	DoQueryTest(t, QueryTest{
 		Query: `SELECT COUNT(*) FROM public.temp;`,
