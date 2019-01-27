@@ -18,6 +18,7 @@ package testsuite
 
 import (
 	"fmt"
+	"github.com/jackc/pgx/pgtype"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
@@ -62,11 +63,13 @@ func Test_Select_CurrentUser(t *testing.T) {
 
 func Test_Select_Numeric(t *testing.T) {
 	t.Skip("numeric types are not supported by noah's wire yet")
+	val := pgtype.Numeric{}
+	val.Set(5.5)
 	DoQueryTest(t, QueryTest{
 		Query: "SELECT 5.5;",
 		Args:  nil,
 		Expected: [][]interface{}{
-			{5.5},
+			{&val},
 		},
 	})
 }

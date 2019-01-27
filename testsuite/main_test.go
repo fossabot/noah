@@ -104,6 +104,7 @@ func TestMain(m *testing.M) {
 				WebAddr:        "127.0.0.1:0",
 				JoinAddr:       "",
 				StoreDirectory: tempFolder,
+				LogLevel:       "verbose",
 			}, sctx)
 		}()
 		golog.Info("waiting for cluster to start up")

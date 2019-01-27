@@ -93,7 +93,7 @@ func init() {
 	startCmd.Flags().StringVarP(&WebAddr, "web", "w", ":5435", "address that will be used for Noah's HTTP interface")
 	startCmd.Flags().StringVarP(&JoinAddr, "join", "j", "", "address and gRPC port of another node in a cluster to join")
 	startCmd.Flags().StringVarP(&StoreDirectory, "store", "s", "data", "directory that will be used for Noah's key value store")
-	startCmd.Flags().StringVarP(&LogLevel, "log", "l", "verbose", "log output level, valid values: verbose, debug, info, warn, error, fatal")
+	startCmd.Flags().StringVarP(&LogLevel, "log", "l", "verbose", "log output level, valid values: trace, verbose, debug, info, warn, error, fatal")
 	rootCmd.AddCommand(startCmd)
 }
 
@@ -114,6 +114,7 @@ type NodeConfig struct {
 }
 
 func RunNode(config NodeConfig, sctx *system.SContext) {
+	golog.SetLevel(config.LogLevel)
 	golog.Infof("Starting noah...")
 
 	s, err := system.NewSystemContext(config.StoreDirectory, config.GrpcAddr, config.JoinAddr, config.PGWireAddr)

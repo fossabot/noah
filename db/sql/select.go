@@ -129,6 +129,9 @@ func (stmt *SelectStatement) getAccountIDs() ([]uint64, error) {
 }
 
 func (stmt *SelectStatement) compilePlan(ex *connExecutor, nodes []system.NNode) ([]plan.NodeExecutionPlan, error) {
+	if err := stmt.handleNoahFunctions(ex); err != nil {
+		return nil, err
+	}
 	plans := make([]plan.NodeExecutionPlan, len(nodes))
 	deparsed, err := pg_query.Deparse(stmt.Statement)
 	if err != nil {
@@ -143,4 +146,13 @@ func (stmt *SelectStatement) compilePlan(ex *connExecutor, nodes []system.NNode)
 		}
 	}
 	return plans, nil
+}
+
+func (stmt *SelectStatement) handleNoahFunctions(ex *connExecutor) error {
+	newStmt, err := queryutil.ReplaceFunctionCalls(stmt.Statement, ex.GetDropInFunctions())
+	if err != nil {
+		return err
+	}
+	stmt.Statement = newStmt.(pg_query.SelectStmt)
+	return nil
 }

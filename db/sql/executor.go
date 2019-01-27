@@ -40,7 +40,7 @@ func (ex *connExecutor) ExecutePlans(plans []plan.NodeExecutionPlan, res Restric
 	errs := make([]error, 0)
 	defer func() {
 		if ex.TransactionState == TransactionState_NONE {
-			golog.Errorf("done executing non-transaction statement, releasing connections")
+			golog.Infof("done executing non-transaction statement, releasing connections")
 			if err := ex.ReleaseAllConnections(); err != nil {
 				errs = append(errs, err)
 			}
@@ -49,7 +49,7 @@ func (ex *connExecutor) ExecutePlans(plans []plan.NodeExecutionPlan, res Restric
 
 	// defer util.CatchPanic(&err)
 	if len(plans) == 0 {
-		golog.Errorf("no plans were provided, nothing will be executed")
+		golog.Warnf("no plans were provided, nothing will be executed")
 		return errors.New("no plans were provided")
 	}
 

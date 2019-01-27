@@ -141,7 +141,7 @@ func (ex *connExecutor) ReleaseNodeConnection(nodeId uint64) error {
 func (ex *connExecutor) ReleaseAllConnections() error {
 	errs := make([]error, 0)
 	// return any connections to pool.
-	golog.Warnf("releasing connection to %d node(s) from executor", len(ex.nodes))
+	golog.Infof("releasing connection to %d node(s) from executor", len(ex.nodes))
 	for nodeId := range ex.nodes {
 		golog.Verbosef("releasing connection to node [%d] from executor", nodeId)
 		if err := ex.ReleaseNodeConnection(nodeId); err != nil {

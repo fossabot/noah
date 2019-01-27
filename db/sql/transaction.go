@@ -17,6 +17,7 @@
 package sql
 
 import (
+	"fmt"
 	"github.com/kataras/go-errors"
 	"github.com/readystock/noah/db/sql/plan"
 	"github.com/readystock/noah/db/system"
@@ -122,7 +123,7 @@ func (stmt *TransactionStatement) compilePlan(ex *connExecutor, nodes []system.N
 
 func (ex *connExecutor) BeginTransaction() error {
 	if ex.TransactionState != TransactionState_NONE {
-		return errors.New("error cannot begin transaction at this time")
+		return errors.New(fmt.Sprintf("error cannot begin transaction at this time, current transaction state [%s]", ex.TransactionState.String()))
 	}
 
 	if id, err := ex.SystemContext.NewSnowflake(); err != nil {

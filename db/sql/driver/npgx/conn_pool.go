@@ -180,7 +180,7 @@ func (p *ConnPool) Acquire() (*Conn, error) {
 
 // acquire performs acquision assuming pool is already locked
 func (p *ConnPool) acquire(deadline *time.Time) (*Conn, error) {
-	golog.Verbosef("acquiring connection for node [%d]", p.config.NodeId)
+	// golog.Verbosef("acquiring connection for node [%d]", p.config.NodeId)
 	if p.closed {
 		return nil, ErrClosedPool
 	}
