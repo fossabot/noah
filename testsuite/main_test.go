@@ -19,6 +19,7 @@ package testsuite
 import (
 	"fmt"
 	"github.com/jackc/pgx"
+	"github.com/readystock/golinq"
 	"github.com/readystock/golog"
 	"github.com/readystock/noah/cmd"
 	"github.com/readystock/noah/db/system"
@@ -41,7 +42,7 @@ var (
 		Logger:   NewLogger(),
 	}
 	SystemCtx     *system.SContext
-	NumberOfNodes = 1
+	NumberOfNodes = 2
 	Connection    *pgx.Conn
 )
 
@@ -67,6 +68,8 @@ func TestMain(m *testing.M) {
 		}
 	}
 
+	SetupTestDatabases(nodes)
+
 	golog.SetLevel("trace")
 	retCode := func() int {
 		golog.Infof("SETTING UP TEST DATABASE")
@@ -74,16 +77,6 @@ func TestMain(m *testing.M) {
 		postgres, err := pgx.Connect(postgresConfig)
 		if err != nil {
 			panic(err)
-		}
-
-		for _, node := range nodes {
-			if _, err := postgres.Exec(fmt.Sprintf("DROP DATABASE IF EXISTS %s", node.Database)); err != nil {
-				panic(err)
-			}
-
-			if _, err := postgres.Exec(fmt.Sprintf("CREATE DATABASE %s", node.Database)); err != nil {
-				panic(err)
-			}
 		}
 
 		defer func() {
@@ -154,6 +147,71 @@ func TestMain(m *testing.M) {
 	os.Exit(retCode)
 }
 
+func SetupTestDatabases(nodes []system.NNode) {
+
+	postgres, err := pgx.Connect(postgresConfig)
+	if err != nil {
+		panic(err)
+	}
+
+	GID_INDEX := 0
+	DATABASE_INDEX := 1
+	preparedResult, err := postgres.Query(`SELECT gid, database FROM pg_prepared_xacts`)
+	if err != nil {
+		panic(err)
+	}
+
+	results := make([][]interface{}, 0)
+	for preparedResult.Next() {
+		row, err := preparedResult.Values()
+		if err != nil {
+			panic(err)
+		}
+		results = append(results, row)
+	}
+
+	for _, node := range nodes {
+		gids := make([]string, 0)
+		// Retrieve all the GIDs for the current database that might still exist
+		linq.From(results).WhereT(func(row []interface{}) bool {
+			return row[DATABASE_INDEX].(string) == node.Database
+		}).SelectT(func(row []interface{}) string {
+			return row[GID_INDEX].(string)
+		}).ToSlice(&gids)
+
+		if len(gids) > 0 {
+			golog.Warnf("there are still outstanding two-phase commits for test database [%s], these will be rolled back and then the database will be dropped", node.Database)
+			tConfig := postgresConfig
+			tConfig.Database = node.Database
+			tConn, err := pgx.Connect(tConfig)
+			if err != nil {
+				panic(err)
+			}
+			for _, gid := range gids {
+				if _, err := tConn.Exec(fmt.Sprintf(`ROLLBACK PREPARED '%s'`, gid)); err != nil {
+					panic(err)
+				}
+			}
+		}
+
+		if _, err := postgres.Exec(fmt.Sprintf("SELECT pg_terminate_backend(pg_stat_activity.pid) FROM pg_stat_activity WHERE pg_stat_activity.datname = '%s';", node.Database)); err != nil {
+			panic(err)
+		}
+
+		if _, err := postgres.Exec(fmt.Sprintf("DROP DATABASE IF EXISTS %s", node.Database)); err != nil {
+			panic(err)
+		}
+
+		if _, err := postgres.Exec(fmt.Sprintf("CREATE DATABASE %s", node.Database)); err != nil {
+			panic(err)
+		}
+	}
+}
+
+func TearDownTestDatabases() {
+
+}
+
 func GetConnection() *pgx.Conn {
 	addr, err := net.ResolveTCPAddr("tcp", SystemCtx.PgListenAddr())
 	if err != nil {
@@ -219,8 +277,8 @@ func DoQueryTest(t *testing.T, test QueryTest) [][]interface{} {
 		index++
 	}
 
-	if result.Err() != nil {
-		golog.Error(result.Err())
+	if err := result.Err(); err != nil {
+		golog.Error(err)
 		t.Error(err)
 		t.FailNow()
 	}

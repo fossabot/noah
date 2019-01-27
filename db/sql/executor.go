@@ -116,8 +116,6 @@ func (ex *connExecutor) ExecutePlans(plans []plan.NodeExecutionPlan, res Restric
 						res.SetColumns(columns)
 					}
 
-					golog.Debugf("retrieved %d column(s)", len(columns))
-
 					row := make([]types.Value, len(columns))
 					if values, err := response.Rows.PgValues(); err != nil {
 						golog.Errorf("reading values from wire: %v", err.Error())
@@ -159,36 +157,41 @@ func (ex *connExecutor) ExecutePlans(plans []plan.NodeExecutionPlan, res Restric
 	}
 	golog.Debugf("%d row(s) compiled for query `%s`", len(result), plans[0].CompiledQuery)
 
-	// Transaction handling.
-	switch ex.TransactionState {
-	case TransactionState_NONE:
-		// If we are not in a transaction then we want to treat each write statement
-		// as a transaction.
-		if linq.From(plans).AnyWithT(func(plan plan.NodeExecutionPlan) bool {
-			return !plan.ReadOnly
-		}) {
-			// If there were writes in the current query plan.
-			if len(errs) == 0 {
-				// If we are targeting more than 1 node then we want to handle that.
-				if len(ex.nodes) > 1 {
-					if err := ex.PrepareTwoPhase(); err != nil {
-						return util.CombineErrors(append(errs, err))
-					}
+	switch ex.TransactionMode {
+	case TransactionMode_AutoCommit:
+		// Transaction handling.
+		switch ex.TransactionState {
+		case TransactionState_NONE, TransactionState_ENTERED:
+			// If we are not in a transaction then we want to treat each write statement
+			// as a transaction.
+			if linq.From(plans).AnyWithT(func(plan plan.NodeExecutionPlan) bool {
+				return !plan.ReadOnly
+			}) {
+				// If there were writes in the current query plan.
+				if len(errs) == 0 {
+					// If we are targeting more than 1 node then we want to handle that.
+					if len(ex.nodes) > 1 {
+						if err := ex.PrepareTwoPhase(); err != nil {
+							return util.CombineErrors(append(errs, err))
+						}
 
-					if err := ex.CommitTwoPhase(); err != nil {
-						return util.CombineErrors(append(errs, err))
+						if err := ex.CommitTwoPhase(); err != nil {
+							return util.CombineErrors(append(errs, err))
+						}
+						return util.CombineErrors(errs)
+					} else {
+						return util.CombineErrors(errs)
 					}
-					return util.CombineErrors(errs)
-				} else {
-					return util.CombineErrors(errs)
 				}
 			}
-		}
-	case TransactionState_PRE:
-		// Technically this should not be able to happen.
-	case TransactionState_ENTERED:
+		case TransactionState_PRE:
+			// Technically this should not be able to happen.
+		case TransactionState_ENDING:
 
-	case TransactionState_ENDING:
+		default:
+
+		}
+	case TransactionMode_Manual:
 
 	default:
 
@@ -204,58 +207,77 @@ func (ex *connExecutor) PrepareTwoPhase() error {
 
 	golog.Debugf("preparing two-phase transaction for changes on %d node(s), transaction ID [%d]", len(ex.nodes), ex.TransactionID)
 
-	return ex.doTransaction(func(nodeID uint64) string {
-		return fmt.Sprintf("PREPARE TRANSACTION %d_%d", nodeID, ex.TransactionID)
-	})
+	if err := ex.doTransaction(func(nodeID uint64) string {
+		return fmt.Sprintf(`PREPARE TRANSACTION '%d%d'`, nodeID, ex.TransactionID)
+	}); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (ex *connExecutor) CommitTwoPhase() error {
+	defer func() {
+		transactionId, _ := ex.SystemContext.NewSnowflake()
+		ex.TransactionID = transactionId
+	}()
 	if ex.nodes == nil {
 		ex.nodes = map[uint64]*npgx.Conn{}
 		return nil // There were never any transactions to release
 	}
 
 	golog.Debugf("preparing two-phase commit for changes on %d node(s), transaction ID [%d]", len(ex.nodes), ex.TransactionID)
-
+	ex.TransactionState = TransactionState_NONE
 	return ex.doTransaction(func(nodeID uint64) string {
-		return fmt.Sprintf("COMMIT TRANSACTION %d_%d", nodeID, ex.TransactionID)
+		return fmt.Sprintf(`COMMIT PREPARED '%d%d'`, nodeID, ex.TransactionID)
 	})
 }
 
 func (ex *connExecutor) RollbackTwoPhase() error {
+	defer func() {
+		transactionId, _ := ex.SystemContext.NewSnowflake()
+		ex.TransactionID = transactionId
+	}()
 	if ex.nodes == nil {
 		ex.nodes = map[uint64]*npgx.Conn{}
 		return nil // There were never any transactions to release
 	}
 
 	golog.Debugf("preparing two-phase rollback for changes on %d node(s), transaction ID [%d]", len(ex.nodes), ex.TransactionID)
-
+	ex.TransactionState = TransactionState_NONE
 	return ex.doTransaction(func(nodeID uint64) string {
-		return fmt.Sprintf(`ROLLBACK TRANSACTION %d%d`, nodeID, ex.TransactionID)
+		return fmt.Sprintf(`ROLLBACK PREPARED '%d%d'`, nodeID, ex.TransactionID)
 	})
 }
 
 func (ex *connExecutor) Commit() error {
+	defer func() {
+		transactionId, _ := ex.SystemContext.NewSnowflake()
+		ex.TransactionID = transactionId
+	}()
 	if ex.nodes == nil {
 		ex.nodes = map[uint64]*npgx.Conn{}
 		return nil // There were never any transactions to release
 	}
 
 	golog.Debugf("committing changes on %d node(s), transaction ID [%d]", len(ex.nodes), ex.TransactionID)
-
+	ex.TransactionState = TransactionState_NONE
 	return ex.doTransaction(func(nodeID uint64) string {
 		return "COMMIT"
 	})
 }
 
 func (ex *connExecutor) Rollback() error {
+	defer func() {
+		transactionId, _ := ex.SystemContext.NewSnowflake()
+		ex.TransactionID = transactionId
+	}()
 	if ex.nodes == nil {
 		ex.nodes = map[uint64]*npgx.Conn{}
 		return nil // There were never any transactions to release
 	}
 
 	golog.Debugf("rolling back changes on %d node(s), transaction ID [%d]", len(ex.nodes), ex.TransactionID)
-
+	ex.TransactionState = TransactionState_NONE
 	return ex.doTransaction(func(nodeID uint64) string {
 		return "ROLLBACK"
 	})
@@ -278,13 +300,13 @@ func (ex *connExecutor) doTransaction(query func(nodeID uint64) string) error {
 	count := len(ex.nodes)
 	responses := make(chan executeResponse, count)
 	for id, conn := range ex.nodes {
-		func(conn *npgx.Conn) {
+		go func(conn *npgx.Conn, nodeId uint64) {
 			response := executeResponse{
-				NodeID: id,
+				NodeID: nodeId,
 			}
 			defer func() { responses <- response }()
 
-			nodeInTransaction, ok := ex.nodeTransactions[id]
+			nodeInTransaction, ok := ex.nodeTransactions[nodeId]
 			if !ok {
 				nodeInTransaction = false
 			}
@@ -294,7 +316,9 @@ func (ex *connExecutor) doTransaction(query func(nodeID uint64) string) error {
 				return
 			}
 
-			result, err := conn.Query(query(id))
+			qry := query(nodeId)
+			golog.Verbosef("issuing transaction query `%s` to node [%d]", qry, nodeId)
+			result, err := conn.Query(qry)
 			if err != nil {
 				response.Error = err
 				return
@@ -305,18 +329,21 @@ func (ex *connExecutor) doTransaction(query func(nodeID uint64) string) error {
 			if err := result.Err(); err != nil {
 				response.Error = err
 			}
-		}(conn)
+		}(conn, id)
 	}
 
 	errs := make([]error, 0)
 	for i := 0; i < count; i++ {
 		response := <-responses
+		golog.Verbosef("finished issuing transaction to node [%d]", response.NodeID)
 		if response.Error != nil {
+			golog.Errorf("error from transaction on node [%d]: %s", response.NodeID, response.Error)
 			errs = append(errs, response.Error)
+		} else {
+			golog.Verbosef("transaction on node [%d] was successful", response.NodeID)
 		}
 	}
 
-	golog.Verbosef("%d error(s) from execution %v", len(errs), errs)
+	golog.Verbosef("%d error(s) from execution", len(errs))
 	return util.CombineErrors(errs)
-
 }

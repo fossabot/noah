@@ -124,6 +124,8 @@ func (stmt *CreateStatement) compilePlan(ex *connExecutor, nodes []system.NNode)
 		return nil, err
 	}
 
+	stmt.Statement.Tablespacename = nil
+
 	compiled, err := pg_query.Deparse(stmt.Statement)
 	if err != nil {
 		golog.Error(err.Error())

@@ -326,7 +326,8 @@ func Test_Create_And_InsertWithSerial_Commit(t *testing.T) {
 	// Rollback the transaction
 	Commit(t)
 
-	// Make sure the number of the rows in the table match the number of rows inserted after the commit
+	// Make sure the number of the rows in the table match the number of rows inserted after the
+	// commit
 	DoQueryTest(t, QueryTest{
 		Query: `SELECT COUNT(*) FROM public.temp;`,
 		Expected: [][]interface{}{
@@ -337,7 +338,8 @@ func Test_Create_And_InsertWithSerial_Commit(t *testing.T) {
 	// Begin another transaction
 	Begin(t)
 
-	// Make sure the number of the rows in the table match the number of rows inserted after the commit
+	// Make sure the number of the rows in the table match the number of rows inserted after the
+	// commit
 	DoExecTest(t, ExecTest{
 		Query: `DELETE FROM public.temp;`,
 	})

@@ -108,6 +108,14 @@ func (ex *connExecutor) GetNodeConnection(nodeId uint64, doTransaction bool) (*n
 		}
 		ex.TransactionState = TransactionState_ENTERED
 		ex.nodeTransactions[nodeId] = true
+
+		if ex.TransactionID == 0 {
+			transactionId, err := ex.SystemContext.NewSnowflake()
+			if err != nil {
+				return nil, err
+			}
+			ex.TransactionID = transactionId
+		}
 	}
 
 	return conn, nil
@@ -126,6 +134,7 @@ func (ex *connExecutor) ReleaseNodeConnection(nodeId uint64) error {
 	}
 
 	delete(ex.nodes, nodeId)
+	delete(ex.nodeTransactions, nodeId)
 	return ex.SystemContext.Pool.Release(conn)
 }
 
