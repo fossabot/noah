@@ -17,9 +17,11 @@
 package system
 
 import (
+	"fmt"
 	"github.com/ahmetb/go-linq"
 	"github.com/golang/protobuf/proto"
 	"github.com/kataras/go-errors"
+	"github.com/readystock/golog"
 )
 
 type SAccounts baseContext
@@ -77,7 +79,7 @@ func (ctx *SAccounts) CreateAccount() (*NAccount, []NNode, error) {
 		return nil, nil, errors.New("could not create account, replication factor is greater than the number of nodes available in cluster")
 	}
 
-	accountId, err := (&sSequence).NewAccountID()
+	accountId, accountIdIndex, err := (&sSequence).NewAccountID()
 	if err != nil {
 		return nil, nil, err
 	}
@@ -86,16 +88,17 @@ func (ctx *SAccounts) CreateAccount() (*NAccount, []NNode, error) {
 	if int64(len(liveNodes)) == *replicationFactor {
 		accountNodes = liveNodes
 		for i := 0; i < len(liveNodes); i++ {
-			err = ctx.db.Set(getAccountsNodesAccountNodePath(*accountId, accountNodes[i].NodeId), []byte{})
+			err = ctx.db.Set(getAccountsNodesAccountNodePath(accountId, accountNodes[i].NodeId), []byte{})
 			if err != nil {
 				return nil, nil, err
 			}
 		}
 	} else {
 		for i := uint64(0); i < uint64(*replicationFactor); i++ {
-			accountNodes[i] = liveNodes[(*accountId+(i*uint64(*replicationFactor)))%uint64(len(nodes))] // This math takes the account id and distributes it in the cluster to pick a node
+			accountNodes[i] = liveNodes[(accountIdIndex+(i*uint64(*replicationFactor)))%uint64(len(nodes))] // This math takes the account id and distributes it in the cluster to pick a node
 			// TODO (elliotcourant) if the replication factor is > 1 and at least 1 of these sets fail then it could mess up the records of what nodes host what account
-			err = ctx.db.Set(getAccountsNodesAccountNodePath(*accountId, accountNodes[i].NodeId), []byte{})
+			golog.Errorf("associating account [%d] with node [%d]", accountId, accountNodes[i].NodeId)
+			err = ctx.db.Set(getAccountsNodesAccountNodePath(accountId, accountNodes[i].NodeId), []byte{})
 			if err != nil {
 				return nil, nil, err
 			}
@@ -103,14 +106,14 @@ func (ctx *SAccounts) CreateAccount() (*NAccount, []NNode, error) {
 	}
 
 	account := &NAccount{
-		AccountId: *accountId,
+		AccountId: accountId,
 	}
 	b, err := proto.Marshal(account)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	err = ctx.db.Set(getAccountsNodesAccountPath(*accountId), b)
+	err = ctx.db.Set(getAccountPath(accountId), b)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -130,18 +133,26 @@ func (ctx *SAccounts) GetNodesForAccounts(accountIds ...uint64) (nodes []NNode, 
 }
 
 func (ctx *SAccounts) GetNodesForAccount(accountId uint64) (nodes []NNode, err error) {
-	nodeBytes, err := ctx.db.GetPrefix(getAccountsNodesAccountPath(accountId))
+	path := getAccountsNodesAccountPath(accountId)
+	golog.Verbosef("getting account nodes from path [%s]", string(path))
+	nodeBytes, err := ctx.db.GetPrefix(path)
 	if err != nil {
 		return nil, err
 	}
 	nodes = make([]NNode, len(nodeBytes))
 	for i, kv := range nodeBytes {
-		node := NNode{}
-		err := proto.Unmarshal(kv.Value, &node)
+		golog.Verbosef("getting node ids from tuple [%v]", string(kv.Key))
+		_, nodeId := getIdsFromAccountNodesPath(kv.Key)
+		sNodes := SNode(*ctx)
+		node, err := sNodes.GetNode(nodeId)
 		if err != nil {
 			return nil, err
 		}
-		nodes[i] = node
+		if node == nil {
+			return nil, fmt.Errorf("node with ID [%d] does not exist, accountId [%d]", nodeId, accountId)
+		}
+		nodes[i] = *node
 	}
+	golog.Verbosef("NODES For Query: %v", nodes)
 	return nodes, nil
 }

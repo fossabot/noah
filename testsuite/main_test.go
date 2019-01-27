@@ -42,7 +42,7 @@ var (
 		Logger:   NewLogger(),
 	}
 	SystemCtx     *system.SContext
-	NumberOfNodes = 2
+	NumberOfNodes = 5
 	Connection    *pgx.Conn
 )
 
@@ -143,7 +143,11 @@ func TestMain(m *testing.M) {
 		}()
 
 		defer recoverName()
-		return m.Run()
+		exit := m.Run()
+
+		dist, _ := SystemCtx.Nodes.GetAccountDistribution()
+		golog.Infof("SHARD DIST: %v", dist)
+		return exit
 	}()
 	os.Exit(retCode)
 }

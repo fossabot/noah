@@ -17,95 +17,102 @@
 package system
 
 import (
-    "github.com/gogo/protobuf/proto"
-    "github.com/stretchr/testify/assert"
-    "testing"
+	"github.com/gogo/protobuf/proto"
+	"github.com/stretchr/testify/assert"
+	"testing"
 )
 
 func Test_Nodes_AddNodes(t *testing.T) {
-    addNodes := []NNode{
-        {
-            Address:   "127.0.0.1:0",
-            Port:      5432,
-            Database:  "postgres0",
-            User:      "postgres",
-            Password:  "",
-            ReplicaOf: 0,
-            Region:    "",
-            Zone:      "",
-            IsAlive:   false,
-        },
-        {
-            Address:   "127.0.0.1:0",
-            Port:      5432,
-            Database:  "postgres1",
-            User:      "postgres",
-            Password:  "",
-            ReplicaOf: 0,
-            Region:    "",
-            Zone:      "",
-            IsAlive:   false,
-        },
-        {
-            Address:   "127.0.0.1:0",
-            Port:      5432,
-            Database:  "postgres2",
-            User:      "postgres",
-            Password:  "",
-            ReplicaOf: 0,
-            Region:    "",
-            Zone:      "",
-            IsAlive:   false,
-        },
-    }
+	addNodes := []NNode{
+		{
+			Address:   "127.0.0.1:0",
+			Port:      5432,
+			Database:  "postgres0",
+			User:      "postgres",
+			Password:  "",
+			ReplicaOf: 0,
+			Region:    "",
+			Zone:      "",
+			IsAlive:   false,
+		},
+		{
+			Address:   "127.0.0.1:0",
+			Port:      5432,
+			Database:  "postgres1",
+			User:      "postgres",
+			Password:  "",
+			ReplicaOf: 0,
+			Region:    "",
+			Zone:      "",
+			IsAlive:   false,
+		},
+		{
+			Address:   "127.0.0.1:0",
+			Port:      5432,
+			Database:  "postgres2",
+			User:      "postgres",
+			Password:  "",
+			ReplicaOf: 0,
+			Region:    "",
+			Zone:      "",
+			IsAlive:   false,
+		},
+	}
 
-    for _, node := range addNodes {
-        newNode, err := SystemCtx.Nodes.AddNode(node)
-        if err != nil {
-            t.Error(err)
-            t.FailNow()
-        }
+	for _, node := range addNodes {
+		newNode, err := SystemCtx.Nodes.AddNode(node)
+		if err != nil {
+			t.Error(err)
+			t.FailNow()
+		}
 
-        node.NodeId = newNode.NodeId
-        assert.True(t, proto.Equal(&node, newNode), "returned node does not equal the expected result")
+		node.NodeId = newNode.NodeId
+		assert.True(t, proto.Equal(&node, newNode), "returned node does not equal the expected result")
 
-        getNode, err := SystemCtx.Nodes.GetNode(node.NodeId)
-        if err != nil {
-            t.Error(err)
-            t.FailNow()
-        }
+		getNode, err := SystemCtx.Nodes.GetNode(node.NodeId)
+		if err != nil {
+			t.Error(err)
+			t.FailNow()
+		}
 
-        assert.True(t, proto.Equal(newNode, getNode), "retrieved node does not match created node")
-    }
+		assert.True(t, proto.Equal(newNode, getNode), "retrieved node does not match created node")
+	}
 
+	n, err := SystemCtx.Nodes.GetNodes()
+	if err != nil {
+		t.Error(err)
+		t.Fail()
+	}
 
-    n, err := SystemCtx.Nodes.GetNodes()
-    if err != nil {
-        t.Error(err)
-        t.Fail()
-    }
+	assert.NotNil(t, n, "nodes should not be null")
 
-    assert.NotNil(t, n, "nodes should not be null")
+	assert.NotEmpty(t, n, "no nodes found, there should be at least 1")
 
-    assert.NotEmpty(t, n, "no nodes found, there should be at least 1")
-
-    for _, node := range n {
-        assert.True(t, node.NodeId > 0, "node ID is not greater than 0, this means that its possible that the node wasn't created")
-    }
+	for _, node := range n {
+		assert.True(t, node.NodeId > 0, "node ID is not greater than 0, this means that its possible that the node wasn't created")
+	}
 }
 
 func Test_Nodes_GetNodes(t *testing.T) {
-    n, err := SystemCtx.Nodes.GetNodes()
-    if err != nil {
-        t.Error(err)
-        t.Fail()
-    }
+	n, err := SystemCtx.Nodes.GetNodes()
+	if err != nil {
+		t.Error(err)
+		t.Fail()
+	}
 
-    assert.NotNil(t, n, "nodes should not be null")
+	assert.NotNil(t, n, "nodes should not be null")
 
-    assert.NotEmpty(t, n, "no nodes found, there should be at least 1")
+	assert.NotEmpty(t, n, "no nodes found, there should be at least 1")
 
-    for _, node := range n {
-        assert.True(t, node.NodeId > 0, "node ID is not greater than 0, this means that its possible that the node wasn't created")
-    }
+	for _, node := range n {
+		assert.True(t, node.NodeId > 0, "node ID is not greater than 0, this means that its possible that the node wasn't created")
+	}
+}
+
+func Test_Nodes_GetIdsFromAccountNodesPath(t *testing.T) {
+	originalAccountId, originalNodeId := uint64(12341), uint64(321)
+	path := getAccountsNodesAccountNodePath(originalAccountId, originalNodeId)
+	accountId, nodeId := getIdsFromAccountNodesPath(path)
+	assert.Equal(t, originalAccountId, accountId, "account IDs do not match")
+	assert.Equal(t, originalNodeId, nodeId, "node IDs do not match")
 }

@@ -19,13 +19,25 @@ package system
 type SSequence baseContext
 
 const (
-    AccountIdSequence = "noah.account_ids"
+	AccountIdSequence = "noah.account_ids"
 )
 
 func (sequences *SSequence) GetNextValueForSequence(sequenceName string) (*uint64, error) {
-    return sequences.db.NextSequenceValueById(sequenceName)
+	return sequences.db.NextSequenceValueById(sequenceName)
 }
 
-func (sequences *SSequence) NewAccountID() (*uint64, error) {
-    return sequences.db.NextSequenceValueById(AccountIdSequence)
+func (sequences *SSequence) GetSequenceIndex(sequenceName string) (uint64, error) {
+	return sequences.db.SequenceIndexById(sequenceName)
+}
+
+func (sequences *SSequence) NewAccountID() (uint64, uint64, error) {
+	accountId, err := sequences.db.NextSequenceValueById(AccountIdSequence)
+	if err != nil {
+		return 0, 0, err
+	}
+	accountIdIndex, err := sequences.db.SequenceIndexById(AccountIdSequence)
+	if err != nil {
+		return 0, 0, err
+	}
+	return *accountId, accountIdIndex, nil
 }

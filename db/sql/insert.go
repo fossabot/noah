@@ -81,7 +81,6 @@ func (stmt *InsertStatement) getTargetNodes(ex *connExecutor) ([]system.NNode, e
 		if len(accountIds) > 1 {
 			return nil, errors.New("cannot insert into more than 1 account ID at this time")
 		}
-
 		return ex.SystemContext.Accounts.GetNodesForAccount(accountIds[0])
 	}
 }
@@ -158,14 +157,26 @@ func (stmt *InsertStatement) compilePlan(ex *connExecutor, nodes []system.NNode)
 				values := stmt.Statement.SelectStmt.(pg_query.SelectStmt)
 
 				for i, valueList := range values.ValuesLists {
-					nextId, err := ex.SystemContext.Sequences.GetNextValueForSequence(fmt.Sprintf("%s.%s", stmt.table.TableName, column.ColumnName))
-					if err != nil {
-						return nil, err
+					nextId := uint64(0)
+					// If this is an account table that we are inserting into then we want to create
+					// new account records
+					if stmt.table.TableType == system.NTableType_ACCOUNT {
+						account, _, err := ex.SystemContext.Accounts.CreateAccount()
+						if err != nil {
+							return nil, err
+						}
+						nextId = account.AccountId
+					} else {
+						next, err := ex.SystemContext.Sequences.GetNextValueForSequence(fmt.Sprintf("%s.%s", stmt.table.TableName, column.ColumnName))
+						if err != nil {
+							return nil, err
+						}
+						nextId = *next
 					}
 
 					valueList = append(valueList, pg_query.A_Const{
 						Val: pg_query.Integer{
-							Ival: int64(*nextId),
+							Ival: int64(nextId),
 						},
 					})
 
