@@ -19,7 +19,7 @@ package transaction
 import (
 	"fmt"
 	"github.com/kataras/go-errors"
-	"github.com/readystock/noah/Prototype/context"
+	"github.com/readystock/noah/prototype/context"
 	"github.com/readystock/pg_query_go/nodes"
 )
 

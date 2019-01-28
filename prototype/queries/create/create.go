@@ -18,9 +18,9 @@ package create
 
 import (
 	"fmt"
-	"github.com/readystock/noah/Prototype/cluster"
-	"github.com/readystock/noah/Prototype/context"
-	"github.com/readystock/noah/Prototype/datums"
+	"github.com/readystock/noah/prototype/cluster"
+	"github.com/readystock/noah/prototype/context"
+	"github.com/readystock/noah/prototype/datums"
 	pgq "github.com/readystock/pg_query_go"
 	"github.com/readystock/pg_query_go/nodes"
 )

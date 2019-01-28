@@ -14,11 +14,11 @@
  * permissions and limitations under the License.
  */
 
-package Prototype
+package prototype
 
 import (
 	"fmt"
-	"github.com/readystock/noah/Prototype/cluster"
+	"github.com/readystock/noah/prototype/cluster"
 	"testing"
 )
 

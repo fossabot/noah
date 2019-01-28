@@ -14,20 +14,20 @@
  * permissions and limitations under the License.
  */
 
-package Prototype
+package prototype
 
 import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/readystock/noah/Prototype/context"
-	_comment "github.com/readystock/noah/Prototype/queries/comment"
-	_create "github.com/readystock/noah/Prototype/queries/create"
-	_drop "github.com/readystock/noah/Prototype/queries/drop"
-	_insert "github.com/readystock/noah/Prototype/queries/insert"
-	"github.com/readystock/noah/Prototype/queries/select"
-	_transaction "github.com/readystock/noah/Prototype/queries/transaction"
-	_update "github.com/readystock/noah/Prototype/queries/update"
+	"github.com/readystock/noah/prototype/context"
+	_comment "github.com/readystock/noah/prototype/queries/comment"
+	_create "github.com/readystock/noah/prototype/queries/create"
+	_drop "github.com/readystock/noah/prototype/queries/drop"
+	_insert "github.com/readystock/noah/prototype/queries/insert"
+	"github.com/readystock/noah/prototype/queries/select"
+	_transaction "github.com/readystock/noah/prototype/queries/transaction"
+	_update "github.com/readystock/noah/prototype/queries/update"
 	pgq "github.com/readystock/pg_query_go"
 	query "github.com/readystock/pg_query_go/nodes"
 )

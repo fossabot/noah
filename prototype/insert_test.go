@@ -14,7 +14,7 @@
  * permissions and limitations under the License.
  */
 
-package prototype
+package Prototype
 
 import (
 	"fmt"

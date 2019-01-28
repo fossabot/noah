@@ -21,7 +21,7 @@ import (
 	"fmt"
 	"github.com/kataras/go-errors"
 	_ "github.com/lib/pq"
-	"github.com/readystock/noah/Prototype/cluster"
+	"github.com/readystock/noah/prototype/cluster"
 	"sync"
 )
 

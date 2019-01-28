@@ -14,19 +14,13 @@
  * permissions and limitations under the License.
  */
 
-package Prototype
+package update
 
 import (
-	"fmt"
-	"testing"
+	"github.com/readystock/noah/prototype/context"
+	"github.com/readystock/pg_query_go/nodes"
 )
 
-func Test_TransactionSimple(t *testing.T) {
-	t.Skip("prototype types are outdate")
-	context := Start()
-	fmt.Println("STATE:", context.TransactionState)
-	if _, err := InjestQuery(&context, "BEGIN;"); err != nil {
-		t.Error(err)
-	}
-	fmt.Println("STATE:", context.TransactionState)
+func HandleUpdate(ctx *context.SessionContext, stmt pg_query.UpdateStmt) error {
+	return nil
 }

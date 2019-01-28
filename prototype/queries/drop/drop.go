@@ -18,7 +18,7 @@ package drop
 
 import (
 	"fmt"
-	"github.com/readystock/noah/prototype/context"
+	"github.com/readystock/noah/Prototype/context"
 	pgq "github.com/readystock/pg_query_go"
 	"github.com/readystock/pg_query_go/nodes"
 )

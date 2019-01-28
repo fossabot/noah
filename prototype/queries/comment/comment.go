@@ -19,8 +19,8 @@ package comment
 import (
 	"fmt"
 	"github.com/kataras/go-errors"
-	"github.com/readystock/noah/prototype/cluster"
-	"github.com/readystock/noah/prototype/context"
+	"github.com/readystock/noah/Prototype/cluster"
+	"github.com/readystock/noah/Prototype/context"
 	pgq "github.com/readystock/pg_query_go"
 	"github.com/readystock/pg_query_go/nodes"
 	"strings"
