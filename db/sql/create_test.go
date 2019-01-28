@@ -245,7 +245,7 @@ func Test_Create_CompilePlan_Sharded_ReferencedForeignKey(t *testing.T) {
 	assert.Equal(t, len(plans), len(Nodes),
 		"the number of plans returned did not match the number of nodes that this query should target.")
 
-	assert.Equal(t, `CREATE TABLE "products" (id bigint PRIMARY KEY, account_id int8 NOT NULL FOREIGN KEY REFERENCES "accounts" ("account_id"))`, plans[0].CompiledQuery,
+	assert.Equal(t, `CREATE TABLE "products" (id bigint PRIMARY KEY, account_id int8 NOT NULL REFERENCES "accounts" ("account_id"))`, plans[0].CompiledQuery,
 		"the resulting query plan did not equal the expected query plan, did something change with how queries were recompiled?")
 
 	assert.NotNil(t, stmt.table.ShardKey, "table's shard key should not be null")
