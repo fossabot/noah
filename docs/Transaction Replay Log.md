@@ -1,4 +1,6 @@
 # Transaction Replay Log
+**(Noah does not have a transaction replay log, this was an idea early on, but ended up not being viable)**
+
 **(This documentation only applies for database nodes that are replicated via statement replication and not PostgreSQL's built in replication)**
 
 The transaction replay log is an array of transactions and their queries that have been sent to database nodes by a coordinator.
