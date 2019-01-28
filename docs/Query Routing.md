@@ -57,3 +57,7 @@ SELECT products.id FROM products INNER JOIN users ON users.id = products.created
 It's very similar when joining with a global table. Because we are still only looking at data for a
 single account ID and global tables are identical on all nodes, we can still just choose a node with
 that account's data and send the query through without modification.
+
+
+## Basic Query Flow Diagram
+![alt text](/docs/images/Query_flow.png "Query Flow Diagram")
