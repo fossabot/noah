@@ -60,4 +60,4 @@ that account's data and send the query through without modification.
 
 
 ## Basic Query Flow Diagram
-![alt text](/docs/images/Query_flow.png "Query Flow Diagram")
+![alt text](/docs/images/Query_Flow.png "Query Flow Diagram")
