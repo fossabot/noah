@@ -3,6 +3,21 @@ Other distributed SQL databases will typically have some kind of CLI or API
 to interact with the lower level functionality of the cluster. Noah aims to
 expose as much functionality over a common SQL interface as possible. 
 
+# How it works.
+Since the data is not actually stored in postgres, it is emulated via temp tables.
+
+```postgresql
+CREATE TEMPORARY TABLE nodes AS SELECT * FROM (VALUES
+    (1, '127.0.0.1', 5432, 'postgres', true, 'us-east-1', null),
+    (2, '127.0.0.1', 5432, 'postgres', true, 'us-east-2', null),
+    (3, '127.0.0.1', 5432, 'postgres', true, 'us-east-3', null)
+  ) AS nodes (node_id, address, port, "user", is_alive, region, zone);
+
+UPDATE nodes SET region = 'test' WHERE node_id = 3 RETURNING *;
+
+DROP TABLE nodes;
+```
+
 # Table Definitions
 
 >## `noah.nodes`
