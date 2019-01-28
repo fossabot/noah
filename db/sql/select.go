@@ -25,10 +25,13 @@ import (
 	"github.com/readystock/noah/db/system"
 	"github.com/readystock/noah/db/util/queryutil"
 	"github.com/readystock/pg_query_go/nodes"
+	"math/rand"
+	"time"
 )
 
 type SelectStatement struct {
 	Statement pg_query.SelectStmt
+	tables    []system.NTable
 	IQueryStatement
 }
 
@@ -70,11 +73,12 @@ func (stmt *SelectStatement) getTargetNodes(ex *connExecutor) ([]system.NNode, e
 	if err != nil {
 		return nil, err
 	}
+	stmt.tables = tables
 
 	// If the query doesn't target any tables then the query should be able to be served by any node
 	// Or if the query targets only global tables.
 	if len(tables) == 0 || linq.From(tables).AllT(func(table system.NTable) bool {
-		return table.TableType == system.NTableType_GLOBAL
+		return table.TableType == system.NTableType_GLOBAL || table.TableType == system.NTableType_ACCOUNT
 	}) {
 		if node, err := ex.SystemContext.Nodes.GetFirstNode(system.AllNodes); err != nil {
 			return nil, errors.New("no nodes available to serve this query.")
@@ -87,13 +91,18 @@ func (stmt *SelectStatement) getTargetNodes(ex *connExecutor) ([]system.NNode, e
 	// directed to any node in the cluster.
 	// tables := stmt.getTables()
 
-	accounts, err := stmt.getAccountIDs()
+	accounts, err := stmt.getAccountIDs(ex)
 	if err != nil {
 		return nil, err
 	}
 
 	if len(accounts) == 1 {
-		return ex.SystemContext.Accounts.GetNodesForAccount(accounts[0])
+		nodes, err := ex.SystemContext.Accounts.GetNodesForAccount(accounts[0])
+		if err != nil {
+			return nil, err
+		}
+		rand.Seed(time.Now().Unix())
+		return []system.NNode{nodes[rand.Intn(len(nodes))]}, nil
 	} else if len(accounts) > 1 {
 		return nil, errors.New("multi account queries are not supported at this time.")
 	} else {
@@ -123,9 +132,18 @@ func (stmt *SelectStatement) getTables(sctx *system.SContext) ([]system.NTable, 
 	return tables, nil
 }
 
-func (stmt *SelectStatement) getAccountIDs() ([]uint64, error) {
+func (stmt *SelectStatement) getAccountIDs(ex *connExecutor) ([]uint64, error) {
+	accountIds := make([]uint64, 0)
+	for _, table := range stmt.tables {
+		if table.TableType != system.NTableType_SHARD {
+			continue
+		}
 
-	return make([]uint64, 0), nil
+		shardColumn := table.ShardKey.(*system.NTable_SKey).SKey.ColumnName
+		ids := queryutil.FindAccountIds(stmt.Statement, shardColumn)
+		accountIds = append(accountIds, ids...)
+	}
+	return accountIds, nil
 }
 
 func (stmt *SelectStatement) compilePlan(ex *connExecutor, nodes []system.NNode) ([]plan.NodeExecutionPlan, error) {

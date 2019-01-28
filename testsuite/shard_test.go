@@ -19,6 +19,7 @@ package testsuite
 import (
 	"fmt"
 	"github.com/readystock/golog"
+	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
@@ -65,5 +66,55 @@ func Test_Shard_Create_Simple(t *testing.T) {
 
 			golog.Warnf("created new user with ID [%d] for account ID [%d]", userId, accountId)
 		}
+	}
+}
+
+func Test_Shard_Create_Select(t *testing.T) {
+	DoExecTest(t, ExecTest{
+		Query: `DROP TABLE IF EXISTS public.accounts CASCADE;`,
+	})
+	DoExecTest(t, ExecTest{
+		Query: `CREATE TABLE public.accounts (account_id BIGSERIAL PRIMARY KEY, account_number BIGINT) TABLESPACE "noah.account";`,
+	})
+	defer DoExecTest(t, ExecTest{
+		Query: `DROP TABLE public.accounts CASCADE;`,
+	})
+
+	DoExecTest(t, ExecTest{
+		Query: `DROP TABLE IF EXISTS public.users CASCADE;`,
+	})
+	DoExecTest(t, ExecTest{
+		Query: `CREATE TABLE public.users (user_id BIGSERIAL PRIMARY KEY, account_id BIGINT NOT NULL REFERENCES public.accounts (account_id), user_number BIGINT) TABLESPACE "noah.shard";`,
+	})
+	defer DoExecTest(t, ExecTest{
+		Query: `DROP TABLE public.users CASCADE;`,
+	})
+
+	numberOfAccountsToMake := 10
+	numberOfUsersPerAccount := 20
+
+	for i := 0; i < numberOfAccountsToMake; i++ {
+		accountResult := DoQueryTest(t, QueryTest{
+			Query: fmt.Sprintf(`INSERT INTO public.accounts (account_number) VALUES(%d) RETURNING account_id;`, i),
+		})
+
+		accountId := accountResult[0][0].(int64)
+
+		golog.Warnf("created new account with ID [%d]", accountId)
+
+		for u := 0; u < numberOfUsersPerAccount; u++ {
+			userResult := DoQueryTest(t, QueryTest{
+				Query: fmt.Sprintf(`INSERT INTO public.users (account_id, user_number) VALUES(%d, %d) RETURNING user_id;`, accountId, i),
+			})
+
+			userId := userResult[0][0].(int64)
+
+			golog.Warnf("created new user with ID [%d] for account ID [%d]", userId, accountId)
+		}
+
+		result := DoQueryTest(t, QueryTest{
+			Query: fmt.Sprintf(`SELECT * FROM users INNER JOIN accounts ON users.account_id=accounts.account_id WHERE users.account_id = %d`, accountId),
+		})
+		assert.Len(t, result, numberOfUsersPerAccount, "the number of users returned from the query does not match the number inserted")
 	}
 }
