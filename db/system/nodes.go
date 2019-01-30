@@ -179,14 +179,14 @@ func (ctx *SNode) GetAccountDistribution() (map[uint64][]uint64, error) {
 func getIdsFromAccountNodesPath(path []byte) (accountId uint64, nodeId uint64) {
 	pathStr := string(path)
 	/* This will look at the index of the items in the path and do things
-	   0        1             2         3
-	     /accounts_nodes/{accountId}/{nodeId}
+	   0   1      2      3        4          5       6
+		/noah/accounts/nodes/{accountId}/{nodeId}/
 	*/
 	for index, item := range strings.Split(pathStr, "/") {
 		switch index {
-		case 2: // accountId
+		case 4: // accountId
 			accountId, _ = strconv.ParseUint(item, 10, 64)
-		case 3:
+		case 5:
 			nodeId, _ = strconv.ParseUint(item, 10, 64)
 		}
 	}

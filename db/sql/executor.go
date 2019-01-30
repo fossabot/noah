@@ -55,13 +55,13 @@ func (ex *connExecutor) ExecutePlans(plans []plan.NodeExecutionPlan, res Restric
 
 	// If none of the plans are read only then increment the number of changes at the end of the
 	// execution.
-	if linq.From(plans).AllT(func(plan plan.NodeExecutionPlan) bool {
-		return !plan.ReadOnly
-	}) {
-		defer func() {
+	defer func(plans []plan.NodeExecutionPlan) {
+		if linq.From(plans).AllT(func(plan plan.NodeExecutionPlan) bool {
+			return !plan.ReadOnly
+		}) {
 			ex.changes++
-		}()
-	}
+		}
+	}(plans)
 
 	responses := make(chan *executeResponse, len(plans))
 	for _, p := range plans {
@@ -134,6 +134,11 @@ func (ex *connExecutor) ExecutePlans(plans []plan.NodeExecutionPlan, res Restric
 				if err := response.Rows.Err(); err != nil {
 					golog.Errorf("received error from node [%d]: %s", response.NodeID, err)
 					errs = append(errs, err)
+				}
+
+				if len(columns) == 0 {
+					columns = response.Rows.PgFieldDescriptions()
+					res.SetColumns(columns)
 				}
 
 				response.Rows.Close()

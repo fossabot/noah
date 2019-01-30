@@ -25,3 +25,47 @@ It helps to store all of this data in noah's own key value store because it allo
 to quickly notify all of the coordinators in the cluster about changes in the cluster
 state.
 
+## Structure
+Data nodes currently in the cluster.
+
+`/noah/nodes/{active|inactive}/meta/{nodeId}/` 
+
+#
+Shards currently being managed by the cluster.
+
+`/noah/shards/{active|inactive}/meta/{shardId}/`
+
+#
+A map of what nodes have what shards on them. A single shard is a single database in postgres.
+There is also a reverse map of the same data to improve lookup time for data.
+
+`/noah/nodes/{active|inactive}/shards/{nodeId}/{shardId}/`
+
+`/noah/shards/{active|inactive}/nodes/{shardId}/{nodeId}/`
+
+#
+Accounts currently being managed by the cluster.
+
+`/noah/accounts/{active|inactive}/meta/{accountId}/`
+
+#
+Accounts and what shards they exist on.
+
+`/noah/accounts/{active|inactive}/shards/{accountId}/{shardId}/`
+
+
+
+#
+Given an `accountId` noah will perform the following key-value operations.
+
+- Prefix scan (key only) of path `/noah/accounts/active/meta/{accountId}/`.
+    - If the key exists then the operation continues, if it does not then the operation fails.
+- Prefix scan (key only) of path `/noah/accounts/active/shards/{accountId}/`
+    - If no shards are found then the operation fails.
+- For each of the `shardIds` returned, do a prefix scan (key only) of the following path: `/noah/shards/active/nodes/{shardId}/`
+    - If no nodes are found the the operation fails.
+- For each of the distinct `nodeIds` returned, lookup the metadata for that node `/noah/nodes/active/meta/{nodeId}/`
+    - If all of the nodes are not healthy then the operation fails.
+
+With all of these operations we now have all of the information we need to connect to any of the account's shards
+and perform the query.

@@ -259,10 +259,7 @@ func (s *Server) newConnExecutor(stmtBuf *StmtBuf, clientComm ClientComm) *connE
 }
 
 func (ex *connExecutor) run() (err error) {
-	defer func() {
-
-	}()
-	// defer util.CatchPanic(&err)
+	defer util.CatchPanic(&err)
 	for {
 		cmd, pos, err := ex.stmtBuf.curCmd()
 		if err != nil {

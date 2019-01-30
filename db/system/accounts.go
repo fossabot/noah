@@ -132,6 +132,16 @@ func (ctx *SAccounts) GetNodesForAccounts(accountIds ...uint64) (nodes []NNode, 
 	return nodes, nil
 }
 
+// func (ctx *SAccounts) GetShardsForAccountQuery(accountId uint64) ([]NNode, error) {
+// 	path := getAccountsNodesAccountPath(accountId)
+// 	nodeKeys, err := ctx.db.GetKeyOnlyPrefix(path)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+//
+//
+// }
+
 func (ctx *SAccounts) GetNodesForAccount(accountId uint64) (nodes []NNode, err error) {
 	path := getAccountsNodesAccountPath(accountId)
 	golog.Verbosef("getting account nodes from path [%s]", string(path))

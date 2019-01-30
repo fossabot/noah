@@ -1,21 +1,6 @@
 syntax = "proto3";
 
-package cluster;
-
-enum WorkerType {
-    Coordinator = 0;
-    Tablet = 1;
-}
-
-message JoinRequest {
-    string region = 1;
-    string zone = 2;
-    string ip_address = 3;
-    uint64 port = 4;
-    WorkerType type = 5;
-}
-
-message JoinResponse {
-    uint64 coordinator_id = 1;
-
+message NShard {
+    uint64 NShardID = 1;
+    bool IsActive = 2;
 }

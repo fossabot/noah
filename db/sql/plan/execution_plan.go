@@ -17,17 +17,13 @@
 package plan
 
 import (
-    "github.com/readystock/noah/db/system"
-    "github.com/readystock/pg_query_go/nodes"
+	"github.com/readystock/noah/db/system"
+	"github.com/readystock/pg_query_go/nodes"
 )
 
 type NodeExecutionPlan struct {
-    CompiledQuery string
-    ReadOnly      bool
-    Node          system.NNode
-    Type          pg_query.StmtType
-}
-
-type NodeBeginTransaction struct {
-    Node system.NNode
+	CompiledQuery string
+	ReadOnly      bool
+	Node          system.NNode
+	Type          pg_query.StmtType
 }
