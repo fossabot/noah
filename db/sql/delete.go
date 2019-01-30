@@ -17,6 +17,7 @@
 package sql
 
 import (
+	"context"
 	"fmt"
 	"github.com/kataras/go-errors"
 	"github.com/readystock/golog"
@@ -36,22 +37,22 @@ func CreateDeleteStatement(stmt pg_query.DeleteStmt) *DeleteStatement {
 	}
 }
 
-func (stmt *DeleteStatement) Execute(ex *connExecutor, res RestrictedCommandResult, pinfo *plan.PlaceholderInfo) error {
-	targetNodes, err := stmt.getTargetNodes(ex)
+func (stmt *DeleteStatement) Execute(ctx context.Context, ex *connExecutor, res RestrictedCommandResult, pinfo *plan.PlaceholderInfo) error {
+	targetNodes, err := stmt.getTargetNodes(ctx, ex)
 	if err != nil {
 		return err
 	}
 	golog.Debugf("Preparing to send query to %d node(s)", len(targetNodes))
 
-	plans, err := stmt.compilePlan(ex, targetNodes)
+	plans, err := stmt.compilePlan(ctx, ex, targetNodes)
 	if err != nil {
 		return err
 	}
 
-	return ex.ExecutePlans(plans, res)
+	return ex.ExecutePlans(ctx, plans, res)
 }
 
-func (stmt *DeleteStatement) getTargetNodes(ex *connExecutor) ([]system.NNode, error) {
+func (stmt *DeleteStatement) getTargetNodes(ctx context.Context, ex *connExecutor) ([]system.NNode, error) {
 	tableName := *stmt.Statement.Relation.Relname
 	table, err := ex.SystemContext.Schema.GetTable(tableName)
 	if err != nil {
@@ -62,7 +63,7 @@ func (stmt *DeleteStatement) getTargetNodes(ex *connExecutor) ([]system.NNode, e
 		return nil, errors.New(fmt.Sprintf("table [%s] does not exist", tableName))
 	}
 
-	accountIds, err := stmt.getAccountIds()
+	accountIds, err := stmt.getAccountIds(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -81,11 +82,11 @@ func (stmt *DeleteStatement) getTargetNodes(ex *connExecutor) ([]system.NNode, e
 	return ex.SystemContext.Accounts.GetNodesForAccounts(accountIds...)
 }
 
-func (stmt *DeleteStatement) getAccountIds() ([]uint64, error) {
+func (stmt *DeleteStatement) getAccountIds(ctx context.Context) ([]uint64, error) {
 	return make([]uint64, 0), nil
 }
 
-func (stmt *DeleteStatement) compilePlan(ex *connExecutor, nodes []system.NNode) ([]plan.NodeExecutionPlan, error) {
+func (stmt *DeleteStatement) compilePlan(ctx context.Context, ex *connExecutor, nodes []system.NNode) ([]plan.NodeExecutionPlan, error) {
 	plans := make([]plan.NodeExecutionPlan, len(nodes))
 	deparsed, err := stmt.Statement.Deparse(pg_query.Context_None)
 	if err != nil {

@@ -17,6 +17,7 @@
 package sql
 
 import (
+	"context"
 	"fmt"
 	"github.com/kataras/go-errors"
 	"github.com/readystock/golinq"
@@ -40,22 +41,22 @@ func CreateInsertStatement(stmt pg_query.InsertStmt) *InsertStatement {
 	}
 }
 
-func (stmt *InsertStatement) Execute(ex *connExecutor, res RestrictedCommandResult, pinfo *plan.PlaceholderInfo) error {
-	targetNodes, err := stmt.getTargetNodes(ex)
+func (stmt *InsertStatement) Execute(ctx context.Context, ex *connExecutor, res RestrictedCommandResult, pinfo *plan.PlaceholderInfo) error {
+	targetNodes, err := stmt.getTargetNodes(ctx, ex)
 	if err != nil {
 		return err
 	}
 	golog.Debugf("Preparing to send query to %d node(s)", len(targetNodes))
 
-	plans, err := stmt.compilePlan(ex, targetNodes)
+	plans, err := stmt.compilePlan(ctx, ex, targetNodes)
 	if err != nil {
 		return err
 	}
 
-	return ex.ExecutePlans(plans, res)
+	return ex.ExecutePlans(ctx, plans, res)
 }
 
-func (stmt *InsertStatement) getTargetNodes(ex *connExecutor) ([]system.NNode, error) {
+func (stmt *InsertStatement) getTargetNodes(ctx context.Context, ex *connExecutor) ([]system.NNode, error) {
 	tableName := *stmt.Statement.Relation.Relname
 
 	table, err := ex.SystemContext.Schema.GetTable(tableName)
@@ -73,7 +74,7 @@ func (stmt *InsertStatement) getTargetNodes(ex *connExecutor) ([]system.NNode, e
 	if table.TableType == system.NTableType_GLOBAL || table.TableType == system.NTableType_ACCOUNT {
 		return ex.SystemContext.Nodes.GetNodes()
 	} else {
-		accountIds, err := stmt.getAccountIds(*table)
+		accountIds, err := stmt.getAccountIds(ctx, *table)
 		if err != nil {
 			return nil, err
 		}
@@ -85,19 +86,19 @@ func (stmt *InsertStatement) getTargetNodes(ex *connExecutor) ([]system.NNode, e
 	}
 }
 
-func (stmt *InsertStatement) getColumnIndex(colName string) int {
+func (stmt *InsertStatement) getColumnIndex(ctx context.Context, colName string) int {
 	return linq.From(stmt.Statement.Cols.Items).IndexOfT(func(col pg_query.ResTarget) bool {
 		return strings.ToLower(*col.Name) == strings.ToLower(colName)
 	})
 }
 
-func (stmt *InsertStatement) getAccountIds(table system.NTable) ([]uint64, error) {
+func (stmt *InsertStatement) getAccountIds(ctx context.Context, table system.NTable) ([]uint64, error) {
 	// Since we are inserting into a sharded table we need to find the shard key in the insert
 	// statement. If the shard key is missing we want to throw an error, if its present we want
 	// to take its index and look at its provided value.
 	shardKey := table.ShardKey.(*system.NTable_SKey).SKey
 
-	shardKeyIndex := stmt.getColumnIndex(shardKey.ColumnName)
+	shardKeyIndex := stmt.getColumnIndex(ctx, shardKey.ColumnName)
 
 	// We couldn't find a value for the shard key, throw an error and return the shard column name
 	if shardKeyIndex < 0 {
@@ -134,7 +135,7 @@ func (stmt *InsertStatement) getAccountIds(table system.NTable) ([]uint64, error
 	return accountIds, nil
 }
 
-func (stmt *InsertStatement) compilePlan(ex *connExecutor, nodes []system.NNode) ([]plan.NodeExecutionPlan, error) {
+func (stmt *InsertStatement) compilePlan(ctx context.Context, ex *connExecutor, nodes []system.NNode) ([]plan.NodeExecutionPlan, error) {
 	plans := make([]plan.NodeExecutionPlan, len(nodes))
 
 	sequenceColumns := make([]*system.NColumn, 0)
@@ -146,7 +147,7 @@ func (stmt *InsertStatement) compilePlan(ex *connExecutor, nodes []system.NNode)
 
 	if len(sequenceColumns) > 0 {
 		for _, column := range sequenceColumns {
-			insertColumnIndex := stmt.getColumnIndex(column.ColumnName)
+			insertColumnIndex := stmt.getColumnIndex(ctx, column.ColumnName)
 
 			if insertColumnIndex < 0 {
 				// If the index is -1 then the column is not specified in the insert and we need to

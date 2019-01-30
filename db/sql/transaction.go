@@ -17,6 +17,7 @@
 package sql
 
 import (
+	"context"
 	"fmt"
 	"github.com/kataras/go-errors"
 	"github.com/readystock/noah/db/sql/plan"
@@ -35,10 +36,10 @@ func CreateTransactionStatement(stmt pq.TransactionStmt) *TransactionStatement {
 	}
 }
 
-func (stmt *TransactionStatement) Execute(ex *connExecutor, res RestrictedCommandResult, pinfo *plan.PlaceholderInfo) error {
+func (stmt *TransactionStatement) Execute(ctx context.Context, ex *connExecutor, res RestrictedCommandResult, pinfo *plan.PlaceholderInfo) error {
 	switch stmt.Statement.Kind {
 	case pq.TRANS_STMT_BEGIN, pq.TRANS_STMT_START:
-		return ex.BeginTransaction()
+		return ex.BeginTransaction(ctx)
 	case pq.TRANS_STMT_COMMIT:
 		defer func() {
 			ex.TransactionState = TransactionState_NONE
@@ -113,15 +114,15 @@ func (stmt *TransactionStatement) Execute(ex *connExecutor, res RestrictedComman
 	return nil
 }
 
-func (stmt *TransactionStatement) getTargetNodes(ex *connExecutor) ([]system.NNode, error) {
+func (stmt *TransactionStatement) getTargetNodes(ctx context.Context, ex *connExecutor) ([]system.NNode, error) {
 	return nil, nil
 }
 
-func (stmt *TransactionStatement) compilePlan(ex *connExecutor, nodes []system.NNode) ([]plan.NodeExecutionPlan, error) {
+func (stmt *TransactionStatement) compilePlan(ctx context.Context, ex *connExecutor, nodes []system.NNode) ([]plan.NodeExecutionPlan, error) {
 	return nil, nil
 }
 
-func (ex *connExecutor) BeginTransaction() error {
+func (ex *connExecutor) BeginTransaction(ctx context.Context) error {
 	if ex.TransactionState != TransactionState_NONE {
 		return errors.New(fmt.Sprintf("error cannot begin transaction at this time, current transaction state [%s]", ex.TransactionState.String()))
 	}

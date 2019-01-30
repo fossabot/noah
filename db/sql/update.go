@@ -15,3 +15,34 @@
  */
 
 package sql
+
+import (
+	"context"
+	"github.com/readystock/noah/db/sql/plan"
+	"github.com/readystock/noah/db/system"
+	"github.com/readystock/pg_query_go/nodes"
+)
+
+type UpdateStatement struct {
+	Statement pg_query.UpdateStmt
+	tables    []system.NTable
+	IQueryStatement
+}
+
+func CreateUpdateStatement(stmt pg_query.UpdateStmt) *UpdateStatement {
+	return &UpdateStatement{
+		Statement: stmt,
+	}
+}
+
+func Execute(ctx context.Context, ex *connExecutor, res RestrictedCommandResult, pinfo *plan.PlaceholderInfo) error {
+	return nil
+}
+
+func compilePlan(ctx context.Context, ex *connExecutor, nodes []system.NNode) ([]plan.NodeExecutionPlan, error) {
+	return nil, nil
+}
+
+func getTargetNodes(ctx context.Context, ex *connExecutor) ([]system.NNode, error) {
+	return nil, nil
+}

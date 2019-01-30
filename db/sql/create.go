@@ -17,6 +17,7 @@
 package sql
 
 import (
+	"context"
 	"github.com/juju/errors"
 	"github.com/readystock/golinq"
 	"github.com/readystock/golog"
@@ -43,18 +44,18 @@ func CreateCreateStatement(stmt pg_query.CreateStmt) *CreateStatement {
 	}
 }
 
-func (stmt *CreateStatement) Execute(ex *connExecutor, res RestrictedCommandResult, pinfo *plan.PlaceholderInfo) error {
+func (stmt *CreateStatement) Execute(ctx context.Context, ex *connExecutor, res RestrictedCommandResult, pinfo *plan.PlaceholderInfo) error {
 	existingTable, _ := ex.SystemContext.Schema.GetTable(*stmt.Statement.Relation.Relname)
 	if existingTable != nil {
 		return errors.Errorf("table with name [%s] already exists in the cluster", *stmt.Statement.Relation.Relname)
 	}
 
-	targetNodes, err := stmt.getTargetNodes(ex)
+	targetNodes, err := stmt.getTargetNodes(ctx, ex)
 	if err != nil {
 		return err
 	}
 
-	plans, err := stmt.compilePlan(ex, targetNodes)
+	plans, err := stmt.compilePlan(ctx, ex, targetNodes)
 	if err != nil {
 		return err
 	}
@@ -64,7 +65,7 @@ func (stmt *CreateStatement) Execute(ex *connExecutor, res RestrictedCommandResu
 		return err
 	}
 
-	if err := ex.ExecutePlans(plans, res); err != nil {
+	if err := ex.ExecutePlans(ctx, plans, res); err != nil {
 		ex.SystemContext.Schema.DropTable(stmt.table.TableName)
 		return err
 	} else {
@@ -73,7 +74,7 @@ func (stmt *CreateStatement) Execute(ex *connExecutor, res RestrictedCommandResu
 	}
 }
 
-func (stmt *CreateStatement) getTargetNodes(ex *connExecutor) ([]system.NNode, error) {
+func (stmt *CreateStatement) getTargetNodes(ctx context.Context, ex *connExecutor) ([]system.NNode, error) {
 	writeNodes, err := ex.SystemContext.Nodes.GetNodes()
 	if err != nil {
 		return nil, err
@@ -101,7 +102,7 @@ func (stmt *CreateStatement) getTargetNodes(ex *connExecutor) ([]system.NNode, e
 	return allNodes, nil
 }
 
-func (stmt *CreateStatement) compilePlan(ex *connExecutor, nodes []system.NNode) ([]plan.NodeExecutionPlan, error) {
+func (stmt *CreateStatement) compilePlan(ctx context.Context, ex *connExecutor, nodes []system.NNode) ([]plan.NodeExecutionPlan, error) {
 	plans := make([]plan.NodeExecutionPlan, len(nodes))
 
 	stmt.table = system.NTable{
@@ -115,12 +116,12 @@ func (stmt *CreateStatement) compilePlan(ex *connExecutor, nodes []system.NNode)
 		return nil, err
 	}
 
-	if err := stmt.handleValidation(ex, &stmt.table); err != nil {
+	if err := stmt.handleValidation(ctx, ex, &stmt.table); err != nil {
 		return nil, err
 	}
 
 	// Add handling here for custom column types.
-	if err := stmt.handleColumns(ex, &stmt.table); err != nil { // Handle sharding
+	if err := stmt.handleColumns(ctx, ex, &stmt.table); err != nil { // Handle sharding
 		return nil, err
 	}
 
@@ -143,7 +144,7 @@ func (stmt *CreateStatement) compilePlan(ex *connExecutor, nodes []system.NNode)
 	return plans, nil
 }
 
-func (stmt *CreateStatement) handleValidation(ex *connExecutor, table *system.NTable) error {
+func (stmt *CreateStatement) handleValidation(ctx context.Context, ex *connExecutor, table *system.NTable) error {
 	if table.TableType == system.NTableType_ACCOUNT {
 		if accountsTable, err := ex.SystemContext.Schema.GetAccountsTable(); err != nil {
 			return err
@@ -155,7 +156,7 @@ func (stmt *CreateStatement) handleValidation(ex *connExecutor, table *system.NT
 	return nil
 }
 
-func (stmt *CreateStatement) handleColumns(ex *connExecutor, table *system.NTable) error {
+func (stmt *CreateStatement) handleColumns(ctx context.Context, ex *connExecutor, table *system.NTable) error {
 	verifyPrimaryKeyColumnType := func(column system.NColumn) error {
 		switch column.ColumnTypeName {
 		case "bigint", "int", "int8", "int4":

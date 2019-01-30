@@ -17,6 +17,7 @@
 package sql
 
 import (
+	"context"
 	"fmt"
 	"github.com/pkg/errors"
 	"github.com/readystock/golinq"
@@ -37,25 +38,25 @@ func CreateDropStatement(stmt pg_query.DropStmt) *DropStatement {
 	}
 }
 
-func (stmt *DropStatement) Execute(ex *connExecutor, res RestrictedCommandResult, pinfo *plan.PlaceholderInfo) error {
+func (stmt *DropStatement) Execute(ctx context.Context, ex *connExecutor, res RestrictedCommandResult, pinfo *plan.PlaceholderInfo) error {
 	switch stmt.Statement.RemoveType {
 	case pg_query.OBJECT_TABLE:
-		targetNodes, err := stmt.getTargetNodes(ex)
+		targetNodes, err := stmt.getTargetNodes(ctx, ex)
 		if err != nil {
 			return err
 		}
 		golog.Debugf("Preparing to send query to %d node(s)", len(targetNodes))
 
-		plans, err := stmt.compilePlan(ex, targetNodes)
+		plans, err := stmt.compilePlan(ctx, ex, targetNodes)
 		if err != nil {
 			return err
 		}
 
-		if err := ex.ExecutePlans(plans, res); err != nil {
+		if err := ex.ExecutePlans(ctx, plans, res); err != nil {
 			return err
 		} else {
 			inner := stmt.Statement.Objects.Items[0].(pg_query.List).Items
-			tableName := inner[len(inner) - 1].(pg_query.String).Str
+			tableName := inner[len(inner)-1].(pg_query.String).Str
 			return ex.SystemContext.Schema.DropTable(tableName)
 		}
 	default:
@@ -63,7 +64,7 @@ func (stmt *DropStatement) Execute(ex *connExecutor, res RestrictedCommandResult
 	}
 }
 
-func (stmt *DropStatement) compilePlan(ex *connExecutor, nodes []system.NNode) ([]plan.NodeExecutionPlan, error) {
+func (stmt *DropStatement) compilePlan(ctx context.Context, ex *connExecutor, nodes []system.NNode) ([]plan.NodeExecutionPlan, error) {
 	plans := make([]plan.NodeExecutionPlan, len(nodes))
 	compiled, err := pg_query.Deparse(stmt.Statement)
 	if err != nil {
@@ -82,7 +83,7 @@ func (stmt *DropStatement) compilePlan(ex *connExecutor, nodes []system.NNode) (
 	return plans, nil
 }
 
-func (stmt *DropStatement) getTargetNodes(ex *connExecutor) ([]system.NNode, error) {
+func (stmt *DropStatement) getTargetNodes(ctx context.Context, ex *connExecutor) ([]system.NNode, error) {
 	writeNodes, err := ex.SystemContext.Nodes.GetNodes()
 	if err != nil {
 		return nil, err

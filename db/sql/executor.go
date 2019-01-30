@@ -17,6 +17,7 @@
 package sql
 
 import (
+	"context"
 	"fmt"
 	"github.com/ahmetb/go-linq"
 	"github.com/juju/errors"
@@ -36,7 +37,7 @@ type executeResponse struct {
 	Type   pg_query.StmtType
 }
 
-func (ex *connExecutor) ExecutePlans(plans []plan.NodeExecutionPlan, res RestrictedCommandResult) error {
+func (ex *connExecutor) ExecutePlans(ctx context.Context, plans []plan.NodeExecutionPlan, res RestrictedCommandResult) error {
 	errs := make([]error, 0)
 	defer func() {
 		if ex.TransactionState == TransactionState_NONE {

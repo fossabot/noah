@@ -17,6 +17,7 @@
 package sql
 
 import (
+	"context"
 	"fmt"
 	"github.com/ahmetb/go-linq"
 	"github.com/kataras/go-errors"
@@ -41,35 +42,35 @@ func CreateSelectStatement(stmt pg_query.SelectStmt) *SelectStatement {
 	}
 }
 
-func (stmt *SelectStatement) Execute(ex *connExecutor, res RestrictedCommandResult, pinfo *plan.PlaceholderInfo) error {
-	targetNodes, err := stmt.getTargetNodes(ex)
+func (stmt *SelectStatement) Execute(ctx context.Context, ex *connExecutor, res RestrictedCommandResult, pinfo *plan.PlaceholderInfo) error {
+	targetNodes, err := stmt.getTargetNodes(ctx, ex)
 	if err != nil {
 		return err
 	}
 	golog.Debugf("Preparing to send query to %d node(s)", len(targetNodes))
 
-	if err := stmt.replaceParameters(ex, pinfo); err != nil {
+	if err := stmt.replaceParameters(ctx, ex, pinfo); err != nil {
 		return err
 	}
 
-	plans, err := stmt.compilePlan(ex, targetNodes)
+	plans, err := stmt.compilePlan(ctx, ex, targetNodes)
 	if err != nil {
 		return err
 	}
 
-	return ex.ExecutePlans(plans, res)
+	return ex.ExecutePlans(ctx, plans, res)
 }
 
-func (stmt *SelectStatement) replaceParameters(ex *connExecutor, pinfo *plan.PlaceholderInfo) error {
+func (stmt *SelectStatement) replaceParameters(ctx context.Context, ex *connExecutor, pinfo *plan.PlaceholderInfo) error {
 	newStmt := queryutil.ReplaceArguments(stmt.Statement, pinfo.Values)
 	stmt.Statement = newStmt.(pg_query.SelectStmt)
 	return nil
 }
 
-func (stmt *SelectStatement) getTargetNodes(ex *connExecutor) ([]system.NNode, error) {
+func (stmt *SelectStatement) getTargetNodes(ctx context.Context, ex *connExecutor) ([]system.NNode, error) {
 	// If there is no from clause, this query can be sent to any node, if we already have a
 	// connection to a node use that one, if not get a new one.
-	tables, err := stmt.getTables(ex.SystemContext)
+	tables, err := stmt.getTables(ctx, ex.SystemContext)
 	if err != nil {
 		return nil, err
 	}
@@ -91,7 +92,7 @@ func (stmt *SelectStatement) getTargetNodes(ex *connExecutor) ([]system.NNode, e
 	// directed to any node in the cluster.
 	// tables := stmt.getTables()
 
-	accounts, err := stmt.getAccountIDs(ex)
+	accounts, err := stmt.getAccountIDs(ctx, ex)
 	if err != nil {
 		return nil, err
 	}
@@ -116,7 +117,7 @@ func (stmt *SelectStatement) getTargetNodes(ex *connExecutor) ([]system.NNode, e
 	}
 }
 
-func (stmt *SelectStatement) getTables(sctx *system.SContext) ([]system.NTable, error) {
+func (stmt *SelectStatement) getTables(ctx context.Context, sctx *system.SContext) ([]system.NTable, error) {
 	tableKeys := queryutil.GetTables(stmt.Statement)
 	tables := make([]system.NTable, len(tableKeys))
 	for i, tableName := range tableKeys {
@@ -132,7 +133,7 @@ func (stmt *SelectStatement) getTables(sctx *system.SContext) ([]system.NTable, 
 	return tables, nil
 }
 
-func (stmt *SelectStatement) getAccountIDs(ex *connExecutor) ([]uint64, error) {
+func (stmt *SelectStatement) getAccountIDs(ctx context.Context, ex *connExecutor) ([]uint64, error) {
 	accountIds := make([]uint64, 0)
 	for _, table := range stmt.tables {
 		if table.TableType != system.NTableType_SHARD {
@@ -146,8 +147,8 @@ func (stmt *SelectStatement) getAccountIDs(ex *connExecutor) ([]uint64, error) {
 	return accountIds, nil
 }
 
-func (stmt *SelectStatement) compilePlan(ex *connExecutor, nodes []system.NNode) ([]plan.NodeExecutionPlan, error) {
-	if err := stmt.handleNoahFunctions(ex); err != nil {
+func (stmt *SelectStatement) compilePlan(ctx context.Context, ex *connExecutor, nodes []system.NNode) ([]plan.NodeExecutionPlan, error) {
+	if err := stmt.handleNoahFunctions(ctx, ex); err != nil {
 		return nil, err
 	}
 	plans := make([]plan.NodeExecutionPlan, len(nodes))
@@ -166,7 +167,7 @@ func (stmt *SelectStatement) compilePlan(ex *connExecutor, nodes []system.NNode)
 	return plans, nil
 }
 
-func (stmt *SelectStatement) handleNoahFunctions(ex *connExecutor) error {
+func (stmt *SelectStatement) handleNoahFunctions(ctx context.Context, ex *connExecutor) error {
 	newStmt, err := queryutil.ReplaceFunctionCalls(stmt.Statement, ex.GetDropInFunctions())
 	if err != nil {
 		return err

@@ -17,6 +17,7 @@
 package sql
 
 import (
+	"context"
 	"errors"
 	"github.com/readystock/noah/db/sql/plan"
 	nodes "github.com/readystock/pg_query_go/nodes"
@@ -38,7 +39,7 @@ func (ex *connExecutor) execStmt(
 		return err
 	}
 
-	return handler.Execute(ex, res, pinfo)
+	return handler.Execute(context.Background(), ex, res, pinfo)
 }
 
 func (ex *connExecutor) getStatementHandler(tree nodes.Stmt) (IQueryStatement, error) {

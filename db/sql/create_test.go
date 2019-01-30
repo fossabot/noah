@@ -17,6 +17,7 @@
 package sql
 
 import (
+	"context"
 	"github.com/readystock/noah/db/system"
 	"github.com/readystock/pg_query_go"
 	pg_query2 "github.com/readystock/pg_query_go/nodes"
@@ -33,7 +34,7 @@ func Test_Create_GetTargetNodes(t *testing.T) {
 
 	stmt := CreateCreateStatement(parsed.Statements[0].(pg_query2.RawStmt).Stmt.(pg_query2.CreateStmt))
 
-	nodes, err := stmt.getTargetNodes(ConnExecutor)
+	nodes, err := stmt.getTargetNodes(context.Background(), ConnExecutor)
 	if err != nil {
 		panic(err)
 	}
@@ -54,7 +55,7 @@ func Test_Create_CompilePlan_Default(t *testing.T) {
 
 	stmt := CreateCreateStatement(parsed.Statements[0].(pg_query2.RawStmt).Stmt.(pg_query2.CreateStmt))
 
-	plans, err := stmt.compilePlan(ConnExecutor, Nodes)
+	plans, err := stmt.compilePlan(context.Background(), ConnExecutor, Nodes)
 	if err != nil {
 		panic(err)
 	}
@@ -81,7 +82,7 @@ func Test_Create_CompilePlan_Account_NoPrimaryKey(t *testing.T) {
 
 	stmt := CreateCreateStatement(parsed.Statements[0].(pg_query2.RawStmt).Stmt.(pg_query2.CreateStmt))
 
-	_, err = stmt.compilePlan(ConnExecutor, Nodes)
+	_, err = stmt.compilePlan(context.Background(), ConnExecutor, Nodes)
 	if err == nil {
 		panic("plan should have failed to compile, account tables require a primary key.")
 	}
@@ -96,7 +97,7 @@ func Test_Create_CompilePlan_Account_MultiColumnNamedPrimaryKey(t *testing.T) {
 
 	stmt := CreateCreateStatement(parsed.Statements[0].(pg_query2.RawStmt).Stmt.(pg_query2.CreateStmt))
 
-	_, err = stmt.compilePlan(ConnExecutor, Nodes)
+	_, err = stmt.compilePlan(context.Background(), ConnExecutor, Nodes)
 	if err == nil {
 		panic("multi column primary keys should produce an error")
 	}
@@ -111,7 +112,7 @@ func Test_Create_CompilePlan_Account_MissingNamedPrimaryKey(t *testing.T) {
 
 	stmt := CreateCreateStatement(parsed.Statements[0].(pg_query2.RawStmt).Stmt.(pg_query2.CreateStmt))
 
-	_, err = stmt.compilePlan(ConnExecutor, Nodes)
+	_, err = stmt.compilePlan(context.Background(), ConnExecutor, Nodes)
 	if err == nil {
 		panic("named primary key columns that do not exist should produce an error")
 	}
@@ -126,7 +127,7 @@ func Test_Create_CompilePlan_Account_NamedPrimaryKey(t *testing.T) {
 
 	stmt := CreateCreateStatement(parsed.Statements[0].(pg_query2.RawStmt).Stmt.(pg_query2.CreateStmt))
 
-	plans, err := stmt.compilePlan(ConnExecutor, Nodes)
+	plans, err := stmt.compilePlan(context.Background(), ConnExecutor, Nodes)
 	if err != nil {
 		panic(err)
 	}
@@ -147,7 +148,7 @@ func Test_Create_CompilePlan_Account_UUIDPrimaryKey(t *testing.T) {
 
 	stmt := CreateCreateStatement(parsed.Statements[0].(pg_query2.RawStmt).Stmt.(pg_query2.CreateStmt))
 
-	_, err = stmt.compilePlan(ConnExecutor, Nodes)
+	_, err = stmt.compilePlan(context.Background(), ConnExecutor, Nodes)
 	if err == nil {
 		panic("plan should have failed to compile, tables must have a numeric primary key.")
 	}
@@ -162,7 +163,7 @@ func Test_Create_CompilePlan_Account(t *testing.T) {
 
 	stmt := CreateCreateStatement(parsed.Statements[0].(pg_query2.RawStmt).Stmt.(pg_query2.CreateStmt))
 
-	plans, err := stmt.compilePlan(ConnExecutor, Nodes)
+	plans, err := stmt.compilePlan(context.Background(), ConnExecutor, Nodes)
 	if err != nil {
 		panic(err)
 	}
@@ -183,7 +184,7 @@ func Test_Create_CompilePlan_Default_MultiplePrimaryKeys(t *testing.T) {
 
 	stmt := CreateCreateStatement(parsed.Statements[0].(pg_query2.RawStmt).Stmt.(pg_query2.CreateStmt))
 
-	_, err = stmt.compilePlan(ConnExecutor, Nodes)
+	_, err = stmt.compilePlan(context.Background(), ConnExecutor, Nodes)
 	if err == nil {
 		panic("the compiler should not allow you to create a table with multiple primary keys")
 	}
@@ -198,7 +199,7 @@ func Test_Create_CompilePlan_Default_ReplacementTypes(t *testing.T) {
 
 	stmt := CreateCreateStatement(parsed.Statements[0].(pg_query2.RawStmt).Stmt.(pg_query2.CreateStmt))
 
-	plans, err := stmt.compilePlan(ConnExecutor, Nodes)
+	plans, err := stmt.compilePlan(context.Background(), ConnExecutor, Nodes)
 	if err != nil {
 		panic(err)
 	}
@@ -219,7 +220,7 @@ func Test_Create_CompilePlan_Sharded_ReferencedForeignKey(t *testing.T) {
 
 	accountStmt := CreateCreateStatement(parsedAccount.Statements[0].(pg_query2.RawStmt).Stmt.(pg_query2.CreateStmt))
 
-	_, err = accountStmt.compilePlan(ConnExecutor, Nodes)
+	_, err = accountStmt.compilePlan(context.Background(), ConnExecutor, Nodes)
 	if err != nil {
 		panic(err)
 	}
@@ -237,7 +238,7 @@ func Test_Create_CompilePlan_Sharded_ReferencedForeignKey(t *testing.T) {
 
 	stmt := CreateCreateStatement(parsed.Statements[0].(pg_query2.RawStmt).Stmt.(pg_query2.CreateStmt))
 
-	plans, err := stmt.compilePlan(ConnExecutor, Nodes)
+	plans, err := stmt.compilePlan(context.Background(), ConnExecutor, Nodes)
 	if err != nil {
 		panic(err)
 	}
@@ -264,7 +265,7 @@ func Test_Create_CompilePlan_Sharded_NamedForeignKey(t *testing.T) {
 
 	accountStmt := CreateCreateStatement(parsedAccount.Statements[0].(pg_query2.RawStmt).Stmt.(pg_query2.CreateStmt))
 
-	_, err = accountStmt.compilePlan(ConnExecutor, Nodes)
+	_, err = accountStmt.compilePlan(context.Background(), ConnExecutor, Nodes)
 	if err != nil {
 		panic(err)
 	}
@@ -282,7 +283,7 @@ func Test_Create_CompilePlan_Sharded_NamedForeignKey(t *testing.T) {
 
 	stmt := CreateCreateStatement(parsed.Statements[0].(pg_query2.RawStmt).Stmt.(pg_query2.CreateStmt))
 
-	plans, err := stmt.compilePlan(ConnExecutor, Nodes)
+	plans, err := stmt.compilePlan(context.Background(), ConnExecutor, Nodes)
 	if err != nil {
 		panic(err)
 	}
@@ -309,7 +310,7 @@ func Test_Create_CompilePlan_Sharded_NamedMultiColumnForeignKey(t *testing.T) {
 
 	accountStmt := CreateCreateStatement(parsedAccount.Statements[0].(pg_query2.RawStmt).Stmt.(pg_query2.CreateStmt))
 
-	_, err = accountStmt.compilePlan(ConnExecutor, Nodes)
+	_, err = accountStmt.compilePlan(context.Background(), ConnExecutor, Nodes)
 	if err != nil {
 		panic(err)
 	}
@@ -327,7 +328,7 @@ func Test_Create_CompilePlan_Sharded_NamedMultiColumnForeignKey(t *testing.T) {
 
 	stmt := CreateCreateStatement(parsed.Statements[0].(pg_query2.RawStmt).Stmt.(pg_query2.CreateStmt))
 
-	_, err = stmt.compilePlan(ConnExecutor, Nodes)
+	_, err = stmt.compilePlan(context.Background(), ConnExecutor, Nodes)
 	if err == nil {
 		panic("create statement should have failed with multi column foreign key")
 	}
@@ -342,7 +343,7 @@ func Test_Create_CompilePlan_Sharded_NamedMultiReferenceForeignKey(t *testing.T)
 
 	accountStmt := CreateCreateStatement(parsedAccount.Statements[0].(pg_query2.RawStmt).Stmt.(pg_query2.CreateStmt))
 
-	_, err = accountStmt.compilePlan(ConnExecutor, Nodes)
+	_, err = accountStmt.compilePlan(context.Background(), ConnExecutor, Nodes)
 	if err != nil {
 		panic(err)
 	}
@@ -360,7 +361,7 @@ func Test_Create_CompilePlan_Sharded_NamedMultiReferenceForeignKey(t *testing.T)
 
 	stmt := CreateCreateStatement(parsed.Statements[0].(pg_query2.RawStmt).Stmt.(pg_query2.CreateStmt))
 
-	_, err = stmt.compilePlan(ConnExecutor, Nodes)
+	_, err = stmt.compilePlan(context.Background(), ConnExecutor, Nodes)
 	if err == nil {
 		panic("create statement should have failed with multi reference foreign key")
 	}
@@ -375,7 +376,7 @@ func Test_Create_CompilePlan_Sharded_MissingTableForeignKey(t *testing.T) {
 
 	stmt := CreateCreateStatement(parsed.Statements[0].(pg_query2.RawStmt).Stmt.(pg_query2.CreateStmt))
 
-	_, err = stmt.compilePlan(ConnExecutor, Nodes)
+	_, err = stmt.compilePlan(context.Background(), ConnExecutor, Nodes)
 	if err == nil {
 		panic("create statement should have failed with multi reference foreign key")
 	}
@@ -390,7 +391,7 @@ func Test_Create_CompilePlan_Sharded_NamedForeignKeyNonPrimary1(t *testing.T) {
 
 	accountStmt := CreateCreateStatement(parsedAccount.Statements[0].(pg_query2.RawStmt).Stmt.(pg_query2.CreateStmt))
 
-	_, err = accountStmt.compilePlan(ConnExecutor, Nodes)
+	_, err = accountStmt.compilePlan(context.Background(), ConnExecutor, Nodes)
 	if err != nil {
 		panic(err)
 	}
@@ -408,7 +409,7 @@ func Test_Create_CompilePlan_Sharded_NamedForeignKeyNonPrimary1(t *testing.T) {
 
 	stmt := CreateCreateStatement(parsed.Statements[0].(pg_query2.RawStmt).Stmt.(pg_query2.CreateStmt))
 
-	_, err = stmt.compilePlan(ConnExecutor, Nodes)
+	_, err = stmt.compilePlan(context.Background(), ConnExecutor, Nodes)
 	if err == nil {
 		panic("create statement should have failed with multi reference foreign key")
 	}
@@ -423,7 +424,7 @@ func Test_Create_CompilePlan_Sharded_NamedForeignKeyNonPrimary2(t *testing.T) {
 
 	accountStmt := CreateCreateStatement(parsedAccount.Statements[0].(pg_query2.RawStmt).Stmt.(pg_query2.CreateStmt))
 
-	_, err = accountStmt.compilePlan(ConnExecutor, Nodes)
+	_, err = accountStmt.compilePlan(context.Background(), ConnExecutor, Nodes)
 	if err != nil {
 		panic(err)
 	}
@@ -441,7 +442,7 @@ func Test_Create_CompilePlan_Sharded_NamedForeignKeyNonPrimary2(t *testing.T) {
 
 	stmt := CreateCreateStatement(parsed.Statements[0].(pg_query2.RawStmt).Stmt.(pg_query2.CreateStmt))
 
-	_, err = stmt.compilePlan(ConnExecutor, Nodes)
+	_, err = stmt.compilePlan(context.Background(), ConnExecutor, Nodes)
 	if err == nil {
 		panic("create statement should have failed with multi reference foreign key")
 	}

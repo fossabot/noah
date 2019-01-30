@@ -17,12 +17,13 @@
 package sql
 
 import (
-    "github.com/readystock/noah/db/sql/plan"
-    "github.com/readystock/noah/db/system"
+	"context"
+	"github.com/readystock/noah/db/sql/plan"
+	"github.com/readystock/noah/db/system"
 )
 
 type IQueryStatement interface {
-    Execute(ex *connExecutor, res RestrictedCommandResult, pinfo *plan.PlaceholderInfo) error
-    compilePlan(ex *connExecutor, nodes []system.NNode) ([]plan.NodeExecutionPlan, error)
-    getTargetNodes(ex *connExecutor) ([]system.NNode, error)
+	Execute(ctx context.Context, ex *connExecutor, res RestrictedCommandResult, pinfo *plan.PlaceholderInfo) error
+	compilePlan(ctx context.Context, ex *connExecutor, nodes []system.NNode) ([]plan.NodeExecutionPlan, error)
+	getTargetNodes(ctx context.Context, ex *connExecutor) ([]system.NNode, error)
 }
