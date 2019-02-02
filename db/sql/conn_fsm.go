@@ -17,6 +17,7 @@
 package sql
 
 import (
+	. "github.com/readystock/noah/db/util/fsm"
 	"time"
 )
 
