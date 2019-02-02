@@ -22,9 +22,9 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/cockroachdb/cockroach/pkg/util/log"
-	"github.com/cockroachdb/cockroach/pkg/util/randutil"
-	"github.com/cockroachdb/cockroach/pkg/util/syncutil"
+	"github.com/readystock/noah/db/util/log"
+	"github.com/readystock/noah/db/util/randutil"
+	"github.com/readystock/noah/db/util/syncutil"
 	"golang.org/x/sync/syncmap"
 )
 

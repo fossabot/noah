@@ -47,3 +47,4 @@ install:
   - make enums -C $GOPATH/src/github.com/readystock/pg_query_go
   - make protos -C $GOPATH/src/github.com/readystock/raft
   - make protos -C $GOPATH/src/github.com/readystock/arctonyx
+  - ./install_test_deps.sh

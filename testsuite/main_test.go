@@ -69,13 +69,12 @@ func TestMain(m *testing.M) {
 			Zone:      "",
 		}
 	}
-
+	postgresConfig.Port = uint16(pgPort)
 	SetupTestDatabases(nodes)
 
 	golog.SetLevel("trace")
 	retCode := func() int {
 		golog.Infof("SETTING UP TEST DATABASE")
-		postgresConfig.Port = uint16(pgPort)
 		postgres, err := pgx.Connect(postgresConfig)
 		if err != nil {
 			panic(err)
@@ -155,7 +154,6 @@ func TestMain(m *testing.M) {
 }
 
 func SetupTestDatabases(nodes []system.NNode) {
-
 	postgres, err := pgx.Connect(postgresConfig)
 	if err != nil {
 		panic(err)

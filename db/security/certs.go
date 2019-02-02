@@ -28,8 +28,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/cockroachdb/cockroach/pkg/util/log"
 	"github.com/pkg/errors"
+	"github.com/readystock/noah/db/util/log"
 )
 
 const (

@@ -12,7 +12,7 @@ build: protos setup_build_dir
 fresh: protos setup_build_dir
 	go build -a -x -v -o $(BUILD_DIRECTORY)/$(EXECUTABLE_NAME) $(PACKAGE)
 
-test: fresh
+test: build
 	go test -v ./...
 
 setup_build_dir:
