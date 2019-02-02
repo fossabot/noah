@@ -7,6 +7,7 @@ At it's core is a gutted version of CockroachDB, rewritten to use multiple Postg
 The query parsing of Cockroach has also been replaced by PostgreSQL's actual query parser in C. 
 It communicates with the database servers using a bare-bone and customized version of PGX, with all non-essential features removed and two-phase transaction handling added.
 
+PLEASE NOTE: Noah is still a work in progress, while some of it's functionality does work currently; it is nowhere near a production worthy state. 
 
 ## Building
 

@@ -18,9 +18,12 @@ package sql
 
 import (
 	"context"
+	"fmt"
+
 	"github.com/readystock/noah/db/sql/plan"
 	"github.com/readystock/noah/db/system"
-	"github.com/readystock/pg_query_go/nodes"
+	"github.com/readystock/noah/db/util/queryutil"
+	pg_query "github.com/readystock/pg_query_go/nodes"
 )
 
 type UpdateStatement struct {
@@ -35,14 +38,46 @@ func CreateUpdateStatement(stmt pg_query.UpdateStmt) *UpdateStatement {
 	}
 }
 
-func Execute(ctx context.Context, ex *connExecutor, res RestrictedCommandResult, pinfo *plan.PlaceholderInfo) error {
-	return nil
+func (stmt *UpdateStatement) Execute(ctx context.Context, ex *connExecutor, res RestrictedCommandResult, pinfo *plan.PlaceholderInfo) error {
+	nodes, err := stmt.getTargetNodes(ctx, ex)
+	if err != nil {
+		return err
+	}
+
+	plans, err := stmt.compilePlan(ctx, ex, nodes)
+	if err != nil {
+		return err
+	}
+
+	return ex.ExecutePlans(ctx, plans, res)
 }
 
-func compilePlan(ctx context.Context, ex *connExecutor, nodes []system.NNode) ([]plan.NodeExecutionPlan, error) {
+func (stmt *UpdateStatement) compilePlan(ctx context.Context, ex *connExecutor, nodes []system.NNode) ([]plan.NodeExecutionPlan, error) {
+
 	return nil, nil
 }
 
-func getTargetNodes(ctx context.Context, ex *connExecutor) ([]system.NNode, error) {
+func (stmt *UpdateStatement) getTargetNodes(ctx context.Context, ex *connExecutor) ([]system.NNode, error) {
+	// tables, err := stmt.getTables(ctx, ex)
+	// if err != nil {
+	// 	return nil, err
+	// }
+
 	return nil, nil
+}
+
+func (stmt *UpdateStatement) getTables(ctx context.Context, ex *connExecutor) ([]system.NTable, error) {
+	tableKeys := queryutil.GetTables(stmt.Statement)
+	tables := make([]system.NTable, len(tableKeys))
+	for i, tableName := range tableKeys {
+		if table, err := ex.SystemContext.Schema.GetTable(tableName); err != nil {
+			return nil, err
+		} else {
+			if table == nil {
+				return nil, fmt.Errorf("table [%s] does not exist", tableName)
+			}
+			tables[i] = *table
+		}
+	}
+	return tables, nil
 }
