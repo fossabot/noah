@@ -29,6 +29,9 @@ This will create a `bin` folder if it does not already exist and create the noah
 that folder.
 
 #### Clean build
+Please note: Noah cannot be built on Windows at this time.
+
+
 If you need to do a completely clean build of noah run the following:
 ```bash
 make fresh
