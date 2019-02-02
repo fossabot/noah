@@ -22,13 +22,16 @@ Any tools that you might need can be found in [tools](./docs/Tools.md).
 
 To build noah.
 ```bash
-go get -d -u github.com/readystock/noah
+go get github.com/readystock/noah
 cd $GOPATH/src/github.com/readystock/noah
-make
+make build
 ```
 
 This will create a `bin` folder if it does not already exist and create the noah executable within 
 that folder.
+
+If you experience any errors when you run `make build` then try looking to `.travis.yml` to see how
+the build is done on a clean machine.
 
 #### Clean build
 
@@ -40,7 +43,9 @@ This will recompile all of noah's dependencies and may take a few minutes.
 
 ## Running Noah
 
-`noah start`
+```bash
+noah start
+```
 
 Will start a Noah coordinator node, listening for Postgres connection on port `5433`.
 Noah's gRPC/Raft interface uses port `5434`, it should not be used for anything other than 
@@ -51,7 +56,9 @@ information about the state of the cluster.
 
 If you are trying to add another coordinator to an existing running instance of Noah you can run:
 
-`noah start --join=192.168.0.1:5434`
+```bash
+noah start --join=192.168.0.1:5434
+```
 
 You can replace `192.168.0.1:5434` with the address and port of any already running instance of
 Noah and it will add the new instance into the existing cluster and allow the new coordinator to 
