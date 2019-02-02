@@ -18,7 +18,7 @@ addons:
       - postgresql-client-10
 before_install:
   - sudo sed -i -e '/local.*peer/s/postgres/all/' -e 's/peer\|md5/trust/g' /etc/postgresql/*/main/pg_hba.conf
-  - sudo sed -i 's/max_prepared_transactions.*/max_prepared_transactions = 100/' /etc/postgresql/*/main/postgresql.conf
+  - sudo sed -i 's/#max_prepared_transactions.*/max_prepared_transactions = 100/' /etc/postgresql/*/main/postgresql.conf
   - cat /etc/postgresql/10/main/postgresql.conf
   - sudo service postgresql restart
   - sleep 1
