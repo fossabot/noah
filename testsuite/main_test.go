@@ -27,6 +27,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"net"
 	"os"
+	"strconv"
 	"testing"
 	"time"
 )
@@ -37,7 +38,7 @@ var (
 		Port:     5432,
 		Database: "postgres",
 		User:     "postgres",
-		Password: "Spring!2016",
+		Password: os.Getenv("PGPASSWORD"),
 		LogLevel: 6,
 		Logger:   NewLogger(),
 	}
@@ -55,13 +56,14 @@ func recoverName() {
 func TestMain(m *testing.M) {
 	golog.Infof("Testing with %d node(s)", NumberOfNodes)
 	nodes := make([]system.NNode, NumberOfNodes)
+	pgPort, _ := strconv.ParseInt(os.Getenv("PGPORT"), 10, 64)
 	for i := 0; i < NumberOfNodes; i++ {
 		nodes[i] = system.NNode{
 			Address:   "127.0.0.1",
-			Port:      5432,
-			Database:  fmt.Sprintf("ready_test_%d", i+1),
+			Port:      int32(pgPort),
+			Database:  fmt.Sprintf("noah_test_%d", i+1),
 			User:      "postgres",
-			Password:  "Spring!2016",
+			Password:  os.Getenv("PGPASSWORD"),
 			ReplicaOf: 0,
 			Region:    "",
 			Zone:      "",
@@ -73,7 +75,7 @@ func TestMain(m *testing.M) {
 	golog.SetLevel("trace")
 	retCode := func() int {
 		golog.Infof("SETTING UP TEST DATABASE")
-
+		postgresConfig.Port = uint16(pgPort)
 		postgres, err := pgx.Connect(postgresConfig)
 		if err != nil {
 			panic(err)
