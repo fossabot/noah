@@ -45,4 +45,6 @@ env:
 install:
   - make protos
   - make protos -C $GOPATH/src/github.com/readystock/pg_query_go
+  - ls -a $GOPATH/src/github.com/readystock/pg_query_go
   - make protos -C $GOPATH/src/github.com/readystock/raft
+  - ls -a $GOPATH/src/github.com/readystock/raft
