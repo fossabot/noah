@@ -42,7 +42,7 @@ This will recompile all of noah's dependencies and may take a few minutes.
 
 #### 1. Create an accounts table:
 
-```postgresql
+```sql
 CREATE TABLE public.accounts (
   account_id   BIGSERIAL NOT NULL PRIMARY KEY,
   account_name TEXT      NOT NULL
@@ -55,7 +55,7 @@ It will look for tables that have a foreign key reference to the primary key of 
 
 #### 2. Create some global tables:
 
-```postgresql
+```sql
 CREATE TABLE public.logins (
   login_id BIGSERIAL NOT NULL PRIMARY KEY,
   email    TEXT      NOT NULL UNIQUE,
@@ -70,7 +70,7 @@ table will be mirrored on every node in the cluster.
 Then we can create another global table to map logins to an account, allowing a single
 login to be associated with multiple accounts.
 
-```postgresql
+```sql
 CREATE TABLE public.users (
   user_id    BIGSERIAL NOT NULL PRIMARY KEY,
   login_id   BIGINT    NOT NULL REFERENCES public.logins (login_id),
@@ -82,7 +82,7 @@ You can also manually specify the global tablespace when creating a table.
 
 #### 3. Create some sharded tables:
 
-```postgresql
+```sql
 CREATE TABLE public.products (
   product_id BIGSERIAL NOT NULL PRIMARY KEY,
   account_id BIGINT    NOT NULL REFERENCES public.accounts (account_id),
@@ -96,7 +96,7 @@ This table stores all of the products for an account. Because it has a foreign k
 the `accounts` table Noah will know how to handle any operations that target the `products` 
 table. 
 
-```postgresql
+```sql
 CREATE TABLE public.orders (
   order_id     BIGSERIAL NOT NULL PRIMARY KEY,
   account_id   BIGINT    NOT NULL REFERENCES public.accounts (account_id),
@@ -105,7 +105,7 @@ CREATE TABLE public.orders (
 ) TABLESPACE "noah.shard";
 ```
 
-```postgresql
+```sql
 CREATE TABLE public.order_lines (
   order_line_id BIGSERIAL NOT NULL PRIMARY KEY,
   account_id    BIGINT    NOT NULL REFERENCES public.accounts (account_id),
@@ -124,7 +124,7 @@ data is split into chunks (a smaller index is a better index).
 
 Create a few accounts:
 
-```postgresql
+```sql
 INSERT INTO public.accounts (account_name) 
 VALUES
        ('Do Stuff Inc.'),        -- account_id = 1
@@ -138,7 +138,7 @@ for sharded tables, it will save a potentially expensive query plan.)
 
 Create a few users and logins:
 
-```postgresql
+```sql
 INSERT INTO public.users (email, name) 
 VALUES
        ('elliot@elliot.elliot', 'Not Elliot'), -- user_id = 1
@@ -146,7 +146,7 @@ VALUES
        ('ron@gmail.com', 'Ron Swanson');       -- user_id = 3
 ```
 
-```postgresql
+```sql
 INSERT INTO public.logins (user_id, account_id) 
 VALUES
        (1, 1),
@@ -158,7 +158,7 @@ VALUES
 You can now run queries for a login. Like if we wanted to see the accounts for a given
 set of credentials.
 
-```postgresql
+```sql
 SELECT accounts.* FROM public.logins JOIN public.accounts ON  logins.account_id = accounts.account_id JOIN public.users ON logins.user_id = users.user_id WHERE users.email = 'elliot@elliot.elliot' LIMIT 1;
 ```
 
@@ -166,7 +166,7 @@ This will give us a list of account_ids and account_names for a given login.
 
 Now we can create some products and orders for some sharded queries.
 
-```postgresql
+```sql
 INSERT INTO public.products (account_id, sku, title) 
 VALUES 
        (1, 'ABC123', 'A title for a product'),  -- product_id = 1
@@ -181,7 +181,7 @@ to reside on different nodes.
 
 We can then query our inserted data by providing the `account_id` column in our select query.
 
-```postgresql
+```sql
 SELECT * FROM public.products WHERE account_id = 1;
 ```
 
@@ -190,14 +190,14 @@ error at this time. (More info will be provided in docs later)
 
 Add some order data for account 1.
 
-```postgresql
+```sql
 INSERT INTO public.orders (account_id, order_number, marketplace) 
 VALUES
        (1, '123-4271841-32141', 'Amazon'),  -- order_id = 1
        (1, '312-8231982-98392', 'Amazon');  -- order_id = 2
 ```
 
-```postgresql
+```sql
 INSERT INTO public.order_lines (account_id, order_id, product_id, qty)
 VALUES 
        (1, 1, 1, 3),
@@ -207,7 +207,7 @@ VALUES
 
 Now that there is some data in the sharded tables we can query and join those too.
 
-```postgresql
+```sql
 SELECT 
        orders.order_number, 
        orders.marketplace, 
