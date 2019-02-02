@@ -72,7 +72,7 @@ func TestMain(m *testing.M) {
 	postgresConfig.Port = uint16(pgPort)
 	SetupTestDatabases(nodes)
 
-	golog.SetLevel("trace")
+	// golog.SetLevel("trace")
 	retCode := func() int {
 		golog.Infof("SETTING UP TEST DATABASE")
 		postgres, err := pgx.Connect(postgresConfig)
@@ -105,7 +105,7 @@ func TestMain(m *testing.M) {
 				WebAddr:        "127.0.0.1:0",
 				JoinAddr:       "",
 				StoreDirectory: tempFolder,
-				LogLevel:       "verbose",
+				// LogLevel:       "verbose",
 			}, sctx)
 		}()
 		golog.Info("waiting for cluster to start up")

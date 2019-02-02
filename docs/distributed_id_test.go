@@ -17,7 +17,7 @@
 package dist_id_test
 
 import (
-	"fmt"
+	"github.com/readystock/golog"
 	"sync"
 	"testing"
 )
@@ -105,7 +105,7 @@ NewID:
 		}
 	}
 
-	if c.NextRange == nil && float64(c.CurrentID*c.CurrentRange.Count)/float64(c.CurrentRange.End-c.CurrentRange.Start) > (float64(PreRetrieve) / 100) {
+	if c.NextRange == nil && float64(c.CurrentID*c.CurrentRange.Count)/float64(c.CurrentRange.End-c.CurrentRange.Start) > (float64(PreRetrieve)/100) {
 		nRange := c.Master.GetNextRange()
 		c.NextRange = &nRange
 	}
@@ -132,7 +132,7 @@ func Test_GenerateDistributedIDs(t *testing.T) {
 	for n := 0; n < len(master.Nodes); n++ {
 		go func(node *CoordinatorNode, nodeId int) {
 			for i := 0; i < GenerateLoops; i++ {
-				fmt.Printf("Node ID [%d] New ID: [%d]\n", nodeId, node.NextID())
+				golog.Verbosef("Node ID [%d] New ID: [%d]\n", nodeId, node.NextID())
 			}
 			wg.Done()
 		}(master.Nodes[n], n)
