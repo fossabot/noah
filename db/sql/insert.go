@@ -19,19 +19,22 @@ package sql
 import (
 	"context"
 	"fmt"
+	"github.com/gogo/protobuf/sortkeys"
+	"strconv"
+	"strings"
+
 	"github.com/kataras/go-errors"
 	"github.com/readystock/golinq"
 	"github.com/readystock/golog"
 	"github.com/readystock/noah/db/sql/plan"
 	"github.com/readystock/noah/db/system"
 	"github.com/readystock/pg_query_go/nodes"
-	"strconv"
-	"strings"
 )
 
 type InsertStatement struct {
-	Statement pg_query.InsertStmt
-	table     system.NTable
+	Statement  pg_query.InsertStmt
+	table      system.NTable
+	accountIds []uint64
 	IQueryStatement
 }
 
@@ -79,6 +82,8 @@ func (stmt *InsertStatement) getTargetNodes(ctx context.Context, ex *connExecuto
 			return nil, err
 		}
 
+		stmt.accountIds = accountIds
+
 		if len(accountIds) > 1 {
 			return nil, errors.New("cannot insert into more than 1 account ID at this time")
 		}
@@ -102,7 +107,7 @@ func (stmt *InsertStatement) getAccountIds(ctx context.Context, table system.NTa
 
 	// We couldn't find a value for the shard key, throw an error and return the shard column name
 	if shardKeyIndex < 0 {
-		return nil, errors.New(fmt.Sprintf("insert statement is missing the shard column [%s] value", shardKey.ColumnName))
+		return nil, fmt.Errorf("insert statement is missing the shard column [%s] value", shardKey.ColumnName)
 	}
 
 	if stmt.Statement.SelectStmt == nil || stmt.Statement.SelectStmt.(pg_query.SelectStmt).ValuesLists == nil {
@@ -138,18 +143,11 @@ func (stmt *InsertStatement) getAccountIds(ctx context.Context, table system.NTa
 func (stmt *InsertStatement) compilePlan(ctx context.Context, ex *connExecutor, nodes []system.NNode) ([]plan.NodeExecutionPlan, error) {
 	plans := make([]plan.NodeExecutionPlan, len(nodes))
 
-	sequenceColumns := make([]*system.NColumn, 0)
-	// Grab any columns for this table that are sequences. We will be adding their values to the
-	// insert
-	linq.From(stmt.table.Columns).WhereT(func(column *system.NColumn) bool {
-		return column.IsSequence
-	}).ToSlice(&sequenceColumns)
+	for _, column := range stmt.table.Columns {
+		columnIndex := stmt.getColumnIndex(ctx, column.ColumnName)
 
-	if len(sequenceColumns) > 0 {
-		for _, column := range sequenceColumns {
-			insertColumnIndex := stmt.getColumnIndex(ctx, column.ColumnName)
-
-			if insertColumnIndex < 0 {
+		if columnIndex < 0 {
+			if column.IsSequence {
 				// If the index is -1 then the column is not specified in the insert and we need to
 				// add it.
 				stmt.Statement.Cols.Items = append(stmt.Statement.Cols.Items, pg_query.ResTarget{
@@ -185,6 +183,41 @@ func (stmt *InsertStatement) compilePlan(ctx context.Context, ex *connExecutor, 
 				}
 
 				stmt.Statement.SelectStmt = values
+			}
+		} else {
+			if column.IsSequence {
+				return nil, fmt.Errorf("cannot specify value when inserting into serialized column [%s]", column.ColumnName)
+			}
+			// If this is a sharded table and we have a value in this column, check to see if this is
+			// the shard column. If it is we want to make sure that it is distinct.
+			if stmt.table.TableType == system.NTableType_SHARD && (stmt.table.ShardKey.(*system.NTable_SKey)).SKey.ColumnName == column.ColumnName {
+				values := stmt.Statement.SelectStmt.(pg_query.SelectStmt)
+
+				shardKeys := make([]uint64, 0)
+				linq.From(values.ValuesLists).SelectT(func(val []pg_query.Node) uint64 {
+					aConst, ok := val[columnIndex].(pg_query.A_Const)
+					if !ok {
+						return 0
+					}
+
+					aInteger, ok := aConst.Val.(pg_query.Integer)
+					if !ok {
+						return 0
+					}
+
+					return uint64(aInteger.Ival)
+				}).Distinct().ToSlice(&shardKeys)
+
+				sortkeys.Uint64s(shardKeys)
+
+				if shardKeys[0] == 0 {
+					return nil, fmt.Errorf("invalid shard key was provided for column [%s]", column.ColumnName)
+				}
+
+				if len(shardKeys) > 1 {
+					// Split the insert stmt into multiple inserts
+					return nil, fmt.Errorf("multi-shard inserts are not supported at this time")
+				}
 			}
 		}
 	}

@@ -282,10 +282,11 @@ func DoQueryTest(t *testing.T, test QueryTest) [][]interface{} {
 		index++
 	}
 
-	if err := result.Err(); err != nil {
-		golog.Error(err)
-		t.Error(err)
-		t.FailNow()
+	err = result.Err()
+	if test.ExpectedError != nil {
+		assert.EqualError(t, err, test.ExpectedError.Error(), "the expected error was not returned from the query")
+	} else {
+		assert.NoError(t, err, "an unexpected error was returned from the query")
 	}
 
 	if test.Expected != nil {
