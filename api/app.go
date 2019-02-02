@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 Ready Stock
+ * Copyright (c) 2019 Ready Stock
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,7 +57,7 @@ func StartApp(sctx *system.SContext, addr string) {
 		} else {
 			ctx.StatusCode(200)
 			ctx.JSON(iris.Map{
-				"Node": newNode,
+				"Node":    newNode,
 				"Message": "Node has been created.",
 			})
 		}

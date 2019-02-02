@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 Ready Stock
+ * Copyright (c) 2019 Ready Stock
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,6 @@ import (
 	"strconv"
 	"strings"
 	"time"
-
 )
 
 type envVarInfo struct {
@@ -53,7 +52,7 @@ func checkVarName(name string) {
 	valid := strings.HasPrefix(name, "NOAH_")
 	for i := 0; valid && i < len(name); i++ {
 		c := name[i]
-		valid = ((c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '_')
+		valid = (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '_'
 	}
 	if !valid {
 		panic("invalid env var name " + name)

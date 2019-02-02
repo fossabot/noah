@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 Ready Stock
+ * Copyright (c) 2019 Ready Stock
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -247,6 +247,7 @@ func TestStopperClosers(t *testing.T) {
 		t.Errorf("expected true & true; got %t & %t", tc1, tc2)
 	}
 }
+
 //
 // func TestStopperNumTasks(t *testing.T) {
 // 	defer leaktest.AfterTest(t)()

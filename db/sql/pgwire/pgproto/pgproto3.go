@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 Ready Stock
+ * Copyright (c) 2019 Ready Stock
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,38 +21,38 @@ import "fmt"
 // Message is the interface implemented by an object that can decode and encode
 // a particular PostgreSQL message.
 type Message interface {
-    // Decode is allowed and expected to retain a reference to data after
-    // returning (unlike encoding.BinaryUnmarshaler).
-    Decode(data []byte) error
+	// Decode is allowed and expected to retain a reference to data after
+	// returning (unlike encoding.BinaryUnmarshaler).
+	Decode(data []byte) error
 
-    // Encode appends itself to dst and returns the new buffer.
-    Encode(dst []byte) []byte
+	// Encode appends itself to dst and returns the new buffer.
+	Encode(dst []byte) []byte
 }
 
 type FrontendMessage interface {
-    Message
-    Frontend() // no-op method to distinguish frontend from backend methods
+	Message
+	Frontend() // no-op method to distinguish frontend from backend methods
 }
 
 type BackendMessage interface {
-    Message
-    Backend() // no-op method to distinguish frontend from backend methods
+	Message
+	Backend() // no-op method to distinguish frontend from backend methods
 }
 
 type invalidMessageLenErr struct {
-    messageType string
-    expectedLen int
-    actualLen   int
+	messageType string
+	expectedLen int
+	actualLen   int
 }
 
 func (e *invalidMessageLenErr) Error() string {
-    return fmt.Sprintf("%s body must have length of %d, but it is %d", e.messageType, e.expectedLen, e.actualLen)
+	return fmt.Sprintf("%s body must have length of %d, but it is %d", e.messageType, e.expectedLen, e.actualLen)
 }
 
 type invalidMessageFormatErr struct {
-    messageType string
+	messageType string
 }
 
 func (e *invalidMessageFormatErr) Error() string {
-    return fmt.Sprintf("%s body is invalid", e.messageType)
+	return fmt.Sprintf("%s body is invalid", e.messageType)
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 Ready Stock
+ * Copyright (c) 2019 Ready Stock
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,16 +17,16 @@
 package types_test
 
 import (
-    "testing"
+	"testing"
 
-    "github.com/readystock/noah/db/sql/types"
-    "github.com/readystock/noah/db/sql/types/testutil"
+	"github.com/readystock/noah/db/sql/types"
+	"github.com/readystock/noah/db/sql/types/testutil"
 )
 
 func TestPointTranscode(t *testing.T) {
-    testutil.TestSuccessfulTranscode(t, "point", []interface{}{
-        &types.Point{P: types.Vec2{1.234, 5.6789012345}, Status: types.Present},
-        &types.Point{P: types.Vec2{-1.234, -5.6789}, Status: types.Present},
-        &types.Point{Status: types.Null},
-    })
+	testutil.TestSuccessfulTranscode(t, "point", []interface{}{
+		&types.Point{P: types.Vec2{1.234, 5.6789012345}, Status: types.Present},
+		&types.Point{P: types.Vec2{-1.234, -5.6789}, Status: types.Present},
+		&types.Point{Status: types.Null},
+	})
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 Ready Stock
+ * Copyright (c) 2019 Ready Stock
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@
 package types
 
 import (
-    "database/sql/driver"
+	"database/sql/driver"
 )
 
 // XID is PostgreSQL's Transaction ID type.
@@ -40,41 +40,41 @@ type XID pguint32
 // number type Set does not do automatic type conversion as other number
 // types do.
 func (dst *XID) Set(src interface{}) error {
-    return (*pguint32)(dst).Set(src)
+	return (*pguint32)(dst).Set(src)
 }
 
 func (dst *XID) Get() interface{} {
-    return (*pguint32)(dst).Get()
+	return (*pguint32)(dst).Get()
 }
 
 // AssignTo assigns from src to dst. Note that as XID is not a general number
 // type AssignTo does not do automatic type conversion as other number types do.
 func (src *XID) AssignTo(dst interface{}) error {
-    return (*pguint32)(src).AssignTo(dst)
+	return (*pguint32)(src).AssignTo(dst)
 }
 
 func (dst *XID) DecodeText(ci *ConnInfo, src []byte) error {
-    return (*pguint32)(dst).DecodeText(ci, src)
+	return (*pguint32)(dst).DecodeText(ci, src)
 }
 
 func (dst *XID) DecodeBinary(ci *ConnInfo, src []byte) error {
-    return (*pguint32)(dst).DecodeBinary(ci, src)
+	return (*pguint32)(dst).DecodeBinary(ci, src)
 }
 
 func (src *XID) EncodeText(ci *ConnInfo, buf []byte) ([]byte, error) {
-    return (*pguint32)(src).EncodeText(ci, buf)
+	return (*pguint32)(src).EncodeText(ci, buf)
 }
 
 func (src *XID) EncodeBinary(ci *ConnInfo, buf []byte) ([]byte, error) {
-    return (*pguint32)(src).EncodeBinary(ci, buf)
+	return (*pguint32)(src).EncodeBinary(ci, buf)
 }
 
 // Scan implements the database/sql Scanner interface.
 func (dst *XID) Scan(src interface{}) error {
-    return (*pguint32)(dst).Scan(src)
+	return (*pguint32)(dst).Scan(src)
 }
 
 // Value implements the database/sql/driver Valuer interface.
 func (src *XID) Value() (driver.Value, error) {
-    return (*pguint32)(src).Value()
+	return (*pguint32)(src).Value()
 }

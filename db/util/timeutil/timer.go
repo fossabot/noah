@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 Ready Stock
+ * Copyright (c) 2019 Ready Stock
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,14 +17,14 @@
 package timeutil
 
 import (
-    "sync"
-    "time"
+	"sync"
+	"time"
 )
 
 var timerPool = sync.Pool{
-    New: func() interface{} {
-        return &Timer{}
-    },
+	New: func() interface{} {
+		return &Timer{}
+	},
 }
 var timeTimerPool sync.Pool
 
@@ -56,16 +56,16 @@ var timeTimerPool sync.Pool
 // not begin counting down until Reset is called for the first time, as
 // there is no constructor function.
 type Timer struct {
-    timer *time.Timer
-    // C is a local "copy" of timer.C that can be used in a select case before
-    // the timer has been initialized (via Reset).
-    C    <-chan time.Time
-    Read bool
+	timer *time.Timer
+	// C is a local "copy" of timer.C that can be used in a select case before
+	// the timer has been initialized (via Reset).
+	C    <-chan time.Time
+	Read bool
 }
 
 // NewTimer allocates a new timer.
 func NewTimer() *Timer {
-    return timerPool.Get().(*Timer)
+	return timerPool.Get().(*Timer)
 }
 
 // Reset changes the timer to expire after duration d and returns
@@ -74,22 +74,22 @@ func NewTimer() *Timer {
 // but requires users of Timer to set Timer.Read to true whenever
 // they successfully read from the Timer's channel.
 func (t *Timer) Reset(d time.Duration) {
-    if t.timer == nil {
-        switch timer := timeTimerPool.Get(); timer {
-        case nil:
-            t.timer = time.NewTimer(d)
-        default:
-            t.timer = timer.(*time.Timer)
-            t.timer.Reset(d)
-        }
-        t.C = t.timer.C
-        return
-    }
-    if !t.timer.Stop() && !t.Read {
-        <-t.C
-    }
-    t.timer.Reset(d)
-    t.Read = false
+	if t.timer == nil {
+		switch timer := timeTimerPool.Get(); timer {
+		case nil:
+			t.timer = time.NewTimer(d)
+		default:
+			t.timer = timer.(*time.Timer)
+			t.timer.Reset(d)
+		}
+		t.C = t.timer.C
+		return
+	}
+	if !t.timer.Stop() && !t.Read {
+		<-t.C
+	}
+	t.timer.Reset(d)
+	t.Read = false
 }
 
 // Stop prevents the Timer from firing. It returns true if the call stops
@@ -97,16 +97,16 @@ func (t *Timer) Reset(d time.Duration) {
 // or had never been initialized with a call to Timer.Reset. Stop does not
 // close the channel, to prevent a read from succeeding incorrectly.
 func (t *Timer) Stop() bool {
-    var res bool
-    if t.timer != nil {
-        res = t.timer.Stop()
-        if res {
-            // Only place the timer back in the pool if we successfully stopped
-            // it. Otherwise, we'd have to read from the channel if !t.Read.
-            timeTimerPool.Put(t.timer)
-        }
-    }
-    *t = Timer{}
-    timerPool.Put(t)
-    return res
+	var res bool
+	if t.timer != nil {
+		res = t.timer.Stop()
+		if res {
+			// Only place the timer back in the pool if we successfully stopped
+			// it. Otherwise, we'd have to read from the channel if !t.Read.
+			timeTimerPool.Put(t.timer)
+		}
+	}
+	*t = Timer{}
+	timerPool.Put(t)
+	return res
 }

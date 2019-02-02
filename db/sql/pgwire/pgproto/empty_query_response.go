@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 Ready Stock
+ * Copyright (c) 2019 Ready Stock
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@
 package pgproto
 
 import (
-    "encoding/json"
+	"encoding/json"
 )
 
 type EmptyQueryResponse struct{}
@@ -25,21 +25,21 @@ type EmptyQueryResponse struct{}
 func (*EmptyQueryResponse) Backend() {}
 
 func (dst *EmptyQueryResponse) Decode(src []byte) error {
-    if len(src) != 0 {
-        return &invalidMessageLenErr{messageType: "EmptyQueryResponse", expectedLen: 0, actualLen: len(src)}
-    }
+	if len(src) != 0 {
+		return &invalidMessageLenErr{messageType: "EmptyQueryResponse", expectedLen: 0, actualLen: len(src)}
+	}
 
-    return nil
+	return nil
 }
 
 func (src *EmptyQueryResponse) Encode(dst []byte) []byte {
-    return append(dst, 'I', 0, 0, 0, 4)
+	return append(dst, 'I', 0, 0, 0, 4)
 }
 
 func (src *EmptyQueryResponse) MarshalJSON() ([]byte, error) {
-    return json.Marshal(struct {
-        Type string
-    }{
-        Type: "EmptyQueryResponse",
-    })
+	return json.Marshal(struct {
+		Type string
+	}{
+		Type: "EmptyQueryResponse",
+	})
 }

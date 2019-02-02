@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 Ready Stock
+ * Copyright (c) 2019 Ready Stock
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,9 @@
 package coltypes
 
 import (
-    "bytes"
+	"bytes"
 
-    "github.com/readystock/noah/db/sql/lex"
+	"github.com/readystock/noah/db/sql/lex"
 )
 
 // This file contains column type definitions that don't fit
@@ -36,12 +36,12 @@ func (node *TUUID) TypeName() string { return "UUID" }
 
 // Format implements the ColTypeFormatter interface.
 func (node *TUUID) Format(buf *bytes.Buffer, f lex.EncodeFlags) {
-    buf.WriteString("UUID")
+	buf.WriteString("UUID")
 }
 
 // TIPAddr represents an INET or CIDR type.
 type TIPAddr struct {
-    Name string
+	Name string
 }
 
 // TypeName implements the ColTypeFormatter interface.
@@ -49,12 +49,12 @@ func (node *TIPAddr) TypeName() string { return node.Name }
 
 // Format implements the ColTypeFormatter interface.
 func (node *TIPAddr) Format(buf *bytes.Buffer, f lex.EncodeFlags) {
-    buf.WriteString(node.Name)
+	buf.WriteString(node.Name)
 }
 
 // TJSON represents the JSON column type.
 type TJSON struct {
-    Name string
+	Name string
 }
 
 // TypeName implements the ColTypeFormatter interface.
@@ -62,7 +62,7 @@ func (node *TJSON) TypeName() string { return node.Name }
 
 // Format implements the ColTypeFormatter interface.
 func (node *TJSON) Format(buf *bytes.Buffer, _ lex.EncodeFlags) {
-    buf.WriteString(node.Name)
+	buf.WriteString(node.Name)
 }
 
 // TOid represents an OID type, which is the type of system object
@@ -73,7 +73,7 @@ func (node *TJSON) Format(buf *bytes.Buffer, _ lex.EncodeFlags) {
 //
 // See https://www.postgresql.org/docs/9.6/static/datatype-oid.html.
 type TOid struct {
-    Name string
+	Name string
 }
 
 // TypeName implements the ColTypeFormatter interface.
@@ -81,5 +81,5 @@ func (node *TOid) TypeName() string { return node.Name }
 
 // Format implements the ColTypeFormatter interface.
 func (node *TOid) Format(buf *bytes.Buffer, f lex.EncodeFlags) {
-    buf.WriteString(node.Name)
+	buf.WriteString(node.Name)
 }

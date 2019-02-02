@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 Ready Stock
+ * Copyright (c) 2019 Ready Stock
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,8 +18,8 @@ package util
 
 // Pluralize returns a single character 's' unless n == 1.
 func Pluralize(n int64) string {
-    if n == 1 {
-        return ""
-    }
-    return "s"
+	if n == 1 {
+		return ""
+	}
+	return "s"
 }

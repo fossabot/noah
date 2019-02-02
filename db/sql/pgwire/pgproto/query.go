@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 Ready Stock
+ * Copyright (c) 2019 Ready Stock
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,45 +17,45 @@
 package pgproto
 
 import (
-    "bytes"
-    "encoding/json"
+	"bytes"
+	"encoding/json"
 
-    "github.com/readystock/pgx/pgio"
+	"github.com/readystock/pgx/pgio"
 )
 
 type Query struct {
-    String string
+	String string
 }
 
 func (*Query) Frontend() {}
 
 func (dst *Query) Decode(src []byte) error {
-    i := bytes.IndexByte(src, 0)
-    if i != len(src)-1 {
-        return &invalidMessageFormatErr{messageType: "Query"}
-    }
+	i := bytes.IndexByte(src, 0)
+	if i != len(src)-1 {
+		return &invalidMessageFormatErr{messageType: "Query"}
+	}
 
-    dst.String = string(src[:i])
+	dst.String = string(src[:i])
 
-    return nil
+	return nil
 }
 
 func (src *Query) Encode(dst []byte) []byte {
-    dst = append(dst, 'Q')
-    dst = pgio.AppendInt32(dst, int32(4+len(src.String)+1))
+	dst = append(dst, 'Q')
+	dst = pgio.AppendInt32(dst, int32(4+len(src.String)+1))
 
-    dst = append(dst, src.String...)
-    dst = append(dst, 0)
+	dst = append(dst, src.String...)
+	dst = append(dst, 0)
 
-    return dst
+	return dst
 }
 
 func (src *Query) MarshalJSON() ([]byte, error) {
-    return json.Marshal(struct {
-        Type   string
-        String string
-    }{
-        Type:   "Query",
-        String: src.String,
-    })
+	return json.Marshal(struct {
+		Type   string
+		String string
+	}{
+		Type:   "Query",
+		String: src.String,
+	})
 }

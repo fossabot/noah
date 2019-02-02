@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 Ready Stock
+ * Copyright (c) 2019 Ready Stock
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,29 +19,29 @@ package types
 type CIDR Inet
 
 func (dst *CIDR) Set(src interface{}) error {
-    return (*Inet)(dst).Set(src)
+	return (*Inet)(dst).Set(src)
 }
 
 func (dst *CIDR) Get() interface{} {
-    return (*Inet)(dst).Get()
+	return (*Inet)(dst).Get()
 }
 
 func (src *CIDR) AssignTo(dst interface{}) error {
-    return (*Inet)(src).AssignTo(dst)
+	return (*Inet)(src).AssignTo(dst)
 }
 
 func (dst *CIDR) DecodeText(ci *ConnInfo, src []byte) error {
-    return (*Inet)(dst).DecodeText(ci, src)
+	return (*Inet)(dst).DecodeText(ci, src)
 }
 
 func (dst *CIDR) DecodeBinary(ci *ConnInfo, src []byte) error {
-    return (*Inet)(dst).DecodeBinary(ci, src)
+	return (*Inet)(dst).DecodeBinary(ci, src)
 }
 
 func (src *CIDR) EncodeText(ci *ConnInfo, buf []byte) ([]byte, error) {
-    return (*Inet)(src).EncodeText(ci, buf)
+	return (*Inet)(src).EncodeText(ci, buf)
 }
 
 func (src *CIDR) EncodeBinary(ci *ConnInfo, buf []byte) ([]byte, error) {
-    return (*Inet)(src).EncodeBinary(ci, buf)
+	return (*Inet)(src).EncodeBinary(ci, buf)
 }

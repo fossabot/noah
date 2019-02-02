@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 Ready Stock
+ * Copyright (c) 2019 Ready Stock
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -110,7 +110,7 @@ package base
 // // Config is embedded by server.Config. A base config is not meant to be used
 // // directly, but embedding configs should call cfg.InitDefaults().
 type Config struct {
-    Insecure bool
+	Insecure bool
 }
 
 //     // Insecure specifies whether to use SSL or not.

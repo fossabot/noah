@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 Ready Stock
+ * Copyright (c) 2019 Ready Stock
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,12 +19,12 @@
 package fsm
 
 import (
-    "context"
+	"context"
 )
 
 // State is a node in a Machine's transition graph.
 type State interface {
-    State()
+	State()
 }
 
 // ExtendedState is extra state in a Machine that does not contribute to state
@@ -36,7 +36,7 @@ type ExtendedState interface{}
 // Event is something that happens to a Machine which may or may not trigger a
 // state transition.
 type Event interface {
-    Event()
+	Event()
 }
 
 // EventPayload is extra payload on an Event that does not contribute to state
@@ -47,34 +47,34 @@ type EventPayload interface{}
 
 // Args is a structure containing the arguments passed to Transition.Action.
 type Args struct {
-    Ctx context.Context
+	Ctx context.Context
 
-    Prev     State
-    Extended ExtendedState
+	Prev     State
+	Extended ExtendedState
 
-    Event   Event
-    Payload EventPayload
+	Event   Event
+	Payload EventPayload
 }
 
 // Transition is a Machine's response to an Event applied to a State. It may
 // transition the machine to a new State and it may also perform an action on
 // the Machine's ExtendedState.
 type Transition struct {
-    Next   State
-    Action func(Args) error
-    // Description, if set, is reflected in the DOT diagram.
-    Description string
+	Next   State
+	Action func(Args) error
+	// Description, if set, is reflected in the DOT diagram.
+	Description string
 }
 
 // TransitionNotFoundError is returned from Machine.Apply when the Event cannot
 // be applied to the current State.
 type TransitionNotFoundError struct {
-    State State
-    Event Event
+	State State
+	Event Event
 }
 
 func (e TransitionNotFoundError) Error() string {
-    return "event " + eventName(e.Event) + " inappropriate in current state " + stateName(e.State)
+	return "event " + eventName(e.Event) + " inappropriate in current state " + stateName(e.State)
 }
 
 // Transitions is a set of expanded state transitions generated from a Pattern,
@@ -85,7 +85,7 @@ func (e TransitionNotFoundError) Error() string {
 // Machine. Because of this, multiple Machines can be instantiated using the
 // same Transitions graph.
 type Transitions struct {
-    expanded Pattern
+	expanded Pattern
 }
 
 // Compile creates a set of state Transitions from a Pattern. This is relatively
@@ -93,59 +93,59 @@ type Transitions struct {
 // graph and assigned to a static variable. This variable can then be given to
 // MakeMachine, which is cheap.
 func Compile(p Pattern) Transitions {
-    return Transitions{expanded: expandPattern(p)}
+	return Transitions{expanded: expandPattern(p)}
 }
 
 func (t Transitions) apply(a Args) (State, error) {
-    sm, ok := t.expanded[a.Prev]
-    if !ok {
-        return a.Prev, TransitionNotFoundError{State: a.Prev, Event: a.Event}
-    }
-    tr, ok := sm[a.Event]
-    if !ok {
-        return a.Prev, TransitionNotFoundError{State: a.Prev, Event: a.Event}
-    }
-    if tr.Action != nil {
-        if err := tr.Action(a); err != nil {
-            return a.Prev, err
-        }
-    }
-    return tr.Next, nil
+	sm, ok := t.expanded[a.Prev]
+	if !ok {
+		return a.Prev, TransitionNotFoundError{State: a.Prev, Event: a.Event}
+	}
+	tr, ok := sm[a.Event]
+	if !ok {
+		return a.Prev, TransitionNotFoundError{State: a.Prev, Event: a.Event}
+	}
+	if tr.Action != nil {
+		if err := tr.Action(a); err != nil {
+			return a.Prev, err
+		}
+	}
+	return tr.Next, nil
 }
 
 // Machine encapsulates a State with a set of State transitions. It reacts to
 // Events, adjusting its internal State according to its Transition graph and
 // perforing actions on its ExtendedState accordingly.
 type Machine struct {
-    t   Transitions
-    cur State
-    es  ExtendedState
+	t   Transitions
+	cur State
+	es  ExtendedState
 }
 
 // MakeMachine creates a new Machine.
 func MakeMachine(t Transitions, start State, es ExtendedState) Machine {
-    return Machine{t: t, cur: start, es: es}
+	return Machine{t: t, cur: start, es: es}
 }
 
 // Apply applies the Event to the state Machine.
 func (m *Machine) Apply(ctx context.Context, e Event) error {
-    return m.ApplyWithPayload(ctx, e, nil)
+	return m.ApplyWithPayload(ctx, e, nil)
 }
 
 // ApplyWithPayload applies the Event to the state Machine, passing along the
 // EventPayload to the state transition's Action function.
 func (m *Machine) ApplyWithPayload(ctx context.Context, e Event, b EventPayload) (err error) {
-    m.cur, err = m.t.apply(Args{
-        Ctx:      ctx,
-        Prev:     m.cur,
-        Extended: m.es,
-        Event:    e,
-        Payload:  b,
-    })
-    return err
+	m.cur, err = m.t.apply(Args{
+		Ctx:      ctx,
+		Prev:     m.cur,
+		Extended: m.es,
+		Event:    e,
+		Payload:  b,
+	})
+	return err
 }
 
 // CurState returns the current state.
 func (m *Machine) CurState() State {
-    return m.cur
+	return m.cur
 }

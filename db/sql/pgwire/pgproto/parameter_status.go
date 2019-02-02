@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 Ready Stock
+ * Copyright (c) 2019 Ready Stock
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,61 +17,61 @@
 package pgproto
 
 import (
-    "bytes"
-    "encoding/json"
+	"bytes"
+	"encoding/json"
 
-    "github.com/readystock/pgx/pgio"
+	"github.com/readystock/pgx/pgio"
 )
 
 type ParameterStatus struct {
-    Name  string
-    Value string
+	Name  string
+	Value string
 }
 
 func (*ParameterStatus) Backend() {}
 
 func (dst *ParameterStatus) Decode(src []byte) error {
-    buf := bytes.NewBuffer(src)
+	buf := bytes.NewBuffer(src)
 
-    b, err := buf.ReadBytes(0)
-    if err != nil {
-        return err
-    }
-    name := string(b[:len(b)-1])
+	b, err := buf.ReadBytes(0)
+	if err != nil {
+		return err
+	}
+	name := string(b[:len(b)-1])
 
-    b, err = buf.ReadBytes(0)
-    if err != nil {
-        return err
-    }
-    value := string(b[:len(b)-1])
+	b, err = buf.ReadBytes(0)
+	if err != nil {
+		return err
+	}
+	value := string(b[:len(b)-1])
 
-    *dst = ParameterStatus{Name: name, Value: value}
-    return nil
+	*dst = ParameterStatus{Name: name, Value: value}
+	return nil
 }
 
 func (src *ParameterStatus) Encode(dst []byte) []byte {
-    dst = append(dst, 'S')
-    sp := len(dst)
-    dst = pgio.AppendInt32(dst, -1)
+	dst = append(dst, 'S')
+	sp := len(dst)
+	dst = pgio.AppendInt32(dst, -1)
 
-    dst = append(dst, src.Name...)
-    dst = append(dst, 0)
-    dst = append(dst, src.Value...)
-    dst = append(dst, 0)
+	dst = append(dst, src.Name...)
+	dst = append(dst, 0)
+	dst = append(dst, src.Value...)
+	dst = append(dst, 0)
 
-    pgio.SetInt32(dst[sp:], int32(len(dst[sp:])))
+	pgio.SetInt32(dst[sp:], int32(len(dst[sp:])))
 
-    return dst
+	return dst
 }
 
 func (ps *ParameterStatus) MarshalJSON() ([]byte, error) {
-    return json.Marshal(struct {
-        Type  string
-        Name  string
-        Value string
-    }{
-        Type:  "ParameterStatus",
-        Name:  ps.Name,
-        Value: ps.Value,
-    })
+	return json.Marshal(struct {
+		Type  string
+		Name  string
+		Value string
+	}{
+		Type:  "ParameterStatus",
+		Name:  ps.Name,
+		Value: ps.Value,
+	})
 }

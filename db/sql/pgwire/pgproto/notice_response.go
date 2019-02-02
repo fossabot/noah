@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 Ready Stock
+ * Copyright (c) 2019 Ready Stock
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,9 +21,9 @@ type NoticeResponse ErrorResponse
 func (*NoticeResponse) Backend() {}
 
 func (dst *NoticeResponse) Decode(src []byte) error {
-    return (*ErrorResponse)(dst).Decode(src)
+	return (*ErrorResponse)(dst).Decode(src)
 }
 
 func (src *NoticeResponse) Encode(dst []byte) []byte {
-    return append(dst, (*ErrorResponse)(src).marshalBinary('N')...)
+	return append(dst, (*ErrorResponse)(src).marshalBinary('N')...)
 }

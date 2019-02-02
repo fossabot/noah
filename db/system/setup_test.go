@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 Ready Stock
+ * Copyright (c) 2019 Ready Stock
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,13 +17,13 @@
 package system
 
 import (
-    "testing"
+	"testing"
 )
 
 func Test_DoSetup(t *testing.T) {
-    err := SystemCtx.Setup.DoSetup()
-    if err != nil {
-        t.Error(err)
-        t.Fail()
-    }
+	err := SystemCtx.Setup.DoSetup()
+	if err != nil {
+		t.Error(err)
+		t.Fail()
+	}
 }

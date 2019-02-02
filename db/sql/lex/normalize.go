@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 Ready Stock
+ * Copyright (c) 2019 Ready Stock
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,10 +17,10 @@
 package lex
 
 import (
-    "strings"
-    "unicode"
+	"strings"
+	"unicode"
 
-    "golang.org/x/text/unicode/norm"
+	"golang.org/x/text/unicode/norm"
 )
 
 // Special case normalization rules for Turkish/Azeri lowercase dotless-i and
@@ -30,37 +30,37 @@ import (
 // languages simultaneously, with the additional quirk that it is also
 // insensitive to the dottedness of the i's
 var normalize = unicode.SpecialCase{
-    unicode.CaseRange{
-        Lo: 0x0130,
-        Hi: 0x0130,
-        Delta: [unicode.MaxCase]rune{
-            0x49 - 0x130, // Upper
-            0x69 - 0x130, // Lower
-            0x49 - 0x130, // Title
-        },
-        // Delta: [unicode.MaxCase]rune{
-        //     0x49 - 0x130, // Upper
-        //     0x69 - 0x130, // Lower
-        //     0x49 - 0x130, // Title
-        // },
-    },
-    unicode.CaseRange{
-        Lo: 0x0131,
-        Hi: 0x0131,
-        Delta: [unicode.MaxCase]rune{
-            0x49 - 0x131, // Upper
-            0x69 - 0x131, // Lower
-            0x49 - 0x131, // Title
-        },
-    },
+	unicode.CaseRange{
+		Lo: 0x0130,
+		Hi: 0x0130,
+		Delta: [unicode.MaxCase]rune{
+			0x49 - 0x130, // Upper
+			0x69 - 0x130, // Lower
+			0x49 - 0x130, // Title
+		},
+		// Delta: [unicode.MaxCase]rune{
+		//     0x49 - 0x130, // Upper
+		//     0x69 - 0x130, // Lower
+		//     0x49 - 0x130, // Title
+		// },
+	},
+	unicode.CaseRange{
+		Lo: 0x0131,
+		Hi: 0x0131,
+		Delta: [unicode.MaxCase]rune{
+			0x49 - 0x131, // Upper
+			0x69 - 0x131, // Lower
+			0x49 - 0x131, // Title
+		},
+	},
 }
 
 // NormalizeName normalizes to lowercase and Unicode Normalization
 // Form C (NFC).
 func NormalizeName(n string) string {
-    lower := strings.Map(normalize.ToLower, n)
-    if isASCII(lower) {
-        return lower
-    }
-    return norm.NFC.String(lower)
+	lower := strings.Map(normalize.ToLower, n)
+	if isASCII(lower) {
+		return lower
+	}
+	return norm.NFC.String(lower)
 }

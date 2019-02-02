@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 Ready Stock
+ * Copyright (c) 2019 Ready Stock
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ import (
 	"strings"
 	"time"
 
-	raven "github.com/getsentry/raven-go"
+	"github.com/getsentry/raven-go"
 	"github.com/pkg/errors"
 )
 
@@ -372,9 +372,9 @@ func Redact(r interface{}) string {
 		if cause != nil {
 			reportable += ": caused by " + Redact(c.Cause())
 		}
-	case (interface {
+	case interface {
 		Cause() error
-	}):
+	}:
 		reportable += ": caused by " + Redact(c.Cause())
 	}
 	return reportable

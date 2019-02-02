@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 Ready Stock
+ * Copyright (c) 2019 Ready Stock
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,16 +17,16 @@
 package types_test
 
 import (
-    "testing"
+	"testing"
 
-    "github.com/readystock/noah/db/sql/types"
-    "github.com/readystock/noah/db/sql/types/testutil"
+	"github.com/readystock/noah/db/sql/types"
+	"github.com/readystock/noah/db/sql/types/testutil"
 )
 
 func TestCircleTranscode(t *testing.T) {
-    testutil.TestSuccessfulTranscode(t, "circle", []interface{}{
-        &types.Circle{P: types.Vec2{1.234, 5.67890123}, R: 3.5, Status: types.Present},
-        &types.Circle{P: types.Vec2{-1.234, -5.6789}, R: 12.9, Status: types.Present},
-        &types.Circle{Status: types.Null},
-    })
+	testutil.TestSuccessfulTranscode(t, "circle", []interface{}{
+		&types.Circle{P: types.Vec2{1.234, 5.67890123}, R: 3.5, Status: types.Present},
+		&types.Circle{P: types.Vec2{-1.234, -5.6789}, R: 12.9, Status: types.Present},
+		&types.Circle{Status: types.Null},
+	})
 }

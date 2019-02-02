@@ -1,7 +1,7 @@
 // +build 386 amd64
 
 /*
- * Copyright (c) 2018 Ready Stock
+ * Copyright (c) 2019 Ready Stock
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,16 +25,16 @@ import "unsafe"
 const wordSize = int(unsafe.Sizeof(uintptr(0)))
 
 func onesComplement(b []byte) {
-    n := len(b)
-    w := n / wordSize
-    if w > 0 {
-        bw := *(*[]uintptr)(unsafe.Pointer(&b))
-        for i := 0; i < w; i++ {
-            bw[i] = ^bw[i]
-        }
-    }
+	n := len(b)
+	w := n / wordSize
+	if w > 0 {
+		bw := *(*[]uintptr)(unsafe.Pointer(&b))
+		for i := 0; i < w; i++ {
+			bw[i] = ^bw[i]
+		}
+	}
 
-    for i := w * wordSize; i < n; i++ {
-        b[i] = ^b[i]
-    }
+	for i := w * wordSize; i < n; i++ {
+		b[i] = ^b[i]
+	}
 }

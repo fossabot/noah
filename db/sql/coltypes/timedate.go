@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 Ready Stock
+ * Copyright (c) 2019 Ready Stock
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,9 @@
 package coltypes
 
 import (
-    "bytes"
+	"bytes"
 
-    "github.com/readystock/noah/db/sql/lex"
+	"github.com/readystock/noah/db/sql/lex"
 )
 
 // TDate represents a DATE type.
@@ -30,7 +30,7 @@ func (node *TDate) TypeName() string { return "DATE" }
 
 // Format implements the ColTypeFormatter interface.
 func (node *TDate) Format(buf *bytes.Buffer, f lex.EncodeFlags) {
-    buf.WriteString("DATE")
+	buf.WriteString("DATE")
 }
 
 // TTime represents a TIME type.
@@ -41,7 +41,7 @@ func (node *TTime) TypeName() string { return "TIME" }
 
 // Format implements the ColTypeFormatter interface.
 func (node *TTime) Format(buf *bytes.Buffer, f lex.EncodeFlags) {
-    buf.WriteString("TIME")
+	buf.WriteString("TIME")
 }
 
 // TTimeTZ represents a TIMETZ type.
@@ -52,7 +52,7 @@ func (node *TTimeTZ) TypeName() string { return "TIMETZ" }
 
 // Format implements the ColTypeFormatter interface.
 func (node *TTimeTZ) Format(buf *bytes.Buffer, f lex.EncodeFlags) {
-    buf.WriteString("TIME WITH TIME ZONE")
+	buf.WriteString("TIME WITH TIME ZONE")
 }
 
 // TTimestamp represents a TIMESTAMP type.
@@ -63,7 +63,7 @@ func (node *TTimestamp) TypeName() string { return "TIMESTAMP" }
 
 // Format implements the ColTypeFormatter interface.
 func (node *TTimestamp) Format(buf *bytes.Buffer, f lex.EncodeFlags) {
-    buf.WriteString("TIMESTAMP")
+	buf.WriteString("TIMESTAMP")
 }
 
 // TTimestampTZ represents a TIMESTAMP type.
@@ -74,7 +74,7 @@ func (node *TTimestampTZ) TypeName() string { return "TIMESTAMPTZ" }
 
 // Format implements the ColTypeFormatter interface.
 func (node *TTimestampTZ) Format(buf *bytes.Buffer, f lex.EncodeFlags) {
-    buf.WriteString("TIMESTAMP WITH TIME ZONE")
+	buf.WriteString("TIMESTAMP WITH TIME ZONE")
 }
 
 // TInterval represents an INTERVAL type
@@ -85,5 +85,5 @@ func (node *TInterval) TypeName() string { return "INTERVAL" }
 
 // Format implements the ColTypeFormatter interface.
 func (node *TInterval) Format(buf *bytes.Buffer, f lex.EncodeFlags) {
-    buf.WriteString("INTERVAL")
+	buf.WriteString("INTERVAL")
 }

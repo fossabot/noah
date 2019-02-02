@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 Ready Stock
+ * Copyright (c) 2019 Ready Stock
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,17 +17,17 @@
 package system
 
 import (
-    "testing"
+	"testing"
 )
 
 func Test_Context_InitSetup(t *testing.T) {
-    timestamp, err := SystemCtx.Settings.GetSettingUint64(InitialSetupTimestamp)
-    if err != nil {
-        panic(err)
-    }
+	timestamp, err := SystemCtx.Settings.GetSettingUint64(InitialSetupTimestamp)
+	if err != nil {
+		panic(err)
+	}
 
-    // Since this is a new store, the value should be nil. If it is not then this should fail.
-    if timestamp != nil {
-        panic("InitialSetupTimestamp is not nil. This value should be nil in a new store.")
-    }
+	// Since this is a new store, the value should be nil. If it is not then this should fail.
+	if timestamp != nil {
+		panic("InitialSetupTimestamp is not nil. This value should be nil in a new store.")
+	}
 }

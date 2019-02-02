@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 Ready Stock
+ * Copyright (c) 2019 Ready Stock
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,15 +17,15 @@
 package pgwirebase
 
 import (
-    "bufio"
-    "bytes"
-    "encoding/binary"
-    "io"
-    "time"
-    "unicode/utf8"
-    "unsafe"
+	"bufio"
+	"bytes"
+	"encoding/binary"
+	"io"
+	"time"
+	"unicode/utf8"
+	"unsafe"
 
-    "github.com/readystock/noah/db/sql/pgwire/pgerror"
+	"github.com/readystock/noah/db/sql/pgwire/pgerror"
 )
 
 const secondsInDay = 24 * 60 * 60
@@ -37,10 +37,10 @@ const maxMessageSize = 1 << 24
 type FormatCode uint16
 
 const (
-    // FormatText is the default, text format.
-    FormatText FormatCode = 0
-    // FormatBinary is an alternative, binary, encoding.
-    FormatBinary FormatCode = 1
+	// FormatText is the default, text format.
+	FormatText FormatCode = 0
+	// FormatBinary is an alternative, binary, encoding.
+	FormatBinary FormatCode = 1
 )
 
 var _ BufferedReader = &bufio.Reader{}
@@ -48,35 +48,35 @@ var _ BufferedReader = &bytes.Buffer{}
 
 // BufferedReader extended io.Reader with some convenience methods.
 type BufferedReader interface {
-    io.Reader
-    ReadString(delim byte) (string, error)
-    ReadByte() (byte, error)
+	io.Reader
+	ReadString(delim byte) (string, error)
+	ReadByte() (byte, error)
 }
 
 // ReadBuffer provides a convenient way to read pgwire protocol messages.
 type ReadBuffer struct {
-    Msg []byte
-    tmp [4]byte
+	Msg []byte
+	tmp [4]byte
 }
 
 // reset sets b.Msg to exactly size, attempting to use spare capacity
 // at the end of the existing slice when possible and allocating a new
 // slice when necessary.
 func (b *ReadBuffer) reset(size int) {
-    if b.Msg != nil {
-        b.Msg = b.Msg[len(b.Msg):]
-    }
+	if b.Msg != nil {
+		b.Msg = b.Msg[len(b.Msg):]
+	}
 
-    if cap(b.Msg) >= size {
-        b.Msg = b.Msg[:size]
-        return
-    }
+	if cap(b.Msg) >= size {
+		b.Msg = b.Msg[:size]
+		return
+	}
 
-    allocSize := size
-    if allocSize < 4096 {
-        allocSize = 4096
-    }
-    b.Msg = make([]byte, size, allocSize)
+	allocSize := size
+	if allocSize < 4096 {
+		allocSize = 4096
+	}
+	b.Msg = make([]byte, size, allocSize)
 }
 
 // ReadUntypedMsg reads a length-prefixed message. It is only used directly
@@ -86,97 +86,97 @@ func (b *ReadBuffer) reset(size int) {
 // (e.g. if data was read but didn't validate) so that we can more accurately
 // measure network traffic.
 func (b *ReadBuffer) ReadUntypedMsg(rd io.Reader) (int, error) {
-    nread, err := io.ReadFull(rd, b.tmp[:])
-    if err != nil {
-        return nread, err
-    }
-    size := int(binary.BigEndian.Uint32(b.tmp[:]))
-    // size includes itself.
-    size -= 4
-    if size > maxMessageSize || size < 0 {
-        return nread, NewProtocolViolationErrorf("message size %d out of bounds (0..%d)",
-            size, maxMessageSize)
-    }
+	nread, err := io.ReadFull(rd, b.tmp[:])
+	if err != nil {
+		return nread, err
+	}
+	size := int(binary.BigEndian.Uint32(b.tmp[:]))
+	// size includes itself.
+	size -= 4
+	if size > maxMessageSize || size < 0 {
+		return nread, NewProtocolViolationErrorf("message size %d out of bounds (0..%d)",
+			size, maxMessageSize)
+	}
 
-    b.reset(size)
-    n, err := io.ReadFull(rd, b.Msg)
-    return nread + n, err
+	b.reset(size)
+	n, err := io.ReadFull(rd, b.Msg)
+	return nread + n, err
 }
 
 // ReadTypedMsg reads a message from the provided reader, returning its type code and body.
 // It returns the message type, number of bytes read, and an error if there was one.
 func (b *ReadBuffer) ReadTypedMsg(rd BufferedReader) (ClientMessageType, int, error) {
-    typ, err := rd.ReadByte()
-    if err != nil {
-        return 0, 0, err
-    }
-    n, err := b.ReadUntypedMsg(rd)
-    return ClientMessageType(typ), n, err
+	typ, err := rd.ReadByte()
+	if err != nil {
+		return 0, 0, err
+	}
+	n, err := b.ReadUntypedMsg(rd)
+	return ClientMessageType(typ), n, err
 }
 
 // GetString reads a null-terminated string.
 func (b *ReadBuffer) GetString() (string, error) {
-    pos := bytes.IndexByte(b.Msg, 0)
-    if pos == -1 {
-        return "", NewProtocolViolationErrorf("NUL terminator not found")
-    }
-    // Note: this is a conversion from a byte slice to a string which avoids
-    // allocation and copying. It is safe because we never reuse the bytes in our
-    // read buffer. It is effectively the same as: "s := string(b.Msg[:pos])"
-    s := b.Msg[:pos]
-    b.Msg = b.Msg[pos+1:]
-    r := *((*string)(unsafe.Pointer(&s)))
-    return r, nil
+	pos := bytes.IndexByte(b.Msg, 0)
+	if pos == -1 {
+		return "", NewProtocolViolationErrorf("NUL terminator not found")
+	}
+	// Note: this is a conversion from a byte slice to a string which avoids
+	// allocation and copying. It is safe because we never reuse the bytes in our
+	// read buffer. It is effectively the same as: "s := string(b.Msg[:pos])"
+	s := b.Msg[:pos]
+	b.Msg = b.Msg[pos+1:]
+	r := *((*string)(unsafe.Pointer(&s)))
+	return r, nil
 }
 
 // GetPrepareType returns the buffer's contents as a PrepareType.
 func (b *ReadBuffer) GetPrepareType() (PrepareType, error) {
-    v, err := b.GetBytes(1)
-    if err != nil {
-        return 0, err
-    }
-    return PrepareType(v[0]), nil
+	v, err := b.GetBytes(1)
+	if err != nil {
+		return 0, err
+	}
+	return PrepareType(v[0]), nil
 }
 
 // GetBytes returns the buffer's contents as a []byte.
 func (b *ReadBuffer) GetBytes(n int) ([]byte, error) {
-    if len(b.Msg) < n {
-        return nil, NewProtocolViolationErrorf("insufficient data: %d", len(b.Msg))
-    }
-    v := b.Msg[:n]
-    b.Msg = b.Msg[n:]
-    return v, nil
+	if len(b.Msg) < n {
+		return nil, NewProtocolViolationErrorf("insufficient data: %d", len(b.Msg))
+	}
+	v := b.Msg[:n]
+	b.Msg = b.Msg[n:]
+	return v, nil
 }
 
 // GetUint16 returns the buffer's contents as a uint16.
 func (b *ReadBuffer) GetUint16() (uint16, error) {
-    if len(b.Msg) < 2 {
-        return 0, NewProtocolViolationErrorf("insufficient data: %d", len(b.Msg))
-    }
-    v := binary.BigEndian.Uint16(b.Msg[:2])
-    b.Msg = b.Msg[2:]
-    return v, nil
+	if len(b.Msg) < 2 {
+		return 0, NewProtocolViolationErrorf("insufficient data: %d", len(b.Msg))
+	}
+	v := binary.BigEndian.Uint16(b.Msg[:2])
+	b.Msg = b.Msg[2:]
+	return v, nil
 }
 
 // GetUint32 returns the buffer's contents as a uint32.
 func (b *ReadBuffer) GetUint32() (uint32, error) {
-    if len(b.Msg) < 4 {
-        return 0, NewProtocolViolationErrorf("insufficient data: %d", len(b.Msg))
-    }
-    v := binary.BigEndian.Uint32(b.Msg[:4])
-    b.Msg = b.Msg[4:]
-    return v, nil
+	if len(b.Msg) < 4 {
+		return 0, NewProtocolViolationErrorf("insufficient data: %d", len(b.Msg))
+	}
+	v := binary.BigEndian.Uint32(b.Msg[:4])
+	b.Msg = b.Msg[4:]
+	return v, nil
 }
 
 // NewUnrecognizedMsgTypeErr creates an error for an unrecognized pgwire
 // message.
 func NewUnrecognizedMsgTypeErr(typ ClientMessageType) error {
-    return NewProtocolViolationErrorf("unrecognized client message type %v", typ)
+	return NewProtocolViolationErrorf("unrecognized client message type %v", typ)
 }
 
 // NewProtocolViolationErrorf creates a pgwire ProtocolViolationError.
 func NewProtocolViolationErrorf(format string, args ...interface{}) error {
-    return pgerror.NewErrorf(pgerror.CodeProtocolViolationError, format, args...)
+	return pgerror.NewErrorf(pgerror.CodeProtocolViolationError, format, args...)
 }
 
 // DecodeOidDatum decodes bytes with specified Oid and format code into
@@ -535,10 +535,10 @@ func NewProtocolViolationErrorf(format string, args ...interface{}) error {
 // Values which are going to be converted to strings (STRING and NAME) need to
 // be valid UTF-8 for us to accept them.
 func validateStringBytes(b []byte) error {
-    if !utf8.Valid(b) {
-        return invalidUTF8Error
-    }
-    return nil
+	if !utf8.Valid(b) {
+		return invalidUTF8Error
+	}
+	return nil
 }
 
 //PGNumericSign indicates the sign of a numeric.
@@ -546,11 +546,11 @@ func validateStringBytes(b []byte) error {
 type PGNumericSign uint16
 
 const (
-    // PGNumericPos represents the + sign.
-    PGNumericPos PGNumericSign = 0x0000
-    // PGNumericNeg represents the - sign.
-    PGNumericNeg PGNumericSign = 0x4000
-    // PGNumericNan PGNumericSign = 0xC000
+	// PGNumericPos represents the + sign.
+	PGNumericPos PGNumericSign = 0x0000
+	// PGNumericNeg represents the - sign.
+	PGNumericNeg PGNumericSign = 0x4000
+	// PGNumericNan PGNumericSign = 0xC000
 )
 
 // PGDecDigits represents the number of decimal digits per int16 Postgres "digit".
@@ -558,8 +558,8 @@ const PGDecDigits = 4
 
 // PGNumeric represents a numeric.
 type PGNumeric struct {
-    Ndigits, Weight, Dscale int16
-    Sign                    PGNumericSign
+	Ndigits, Weight, Dscale int16
+	Sign                    PGNumericSign
 }
 
 // pgBinaryToTime takes an int64 and interprets it as the Postgres binary format
@@ -622,17 +622,17 @@ type PGNumeric struct {
 var invalidUTF8Error = pgerror.NewErrorf(pgerror.CodeCharacterNotInRepertoireError, "invalid UTF-8 sequence")
 
 var (
-    // PGEpochJDate represents the pg epoch.
-    PGEpochJDate = time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC)
-    // PGEpochJDateFromUnix represents the pg epoch relative to the Unix epoch.
-    PGEpochJDateFromUnix = int32(PGEpochJDate.Unix() / secondsInDay)
+	// PGEpochJDate represents the pg epoch.
+	PGEpochJDate = time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC)
+	// PGEpochJDateFromUnix represents the pg epoch relative to the Unix epoch.
+	PGEpochJDateFromUnix = int32(PGEpochJDate.Unix() / secondsInDay)
 )
 
 const (
-    // PGBinaryIPv4family is the pgwire constant for IPv4. It is defined as
-    // AF_INET.
-    PGBinaryIPv4family byte = 2
-    // PGBinaryIPv6family is the pgwire constant for IPv4. It is defined as
-    // AF_NET + 1.
-    PGBinaryIPv6family byte = 3
+	// PGBinaryIPv4family is the pgwire constant for IPv4. It is defined as
+	// AF_INET.
+	PGBinaryIPv4family byte = 2
+	// PGBinaryIPv6family is the pgwire constant for IPv4. It is defined as
+	// AF_NET + 1.
+	PGBinaryIPv6family byte = 3
 )

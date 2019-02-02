@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 Ready Stock
+ * Copyright (c) 2019 Ready Stock
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,19 +17,19 @@
 package uuid
 
 import (
-    "encoding/binary"
-    "encoding/json"
-    "fmt"
+	"encoding/binary"
+	"encoding/json"
+	"fmt"
 
-    "github.com/pkg/errors"
-    "github.com/readystock/noah/db/util/uint128"
-    "github.com/satori/go.uuid"
+	"github.com/pkg/errors"
+	"github.com/readystock/noah/db/util/uint128"
+	"github.com/satori/go.uuid"
 )
 
 // UUID is a thin wrapper around "github.com/satori/go.uuid".UUID that can be
 // used as a gogo/protobuf customtype.
 type UUID struct {
-    uuid.UUID
+	uuid.UUID
 }
 
 // Nil is the empty UUID with all 128 bits set to zero.
@@ -37,7 +37,7 @@ var Nil = UUID{uuid.Nil}
 
 // Short returns the first eight characters of the output of String().
 func (u UUID) Short() string {
-    return u.String()[:8]
+	return u.String()[:8]
 }
 
 // ShortStringer implements fmt.Stringer to output Short() on String().
@@ -45,7 +45,7 @@ type ShortStringer UUID
 
 // String is part of fmt.Stringer.
 func (s ShortStringer) String() string {
-    return UUID(s).Short()
+	return UUID(s).Short()
 }
 
 var _ fmt.Stringer = ShortStringer{}
@@ -59,7 +59,7 @@ var _ fmt.Stringer = ShortStringer{}
 // https://github.com/gogo/protobuf/pull/227 and
 // https://github.com/golang/protobuf/issues/311.
 func (UUID) Bytes() {
-    panic("intentionally shadowed; use GetBytes()")
+	panic("intentionally shadowed; use GetBytes()")
 }
 
 // Silence unused warning for UUID.Bytes.
@@ -70,87 +70,87 @@ var _ = UUID.Bytes
 // This method exists only to conform to the API expected by gogoproto's
 // generated Equal implementations.
 func (u UUID) Equal(t UUID) bool {
-    return u == t
+	return u == t
 }
 
 // GetBytes returns the UUID as a byte slice.
 func (u UUID) GetBytes() []byte {
-    return u.UUID.Bytes()
+	return u.UUID.Bytes()
 }
 
 // ToUint128 returns the UUID as a Uint128.
 func (u UUID) ToUint128() uint128.Uint128 {
-    return uint128.FromBytes(u.GetBytes())
+	return uint128.FromBytes(u.GetBytes())
 }
 
 // Size returns the marshaled size of u, in bytes.
 func (u UUID) Size() int {
-    return len(u.UUID)
+	return len(u.UUID)
 }
 
 // MarshalTo marshals u to data.
 func (u UUID) MarshalTo(data []byte) (int, error) {
-    return copy(data, u.UUID.Bytes()), nil
+	return copy(data, u.UUID.Bytes()), nil
 }
 
 // Unmarshal unmarshals data to u.
 func (u *UUID) Unmarshal(data []byte) error {
-    return u.UUID.UnmarshalBinary(data)
+	return u.UUID.UnmarshalBinary(data)
 }
 
 // MarshalJSON returns the JSON encoding of u.
 func (u UUID) MarshalJSON() ([]byte, error) {
-    return json.Marshal(u.String())
+	return json.Marshal(u.String())
 }
 
 // UnmarshalJSON unmarshals the JSON encoded data into u.
 func (u *UUID) UnmarshalJSON(data []byte) error {
-    var uuidString string
-    if err := json.Unmarshal(data, &uuidString); err != nil {
-        return err
-    }
-    uuid, err := FromString(uuidString)
-    *u = uuid
-    return err
+	var uuidString string
+	if err := json.Unmarshal(data, &uuidString); err != nil {
+		return err
+	}
+	uuid, err := FromString(uuidString)
+	*u = uuid
+	return err
 }
 
 // MakeV4 delegates to "github.com/satori/go.uuid".NewV4 and wraps the result in
 // a UUID.
 func MakeV4() UUID {
-    uuid, _ := uuid.NewV4()
-    return UUID{uuid}
+	uuid, _ := uuid.NewV4()
+	return UUID{uuid}
 }
 
 // NewPopulatedUUID returns a populated UUID.
 func NewPopulatedUUID(r interface {
-    Int63() int64
+	Int63() int64
 }) *UUID {
-    var u uuid.UUID
-    binary.LittleEndian.PutUint64(u[:8], uint64(r.Int63()))
-    binary.LittleEndian.PutUint64(u[8:], uint64(r.Int63()))
-    return &UUID{u}
+	var u uuid.UUID
+	binary.LittleEndian.PutUint64(u[:8], uint64(r.Int63()))
+	binary.LittleEndian.PutUint64(u[8:], uint64(r.Int63()))
+	return &UUID{u}
 }
 
 // FromBytes delegates to "github.com/satori/go.uuid".FromBytes and wraps the
 // result in a UUID.
 func FromBytes(input []byte) (UUID, error) {
-    u, err := uuid.FromBytes(input)
-    return UUID{u}, err
+	u, err := uuid.FromBytes(input)
+	return UUID{u}, err
 }
 
 // FromString delegates to "github.com/satori/go.uuid".FromString and wraps the
 // result in a UUID.
 func FromString(input string) (UUID, error) {
-    u, err := uuid.FromString(input)
-    return UUID{u}, err
+	u, err := uuid.FromString(input)
+	return UUID{u}, err
 }
 
 // FromUint128 delegates to "github.com/satori/go.uuid".FromBytes and wraps the
 // result in a UUID.
 func FromUint128(input uint128.Uint128) UUID {
-    u, err := uuid.FromBytes(input.GetBytes())
-    if err != nil {
-        panic(errors.Wrap(err, "should never happen with 16 byte slice"))
-    }
-    return UUID{u}
+	u, err := uuid.FromBytes(input.GetBytes())
+	if err != nil {
+		panic(errors.Wrap(err, "should never happen with 16 byte slice"))
+	}
+	return UUID{u}
 }

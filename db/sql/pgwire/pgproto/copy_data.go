@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 Ready Stock
+ * Copyright (c) 2019 Ready Stock
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,37 +17,37 @@
 package pgproto
 
 import (
-    "encoding/hex"
-    "encoding/json"
+	"encoding/hex"
+	"encoding/json"
 
-    "github.com/readystock/pgx/pgio"
+	"github.com/readystock/pgx/pgio"
 )
 
 type CopyData struct {
-    Data []byte
+	Data []byte
 }
 
 func (*CopyData) Backend()  {}
 func (*CopyData) Frontend() {}
 
 func (dst *CopyData) Decode(src []byte) error {
-    dst.Data = src
-    return nil
+	dst.Data = src
+	return nil
 }
 
 func (src *CopyData) Encode(dst []byte) []byte {
-    dst = append(dst, 'd')
-    dst = pgio.AppendInt32(dst, int32(4+len(src.Data)))
-    dst = append(dst, src.Data...)
-    return dst
+	dst = append(dst, 'd')
+	dst = pgio.AppendInt32(dst, int32(4+len(src.Data)))
+	dst = append(dst, src.Data...)
+	return dst
 }
 
 func (src *CopyData) MarshalJSON() ([]byte, error) {
-    return json.Marshal(struct {
-        Type string
-        Data string
-    }{
-        Type: "CopyData",
-        Data: hex.EncodeToString(src.Data),
-    })
+	return json.Marshal(struct {
+		Type string
+		Data string
+	}{
+		Type: "CopyData",
+		Data: hex.EncodeToString(src.Data),
+	})
 }

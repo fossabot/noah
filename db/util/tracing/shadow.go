@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 Ready Stock
+ * Copyright (c) 2019 Ready Stock
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,8 +21,8 @@ import (
 	"fmt"
 	"os"
 
-	lightstep "github.com/lightstep/lightstep-tracer-go"
-	opentracing "github.com/opentracing/opentracing-go"
+	"github.com/lightstep/lightstep-tracer-go"
+	"github.com/opentracing/opentracing-go"
 	zipkin "github.com/openzipkin/zipkin-go-opentracing"
 )
 

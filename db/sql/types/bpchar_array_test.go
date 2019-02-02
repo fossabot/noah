@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 Ready Stock
+ * Copyright (c) 2019 Ready Stock
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,55 +17,55 @@
 package types_test
 
 import (
-    "testing"
+	"testing"
 
-    "github.com/readystock/noah/db/sql/types"
-    "github.com/readystock/noah/db/sql/types/testutil"
+	"github.com/readystock/noah/db/sql/types"
+	"github.com/readystock/noah/db/sql/types/testutil"
 )
 
 func TestBPCharArrayTranscode(t *testing.T) {
-    testutil.TestSuccessfulTranscode(t, "char(8)[]", []interface{}{
-        &types.BPCharArray{
-            Elements:   nil,
-            Dimensions: nil,
-            Status:     types.Present,
-        },
-        &types.BPCharArray{
-            Elements: []types.BPChar{
-                {String: "foo     ", Status: types.Present},
-                {Status: types.Null},
-            },
-            Dimensions: []types.ArrayDimension{{Length: 2, LowerBound: 1}},
-            Status:     types.Present,
-        },
-        &types.BPCharArray{Status: types.Null},
-        &types.BPCharArray{
-            Elements: []types.BPChar{
-                {String: "bar     ", Status: types.Present},
-                {String: "NuLL    ", Status: types.Present},
-                {String: `wow"quz\`, Status: types.Present},
-                {String: "1       ", Status: types.Present},
-                {String: "1       ", Status: types.Present},
-                {String: "null    ", Status: types.Present},
-            },
-            Dimensions: []types.ArrayDimension{
-                {Length: 3, LowerBound: 1},
-                {Length: 2, LowerBound: 1},
-            },
-            Status: types.Present,
-        },
-        &types.BPCharArray{
-            Elements: []types.BPChar{
-                {String: " bar    ", Status: types.Present},
-                {String: "    baz ", Status: types.Present},
-                {String: "    quz ", Status: types.Present},
-                {String: "foo     ", Status: types.Present},
-            },
-            Dimensions: []types.ArrayDimension{
-                {Length: 2, LowerBound: 4},
-                {Length: 2, LowerBound: 2},
-            },
-            Status: types.Present,
-        },
-    })
+	testutil.TestSuccessfulTranscode(t, "char(8)[]", []interface{}{
+		&types.BPCharArray{
+			Elements:   nil,
+			Dimensions: nil,
+			Status:     types.Present,
+		},
+		&types.BPCharArray{
+			Elements: []types.BPChar{
+				{String: "foo     ", Status: types.Present},
+				{Status: types.Null},
+			},
+			Dimensions: []types.ArrayDimension{{Length: 2, LowerBound: 1}},
+			Status:     types.Present,
+		},
+		&types.BPCharArray{Status: types.Null},
+		&types.BPCharArray{
+			Elements: []types.BPChar{
+				{String: "bar     ", Status: types.Present},
+				{String: "NuLL    ", Status: types.Present},
+				{String: `wow"quz\`, Status: types.Present},
+				{String: "1       ", Status: types.Present},
+				{String: "1       ", Status: types.Present},
+				{String: "null    ", Status: types.Present},
+			},
+			Dimensions: []types.ArrayDimension{
+				{Length: 3, LowerBound: 1},
+				{Length: 2, LowerBound: 1},
+			},
+			Status: types.Present,
+		},
+		&types.BPCharArray{
+			Elements: []types.BPChar{
+				{String: " bar    ", Status: types.Present},
+				{String: "    baz ", Status: types.Present},
+				{String: "    quz ", Status: types.Present},
+				{String: "foo     ", Status: types.Present},
+			},
+			Dimensions: []types.ArrayDimension{
+				{Length: 2, LowerBound: 4},
+				{Length: 2, LowerBound: 2},
+			},
+			Status: types.Present,
+		},
+	})
 }

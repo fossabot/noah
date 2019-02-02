@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 Ready Stock
+ * Copyright (c) 2019 Ready Stock
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,28 +17,27 @@
 package pgwire
 
 import (
-    "github.com/readystock/noah/db/system"
-    "github.com/readystock/noah/testutils"
-    "os"
-    "testing"
+	"github.com/readystock/noah/db/system"
+	"github.com/readystock/noah/testutils"
+	"os"
+	"testing"
 )
 
 var (
-    SystemCtx *system.SContext
+	SystemCtx *system.SContext
 )
 
-
 func TestMain(m *testing.M) {
-    tempFolder := testutils.CreateTempFolder()
-    defer testutils.DeleteTempFolder(tempFolder)
+	tempFolder := testutils.CreateTempFolder()
+	defer testutils.DeleteTempFolder(tempFolder)
 
-    sctx, err := system.NewSystemContext(tempFolder, "127.0.0.1:0", "", "")
-    if err != nil {
-        panic(err)
-    }
-    SystemCtx = sctx
-    defer SystemCtx.Close()
+	sctx, err := system.NewSystemContext(tempFolder, "127.0.0.1:0", "", "")
+	if err != nil {
+		panic(err)
+	}
+	SystemCtx = sctx
+	defer SystemCtx.Close()
 
-    retCode := m.Run()
-    os.Exit(retCode)
+	retCode := m.Run()
+	os.Exit(retCode)
 }

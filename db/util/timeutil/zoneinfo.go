@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 Ready Stock
+ * Copyright (c) 2019 Ready Stock
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,9 @@
 package timeutil
 
 import (
-    "errors"
-    "strings"
-    "time"
+	"errors"
+	"strings"
+	"time"
 )
 
 var errTZDataNotFound = errors.New("timezone data cannot be found")
@@ -35,13 +35,13 @@ var errTZDataNotFound = errors.New("timezone data cannot be found")
 // of a more useful message like "the tz file with such name
 // is not present in one of the standard tz locations".
 func LoadLocation(name string) (*time.Location, error) {
-    switch strings.ToLower(name) {
-    case "local", "default":
-        name = "UTC"
-    }
-    l, err := time.LoadLocation(name)
-    if err != nil && strings.Contains(err.Error(), "zoneinfo.zip") {
-        err = errTZDataNotFound
-    }
-    return l, err
+	switch strings.ToLower(name) {
+	case "local", "default":
+		name = "UTC"
+	}
+	l, err := time.LoadLocation(name)
+	if err != nil && strings.Contains(err.Error(), "zoneinfo.zip") {
+		err = errTZDataNotFound
+	}
+	return l, err
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 Ready Stock
+ * Copyright (c) 2019 Ready Stock
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,58 +17,58 @@
 package logflags
 
 import (
-    "strconv"
-    "sync"
+	"strconv"
+	"sync"
 )
 
 type atomicBool struct {
-    sync.Locker
-    b *bool
+	sync.Locker
+	b *bool
 }
 
 func (ab *atomicBool) IsBoolFlag() bool {
-    return true
+	return true
 }
 
 func (ab *atomicBool) String() string {
-    if ab.Locker == nil {
-        return strconv.FormatBool(false)
-    }
-    ab.Lock()
-    defer ab.Unlock()
-    return strconv.FormatBool(*ab.b)
+	if ab.Locker == nil {
+		return strconv.FormatBool(false)
+	}
+	ab.Lock()
+	defer ab.Unlock()
+	return strconv.FormatBool(*ab.b)
 }
 
 func (ab *atomicBool) Set(s string) error {
-    ab.Lock()
-    defer ab.Unlock()
-    b, err := strconv.ParseBool(s)
-    if err != nil {
-        return err
-    }
-    *ab.b = b
-    return nil
+	ab.Lock()
+	defer ab.Unlock()
+	b, err := strconv.ParseBool(s)
+	if err != nil {
+		return err
+	}
+	*ab.b = b
+	return nil
 }
 
 func (ab *atomicBool) Type() string {
-    return "bool"
+	return "bool"
 }
 
 // var _ flag.Value = &atomicBool{}
 
 // LogToStderrName and others are flag names.
 const (
-    LogToStderrName               = "logtostderr"
-    NoColorName                   = "no-color"
-    VerbosityName                 = "verbosity"
-    VModuleName                   = "vmodule"
-    LogBacktraceAtName            = "log-backtrace-at"
-    LogDirName                    = "log-dir"
-    NoRedirectStderrName          = "no-redirect-stderr"
-    ShowLogsName                  = "show-logs"
-    LogFileMaxSizeName            = "log-file-max-size"
-    LogFilesCombinedMaxSizeName   = "log-dir-max-size"
-    LogFileVerbosityThresholdName = "log-file-verbosity"
+	LogToStderrName               = "logtostderr"
+	NoColorName                   = "no-color"
+	VerbosityName                 = "verbosity"
+	VModuleName                   = "vmodule"
+	LogBacktraceAtName            = "log-backtrace-at"
+	LogDirName                    = "log-dir"
+	NoRedirectStderrName          = "no-redirect-stderr"
+	ShowLogsName                  = "show-logs"
+	LogFileMaxSizeName            = "log-file-max-size"
+	LogFilesCombinedMaxSizeName   = "log-dir-max-size"
+	LogFileVerbosityThresholdName = "log-file-verbosity"
 )
 
 // // InitFlags creates logging flags which update the given variables. The passed mutex is

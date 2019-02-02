@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 Ready Stock
+ * Copyright (c) 2019 Ready Stock
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,25 +17,25 @@
 package util
 
 import (
-    "fmt"
-    "github.com/kataras/go-errors"
-    "github.com/kataras/golog"
+	"fmt"
+	"github.com/kataras/go-errors"
+	"github.com/kataras/golog"
 )
 
 func CatchPanic(err *error) {
-    if x := recover(); x != nil {
-        golog.Errorf("uncaught panic: %v", x)
-        *err = fmt.Errorf("uncaught panic: %v", x)
-    }
+	if x := recover(); x != nil {
+		golog.Errorf("uncaught panic: %v", x)
+		*err = fmt.Errorf("uncaught panic: %v", x)
+	}
 }
 
 func CombineErrors(errs []error) error {
-    if len(errs) > 0 {
-        err := errors.New(errs[0].Error())
-        for i := 1; i < len(errs); i++ {
-            err.AppendErr(errs[i])
-        }
-        return err
-    }
-    return nil
+	if len(errs) > 0 {
+		err := errors.New(errs[0].Error())
+		for i := 1; i < len(errs); i++ {
+			err.AppendErr(errs[i])
+		}
+		return err
+	}
+	return nil
 }

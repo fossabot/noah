@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 Ready Stock
+ * Copyright (c) 2019 Ready Stock
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@
 package types
 
 import (
-    "database/sql/driver"
+	"database/sql/driver"
 )
 
 // GenericBinary is a placeholder for binary format values that no other type exists
@@ -25,31 +25,31 @@ import (
 type GenericBinary Bytea
 
 func (dst *GenericBinary) Set(src interface{}) error {
-    return (*Bytea)(dst).Set(src)
+	return (*Bytea)(dst).Set(src)
 }
 
 func (dst *GenericBinary) Get() interface{} {
-    return (*Bytea)(dst).Get()
+	return (*Bytea)(dst).Get()
 }
 
 func (src *GenericBinary) AssignTo(dst interface{}) error {
-    return (*Bytea)(src).AssignTo(dst)
+	return (*Bytea)(src).AssignTo(dst)
 }
 
 func (dst *GenericBinary) DecodeBinary(ci *ConnInfo, src []byte) error {
-    return (*Bytea)(dst).DecodeBinary(ci, src)
+	return (*Bytea)(dst).DecodeBinary(ci, src)
 }
 
 func (src *GenericBinary) EncodeBinary(ci *ConnInfo, buf []byte) ([]byte, error) {
-    return (*Bytea)(src).EncodeBinary(ci, buf)
+	return (*Bytea)(src).EncodeBinary(ci, buf)
 }
 
 // Scan implements the database/sql Scanner interface.
 func (dst *GenericBinary) Scan(src interface{}) error {
-    return (*Bytea)(dst).Scan(src)
+	return (*Bytea)(dst).Scan(src)
 }
 
 // Value implements the database/sql/driver Valuer interface.
 func (src *GenericBinary) Value() (driver.Value, error) {
-    return (*Bytea)(src).Value()
+	return (*Bytea)(src).Value()
 }

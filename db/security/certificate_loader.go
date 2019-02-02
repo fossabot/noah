@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 Ready Stock
+ * Copyright (c) 2019 Ready Stock
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ package security
 import (
 	"context"
 	"crypto/x509"
+	"github.com/pkg/errors"
 	"github.com/readystock/noah/db/util/envutil"
 	"github.com/readystock/noah/db/util/log"
 	"io/ioutil"
@@ -27,7 +28,6 @@ import (
 	"runtime"
 	"strings"
 	"time"
-	"github.com/pkg/errors"
 )
 
 func init() {

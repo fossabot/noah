@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 Ready Stock
+ * Copyright (c) 2019 Ready Stock
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,23 +17,18 @@
 package sql
 
 import (
-    "time"
-
-    // We dot-import fsm to use common names such as fsm.True/False. State machine
-    // implementations using that library are weird beasts intimately inter-twined
-    // with that package; therefor this file should stay as small as possible.
-    . "github.com/readystock/noah/db/util/fsm"
+	"time"
 )
 
 // Constants for the String() representation of the session states. Shared with
 // the CLI code which needs to recognize them.
 const (
-    NoTxnStr              string = "NoTxn"
-    OpenStateStr                 = "Open"
-    AbortedStateStr              = "Aborted"
-    CommitWaitStateStr           = "CommitWait"
-    RestartWaitStateStr          = "RestartWait"
-    InternalErrorStateStr        = "InternalError"
+	NoTxnStr              string = "NoTxn"
+	OpenStateStr                 = "Open"
+	AbortedStateStr              = "Aborted"
+	CommitWaitStateStr           = "CommitWait"
+	RestartWaitStateStr          = "RestartWait"
+	InternalErrorStateStr        = "InternalError"
 )
 
 // / States.
@@ -41,41 +36,41 @@ const (
 type stateNoTxn struct{}
 
 func (stateNoTxn) String() string {
-    return NoTxnStr
+	return NoTxnStr
 }
 
 type stateOpen struct {
-    ImplicitTxn Bool
-    // RetryIntent, if set, means the user declared the intention to retry the txn
-    // in case of retriable errors by running a SAVEPOINT cockroach_restart. The
-    // txn will enter a RestartWait state in case of such errors.
-    RetryIntent Bool
+	ImplicitTxn Bool
+	// RetryIntent, if set, means the user declared the intention to retry the txn
+	// in case of retriable errors by running a SAVEPOINT cockroach_restart. The
+	// txn will enter a RestartWait state in case of such errors.
+	RetryIntent Bool
 }
 
 func (stateOpen) String() string {
-    return OpenStateStr
+	return OpenStateStr
 }
 
 type stateAborted struct {
-    // RetryIntent carries over the setting from stateOpen, in case we move back
-    // to Open.
-    RetryIntent Bool
+	// RetryIntent carries over the setting from stateOpen, in case we move back
+	// to Open.
+	RetryIntent Bool
 }
 
 func (stateAborted) String() string {
-    return AbortedStateStr
+	return AbortedStateStr
 }
 
 type stateRestartWait struct{}
 
 func (stateRestartWait) String() string {
-    return RestartWaitStateStr
+	return RestartWaitStateStr
 }
 
 type stateCommitWait struct{}
 
 func (stateCommitWait) String() string {
-    return CommitWaitStateStr
+	return CommitWaitStateStr
 }
 
 // stateInternalError is used by the InternalExecutor when running statements in
@@ -86,7 +81,7 @@ func (stateCommitWait) String() string {
 type stateInternalError struct{}
 
 func (stateInternalError) String() string {
-    return InternalErrorStateStr
+	return InternalErrorStateStr
 }
 
 func (stateNoTxn) State()         {}
@@ -99,31 +94,31 @@ func (stateInternalError) State() {}
 // / Events.
 
 type eventTxnStart struct {
-    ImplicitTxn Bool
+	ImplicitTxn Bool
 }
 type eventTxnStartPayload struct {
-    // tranCtx transitionCtx
+	// tranCtx transitionCtx
 
-    // iso enginepb.IsolationType
-    // pri roachpb.UserPriority
-    // txnSQLTimestamp is the timestamp that statements executed in the
-    // transaction that is started by this event will report for now(),
-    // current_timestamp(), transaction_timestamp().
-    txnSQLTimestamp time.Time
+	// iso enginepb.IsolationType
+	// pri roachpb.UserPriority
+	// txnSQLTimestamp is the timestamp that statements executed in the
+	// transaction that is started by this event will report for now(),
+	// current_timestamp(), transaction_timestamp().
+	txnSQLTimestamp time.Time
 }
 
 func makeEventTxnStartPayload(
-    // iso enginepb.IsolationType,
-    // pri roachpb.UserPriority,
-    txnSQLTimestamp time.Time,
-    // tranCtx transitionCtx,
+	// iso enginepb.IsolationType,
+	// pri roachpb.UserPriority,
+	txnSQLTimestamp time.Time,
+	// tranCtx transitionCtx,
 ) eventTxnStartPayload {
-    return eventTxnStartPayload{
-        // iso:             iso,
-        // pri:             pri,
-        txnSQLTimestamp: txnSQLTimestamp,
-        // tranCtx:         tranCtx,
-    }
+	return eventTxnStartPayload{
+		// iso:             iso,
+		// pri:             pri,
+		txnSQLTimestamp: txnSQLTimestamp,
+		// tranCtx:         tranCtx,
+	}
 }
 
 // eventRetryIntentSet is generated in the Open state when a SAVEPOINT
@@ -133,8 +128,8 @@ type eventTxnFinish struct{}
 
 // eventTxnFinishPayload represents the payload for eventTxnFinish.
 type eventTxnFinishPayload struct {
-    // commit is set if the transaction committed, false if it was aborted.
-    commit bool
+	// commit is set if the transaction committed, false if it was aborted.
+	commit bool
 }
 
 // toEvent turns the eventTxnFinishPayload into a txnEvent.
@@ -148,40 +143,40 @@ type eventTxnFinishPayload struct {
 type eventTxnRestart struct{}
 
 type eventNonRetriableErr struct {
-    IsCommit Bool
+	IsCommit Bool
 }
 
 // eventNonRetriableErrPayload represents the payload for eventNonRetriableErr.
 type eventNonRetriableErrPayload struct {
-    // err is the error that caused the event.
-    err error
+	// err is the error that caused the event.
+	err error
 }
 
 // errorCause implements the payloadWithError interface.
 func (p eventNonRetriableErrPayload) errorCause() error {
-    return p.err
+	return p.err
 }
 
 // eventNonRetriableErrorPayload implements payloadWithError.
 var _ payloadWithError = eventNonRetriableErrPayload{}
 
 type eventRetriableErr struct {
-    CanAutoRetry Bool
-    IsCommit     Bool
+	CanAutoRetry Bool
+	IsCommit     Bool
 }
 
 // eventRetriableErrPayload represents the payload for eventRetriableErr.
 type eventRetriableErrPayload struct {
-    // err is the error that caused the event
-    err error
-    // rewCap must be set if CanAutoRetry is set on the event. It will be passed
-    // back to the connExecutor to perform the rewind.
-    rewCap rewindCapability
+	// err is the error that caused the event
+	err error
+	// rewCap must be set if CanAutoRetry is set on the event. It will be passed
+	// back to the connExecutor to perform the rewind.
+	rewCap rewindCapability
 }
 
 // errorCause implements the payloadWithError interface.
 func (p eventRetriableErrPayload) errorCause() error {
-    return p.err
+	return p.err
 }
 
 // eventRetriableErrPayload implements payloadWithError.
@@ -193,7 +188,7 @@ type eventTxnReleased struct{}
 
 // payloadWithError is a common interface for the payloads that wrap an error.
 type payloadWithError interface {
-    errorCause() error
+	errorCause() error
 }
 
 func (eventRetryIntentSet) Event()  {}

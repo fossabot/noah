@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 Ready Stock
+ * Copyright (c) 2019 Ready Stock
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,9 @@
 package coltypes
 
 import (
-    "bytes"
+	"bytes"
 
-    "github.com/readystock/noah/db/sql/lex"
+	"github.com/readystock/noah/db/sql/lex"
 )
 
 // TTuple represents tuple column types. Tuples aren't writable to disk, but
@@ -31,12 +31,12 @@ func (node TTuple) TypeName() string { return "" }
 
 // Format implements the ColTypeFormatter interface.
 func (node TTuple) Format(buf *bytes.Buffer, flags lex.EncodeFlags) {
-    buf.WriteString("(")
-    for i := range node {
-        if i != 0 {
-            buf.WriteString(", ")
-        }
-        node[i].Format(buf, flags)
-    }
-    buf.WriteString(")")
+	buf.WriteString("(")
+	for i := range node {
+		if i != 0 {
+			buf.WriteString(", ")
+		}
+		node[i].Format(buf, flags)
+	}
+	buf.WriteString(")")
 }

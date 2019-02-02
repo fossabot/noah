@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 Ready Stock
+ * Copyright (c) 2019 Ready Stock
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,35 +17,35 @@
 package pgproto
 
 import (
-    "encoding/json"
+	"encoding/json"
 )
 
 type ReadyForQuery struct {
-    TxStatus byte
+	TxStatus byte
 }
 
 func (*ReadyForQuery) Backend() {}
 
 func (dst *ReadyForQuery) Decode(src []byte) error {
-    if len(src) != 1 {
-        return &invalidMessageLenErr{messageType: "ReadyForQuery", expectedLen: 1, actualLen: len(src)}
-    }
+	if len(src) != 1 {
+		return &invalidMessageLenErr{messageType: "ReadyForQuery", expectedLen: 1, actualLen: len(src)}
+	}
 
-    dst.TxStatus = src[0]
+	dst.TxStatus = src[0]
 
-    return nil
+	return nil
 }
 
 func (src *ReadyForQuery) Encode(dst []byte) []byte {
-    return append(dst, 'Z', 0, 0, 0, 5, src.TxStatus)
+	return append(dst, 'Z', 0, 0, 0, 5, src.TxStatus)
 }
 
 func (src *ReadyForQuery) MarshalJSON() ([]byte, error) {
-    return json.Marshal(struct {
-        Type     string
-        TxStatus string
-    }{
-        Type:     "ReadyForQuery",
-        TxStatus: string(src.TxStatus),
-    })
+	return json.Marshal(struct {
+		Type     string
+		TxStatus string
+	}{
+		Type:     "ReadyForQuery",
+		TxStatus: string(src.TxStatus),
+	})
 }

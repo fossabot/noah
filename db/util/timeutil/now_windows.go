@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 Ready Stock
+ * Copyright (c) 2019 Ready Stock
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,17 +17,17 @@
 package timeutil
 
 import (
-    "time"
+	"time"
 
-    "github.com/pkg/errors"
+	"github.com/pkg/errors"
 
-    "golang.org/x/sys/windows"
+	"golang.org/x/sys/windows"
 )
 
 func init() {
-    if err := windows.LoadGetSystemTimePreciseAsFileTime(); err != nil {
-        panic(errors.Wrap(err, "CockroachDB requires Windows 8 or higher"))
-    }
+	if err := windows.LoadGetSystemTimePreciseAsFileTime(); err != nil {
+		panic(errors.Wrap(err, "CockroachDB requires Windows 8 or higher"))
+	}
 }
 
 // Now returns the current UTC time.
@@ -41,7 +41,7 @@ func init() {
 // obviate the need for this, since we only need the higher precision when
 // subtracting `time.Time`s.
 func Now() time.Time {
-    var ft windows.Filetime
-    windows.GetSystemTimePreciseAsFileTime(&ft)
-    return time.Unix(0, ft.Nanoseconds()).UTC()
+	var ft windows.Filetime
+	windows.GetSystemTimePreciseAsFileTime(&ft)
+	return time.Unix(0, ft.Nanoseconds()).UTC()
 }
