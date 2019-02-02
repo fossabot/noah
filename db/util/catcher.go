@@ -19,7 +19,7 @@ package util
 import (
 	"fmt"
 	"github.com/kataras/go-errors"
-	"github.com/kataras/golog"
+	"github.com/readystock/golog"
 )
 
 func CatchPanic(err *error) {

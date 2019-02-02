@@ -19,7 +19,7 @@ package pgwire
 import (
 	"context"
 	"fmt"
-	"github.com/kataras/golog"
+	"github.com/readystock/golog"
 	"io"
 	"net"
 	"time"

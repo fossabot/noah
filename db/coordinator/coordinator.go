@@ -17,7 +17,7 @@
 package coordinator
 
 import (
-	"github.com/kataras/golog"
+	"github.com/readystock/golog"
 	"github.com/readystock/noah/db/base"
 	"github.com/readystock/noah/db/sql/pgwire"
 	"github.com/readystock/noah/db/system"

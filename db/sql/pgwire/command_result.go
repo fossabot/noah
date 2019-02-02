@@ -18,7 +18,7 @@ package pgwire
 
 import (
 	"fmt"
-	"github.com/kataras/golog"
+	"github.com/readystock/golog"
 	"github.com/readystock/noah/db/sql"
 	"github.com/readystock/noah/db/sql/pgwire/pgproto"
 	"github.com/readystock/noah/db/sql/pgwire/pgwirebase"
