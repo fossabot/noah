@@ -17,7 +17,6 @@
 package sql
 
 import (
-	"github.com/readystock/golog"
 	"github.com/readystock/noah/db/system"
 	"github.com/readystock/noah/testutils"
 	"os"
@@ -43,7 +42,6 @@ var (
 )
 
 func TestMain(m *testing.M) {
-	golog.Info("RUNNING SQL TEST")
 	tempFolder := testutils.CreateTempFolder()
 	defer testutils.DeleteTempFolder(tempFolder)
 

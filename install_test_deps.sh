@@ -8,3 +8,4 @@ go get github.com/prometheus/common/expfmt
 go get github.com/shopspring/decimal
 go get github.com/jackc/pgx
 go get github.com/stretchr/testify/assert
+go get github.com/deckarep/golang-set
