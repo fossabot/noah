@@ -11,6 +11,8 @@ PLEASE NOTE: Noah is still a work in progress, while some of it's functionality 
 
 ## Building
 
+Please note: Noah cannot be built on Windows at this time.
+
 Noah requires `protoc` to be built. Protoc will generate the protos needed for
 some of the key value store data and wire protocol. Cockroach had some protos
 that have been "hard-coded" into noah to make builds easier. These protos also
@@ -29,14 +31,31 @@ This will create a `bin` folder if it does not already exist and create the noah
 that folder.
 
 #### Clean build
-Please note: Noah cannot be built on Windows at this time.
-
 
 If you need to do a completely clean build of noah run the following:
 ```bash
 make fresh
 ```
 This will recompile all of noah's dependencies and may take a few minutes.
+
+## Running Noah
+
+`noah start`
+
+Will start a Noah coordinator node, listening for Postgres connection on port `5433`.
+Noah's gRPC/Raft interface uses port `5434`, it should not be used for anything other than 
+Noah's internal communication.
+A simple RESTful API is available on port `5435`, this allows some control and provides some
+information about the state of the cluster.
+
+
+If you are trying to add another coordinator to an existing running instance of Noah you can run:
+
+`noah start --join=192.168.0.1:5434`
+
+You can replace `192.168.0.1:5434` with the address and port of any already running instance of
+Noah and it will add the new instance into the existing cluster and allow the new coordinator to 
+start serving queries.
 
 ## Example
 
