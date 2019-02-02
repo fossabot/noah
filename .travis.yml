@@ -43,7 +43,6 @@ env:
     - PGX_TEST_DATABASE=postgres://postgres@127.0.0.1:5433/postgres
 
 install:
-  - make protos
   - make protos -C $GOPATH/src/github.com/readystock/pg_query_go
   - make enums -C $GOPATH/src/github.com/readystock/pg_query_go
   - make protos -C $GOPATH/src/github.com/readystock/raft

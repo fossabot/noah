@@ -1,5 +1,5 @@
 .PHONY: default build protos fresh setup_build_dir
-default: build
+default: test
 
 PROTOS_DIRECTORY = ./protos
 BUILD_DIRECTORY = ./bin
@@ -11,6 +11,9 @@ build: protos setup_build_dir
 
 fresh: protos setup_build_dir
 	go build -a -x -v -o $(BUILD_DIRECTORY)/$(EXECUTABLE_NAME) $(PACKAGE)
+
+test: fresh
+	go test -v ./...
 
 setup_build_dir:
 	mkdir -p $(BUILD_DIRECTORY)
