@@ -1,6 +1,7 @@
 # Noah 
 [![Build Status](https://travis-ci.com/readystock/noah.svg?token=QvXZjJzgiir2JHLaKFrG&branch=master)](https://travis-ci.com/readystock/noah)
 [![CodeFactor](https://www.codefactor.io/repository/github/readystock/noah/badge)](https://www.codefactor.io/repository/github/readystock/noah)
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Freadystock%2Fnoah.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Freadystock%2Fnoah?ref=badge_shield)
 
 Noah is a database sharding tool for Postgres inspired by Vitess and Citus. 
 At it's core is a gutted version of CockroachDB, rewritten to use multiple PostgreSQL databases as it's primary storage engine.
@@ -244,3 +245,6 @@ JOIN public.order_lines ON order_lines.order_id = orders.order_id
 JOIN public.products ON products.product_id = order_lines.product_id
 WHERE orders.account_id = 1;
 ```
+
+## License
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Freadystock%2Fnoah.svg?type=large)](https://app.fossa.io/projects/git%2Bgithub.com%2Freadystock%2Fnoah?ref=badge_large)
